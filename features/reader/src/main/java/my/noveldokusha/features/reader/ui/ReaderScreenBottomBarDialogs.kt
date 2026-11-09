@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
 import my.noveldokusha.coreui.theme.AppTheme
 import my.noveldokusha.coreui.theme.DarkMode
+import my.noveldokusha.coreui.theme.NovelaSpacing
 import my.noveldokusha.features.reader.ui.settingDialogs.MoreSettingDialog
 import my.noveldokusha.features.reader.ui.settingDialogs.StyleSettingDialog
 import my.noveldokusha.features.reader.ui.settingDialogs.TranslatorSettingDialog
@@ -60,54 +61,52 @@ internal fun ReaderScreenBottomBarDialogs(
     modifier: Modifier = Modifier,
 ) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        modifier = modifier.fillMaxWidth()
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = modifier.fillMaxWidth(),
     ) {
-        val maxDialogHeight = (LocalConfiguration.current.screenHeightDp * 0.6f).roundToInt().dp
+        val maxDialogHeight = (LocalConfiguration.current.screenHeightDp * 0.60f).roundToInt().dp
         Box(
             Modifier
-                .padding(horizontal = 24.dp)
+                .padding(horizontal = NovelaSpacing.sm)
                 .heightIn(max = maxDialogHeight)
         ) {
-            AnimatedContent(targetState = settings.selectedSetting.value, label = "") { target ->
+            AnimatedContent(targetState = settings.selectedSetting.value, label = "reader_panel") { target ->
                 when (target) {
                     ReaderScreenState.Settings.Type.LiveTranslation -> TranslatorSettingDialog(
-                        state = settings.liveTranslation
+                        state = settings.liveTranslation,
                     )
                     ReaderScreenState.Settings.Type.TextToSpeech -> VoiceReaderSettingDialog(
                         state = settings.textToSpeech,
                         floatingTtsState = settings.floatingTts,
                         parallelEnabled = settings.liveTranslation.parallelEnabled,
                     )
-                    ReaderScreenState.Settings.Type.Style -> {
-                        StyleSettingDialog(
-                            state = settings.style,
-                            onDarkModeChange = onDarkModeSelected,
-                            onAppThemeChange = onAppThemeSelected,
-                            onTextFontChange = onTextFontChanged,
-                            onTextColorChanged = onTextColorChanged,
-                            onBackgroundChanged = onBackgroundChanged,
-                            onTextSizeChange = onTextSizeChanged,
-                            onLineHeightChange = onLineHeightChanged,
-                            onParagraphSpacingChange = onParagraphSpacingChanged,
-                            onLetterSpacingChange = onLetterSpacingChanged,
-                            onTextJustifyChange = onTextJustifyChange,
-                            onTextHyphenationChange = onTextHyphenationChange,
-                            onParagraphIndentChange = onParagraphIndentChange,
-                            onParagraphFirstLetterBoldChange = onParagraphFirstLetterBoldChange,
-                            onSentenceSplittingChange = onSentenceSplittingChange,
-                            onTextBoldChange = onTextBoldChange,
-                            onTextItalicChange = onTextItalicChange,
-                            onTextUnderlineChange = onTextUnderlineChange,
-                            onTextShadowChange = onTextShadowChange,
-                            onTextSmoothChange = onTextSmoothChange,
-                            onMarginLeftChange = onMarginLeftChange,
-                            onMarginRightChange = onMarginRightChange,
-                            onMarginTopChange = onMarginTopChange,
-                            onMarginBottomChange = onMarginBottomChange,
-                            onTextDefaultsReset = onTextDefaultsReset,
-                        )
-                    }
+                    ReaderScreenState.Settings.Type.Style -> StyleSettingDialog(
+                        state = settings.style,
+                        onDarkModeChange = onDarkModeSelected,
+                        onAppThemeChange = onAppThemeSelected,
+                        onTextFontChange = onTextFontChanged,
+                        onTextColorChanged = onTextColorChanged,
+                        onBackgroundChanged = onBackgroundChanged,
+                        onTextSizeChange = onTextSizeChanged,
+                        onLineHeightChange = onLineHeightChanged,
+                        onParagraphSpacingChange = onParagraphSpacingChanged,
+                        onLetterSpacingChange = onLetterSpacingChanged,
+                        onTextJustifyChange = onTextJustifyChange,
+                        onTextHyphenationChange = onTextHyphenationChange,
+                        onParagraphIndentChange = onParagraphIndentChange,
+                        onParagraphFirstLetterBoldChange = onParagraphFirstLetterBoldChange,
+                        onSentenceSplittingChange = onSentenceSplittingChange,
+                        onTextBoldChange = onTextBoldChange,
+                        onTextItalicChange = onTextItalicChange,
+                        onTextUnderlineChange = onTextUnderlineChange,
+                        onTextShadowChange = onTextShadowChange,
+                        onTextSmoothChange = onTextSmoothChange,
+                        onMarginLeftChange = onMarginLeftChange,
+                        onMarginRightChange = onMarginRightChange,
+                        onMarginTopChange = onMarginTopChange,
+                        onMarginBottomChange = onMarginBottomChange,
+                        onTextDefaultsReset = onTextDefaultsReset,
+                    )
                     ReaderScreenState.Settings.Type.More -> MoreSettingDialog(
                         ttsHighlightEnabled = settings.ttsHighlight.isEnabled.value,
                         onTtsHighlightEnabledChange = onTtsHighlightEnabledChange,
@@ -121,7 +120,7 @@ internal fun ReaderScreenBottomBarDialogs(
                         val viewModel = regexCleanupViewModel
                         if (viewModel != null) {
                             val panelHeight =
-                                (LocalConfiguration.current.screenHeightDp * 0.6f).roundToInt().dp
+                                (LocalConfiguration.current.screenHeightDp * 0.58f).roundToInt().dp
                             RegexCleanupSettingsScreen(
                                 viewModel = viewModel,
                                 onNavigateBack = {

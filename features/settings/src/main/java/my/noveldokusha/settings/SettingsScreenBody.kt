@@ -1,7 +1,9 @@
 package my.noveldokusha.settings
 
-import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -11,25 +13,24 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AutoStories
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -38,28 +39,32 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.material.icons.Icons
-
-import my.noveldokusha.coreui.theme.AppTheme
-import my.noveldokusha.coreui.theme.DarkMode
-import my.noveldokusha.coreui.theme.InternalTheme
-import my.noveldokusha.coreui.theme.PreviewThemes
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import my.noveldokusha.core.appPreferences.AppLanguage
 import my.noveldokusha.core.appPreferences.AppLanguageProvider
 import my.noveldokusha.core.appPreferences.NovelPromptData
+import my.noveldokusha.coreui.theme.AppTheme
+import my.noveldokusha.coreui.theme.DarkMode
+import my.noveldokusha.coreui.theme.InternalTheme
+import my.noveldokusha.coreui.theme.NovelaRadius
+import my.noveldokusha.coreui.theme.NovelaSize
+import my.noveldokusha.coreui.theme.NovelaSpacing
+import my.noveldokusha.coreui.theme.NovelaTheme
+import my.noveldokusha.coreui.theme.PreviewThemes
 import my.noveldokusha.settings.sections.AppUpdates
 import my.noveldokusha.settings.sections.LibraryAutoUpdate
+import my.noveldokusha.settings.sections.SettingsAbout
 import my.noveldokusha.settings.sections.SettingsBackup
 import my.noveldokusha.settings.sections.SettingsData
 import my.noveldokusha.settings.sections.SettingsGeminiTranslation
 import my.noveldokusha.settings.sections.SettingsLanguage
-import my.noveldokusha.settings.sections.SettingsNovelPromptsDialog
 import my.noveldokusha.settings.sections.SettingsNetwork
-import my.noveldokusha.settings.sections.SettingsTheme
+import my.noveldokusha.settings.sections.SettingsNovelPromptsDialog
 import my.noveldokusha.settings.sections.SettingsRegexCleanup
 import my.noveldokusha.settings.sections.SettingsSupport
-import my.noveldokusha.settings.sections.SettingsAbout
+import my.noveldokusha.settings.sections.SettingsTheme
 
 @Composable
 internal fun SettingsScreenBody(
@@ -107,6 +112,8 @@ internal fun SettingsScreenBody(
     onAutoBackupIncludePluginsChange: (Boolean) -> Unit,
     onExportLogs: () -> Unit = {},
 ) {
+    val colors = NovelaTheme.colors
+
     // Refresh size displays every time the user navigates to this screen
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
@@ -123,25 +130,86 @@ internal fun SettingsScreenBody(
 
     val showNovelPromptsDialog = remember { mutableStateOf(false) }
 
+    val currentLanguageObj = remember(state.currentLanguage.value) {
+        AppLanguageProvider.fromCode(state.currentLanguage.value)
+            ?: AppLanguageProvider.supportedLanguages.first()
+    }
+
     Column(
-        modifier = modifier.verticalScroll(rememberScrollState()),
+        modifier = modifier
+            .background(colors.background)
+            .verticalScroll(rememberScrollState())
+            .padding(top = NovelaSpacing.xs),
+        verticalArrangement = Arrangement.spacedBy(NovelaSpacing.lg),
     ) {
-        val currentLanguageObj = remember(state.currentLanguage.value) {
-            AppLanguageProvider.fromCode(state.currentLanguage.value)
-                ?: AppLanguageProvider.supportedLanguages.first()
+        // ── Brand / App Summary Banner ──
+        Surface(
+            shape = RoundedCornerShape(NovelaRadius.cardLarge),
+            color = colors.surfaceCard,
+            border = BorderStroke(NovelaSize.hairline, colors.borderSubtle),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = NovelaSpacing.lg),
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(14.dp),
+                    color = colors.accentSoft,
+                    modifier = Modifier.size(46.dp),
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Outlined.AutoStories,
+                            contentDescription = null,
+                            tint = colors.accent,
+                            modifier = Modifier.size(24.dp),
+                        )
+                    }
+                }
+                Spacer(Modifier.width(14.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.app_name),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.textPrimary,
+                    )
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        text = buildString {
+                            if (state.appVersion.isNotBlank()) {
+                                append("v")
+                                append(state.appVersion)
+                                append(" · ")
+                            }
+                            append(stringResource(state.currentAppTheme.value.titleRes))
+                            append(" · ")
+                            append(currentLanguageObj.getDisplayName())
+                        },
+                        style = MaterialTheme.typography.labelSmall,
+                        color = colors.textMuted,
+                    )
+                }
+            }
         }
+
         SettingsLanguage(
             currentLanguage = currentLanguageObj,
             onLanguageChange = onLanguageChange,
         )
-        HorizontalDivider()
+
         SettingsTheme(
             currentAppTheme = state.currentAppTheme.value,
             currentDarkMode = state.currentDarkMode.value,
             onAppThemeChange = onAppThemeSelected,
             onDarkModeChange = onDarkModeSelected,
         )
-        HorizontalDivider()
+
         SettingsData(
             databaseSize = state.databaseSize.value,
             imagesFolderSize = state.imageFolderSize.value,
@@ -159,7 +227,7 @@ internal fun SettingsScreenBody(
             onRequestCleanMangaCache = onRequestCleanMangaCache,
             onRequestCleanOfflineVideo = onRequestCleanOfflineVideo,
         )
-        HorizontalDivider()
+
         val context = LocalContext.current
         SettingsNetwork(
             context = context,
@@ -169,9 +237,9 @@ internal fun SettingsScreenBody(
             massAddDelayMs = state.massAddDelayMs,
             onMassAddDelayChange = onMassAddDelayChange,
             downloadDelayMs = state.downloadDelayMs,
-            onDownloadDelayChange = onDownloadDelayChange
+            onDownloadDelayChange = onDownloadDelayChange,
         )
-        HorizontalDivider()
+
         SettingsBackup(
             onBackupData = onBackupData,
             onRestoreData = onRestoreData,
@@ -192,66 +260,68 @@ internal fun SettingsScreenBody(
             onAutoBackupIncludePluginsChange = onAutoBackupIncludePluginsChange,
             autoBackupLastTimestamp = state.autoBackupLastTimestamp.value,
         )
+
         SettingsGeminiTranslation(
-                translationProvider            = state.translationProvider.value,
-                onTranslationProviderChange    = onTranslationProviderChange,
-                translationGlobalMode          = state.translationGlobalMode.value,
-                onTranslationGlobalModeChange  = onTranslationGlobalModeChange,
-                hasGlobalPair                  = state.hasGlobalPair.value,
-                geminiApiKey                   = state.geminiApiKey.value,
-                geminiModel                    = state.geminiModel.value,
-                googlePaApiKeys                = state.googlePaApiKeys.value,
-                openAiBaseUrl                  = state.openAiBaseUrl.value,
-                openAiApiKeys                  = state.openAiApiKeys.value,
-                openAiModel                    = state.openAiModel.value,
-                activeSystemPrompt             = state.activeSystemPrompt.value,
-                promptPresets                  = state.promptPresets.value,
-                promptUseEnglishLocale         = state.promptUseEnglishLocale.value,
-                onGeminiApiKeyChange           = onGeminiApiKeyChange,
-                onGeminiModelChange            = onGeminiModelChange,
-                onGooglePaApiKeysChange        = onGooglePaApiKeysChange,
-                onOpenAiBaseUrlChange          = onOpenAiBaseUrlChange,
-                onOpenAiApiKeysChange          = onOpenAiApiKeysChange,
-                onOpenAiModelChange            = onOpenAiModelChange,
-                onActiveSystemPromptChange     = onActiveSystemPromptChange,
-                onPromptUseEnglishLocaleChange = onPromptUseEnglishLocaleChange,
-                onSavePreset                   = onSavePreset,
-                onDeletePreset                 = onDeletePreset,
-                llmBatchSize                   = state.llmBatchSize.value,
-                llmMaxOutputTokens             = state.llmMaxOutputTokens.value,
-                onLlmBatchSizeChange           = onLlmBatchSizeChange,
-                onLlmMaxOutputTokensChange     = onLlmMaxOutputTokensChange,
-                novelPromptCount               = state.translationNovelPrompts.value.size,
-                onNovelPromptsClick            = { showNovelPromptsDialog.value = true },
-            )
-        SettingsRegexCleanup(
-            onNavigateToRegexCleanup = onNavigateToRegexCleanup
+            translationProvider = state.translationProvider.value,
+            onTranslationProviderChange = onTranslationProviderChange,
+            translationGlobalMode = state.translationGlobalMode.value,
+            onTranslationGlobalModeChange = onTranslationGlobalModeChange,
+            hasGlobalPair = state.hasGlobalPair.value,
+            geminiApiKey = state.geminiApiKey.value,
+            geminiModel = state.geminiModel.value,
+            googlePaApiKeys = state.googlePaApiKeys.value,
+            openAiBaseUrl = state.openAiBaseUrl.value,
+            openAiApiKeys = state.openAiApiKeys.value,
+            openAiModel = state.openAiModel.value,
+            activeSystemPrompt = state.activeSystemPrompt.value,
+            promptPresets = state.promptPresets.value,
+            promptUseEnglishLocale = state.promptUseEnglishLocale.value,
+            onGeminiApiKeyChange = onGeminiApiKeyChange,
+            onGeminiModelChange = onGeminiModelChange,
+            onGooglePaApiKeysChange = onGooglePaApiKeysChange,
+            onOpenAiBaseUrlChange = onOpenAiBaseUrlChange,
+            onOpenAiApiKeysChange = onOpenAiApiKeysChange,
+            onOpenAiModelChange = onOpenAiModelChange,
+            onActiveSystemPromptChange = onActiveSystemPromptChange,
+            onPromptUseEnglishLocaleChange = onPromptUseEnglishLocaleChange,
+            onSavePreset = onSavePreset,
+            onDeletePreset = onDeletePreset,
+            llmBatchSize = state.llmBatchSize.value,
+            llmMaxOutputTokens = state.llmMaxOutputTokens.value,
+            onLlmBatchSizeChange = onLlmBatchSizeChange,
+            onLlmMaxOutputTokensChange = onLlmMaxOutputTokensChange,
+            novelPromptCount = state.translationNovelPrompts.value.size,
+            onNovelPromptsClick = { showNovelPromptsDialog.value = true },
         )
-        HorizontalDivider()
+
+        SettingsRegexCleanup(
+            onNavigateToRegexCleanup = onNavigateToRegexCleanup,
+        )
+
         LibraryAutoUpdate(state = state.libraryAutoUpdate)
-        HorizontalDivider()
+
         AppUpdates(
             state = state.updateAppSetting,
-            onCheckForUpdatesManual = onCheckForUpdatesManual
+            onCheckForUpdatesManual = onCheckForUpdatesManual,
         )
-        HorizontalDivider()
+
         SettingsSupport(
             onExportLogs = onExportLogs,
         )
-        HorizontalDivider()
+
         SettingsAbout(
             appVersion = state.appVersion,
         )
-        Spacer(modifier = Modifier.height(16.dp))
+
         Text(
             text = "(°.°)",
             modifier = Modifier
-                .padding(20.dp)
+                .padding(top = 8.dp)
                 .fillMaxWidth(),
             fontFamily = FontFamily.Monospace,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
-            textAlign = TextAlign.Center
+            color = colors.accent.copy(alpha = 0.72f),
+            textAlign = TextAlign.Center,
         )
         Spacer(modifier = Modifier.height(120.dp))
     }
@@ -282,49 +352,53 @@ internal fun SettingsScreenBody(
         }
         AlertDialog(
             onDismissRequest = onDismissClean,
+            containerColor = colors.surfaceElevated,
+            shape = RoundedCornerShape(NovelaRadius.cardLarge),
             title = {
                 Text(
                     text = stringResource(id = titleRes),
-                    color = MaterialTheme.colorScheme.onSurface
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.textPrimary,
                 )
             },
             text = {
                 Text(
                     text = stringResource(id = textRes),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colors.textSecondary,
                 )
             },
             confirmButton = {
-                OutlinedButton(
+                Button(
                     onClick = onConfirmClean,
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer,
-                        contentColor = MaterialTheme.colorScheme.onErrorContainer
+                    shape = RoundedCornerShape(NovelaRadius.pill),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = colors.danger,
+                        contentColor = MaterialTheme.colorScheme.onError,
                     ),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.error)
                 ) {
-                    Text(stringResource(id = android.R.string.ok))
+                    Text(
+                        text = stringResource(id = android.R.string.ok),
+                        fontWeight = FontWeight.SemiBold,
+                    )
                 }
             },
             dismissButton = {
-                OutlinedButton(
-                    onClick = onDismissClean,
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                TextButton(onClick = onDismissClean) {
+                    Text(
+                        text = stringResource(id = R.string.cancel),
+                        color = colors.textSecondary,
                     )
-                ) {
-                    Text(stringResource(id = R.string.cancel))
                 }
-            }
+            },
         )
     }
 }
 
-
 @PreviewThemes
 @Composable
 private fun Preview() {
-    val isDark = isSystemInDarkTheme()
     InternalTheme {
         Surface(color = MaterialTheme.colorScheme.background) {
             SettingsScreenBody(
@@ -410,18 +484,18 @@ private fun Preview() {
                 onDeletePreset = { },
                 onLlmBatchSizeChange = { },
                 onLlmMaxOutputTokensChange = { },
-                    onLanguageChange = { },
-                    onAppThemeSelected = { },
-                    onDarkModeSelected = { },
-                    onNavigateToRegexCleanup = { },
-                    onAutoBackupEnabledChange = { },
-                    onAutoBackupSelectDirectory = { },
-                    onAutoBackupMaxCountChange = { },
-                    onAutoBackupIntervalMinutesChange = { },
-                    onAutoBackupIncludeImagesChange = { },
-                    onAutoBackupIncludeSettingsChange = { },
-                    onAutoBackupIncludePluginsChange = { },
-                    onDeleteNovelPrompt = { },
+                onLanguageChange = { },
+                onAppThemeSelected = { },
+                onDarkModeSelected = { },
+                onNavigateToRegexCleanup = { },
+                onAutoBackupEnabledChange = { },
+                onAutoBackupSelectDirectory = { },
+                onAutoBackupMaxCountChange = { },
+                onAutoBackupIntervalMinutesChange = { },
+                onAutoBackupIncludeImagesChange = { },
+                onAutoBackupIncludeSettingsChange = { },
+                onAutoBackupIncludePluginsChange = { },
+                onDeleteNovelPrompt = { },
             )
         }
     }

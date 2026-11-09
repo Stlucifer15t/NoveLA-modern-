@@ -1,7 +1,6 @@
 package my.noveldokusha.settings.sections
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,18 +11,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Psychology
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -33,10 +33,14 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import my.noveldokusha.core.appPreferences.NovelPromptData
+import my.noveldokusha.coreui.theme.NovelaRadius
+import my.noveldokusha.coreui.theme.NovelaSize
+import my.noveldokusha.coreui.theme.NovelaTheme
 import my.noveldokusha.settings.R
 
 @Composable
@@ -45,23 +49,31 @@ internal fun SettingsNovelPromptsDialog(
     onDeleteNovelPrompt: (String) -> Unit,
     onDismiss: () -> Unit,
 ) {
+    val colors = NovelaTheme.colors
     val query = rememberSaveable { mutableStateOf("") }
 
     val filtered = remember(query.value, novelPrompts) {
-        if (query.value.isBlank()) novelPrompts
-        else novelPrompts.filter { (url, data) ->
-            url.contains(query.value, ignoreCase = true) ||
-            data.title.contains(query.value, ignoreCase = true) ||
-            data.prompt.contains(query.value, ignoreCase = true)
+        if (query.value.isBlank()) {
+            novelPrompts
+        } else {
+            novelPrompts.filter { (url, data) ->
+                url.contains(query.value, ignoreCase = true) ||
+                    data.title.contains(query.value, ignoreCase = true) ||
+                    data.prompt.contains(query.value, ignoreCase = true)
+            }
         }
     }
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        containerColor = colors.surfaceElevated,
+        shape = RoundedCornerShape(NovelaRadius.cardLarge),
         title = {
             Text(
                 text = stringResource(R.string.novel_prompts_title),
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = colors.textPrimary,
             )
         },
         text = {
@@ -72,15 +84,18 @@ internal fun SettingsNovelPromptsDialog(
                         onValueChange = { query.value = it },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
+                        shape = RoundedCornerShape(NovelaRadius.pill),
                         placeholder = { Text(stringResource(R.string.novel_prompts_search)) },
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = MaterialTheme.colorScheme.onSurface,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            cursorColor = MaterialTheme.colorScheme.onSurface,
+                            focusedBorderColor = colors.accent,
+                            unfocusedBorderColor = colors.borderSubtle,
+                            focusedContainerColor = colors.surfaceMuted,
+                            unfocusedContainerColor = colors.surfaceMuted,
+                            cursorColor = colors.accent,
                         ),
                     )
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(10.dp))
                 }
 
                 Column(
@@ -90,60 +105,72 @@ internal fun SettingsNovelPromptsDialog(
                         .verticalScroll(rememberScrollState()),
                 ) {
                     filtered.forEach { (bookUrl, data) ->
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
+                        Surface(
+                            shape = RoundedCornerShape(NovelaRadius.md),
+                            color = colors.surfaceMuted,
+                            border = BorderStroke(NovelaSize.hairline, colors.borderSubtle),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 4.dp, vertical = 4.dp),
+                                .padding(vertical = 4.dp),
                         ) {
-                            Icon(
-                                Icons.Outlined.Psychology,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(18.dp),
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = data.title.ifBlank { bookUrl },
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    color = MaterialTheme.colorScheme.onSurface,
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 10.dp, vertical = 8.dp),
+                            ) {
+                                Icon(
+                                    Icons.Outlined.Psychology,
+                                    contentDescription = null,
+                                    tint = colors.accent,
+                                    modifier = Modifier.size(18.dp),
                                 )
-                                if (data.title.isNotBlank()) {
+                                Spacer(Modifier.width(8.dp))
+                                Column(modifier = Modifier.weight(1f)) {
                                     Text(
-                                        text = bookUrl,
-                                        style = MaterialTheme.typography.bodySmall,
+                                        text = data.title.ifBlank { bookUrl },
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.SemiBold,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        color = colors.textPrimary,
+                                    )
+                                    if (data.title.isNotBlank()) {
+                                        Text(
+                                            text = bookUrl,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                            color = colors.textMuted,
+                                        )
+                                    }
+                                    Text(
+                                        text = data.prompt,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        maxLines = 3,
+                                        overflow = TextOverflow.Ellipsis,
+                                        color = colors.textSecondary,
                                     )
                                 }
-                                Text(
-                                    text = data.prompt,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    maxLines = 3,
-                                    overflow = TextOverflow.Ellipsis,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
-                            IconButton(onClick = { onDeleteNovelPrompt(bookUrl) }) {
-                                Icon(
-                                    Icons.Outlined.Delete,
-                                    contentDescription = stringResource(R.string.delete),
-                                    tint = MaterialTheme.colorScheme.error,
-                                )
+                                IconButton(onClick = { onDeleteNovelPrompt(bookUrl) }) {
+                                    Icon(
+                                        Icons.Outlined.Delete,
+                                        contentDescription = stringResource(R.string.delete),
+                                        tint = colors.danger,
+                                    )
+                                }
                             }
                         }
-                        HorizontalDivider()
                     }
                 }
             }
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.close))
+                Text(
+                    text = stringResource(R.string.close),
+                    color = colors.textSecondary,
+                )
             }
         },
     )

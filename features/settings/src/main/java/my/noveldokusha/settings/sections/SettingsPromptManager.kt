@@ -1,5 +1,6 @@
 package my.noveldokusha.settings.sections
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -10,15 +11,19 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Psychology
 import androidx.compose.material.icons.outlined.Translate
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -37,17 +42,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import my.noveldokusha.coreui.components.SlimListItem
-import my.noveldokusha.coreui.theme.colorAccent
-import my.noveldokusha.coreui.theme.textPadding
+import my.noveldokusha.coreui.components.NovelaSettingsTile
+import my.noveldokusha.coreui.theme.NovelaRadius
+import my.noveldokusha.coreui.theme.NovelaSize
+import my.noveldokusha.coreui.theme.NovelaTheme
+import my.noveldokusha.coreui.theme.NovelaType
 import my.noveldokusha.settings.R
 import my.noveldokusha.text_translator.BUILT_IN_PROMPTS
 
-/**
- * Единый менеджер промптов для LLM-провайдеров (Gemini и OpenAI-compatible).
- * Показывается внутри блока настроек провайдера, когда выбран Gemini или OpenAI.
- */
 @Composable
 internal fun SettingsPromptManager(
     activeSystemPrompt: String,
@@ -58,267 +62,242 @@ internal fun SettingsPromptManager(
     onSavePreset: (name: String, prompt: String) -> Unit,
     onDeletePreset: (name: String) -> Unit,
 ) {
+    val colors = NovelaTheme.colors
     val textFieldColors = OutlinedTextFieldDefaults.colors(
-        focusedBorderColor   = MaterialTheme.colorScheme.onSurface,
-        unfocusedBorderColor = MaterialTheme.colorScheme.onSurface,
-        cursorColor          = MaterialTheme.colorScheme.onSurface,
-        focusedLabelColor    = MaterialTheme.colorScheme.onSurface,
-        unfocusedLabelColor  = MaterialTheme.colorScheme.onSurfaceVariant,
+        focusedBorderColor = colors.accent,
+        unfocusedBorderColor = colors.borderSubtle,
+        cursorColor = colors.accent,
     )
 
     var promptText by remember(activeSystemPrompt) { mutableStateOf(activeSystemPrompt) }
     var showSavePresetDialog by rememberSaveable { mutableStateOf(false) }
     var presetNameInput by rememberSaveable { mutableStateOf("") }
 
-    // Заголовок секции в едином стиле с остальными секциями настроек
-    Text(
-        text     = stringResource(R.string.llm_prompt_section_title),
-        style    = MaterialTheme.typography.titleMedium,
-        modifier = Modifier.textPadding(),
-        color    = colorAccent(),
-    )
+    Column(modifier = Modifier.fillMaxWidth()) {
+        HorizontalDivider(
+            thickness = NovelaSize.hairline,
+            color = colors.borderSubtle,
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+        )
 
-    // ── System Prompt field ───────────────────────────────────────────────────
-    SlimListItem(
-        headlineContent = {
-            // Отступ сверху чтобы label OutlinedTextField не обрезался анимацией
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp)
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 4.dp),
+        ) {
+            Text(
+                text = stringResource(R.string.llm_prompt_section_title).uppercase(),
+                style = NovelaType.sectionEyebrow,
+                color = colors.accent,
+            )
+            Spacer(Modifier.height(8.dp))
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth(),
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier          = Modifier.fillMaxWidth()
-                ) {
-                    Icon(
-                        Icons.Outlined.Psychology,
-                        contentDescription = null,
-                        tint               = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        text  = stringResource(R.string.llm_prompt_label),
-                        style = MaterialTheme.typography.titleSmall,
-                    )
-                }
-                Spacer(Modifier.height(8.dp))
-                OutlinedTextField(
-                    value         = promptText,
-                    onValueChange = { promptText = it; onActiveSystemPromptChange(it) },
-                    modifier      = Modifier.fillMaxWidth(),
-                    minLines      = 5,
-                    maxLines      = 12,
-                    colors        = textFieldColors,
+                Icon(
+                    Icons.Outlined.Psychology,
+                    contentDescription = null,
+                    tint = colors.accent,
                 )
-                Spacer(Modifier.height(4.dp))
+                Spacer(Modifier.width(8.dp))
                 Text(
-                    text  = stringResource(R.string.llm_prompt_placeholders_hint),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    text = stringResource(R.string.llm_prompt_label),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = colors.textPrimary,
                 )
+            }
+            Spacer(Modifier.height(8.dp))
+            OutlinedTextField(
+                value = promptText,
+                onValueChange = {
+                    promptText = it
+                    onActiveSystemPromptChange(it)
+                },
+                shape = RoundedCornerShape(NovelaRadius.md),
+                modifier = Modifier.fillMaxWidth(),
+                minLines = 5,
+                maxLines = 12,
+                colors = textFieldColors,
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = stringResource(R.string.llm_prompt_placeholders_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.textMuted,
+            )
 
-                Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(10.dp))
 
-                // ── Preset chips ──────────────────────────────────────────────
-                val allPresets: List<Pair<String, String>> = buildList {
-                    addAll(BUILT_IN_PROMPTS)
-                    addAll(promptPresets)
-                }
-                val builtInNames = BUILT_IN_PROMPTS.map { it.first }.toSet()
+            val allPresets: List<Pair<String, String>> = buildList {
+                addAll(BUILT_IN_PROMPTS)
+                addAll(promptPresets)
+            }
+            val builtInNames = BUILT_IN_PROMPTS.map { it.first }.toSet()
 
-                Row(
-                    modifier              = Modifier.horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    allPresets.forEach { (presetName, presetPrompt) ->
-                        val isBuiltIn  = presetName in builtInNames
-                        val isSelected = promptText == presetPrompt
+            Row(
+                modifier = Modifier.horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                allPresets.forEach { (presetName, presetPrompt) ->
+                    val isBuiltIn = presetName in builtInNames
+                    val isSelected = promptText == presetPrompt
+                    var showChipMenu by remember { mutableStateOf(false) }
 
-                        // Для пользовательских чипов: при нажатии на уже выбранный
-                        // показываем DropdownMenu с опциями «Применить» / «Удалить»
-                        var showChipMenu by remember { mutableStateOf(false) }
-
-                        if (isBuiltIn) {
-                            // Встроенный пресет — простой клик без меню
+                    if (isBuiltIn) {
+                        FilterChip(
+                            selected = isSelected,
+                            onClick = {
+                                promptText = presetPrompt
+                                onActiveSystemPromptChange(presetPrompt)
+                            },
+                            shape = RoundedCornerShape(NovelaRadius.pill),
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = colors.accentSoft,
+                                selectedLabelColor = colors.accent,
+                            ),
+                            label = { Text(presetName) },
+                        )
+                    } else {
+                        Column {
                             FilterChip(
                                 selected = isSelected,
-                                onClick  = {
-                                    promptText = presetPrompt
-                                    onActiveSystemPromptChange(presetPrompt)
-                                },
-                                label    = { Text(presetName) },
+                                onClick = { showChipMenu = true },
+                                shape = RoundedCornerShape(NovelaRadius.pill),
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = colors.accentSoft,
+                                    selectedLabelColor = colors.accent,
+                                ),
+                                label = { Text(presetName) },
                             )
-                        } else {
-                            // Пользовательский пресет — клик открывает меню
-                            // (и применить, и удалить — без конфликта касания)
-                            Column {
-                                FilterChip(
-                                    selected = isSelected,
-                                    onClick  = { showChipMenu = true },
-                                    label    = { Text(presetName) },
+                            DropdownMenu(
+                                expanded = showChipMenu,
+                                onDismissRequest = { showChipMenu = false },
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.apply)) },
+                                    onClick = {
+                                        promptText = presetPrompt
+                                        onActiveSystemPromptChange(presetPrompt)
+                                        showChipMenu = false
+                                    },
                                 )
-                                DropdownMenu(
-                                    expanded        = showChipMenu,
-                                    onDismissRequest = { showChipMenu = false },
-                                ) {
-                                    DropdownMenuItem(
-                                        text    = { Text(stringResource(R.string.apply)) },
-                                        onClick = {
-                                            promptText = presetPrompt
-                                            onActiveSystemPromptChange(presetPrompt)
-                                            showChipMenu = false
-                                        }
-                                    )
-                                    DropdownMenuItem(
-                                        text    = {
-                                            Text(
-                                                text  = stringResource(R.string.delete),
-                                                color = MaterialTheme.colorScheme.error,
-                                            )
-                                        },
-                                        onClick = {
-                                            onDeletePreset(presetName)
-                                            showChipMenu = false
-                                        }
-                                    )
-                                }
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            text = stringResource(R.string.delete),
+                                            color = colors.danger,
+                                        )
+                                    },
+                                    onClick = {
+                                        onDeletePreset(presetName)
+                                        showChipMenu = false
+                                    },
+                                )
                             }
                         }
                     }
                 }
+            }
 
-                Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(8.dp))
 
-                // ── Save preset button ────────────────────────────────────────
-                OutlinedButton(
-                    onClick  = {
-                        presetNameInput = ""
-                        showSavePresetDialog = true
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors   = ButtonDefaults.outlinedButtonColors(
-                        contentColor = MaterialTheme.colorScheme.onSurface,
-                    ),
-                    border   = androidx.compose.foundation.BorderStroke(
-                        width = 1.dp,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    ),
-                ) {
-                    Icon(
-                        Icons.Outlined.Add,
-                        contentDescription = null,
-                        tint               = MaterialTheme.colorScheme.onSurface,
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        text  = stringResource(R.string.llm_save_preset),
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                }
+            OutlinedButton(
+                onClick = {
+                    presetNameInput = ""
+                    showSavePresetDialog = true
+                },
+                shape = RoundedCornerShape(NovelaRadius.pill),
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = colors.accent,
+                ),
+                border = BorderStroke(1.dp, colors.accent.copy(alpha = 0.5f)),
+            ) {
+                Icon(Icons.Outlined.Add, contentDescription = null, tint = colors.accent)
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    text = stringResource(R.string.llm_save_preset),
+                    fontWeight = FontWeight.SemiBold,
+                )
             }
         }
-    )
 
-    // ── English locale toggle ─────────────────────────────────────────────────
-    SlimListItem(
-        headlineContent = {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Row(
-                    verticalAlignment     = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier              = Modifier.fillMaxWidth(),
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier          = Modifier.weight(1f),
-                    ) {
-                        Icon(
-                            Icons.Outlined.Translate,
-                            contentDescription = null,
-                            tint               = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Column {
-                            Text(
-                                text  = stringResource(R.string.llm_prompt_use_english_locale),
-                                style = MaterialTheme.typography.titleSmall,
-                            )
-                            Text(
-                                text  = stringResource(R.string.llm_prompt_use_english_locale_tip),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    }
-                    Spacer(Modifier.width(12.dp))
-                    Switch(
-                        checked         = promptUseEnglishLocale,
-                        onCheckedChange = onPromptUseEnglishLocaleChange,
-                        colors          = SwitchDefaults.colors(
-                            checkedThumbColor = colorAccent(),
-                            checkedTrackColor = colorAccent().copy(alpha = 0.4f),
-                        ),
-                    )
-                }
-            }
-        }
-    )
+        NovelaSettingsTile(
+            title = stringResource(R.string.llm_prompt_use_english_locale),
+            subtitle = stringResource(R.string.llm_prompt_use_english_locale_tip),
+            icon = Icons.Outlined.Translate,
+            onClick = { onPromptUseEnglishLocaleChange(!promptUseEnglishLocale) },
+            trailing = {
+                Switch(
+                    checked = promptUseEnglishLocale,
+                    onCheckedChange = onPromptUseEnglishLocaleChange,
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = colors.onAccent,
+                        checkedTrackColor = colors.accent,
+                        uncheckedThumbColor = colors.textMuted,
+                        uncheckedTrackColor = colors.surfaceMuted,
+                    ),
+                )
+            },
+        )
+    }
 
-    // ── Save preset dialog ────────────────────────────────────────────────────
     if (showSavePresetDialog) {
         AlertDialog(
             onDismissRequest = { showSavePresetDialog = false },
-            title            = {
+            containerColor = colors.surfaceElevated,
+            shape = RoundedCornerShape(NovelaRadius.cardLarge),
+            title = {
                 Text(
-                    text  = stringResource(R.string.llm_save_preset),
-                    color = MaterialTheme.colorScheme.onSurface,
+                    text = stringResource(R.string.llm_save_preset),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.textPrimary,
                 )
             },
-            text             = {
+            text = {
                 OutlinedTextField(
-                    value         = presetNameInput,
+                    value = presetNameInput,
                     onValueChange = { presetNameInput = it },
-                    label         = {
-                        Text(
-                            text  = stringResource(R.string.llm_preset_name),
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
-                    },
+                    label = { Text(stringResource(R.string.llm_preset_name)) },
                     singleLine = true,
-                    modifier   = Modifier.fillMaxWidth(),
-                    colors     = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor   = MaterialTheme.colorScheme.onSurface,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                        cursorColor          = MaterialTheme.colorScheme.onSurface,
-                        focusedLabelColor    = MaterialTheme.colorScheme.onSurface,
-                        unfocusedLabelColor  = MaterialTheme.colorScheme.onSurfaceVariant,
-                    ),
+                    shape = RoundedCornerShape(NovelaRadius.md),
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = textFieldColors,
                 )
             },
-            confirmButton    = {
-                TextButton(
-                    onClick  = {
+            confirmButton = {
+                Button(
+                    onClick = {
                         val name = presetNameInput.trim()
                         if (name.isNotEmpty()) {
                             onSavePreset(name, promptText)
                             showSavePresetDialog = false
                         }
                     },
-                    enabled  = presetNameInput.trim().isNotEmpty(),
-                    colors   = ButtonDefaults.textButtonColors(
-                        contentColor         = MaterialTheme.colorScheme.onSurface,
-                        disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+                    enabled = presetNameInput.trim().isNotEmpty(),
+                    shape = RoundedCornerShape(NovelaRadius.pill),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = colors.accent,
+                        contentColor = colors.onAccent,
                     ),
-                ) { Text(stringResource(R.string.save)) }
+                ) {
+                    Text(
+                        text = stringResource(R.string.save),
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
             },
-            dismissButton    = {
-                TextButton(
-                    onClick = { showSavePresetDialog = false },
-                    colors  = ButtonDefaults.textButtonColors(
-                        contentColor = MaterialTheme.colorScheme.onSurface,
-                    ),
-                ) { Text(stringResource(R.string.cancel)) }
+            dismissButton = {
+                TextButton(onClick = { showSavePresetDialog = false }) {
+                    Text(
+                        text = stringResource(R.string.cancel),
+                        color = colors.textSecondary,
+                    )
+                }
             },
         )
     }

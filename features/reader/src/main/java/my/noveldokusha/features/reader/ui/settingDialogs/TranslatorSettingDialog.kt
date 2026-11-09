@@ -1,9 +1,8 @@
 package my.noveldokusha.features.reader.ui.settingDialogs
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,23 +12,22 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowRightAlt
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.ViewColumn
 import androidx.compose.material.icons.outlined.AutoStories
 import androidx.compose.material.icons.outlined.Block
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Extension
+import androidx.compose.material.icons.outlined.Psychology
 import androidx.compose.material.icons.outlined.Public
 import androidx.compose.material.icons.outlined.ViewColumn
-import androidx.compose.material.icons.outlined.Edit
-import androidx.compose.material.icons.outlined.Psychology
 import androidx.compose.material3.Button
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -53,28 +51,38 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import my.noveldokusha.core.appPreferences.TranslationLangPair
 import my.noveldokusha.core.appPreferences.TranslationSettingsResolver.ActiveTranslatorLevel
 import my.noveldokusha.coreui.components.LanguageButton
 import my.noveldokusha.coreui.components.LanguageSearchDialog
-import my.noveldokusha.coreui.theme.colorAccent
+import my.noveldokusha.coreui.theme.NovelaRadius
+import my.noveldokusha.coreui.theme.NovelaSize
+import my.noveldokusha.coreui.theme.NovelaTheme
 import my.noveldokusha.features.reader.features.LiveTranslationSettingData
 import my.noveldokusha.reader.R
 
 @Composable
 internal fun TranslatorSettingDialog(
-    state: LiveTranslationSettingData
+    state: LiveTranslationSettingData,
 ) {
-    ElevatedCard(
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 12.dp)
+    val colors = NovelaTheme.colors
+    val scrollState = rememberScrollState()
+    val isScrolling by remember { derivedStateOf { scrollState.isScrollInProgress } }
+
+    Surface(
+        shape = RoundedCornerShape(NovelaRadius.cardLarge),
+        color = colors.surfaceElevated.copy(alpha = 0.97f),
+        border = BorderStroke(NovelaSize.hairline, colors.borderSubtle),
+        shadowElevation = 12.dp,
+        modifier = Modifier.fillMaxWidth(),
     ) {
-        val scrollState = rememberScrollState()
-        val isScrolling by remember { derivedStateOf { scrollState.isScrollInProgress } }
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -82,7 +90,7 @@ internal fun TranslatorSettingDialog(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            // ── Toggle + режим применения ────────────────────────────────────
+            // ── Toggle + Scope Mode ──
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth(),
@@ -92,8 +100,10 @@ internal fun TranslatorSettingDialog(
                     enabled = !isScrolling,
                     onCheckedChange = { state.onEnable(it) },
                     colors = SwitchDefaults.colors(
-                        checkedThumbColor = colorAccent(),
-                        checkedTrackColor = colorAccent().copy(alpha = 0.3f),
+                        checkedThumbColor = colors.onAccent,
+                        checkedTrackColor = colors.accent,
+                        uncheckedThumbColor = colors.textMuted,
+                        uncheckedTrackColor = colors.surfaceMuted,
                     ),
                 )
                 Spacer(Modifier.width(12.dp))
@@ -101,11 +111,13 @@ internal fun TranslatorSettingDialog(
                     Text(
                         text = stringResource(R.string.live_translation),
                         style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.textPrimary,
                     )
                     Text(
                         text = stringResource(R.string.provider_name, getProviderLabel(state.currentProvider.value)),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = colors.textMuted,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -115,7 +127,7 @@ internal fun TranslatorSettingDialog(
                         Icon(
                             Icons.Filled.Refresh,
                             contentDescription = stringResource(R.string.live_translation),
-                            tint = colorAccent(),
+                            tint = colors.accent,
                         )
                     }
                 }
@@ -123,18 +135,21 @@ internal fun TranslatorSettingDialog(
                 ModeToggle(state = state)
             }
 
-            // ── Статус перевода: активный переводчик или «все выключены». ──
+            // ── Active Translator Status Pill ──
             val level = state.activeTranslatorLevel.value
             val levelActive = level != ActiveTranslatorLevel.NONE
             Surface(
-                shape = RoundedCornerShape(10.dp),
-                color = if (levelActive) colorAccent().copy(alpha = 0.12f)
-                else MaterialTheme.colorScheme.surfaceVariant,
+                shape = RoundedCornerShape(NovelaRadius.md),
+                color = if (levelActive) colors.accentSoft else colors.surfaceMuted,
+                border = BorderStroke(
+                    NovelaSize.hairline,
+                    if (levelActive) colors.accent.copy(alpha = 0.45f) else colors.borderSubtle,
+                ),
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 9.dp),
                 ) {
                     Icon(
                         imageVector = when (level) {
@@ -144,7 +159,8 @@ internal fun TranslatorSettingDialog(
                             ActiveTranslatorLevel.NONE -> Icons.Outlined.Block
                         },
                         contentDescription = null,
-                        tint = if (levelActive) colorAccent() else MaterialTheme.colorScheme.onSurfaceVariant,
+                        tint = if (levelActive) colors.accent else colors.textMuted,
+                        modifier = Modifier.size(18.dp),
                     )
                     Spacer(Modifier.width(8.dp))
                     Text(
@@ -164,41 +180,37 @@ internal fun TranslatorSettingDialog(
                             ActiveTranslatorLevel.NONE -> stringResource(R.string.translators_all_off)
                         },
                         style = MaterialTheme.typography.bodySmall,
-                        color = if (levelActive) colorAccent() else MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontWeight = if (levelActive) FontWeight.SemiBold else FontWeight.Normal,
+                        color = if (levelActive) colors.accent else colors.textMuted,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
             }
 
-            // ── Подсказка состояния: переключатель и пара независимы. ──
-            // «Перевод выключен» показываем только когда реально не переводит НИКТО
-            // (level == NONE): иначе при выключенном пер-новел, но включённом плагине
-            // подсказка противоречила бы полоске «Активный переводчик: <плагин>».
-            when {
-                !state.translationGlobalMode.value && (state.source.value == null || state.target.value == null) ->
-                    Text(
-                        text = stringResource(R.string.translation_select_pair_to_enable),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+            if (!state.translationGlobalMode.value && (state.source.value == null || state.target.value == null)) {
+                Text(
+                    text = stringResource(R.string.translation_select_pair_to_enable),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.textMuted,
+                )
             }
 
-            // ── Provider selection ──────────────────────────────────────
+            // ── Provider Selection ──
             ProviderSelector(state = state, isScrolling = isScrolling)
 
-            HorizontalDivider()
+            HorizontalDivider(thickness = NovelaSize.hairline, color = colors.borderSubtle)
 
-            // ── Language selection ──────────────────────────────────────
+            // ── Language Selection ──
             LanguageSelector(
                 state = state,
                 onRemovePair = state.onRemovePair,
             )
 
-            // ── Display options ────────────────────────────────────────
+            // ── Display Options ──
             DisplayOptionsSection(state = state, isScrolling = isScrolling)
 
-            // ── Novel prompt (LLM only) ────────────────────────────────
+            // ── Novel Prompt (LLM only) ──
             NovelPromptSection(state = state, isScrolling = isScrolling)
         }
     }
@@ -232,9 +244,11 @@ private fun ModeChip(
     description: String,
     onClick: () -> Unit,
 ) {
+    val colors = NovelaTheme.colors
     FilterChip(
         selected = selected,
         onClick = onClick,
+        shape = RoundedCornerShape(NovelaRadius.pill),
         label = {
             Icon(
                 icon,
@@ -243,66 +257,86 @@ private fun ModeChip(
             )
         },
         colors = FilterChipDefaults.filterChipColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-            selectedContainerColor = colorAccent().copy(alpha = 0.15f),
-            labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            selectedLabelColor = colorAccent(),
+            containerColor = colors.surfaceMuted,
+            selectedContainerColor = colors.accentSoft,
+            labelColor = colors.textMuted,
+            selectedLabelColor = colors.accent,
         ),
         border = FilterChipDefaults.filterChipBorder(
             enabled = true,
             selected = selected,
-            selectedBorderColor = colorAccent(),
+            selectedBorderColor = colors.accent,
             selectedBorderWidth = 1.dp,
         ),
     )
 }
 
 private fun getProviderLabel(key: String): String = when (key) {
-    "GOOGLE_PA"   -> "Google (Enhanced)"
+    "GOOGLE_PA" -> "Google (Enhanced)"
     "GOOGLE_FREE" -> "Google (Simple)"
-    "GEMINI"      -> "Gemini"
-    "OPENAI"      -> "OpenAI"
-    else          -> key
+    "GEMINI" -> "Gemini"
+    "OPENAI" -> "OpenAI"
+    else -> key
 }
 
 @Composable
 private fun ProviderSelector(state: LiveTranslationSettingData, isScrolling: Boolean = false) {
+    val colors = NovelaTheme.colors
     val providers = listOf(
-        Triple("GOOGLE_PA",   R.string.provider_google_pa,   R.string.provider_google_pa_description),
+        Triple("GOOGLE_PA", R.string.provider_google_pa, R.string.provider_google_pa_description),
         Triple("GOOGLE_FREE", R.string.provider_google_free, R.string.provider_google_free_description),
-        Triple("GEMINI",      R.string.provider_gemini,      R.string.provider_gemini_description),
-        Triple("OPENAI",      R.string.provider_openai,      R.string.provider_openai_description),
+        Triple("GEMINI", R.string.provider_gemini, R.string.provider_gemini_description),
+        Triple("OPENAI", R.string.provider_openai, R.string.provider_openai_description),
     )
 
-    Column(modifier = Modifier.fillMaxWidth()) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
         providers.forEach { (key, labelRes, descRes) ->
             val selected = state.currentProvider.value == key
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
+            Surface(
+                shape = RoundedCornerShape(NovelaRadius.md),
+                color = if (selected) colors.accentSoft else colors.surfaceMuted,
+                border = BorderStroke(
+                    NovelaSize.hairline,
+                    if (selected) colors.accent.copy(alpha = 0.55f) else colors.borderSubtle,
+                ),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable(role = Role.RadioButton, enabled = !isScrolling) { state.onProviderChange(key) }
-                    .padding(vertical = 6.dp),
+                    .clip(RoundedCornerShape(NovelaRadius.md))
+                    .clickable(role = Role.RadioButton, enabled = !isScrolling) {
+                        state.onProviderChange(key)
+                    },
             ) {
-                RadioButton(
-                    selected = selected,
-                    onClick = null,
-                    colors = RadioButtonDefaults.colors(
-                        selectedColor = colorAccent(),
-                        unselectedColor = MaterialTheme.colorScheme.onSurface,
-                    ),
-                )
-                Spacer(Modifier.width(12.dp))
-                Column {
-                    Text(
-                        text = stringResource(labelRes),
-                        style = MaterialTheme.typography.bodyLarge,
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 10.dp, vertical = 8.dp),
+                ) {
+                    RadioButton(
+                        selected = selected,
+                        onClick = null,
+                        colors = RadioButtonDefaults.colors(
+                            selectedColor = colors.accent,
+                            unselectedColor = colors.textMuted,
+                        ),
                     )
-                    Text(
-                        text = stringResource(descRes),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                    Spacer(Modifier.width(10.dp))
+                    Column {
+                        Text(
+                            text = stringResource(labelRes),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = if (selected) colors.accent else colors.textPrimary,
+                        )
+                        Text(
+                            text = stringResource(descRes),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.textMuted,
+                        )
+                    }
                 }
             }
         }
@@ -314,6 +348,7 @@ private fun LanguageSelector(
     state: LiveTranslationSettingData,
     onRemovePair: (TranslationLangPair) -> Unit = {},
 ) {
+    val colors = NovelaTheme.colors
     var showSourceDialog by rememberSaveable { mutableStateOf(false) }
     var showTargetDialog by rememberSaveable { mutableStateOf(false) }
 
@@ -321,6 +356,8 @@ private fun LanguageSelector(
         Text(
             text = stringResource(R.string.language_selection),
             style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = colors.textPrimary,
         )
         Spacer(Modifier.height(8.dp))
         Row(
@@ -338,7 +375,7 @@ private fun LanguageSelector(
             Icon(
                 Icons.AutoMirrored.Filled.ArrowRightAlt,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                tint = colors.accent,
                 modifier = Modifier.size(20.dp),
             )
             Spacer(Modifier.width(8.dp))
@@ -383,11 +420,11 @@ private fun LanguageSelector(
 
 @Composable
 private fun DisplayOptionsSection(state: LiveTranslationSettingData, isScrolling: Boolean = false) {
-    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+    val colors = NovelaTheme.colors
+    HorizontalDivider(thickness = NovelaSize.hairline, color = colors.borderSubtle, modifier = Modifier.padding(vertical = 4.dp))
 
     val enabled = state.parallelEnabled.value
     val order = state.parallelOrder.value
-    val active = enabled
 
     val modeLabel = when {
         !enabled -> ""
@@ -399,6 +436,7 @@ private fun DisplayOptionsSection(state: LiveTranslationSettingData, isScrolling
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
+            .clip(RoundedCornerShape(NovelaRadius.md))
             .clickable(enabled = !isScrolling) {
                 when {
                     !enabled -> {
@@ -413,42 +451,51 @@ private fun DisplayOptionsSection(state: LiveTranslationSettingData, isScrolling
                     }
                 }
             }
-            .padding(vertical = 4.dp),
+            .padding(vertical = 6.dp, horizontal = 4.dp),
     ) {
         Icon(
-            if (active) Icons.Filled.ViewColumn else Icons.Outlined.ViewColumn,
+            if (enabled) Icons.Filled.ViewColumn else Icons.Outlined.ViewColumn,
             contentDescription = stringResource(R.string.parallel_mode_title),
-            tint = if (active) colorAccent() else MaterialTheme.colorScheme.onSurfaceVariant,
+            tint = if (enabled) colors.accent else colors.textMuted,
             modifier = Modifier.size(20.dp),
         )
-        Spacer(Modifier.width(8.dp))
+        Spacer(Modifier.width(10.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = stringResource(R.string.parallel_mode_title),
                 style = MaterialTheme.typography.titleSmall,
-                color = if (active) colorAccent() else MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.SemiBold,
+                color = if (enabled) colors.accent else colors.textPrimary,
             )
             Text(
                 text = stringResource(R.string.parallel_mode_description),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = colors.textMuted,
             )
         }
-        if (active) {
-            Text(
-                text = modeLabel,
-                style = MaterialTheme.typography.labelSmall,
-                color = colorAccent(),
-            )
+        if (enabled) {
+            Surface(
+                shape = RoundedCornerShape(NovelaRadius.pill),
+                color = colors.accentSoft,
+            ) {
+                Text(
+                    text = modeLabel,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = colors.accent,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                )
+            }
         }
     }
 }
 
 @Composable
 private fun NovelPromptSection(state: LiveTranslationSettingData, isScrolling: Boolean = false) {
+    val colors = NovelaTheme.colors
     val isLlmProvider = state.currentProvider.value in listOf("GEMINI", "OPENAI")
 
-    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+    HorizontalDivider(thickness = NovelaSize.hairline, color = colors.borderSubtle, modifier = Modifier.padding(vertical = 4.dp))
 
     val isActive = isLlmProvider && state.novelPrompt.value.isNotBlank()
     var showEditor by rememberSaveable { mutableStateOf(false) }
@@ -457,30 +504,32 @@ private fun NovelPromptSection(state: LiveTranslationSettingData, isScrolling: B
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
+            .clip(RoundedCornerShape(NovelaRadius.md))
             .then(
                 if (isLlmProvider) Modifier.clickable(enabled = !isScrolling) { showEditor = !showEditor }
                 else Modifier
             )
-            .padding(vertical = 4.dp),
+            .padding(vertical = 6.dp, horizontal = 4.dp),
     ) {
         Icon(
             Icons.Outlined.Psychology,
             contentDescription = null,
-            tint = if (isActive) colorAccent() else MaterialTheme.colorScheme.onSurfaceVariant,
+            tint = if (isActive) colors.accent else colors.textMuted,
             modifier = Modifier.size(20.dp),
         )
-        Spacer(Modifier.width(8.dp))
+        Spacer(Modifier.width(10.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = stringResource(R.string.novel_prompt_title),
                 style = MaterialTheme.typography.titleSmall,
-                color = if (isActive) colorAccent() else MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.SemiBold,
+                color = if (isActive) colors.accent else colors.textPrimary,
             )
             Text(
                 text = if (isLlmProvider) stringResource(R.string.novel_prompt_description_reader)
-                       else stringResource(R.string.novel_prompt_llm_only),
+                else stringResource(R.string.novel_prompt_llm_only),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = colors.textMuted,
             )
         }
         if (isActive) {
@@ -488,14 +537,15 @@ private fun NovelPromptSection(state: LiveTranslationSettingData, isScrolling: B
             Text(
                 text = "(${state.novelPrompt.value.length} chars)",
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = colors.accent,
             )
         }
         if (isLlmProvider) {
+            Spacer(Modifier.width(6.dp))
             Icon(
                 Icons.Outlined.Edit,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                tint = colors.textSecondary,
                 modifier = Modifier.size(16.dp),
             )
         }
@@ -503,7 +553,7 @@ private fun NovelPromptSection(state: LiveTranslationSettingData, isScrolling: B
 
     if (isLlmProvider) {
         AnimatedVisibility(visible = showEditor) {
-            Column(modifier = Modifier.padding(top = 4.dp)) {
+            Column(modifier = Modifier.padding(top = 6.dp)) {
                 var promptText by remember(state.novelPrompt.value) {
                     mutableStateOf(state.novelPrompt.value)
                 }
@@ -511,6 +561,7 @@ private fun NovelPromptSection(state: LiveTranslationSettingData, isScrolling: B
                 OutlinedTextField(
                     value = promptText,
                     onValueChange = { promptText = it },
+                    shape = RoundedCornerShape(NovelaRadius.md),
                     modifier = Modifier.fillMaxWidth(),
                     minLines = 3,
                     maxLines = 6,
@@ -521,9 +572,9 @@ private fun NovelPromptSection(state: LiveTranslationSettingData, isScrolling: B
                         )
                     },
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.onSurface,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                        cursorColor = MaterialTheme.colorScheme.onSurface,
+                        focusedBorderColor = colors.accent,
+                        unfocusedBorderColor = colors.borderSubtle,
+                        cursorColor = colors.accent,
                     ),
                 )
                 Spacer(Modifier.height(8.dp))
@@ -536,14 +587,22 @@ private fun NovelPromptSection(state: LiveTranslationSettingData, isScrolling: B
                             state.onNovelPromptChange(promptText)
                             showEditor = false
                         },
+                        shape = RoundedCornerShape(NovelaRadius.pill),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = colors.accent,
+                            contentColor = colors.onAccent,
+                        ),
                     ) {
-                        Text(stringResource(R.string.save))
+                        Text(
+                            text = stringResource(R.string.save),
+                            fontWeight = FontWeight.SemiBold,
+                        )
                     }
-                    Spacer(Modifier.width(8.dp))
+                    Spacer(Modifier.width(10.dp))
                     Text(
                         text = stringResource(R.string.novel_prompt_append_mode),
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = colors.textSecondary,
                         modifier = Modifier.weight(1f),
                     )
                     Switch(
@@ -551,8 +610,10 @@ private fun NovelPromptSection(state: LiveTranslationSettingData, isScrolling: B
                         onCheckedChange = { state.onNovelPromptAppendModeChange(it) },
                         enabled = !isScrolling,
                         colors = SwitchDefaults.colors(
-                            checkedThumbColor = colorAccent(),
-                            checkedTrackColor = colorAccent().copy(alpha = 0.3f),
+                            checkedThumbColor = colors.onAccent,
+                            checkedTrackColor = colors.accent,
+                            uncheckedThumbColor = colors.textMuted,
+                            uncheckedTrackColor = colors.surfaceMuted,
                         ),
                     )
                 }

@@ -1,26 +1,20 @@
 package my.noveldokusha.settings.sections
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AutoMode
-import androidx.compose.material.icons.outlined.DoubleArrow
+import androidx.compose.material.icons.outlined.SystemUpdateAlt
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import my.noveldokusha.coreui.components.SlimListItem
-import my.noveldokusha.coreui.theme.colorAccent
-import my.noveldokusha.coreui.theme.debouncedClickable
-import my.noveldokusha.coreui.theme.textPadding
+import my.noveldokusha.coreui.components.NovelaSettingsGroupCard
+import my.noveldokusha.coreui.components.NovelaSettingsTile
+import my.noveldokusha.coreui.theme.NovelaTheme
 import my.noveldokusha.settings.R
 import my.noveldokusha.settings.SettingsScreenState
 import my.noveldokusha.settings.views.NewAppUpdateDialog
@@ -28,65 +22,50 @@ import my.noveldokusha.settings.views.NewAppUpdateDialog
 @Composable
 internal fun AppUpdates(
     state: SettingsScreenState.UpdateApp,
-    onCheckForUpdatesManual: () -> Unit
+    onCheckForUpdatesManual: () -> Unit,
 ) {
-    Column {
-        Text(
-            text = stringResource(R.string.app_updates),
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.textPadding(),
-            color = colorAccent()
-        )
-        SlimListItem(
-            modifier = Modifier.clickable {
-                state.appUpdateCheckerEnabled.value = !state.appUpdateCheckerEnabled.value
-            },
-            headlineContent = {
-                Text(text = stringResource(R.string.automatically_check_for_app_updates))
-            },
-            leadingContent = {
-                Icon(
-                    Icons.Outlined.AutoMode,
-                    null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            },
-            trailingContent = {
+    val colors = NovelaTheme.colors
+
+    NovelaSettingsGroupCard(title = stringResource(R.string.app_updates)) {
+        NovelaSettingsTile(
+            title = stringResource(R.string.automatically_check_for_app_updates),
+            icon = Icons.Outlined.AutoMode,
+            showDivider = true,
+            onClick = { state.appUpdateCheckerEnabled.value = !state.appUpdateCheckerEnabled.value },
+            trailing = {
                 Switch(
                     checked = state.appUpdateCheckerEnabled.value,
-                    onCheckedChange = {
-                        state.appUpdateCheckerEnabled.value = !state.appUpdateCheckerEnabled.value
-                    },
+                    onCheckedChange = { state.appUpdateCheckerEnabled.value = it },
                     colors = SwitchDefaults.colors(
-                        checkedThumbColor = colorAccent(),
-                        checkedTrackColor = colorAccent().copy(alpha = 0.4f),
-                    )
+                        checkedThumbColor = colors.onAccent,
+                        checkedTrackColor = colors.accent,
+                        uncheckedThumbColor = colors.textMuted,
+                        uncheckedTrackColor = colors.surfaceMuted,
+                    ),
                 )
-            }
+            },
         )
-        SlimListItem(
-            headlineContent = {
-                Text(text = stringResource(R.string.check_for_app_updates_now))
-            },
-            leadingContent = {
-                Icon(
-                    Icons.Outlined.DoubleArrow,
-                    null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            },
-            trailingContent = {
-                AnimatedVisibility(visible = state.checkingForNewVersion.value) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(22.dp),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+
+        NovelaSettingsTile(
+            title = stringResource(R.string.check_for_app_updates_now),
+            icon = Icons.Outlined.SystemUpdateAlt,
+            showChevron = !state.checkingForNewVersion.value,
+            onClick = if (!state.checkingForNewVersion.value) onCheckForUpdatesManual else null,
+            trailing = if (state.checkingForNewVersion.value) {
+                {
+                    AnimatedVisibility(visible = state.checkingForNewVersion.value) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp,
+                            color = colors.accent,
+                        )
+                    }
                 }
+            } else {
+                null
             },
-            modifier = Modifier.debouncedClickable { onCheckForUpdatesManual() }
-        )
-        NewAppUpdateDialog(
-            updateApp = state
         )
     }
+
+    NewAppUpdateDialog(updateApp = state)
 }

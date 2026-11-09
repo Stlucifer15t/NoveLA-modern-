@@ -2,26 +2,36 @@ package my.noveldokusha.settings.views
 
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import my.noveldokusha.coreui.R as CoreUiR
 import my.noveldokusha.coreui.components.ImageView
-import my.noveldokusha.coreui.components.MyButton
+import my.noveldokusha.coreui.theme.NovelaRadius
+import my.noveldokusha.coreui.theme.NovelaSize
+import my.noveldokusha.coreui.theme.NovelaTheme
 import my.noveldokusha.settings.R
 import my.noveldokusha.settings.SettingsScreenState
 
@@ -31,53 +41,73 @@ internal fun NewAppUpdateDialog(
 ) {
     val newVersion = updateApp.showNewVersionDialog.value
     val context = LocalContext.current
+    val colors = NovelaTheme.colors
 
     if (newVersion != null) {
-        Dialog(
-            onDismissRequest = { updateApp.showNewVersionDialog.value = null },
-            content = {
-                Card(
-                    elevation = CardDefaults.elevatedCardElevation(
-                        defaultElevation = 10.dp,
-                        pressedElevation = 10.dp,
-                        focusedElevation = 10.dp,
-                        hoveredElevation = 10.dp,
-                        draggedElevation = 10.dp,
-                        disabledElevation = 10.dp,
-                    )
-
+        Dialog(onDismissRequest = { updateApp.showNewVersionDialog.value = null }) {
+            Surface(
+                shape = RoundedCornerShape(NovelaRadius.cardLarge),
+                color = colors.surfaceElevated,
+                border = BorderStroke(NovelaSize.hairline, colors.borderSubtle),
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.padding(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ImageView(
+                        imageModel = CoreUiR.drawable.default_icon,
+                        modifier = Modifier
+                            .size(56.dp)
+                            .clip(RoundedCornerShape(14.dp)),
+                        contentScale = ContentScale.Fit,
+                    )
+                    Text(
+                        text = stringResource(
+                            R.string.new_app_version_found_s,
+                            newVersion.version.toString(),
+                        ),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.textPrimary,
+                        textAlign = TextAlign.Center,
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        ImageView(
-                            imageModel = R.drawable.default_icon,
-                            modifier = Modifier.size(48.dp),
-                            contentScale = ContentScale.Fit
-                        )
-                        Text(
-                            text = stringResource(
-                                R.string.new_app_version_found_s,
-                                newVersion.version.toString()
-                            ),
-                            modifier = Modifier.padding(0.dp),
-                            style = MaterialTheme.typography.headlineSmall
-                                .copy(textAlign = TextAlign.Center)
-                        )
-                        MyButton(
-                            text = stringResource(R.string.download),
-                            textAlign = TextAlign.Center,
+                        TextButton(
+                            onClick = { updateApp.showNewVersionDialog.value = null },
+                            modifier = Modifier.weight(1f),
+                        ) {
+                            Text(
+                                text = stringResource(R.string.cancel),
+                                color = colors.textSecondary,
+                            )
+                        }
+                        Button(
                             onClick = {
-                                context.startActivity(Intent(Intent.ACTION_VIEW)
-                                    .also { it.data = Uri.parse(newVersion.sourceUrl) })
+                                context.startActivity(
+                                    Intent(Intent.ACTION_VIEW).also {
+                                        it.data = Uri.parse(newVersion.sourceUrl)
+                                    }
+                                )
                             },
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                            shape = RoundedCornerShape(NovelaRadius.pill),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = colors.accent,
+                                contentColor = colors.onAccent,
+                            ),
+                            modifier = Modifier.weight(1.4f),
+                        ) {
+                            Text(
+                                text = stringResource(R.string.download),
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                        }
                     }
                 }
             }
-        )
+        }
     }
 }
