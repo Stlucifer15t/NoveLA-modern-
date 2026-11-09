@@ -86,8 +86,25 @@ jobs:
             echo "keyPassword=${KEY_PASS}"
           } > custom.properties
 
-      - name: Assemble Signed Release & Debug APKs
-        run: ./gradlew assembleRelease assembleDebug -PlocalPropertiesFilePath=custom.properties --stacktrace
+      - name: Assemble Debug APK
+        run: |
+          set -o pipefail
+          if ! ./gradlew assembleDebug --stacktrace 2>&1 | tee debug-build.log; then
+            grep -E "(^e: |FAILURE:|What went wrong:|^\* |> |Exception:|Error:|Unresolved)" debug-build.log | head -n 35 | while IFS= read -r line; do
+              echo "::error title=AssembleDebug::${line}"
+            done
+            exit 1
+          fi
+
+      - name: Assemble Signed Release APK
+        run: |
+          set -o pipefail
+          if ! ./gradlew assembleRelease -PlocalPropertiesFilePath=custom.properties --stacktrace 2>&1 | tee release-build.log; then
+            grep -E "(^e: |FAILURE:|What went wrong:|^\* |> |Exception:|Error:|Missing class|Lint found)" release-build.log | head -n 40 | while IFS= read -r line; do
+              echo "::error title=AssembleRelease::${line}"
+            done
+            exit 1
+          fi
 
       - name: Run unit tests
         continue-on-error: true
