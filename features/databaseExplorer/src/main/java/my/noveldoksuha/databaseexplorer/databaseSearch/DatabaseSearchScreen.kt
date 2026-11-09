@@ -5,18 +5,15 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.LibraryBooks
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Title
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -32,18 +29,21 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.graphics.Color
 import kotlinx.coroutines.launch
-import my.noveldokusha.coreui.components.BooksVerticalView
-import my.noveldokusha.coreui.components.CollapsibleDivider
-import my.noveldokusha.coreui.components.TopAppBarSearch
-import my.noveldokusha.coreui.states.PagedListIteratorState
-import my.noveldokusha.coreui.theme.InternalTheme
-import my.noveldokusha.coreui.theme.PreviewThemes
-import my.noveldokusha.databaseexplorer.R
 import my.noveldokusha.core.PagedList
 import my.noveldokusha.core.Response
 import my.noveldokusha.core.appPreferences.ListLayoutMode
+import my.noveldokusha.coreui.components.BooksVerticalView
+import my.noveldokusha.coreui.components.CollapsibleDivider
+import my.noveldokusha.coreui.components.NovelaFilterChip
+import my.noveldokusha.coreui.components.TopAppBarSearch
+import my.noveldokusha.coreui.states.PagedListIteratorState
+import my.noveldokusha.coreui.theme.InternalTheme
+import my.noveldokusha.coreui.theme.NovelaRadius
+import my.noveldokusha.coreui.theme.NovelaSpacing
+import my.noveldokusha.coreui.theme.NovelaTheme
+import my.noveldokusha.coreui.theme.PreviewThemes
+import my.noveldokusha.databaseexplorer.R
 import my.noveldokusha.feature.local_database.BookMetadata
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -59,11 +59,12 @@ internal fun DatabaseSearchScreen(
     onBookLongClicked: (BookMetadata) -> Unit,
     onPressBack: () -> Unit,
 ) {
+    val colors = NovelaTheme.colors
     val showFiltersBottomSheet = rememberSaveable { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(
         snapAnimationSpec = null,
-        flingAnimationSpec = null
+        flingAnimationSpec = null,
     )
 
     val searchPlaceholderText = when (state.searchMode.value) {
@@ -73,6 +74,7 @@ internal fun DatabaseSearchScreen(
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBarSearch(
                 focusRequester = focusRequester,
@@ -91,64 +93,39 @@ internal fun DatabaseSearchScreen(
         },
         content = { innerPadding ->
             Column(
-                modifier = Modifier.padding(innerPadding)
+                modifier = Modifier.padding(innerPadding),
             ) {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.padding(horizontal = 8.dp),
+                    modifier = Modifier.padding(horizontal = NovelaSpacing.lg, vertical = 8.dp),
                 ) {
-                    FilterChip(
+                    NovelaFilterChip(
+                        label = stringResource(R.string.filter_catalog),
                         selected = state.searchMode.value == SearchMode.Catalog,
+                        leadingIcon = Icons.AutoMirrored.Filled.LibraryBooks,
                         onClick = {
                             onSearchModeChange(SearchMode.Catalog)
                             focusRequester.freeFocus()
                             onSearchCatalogSubmit()
                         },
-                        label = { Text(text = stringResource(R.string.filter_catalog)) },
-                        leadingIcon = { Icon(Icons.AutoMirrored.Filled.LibraryBooks, null) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor   = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-                            selectedLabelColor       = MaterialTheme.colorScheme.primary,
-                            selectedLeadingIconColor = MaterialTheme.colorScheme.primary,
-                            labelColor               = MaterialTheme.colorScheme.onSurfaceVariant,
-                            containerColor           = Color.Transparent,
-                        )
                     )
-                    FilterChip(
+                    NovelaFilterChip(
+                        label = stringResource(R.string.filter_title),
                         selected = state.searchMode.value == SearchMode.BookTitle,
+                        leadingIcon = Icons.Filled.Title,
                         onClick = {
                             onSearchModeChange(SearchMode.BookTitle)
-                            focusRequester.requestFocus() // Doesn't work
+                            focusRequester.requestFocus()
                         },
-                        label = { Text(text = stringResource(R.string.filter_title)) },
-                        leadingIcon = { Icon(Icons.Filled.Title, null) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor   = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-                            selectedLabelColor       = MaterialTheme.colorScheme.primary,
-                            selectedLeadingIconColor = MaterialTheme.colorScheme.primary,
-                            labelColor               = MaterialTheme.colorScheme.onSurfaceVariant,
-                            containerColor           = Color.Transparent,
-                        )
                     )
-                    FilterChip(
+                    NovelaFilterChip(
+                        label = stringResource(R.string.filter_genres),
                         selected = state.searchMode.value == SearchMode.BookGenres,
+                        leadingIcon = Icons.Filled.FilterList,
                         onClick = {
                             onSearchModeChange(SearchMode.BookGenres)
                             showFiltersBottomSheet.value = true
                         },
-                        label = {
-                            Text(text = stringResource(R.string.filter_genres))
-                        },
-                        leadingIcon = {
-                            Icon(Icons.Filled.FilterList, null)
-                        },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor   = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-                            selectedLabelColor       = MaterialTheme.colorScheme.primary,
-                            selectedLeadingIconColor = MaterialTheme.colorScheme.primary,
-                            labelColor               = MaterialTheme.colorScheme.onSurfaceVariant,
-                            containerColor           = Color.Transparent,
-                        )
                     )
                 }
                 CollapsibleDivider(scrollBehavior.state)
@@ -163,7 +140,7 @@ internal fun DatabaseSearchScreen(
                     onBookLongClicked = onBookLongClicked,
                 )
             }
-        }
+        },
     )
 
     LaunchedEffect(state.searchMode.value) {
@@ -176,6 +153,8 @@ internal fun DatabaseSearchScreen(
         ModalBottomSheet(
             onDismissRequest = { showFiltersBottomSheet.value = false },
             sheetState = sheetState,
+            shape = RoundedCornerShape(topStart = NovelaRadius.sheet, topEnd = NovelaRadius.sheet),
+            containerColor = colors.surfaceFloating,
         ) {
             DatabaseSearchBottomSheet(
                 genresList = state.genresList,
@@ -184,17 +163,15 @@ internal fun DatabaseSearchScreen(
                     coroutineScope.launch {
                         sheetState.partialExpand()
                     }
-                }
+                },
             )
         }
     }
 }
 
-
 @PreviewThemes
 @Composable
 private fun PreviewView() {
-
     val genresList = remember { mutableStateListOf<GenreItem>() }
     val list = remember {
         mutableStateListOf(
@@ -204,10 +181,9 @@ private fun PreviewView() {
         )
     }
     val scope = rememberCoroutineScope()
-    val fetchIterator =
-        PagedListIteratorState(list = list, coroutineScope = scope) {
-            Response.Success(PagedList(listOf(), 0, true))
-        }
+    val fetchIterator = PagedListIteratorState(list = list, coroutineScope = scope) {
+        Response.Success(PagedList(listOf(), 0, true))
+    }
     val state = remember {
         DatabaseSearchScreenState(
             databaseNameStrId = mutableIntStateOf(R.string.database_name_baka_updates),
@@ -229,7 +205,7 @@ private fun PreviewView() {
             onBookClicked = { },
             onBookLongClicked = { },
             onPressBack = { },
-            onGenresFiltersSubmit = { }
+            onGenresFiltersSubmit = { },
         )
     }
 }

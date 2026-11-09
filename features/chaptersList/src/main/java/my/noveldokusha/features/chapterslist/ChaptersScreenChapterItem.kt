@@ -8,23 +8,30 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CloudDownload
+import androidx.compose.material.icons.filled.CloudDone
 import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.CloudDownload
 import androidx.compose.material.icons.outlined.CloudOff
-import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -37,23 +44,28 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
-import my.noveldokusha.coreui.components.AnimatedTransition
-import my.noveldokusha.coreui.components.SlimListItem
-import my.noveldokusha.coreui.theme.InternalTheme
-import my.noveldokusha.coreui.theme.PreviewThemes
+import kotlin.math.roundToInt
 import my.noveldokusha.chapterslist.R
+import my.noveldokusha.coreui.components.AnimatedTransition
+import my.noveldokusha.coreui.theme.InternalTheme
+import my.noveldokusha.coreui.theme.NovelaRadius
+import my.noveldokusha.coreui.theme.NovelaSize
+import my.noveldokusha.coreui.theme.NovelaSpacing
+import my.noveldokusha.coreui.theme.NovelaTheme
+import my.noveldokusha.coreui.theme.NovelaType
+import my.noveldokusha.coreui.theme.PreviewThemes
 import my.noveldokusha.feature.local_database.ChapterWithContext
 import my.noveldokusha.feature.local_database.tables.Chapter
 import my.noveldokusha.features.reader.video.ChapterDownloadUi
 import my.noveldokusha.features.reader.video.ChapterDownloadUiState
-import kotlin.math.roundToInt
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalAnimationApi::class)
 @Composable
@@ -76,20 +88,28 @@ internal fun ChaptersScreenChapterItem(
     onResumeDownload: () -> Unit,
     onCancelDownload: () -> Unit,
 ) {
+    val colors = NovelaTheme.colors
     val chapter = chapterWithContext.chapter
-
+    val isLastRead = chapterWithContext.lastReadChapter
     val sizeLabel = chapterSize?.sizeBytes?.let { formatBytes(it) }
 
     val targetContainerColor = when {
-        selected -> MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
-        highlighted -> MaterialTheme.colorScheme.secondaryContainer
-        else -> Color.Transparent
+        selected -> colors.accentSoft
+        highlighted -> colors.accentSoft
+        isLastRead -> colors.accentSoft.copy(alpha = if (colors.isDark) 0.45f else 0.55f)
+        else -> colors.surfaceCard
     }
     val containerColor by animateColorAsState(
         targetValue = targetContainerColor,
         animationSpec = tween(durationMillis = 200),
-        label = "chapterItemBackground"
+        label = "chapterItemBackground",
     )
+
+    val borderColor = when {
+        selected || highlighted -> colors.accent
+        isLastRead -> colors.accentLine
+        else -> colors.borderSubtle
+    }
 
     val stableOnClick = remember(onClick) { onClick }
     val stableOnLongClick = remember(onLongClick) { onLongClick }
@@ -98,281 +118,302 @@ internal fun ChaptersScreenChapterItem(
     val stableOnResumeDownload = remember(onResumeDownload) { onResumeDownload }
     val stableOnCancelDownload = remember(onCancelDownload) { onCancelDownload }
 
-    val badge: @Composable (() -> Unit)? = remember(chapterWithContext.lastReadChapter, chapter.read) {
-        when {
-            chapterWithContext.lastReadChapter -> {
-                {
-                    Surface(
-                        shape = RoundedCornerShape(4.dp),
-                        color = MaterialTheme.colorScheme.secondaryContainer,
-                    ) {
-                        Text(
-                            text = stringResource(id = R.string.last_read),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                        )
-                    }
-                }
-            }
-            chapter.read -> {
-                {
-                    Surface(
-                        shape = RoundedCornerShape(4.dp),
-                        color = MaterialTheme.colorScheme.surfaceVariant,
-                    ) {
-                        Text(
-                            text = stringResource(id = R.string.read),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                        )
-                    }
-                }
-            }
-            else -> null
-        }
-    }
-
-    // Статус загрузки показывает только трейлинг-иконка (кольцо/глиф/цвет),
-    // текстовый бейдж дублировал бы тот же сигнал в строке.
-
     Surface(
-        shape = RoundedCornerShape(8.dp),
-        tonalElevation = 0.5.dp,
-        color = MaterialTheme.colorScheme.surfaceContainer,
-        modifier = modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+        shape = RoundedCornerShape(NovelaRadius.md),
+        color = containerColor,
+        border = BorderStroke(
+            width = if (selected || highlighted) 1.25.dp else NovelaSize.hairline,
+            color = borderColor,
+        ),
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = NovelaSpacing.lg, vertical = 3.dp),
     ) {
-        Box(
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
-                .clip(RoundedCornerShape(8.dp))
-                .background(containerColor)
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(NovelaRadius.md))
                 .combinedClickable(
                     onClick = stableOnClick,
                     onLongClick = stableOnLongClick,
                 )
+                .padding(start = 14.dp, end = if (isLocalSource) 14.dp else 4.dp, top = 11.dp, bottom = 11.dp),
         ) {
-            SlimListItem(
-                headlineContent = {
-                    Text(
-                        text = translatedTitle ?: chapter.title,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = if (chapter.read) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
+            // Leading state marker (selection check, last-read bar, or unread dot)
+            when {
+                selected -> {
+                    Icon(
+                        imageVector = Icons.Rounded.CheckCircle,
+                        contentDescription = null,
+                        tint = colors.accent,
+                        modifier = Modifier.size(18.dp),
                     )
-                },
-                supportingContent = if (badge != null || sizeLabel != null) {
-                    {
-                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            if (badge != null) badge()
-                            if (sizeLabel != null) {
-                                Text(
-                                    text = sizeLabel,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    Spacer(Modifier.width(10.dp))
+                }
+                isLastRead -> {
+                    Box(
+                        modifier = Modifier
+                            .width(3.5.dp)
+                            .height(22.dp)
+                            .clip(RoundedCornerShape(NovelaRadius.pill))
+                            .background(colors.accent)
+                    )
+                    Spacer(Modifier.width(10.dp))
+                }
+                !chapter.read -> {
+                    Box(
+                        modifier = Modifier
+                            .size(6.dp)
+                            .background(colors.accent, CircleShape)
+                    )
+                    Spacer(Modifier.width(10.dp))
+                }
+            }
+
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Text(
+                    text = translatedTitle ?: chapter.title,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = when {
+                        isLastRead -> FontWeight.SemiBold
+                        !chapter.read -> FontWeight.Medium
+                        else -> FontWeight.Normal
+                    },
+                    color = when {
+                        isLastRead -> colors.accent
+                        chapter.read -> colors.textMuted
+                        else -> colors.textPrimary
+                    },
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+
+                if (isLastRead || chapter.read || sizeLabel != null) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        when {
+                            isLastRead -> {
+                                Surface(
+                                    shape = RoundedCornerShape(NovelaRadius.pill),
+                                    color = colors.accentSoft,
+                                ) {
+                                    Text(
+                                        text = stringResource(id = R.string.last_read),
+                                        style = NovelaType.badge,
+                                        color = colors.accent,
+                                        modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp),
+                                    )
+                                }
+                            }
+                            chapter.read -> {
+                                Surface(
+                                    shape = RoundedCornerShape(NovelaRadius.pill),
+                                    color = colors.surfaceSubtle,
+                                ) {
+                                    Text(
+                                        text = stringResource(id = R.string.read),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = colors.textMuted,
+                                        modifier = Modifier.padding(horizontal = 7.dp, vertical = 1.5.dp),
+                                    )
+                                }
+                            }
+                        }
+
+                        if (sizeLabel != null) {
+                            Text(
+                                text = sizeLabel,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = colors.textMuted,
+                            )
+                        }
+                    }
+                }
+            }
+
+            if (!isLocalSource) {
+                Spacer(Modifier.width(4.dp))
+                val uiState = when {
+                    downloadUi == null || downloadUi.state == ChapterDownloadUiState.NONE ->
+                        if (chapterWithContext.downloaded) ChapterDownloadUiState.COMPLETED
+                        else ChapterDownloadUiState.NONE
+                    else -> downloadUi.state
+                }
+                AnimatedTransition(targetState = uiState) { state ->
+                    when (state) {
+                        ChapterDownloadUiState.NONE -> IconButton(onClick = stableOnDownload) {
+                            Icon(
+                                Icons.Outlined.CloudDownload,
+                                stringResource(id = R.string.download),
+                                tint = colors.textMuted,
+                                modifier = Modifier.size(20.dp),
+                            )
+                        }
+
+                        ChapterDownloadUiState.COMPLETED -> IconButton(onClick = stableOnDownload) {
+                            Icon(
+                                Icons.Filled.CloudDone,
+                                stringResource(id = R.string.download),
+                                tint = colors.accent,
+                                modifier = Modifier.size(20.dp),
+                            )
+                        }
+
+                        ChapterDownloadUiState.QUEUED -> Row(verticalAlignment = Alignment.CenterVertically) {
+                            if (showCancelAction) {
+                                DownloadCancelButton(onCancelDownload = stableOnCancelDownload)
+                            }
+                            IconButton(onClick = stableOnPauseDownload) {
+                                val pulse by rememberInfiniteTransition(label = "queuedPulse").animateFloat(
+                                    initialValue = 0.35f,
+                                    targetValue = 0.90f,
+                                    animationSpec = infiniteRepeatable(tween(1000), RepeatMode.Reverse),
+                                    label = "queuedPulseAlpha",
+                                )
+                                Icon(
+                                    Icons.Outlined.CloudDownload,
+                                    stringResource(id = R.string.download_pause),
+                                    tint = colors.accent.copy(alpha = pulse),
+                                    modifier = Modifier.size(20.dp),
                                 )
                             }
                         }
-                    }
-                } else null,
-                trailingContent = if (isLocalSource) null else {
-                    {
-                        // Трейлинг-состояние: локально скачанная глава или статус
-                        // загрузки; NONE без скачанного — обычное «скачать».
-                        val uiState = when {
-                            downloadUi == null || downloadUi.state == ChapterDownloadUiState.NONE ->
-                                if (chapterWithContext.downloaded) ChapterDownloadUiState.COMPLETED
-                                else ChapterDownloadUiState.NONE
-                            else -> downloadUi.state
+
+                        ChapterDownloadUiState.DOWNLOADING -> Row(verticalAlignment = Alignment.CenterVertically) {
+                            if (showCancelAction) {
+                                DownloadCancelButton(onCancelDownload = stableOnCancelDownload)
+                            }
+                            IconButton(onClick = stableOnPauseDownload) {
+                                DownloadRing(
+                                    progress = downloadUi?.progress,
+                                    description = stringResource(id = R.string.download_pause),
+                                )
+                            }
                         }
-                        AnimatedTransition(targetState = uiState) { state ->
-                            when (state) {
-                                ChapterDownloadUiState.NONE -> IconButton(onClick = stableOnDownload) {
-                                    Icon(
-                                        Icons.Outlined.CloudDownload,
-                                        stringResource(id = R.string.download)
-                                    )
-                                }
 
-                                ChapterDownloadUiState.COMPLETED -> IconButton(onClick = stableOnDownload) {
-                                    Icon(
-                                        Icons.Filled.CloudDownload,
-                                        stringResource(id = R.string.download)
-                                    )
-                                }
-
-                                // В очереди: приглушённый глиф с пульсацией — отличим
-                                // и от скачанного, и от неактивного.
-                                // «X» рисуем только у видео-книг (showCancelAction):
-                                // у текста/манги отмена сбрасывает всю задачу книги.
-                                ChapterDownloadUiState.QUEUED -> Row {
-                                    if (showCancelAction) {
-                                        DownloadCancelButton(onCancelDownload = stableOnCancelDownload)
-                                    }
-                                    IconButton(onClick = stableOnPauseDownload) {
-                                        val pulse by rememberInfiniteTransition(label = "queuedPulse").animateFloat(
-                                            initialValue = 0.35f,
-                                            targetValue = 0.85f,
-                                            animationSpec = infiniteRepeatable(tween(1000), RepeatMode.Reverse),
-                                            label = "queuedPulseAlpha",
+                        ChapterDownloadUiState.PAUSED -> Row(verticalAlignment = Alignment.CenterVertically) {
+                            if (showCancelAction) {
+                                DownloadCancelButton(onCancelDownload = stableOnCancelDownload)
+                            }
+                            IconButton(onClick = stableOnResumeDownload) {
+                                val description = stringResource(id = R.string.download_resume)
+                                Box(
+                                    modifier = Modifier
+                                        .size(38.dp)
+                                        .clearAndSetSemantics { contentDescription = description },
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    val pausedProgress = downloadUi?.progress
+                                    if (pausedProgress != null) {
+                                        CircularProgressIndicator(
+                                            progress = { pausedProgress },
+                                            modifier = Modifier.size(36.dp),
+                                            strokeWidth = 2.5.dp,
+                                            color = colors.textSecondary,
+                                            trackColor = colors.surfaceSubtle,
                                         )
-                                        Icon(
-                                            Icons.Outlined.CloudDownload,
-                                            stringResource(id = R.string.download_pause),
-                                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = pulse),
-                                        )
-                                    }
-                                }
-
-                                ChapterDownloadUiState.DOWNLOADING -> Row {
-                                    if (showCancelAction) {
-                                        DownloadCancelButton(onCancelDownload = stableOnCancelDownload)
-                                    }
-                                    IconButton(onClick = stableOnPauseDownload) {
-                                        DownloadRing(
-                                            progress = downloadUi?.progress,
-                                            description = stringResource(id = R.string.download_pause),
-                                        )
-                                    }
-                                }
-
-                                // Пауза: кольцо заморожено на прогрессе, в центре — пауза.
-                                ChapterDownloadUiState.PAUSED -> Row {
-                                    if (showCancelAction) {
-                                        DownloadCancelButton(onCancelDownload = stableOnCancelDownload)
-                                    }
-                                    IconButton(onClick = stableOnResumeDownload) {
-                                        val description = stringResource(id = R.string.download_resume)
-                                        val colors = MaterialTheme.colorScheme
+                                    } else {
                                         Box(
-                                            modifier = Modifier
-                                                .size(40.dp)
-                                                .clearAndSetSemantics { contentDescription = description },
-                                            contentAlignment = Alignment.Center,
-                                        ) {
-                                            val pausedProgress = downloadUi?.progress
-                                            if (pausedProgress != null) {
-                                                CircularProgressIndicator(
-                                                    progress = { pausedProgress },
-                                                    modifier = Modifier.size(40.dp),
-                                                    color = colors.onSurfaceVariant,
-                                                    trackColor = colors.surfaceVariant,
-                                                )
-                                            } else {
-                                                // Прогресс неизвестен — тонкое статичное кольцо.
-                                                Box(
-                                                    Modifier
-                                                        .size(40.dp)
-                                                        .border(2.dp, colors.outlineVariant, CircleShape)
-                                                )
-                                            }
-                                            Icon(
-                                                Icons.Filled.Pause,
-                                                null,
-                                                modifier = Modifier.size(16.dp),
-                                                tint = colors.onSurface,
-                                            )
-                                        }
+                                            Modifier
+                                                .size(36.dp)
+                                                .border(2.dp, colors.borderStrong, CircleShape)
+                                        )
                                     }
-                                }
-
-                                ChapterDownloadUiState.FAILED -> IconButton(onClick = stableOnDownload) {
                                     Icon(
-                                        Icons.Outlined.CloudOff,
-                                        stringResource(id = R.string.download),
-                                        tint = MaterialTheme.colorScheme.error,
+                                        Icons.Filled.Pause,
+                                        null,
+                                        modifier = Modifier.size(15.dp),
+                                        tint = colors.textPrimary,
                                     )
                                 }
                             }
                         }
+
+                        ChapterDownloadUiState.FAILED -> IconButton(onClick = stableOnDownload) {
+                            Icon(
+                                Icons.Outlined.CloudOff,
+                                stringResource(id = R.string.download),
+                                tint = colors.danger,
+                                modifier = Modifier.size(20.dp),
+                            )
+                        }
                     }
-                },
-            )
+                }
+            }
         }
     }
 }
 
-
-/**
- * Отмена загрузки в строке главы (доступна в QUEUED/DOWNLOADING/PAUSED,
- * только у видео-книг — см. showCancelAction).
- * Стоит слева от статус-кольца: слот кольца всегда у правого края строки,
- * 48dp на кнопку строка отдаёт только пока глава реально качается.
- * Глиф мелкий и без фона — кольцо остаётся главным сигналом.
- */
 @Composable
 private fun DownloadCancelButton(onCancelDownload: () -> Unit) {
+    val colors = NovelaTheme.colors
     IconButton(onClick = onCancelDownload) {
         Icon(
             Icons.Outlined.Close,
             stringResource(id = R.string.download_cancel),
             modifier = Modifier.size(18.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            tint = colors.textMuted,
         )
     }
 }
 
-
-/**
- * Кольцевой прогресс загрузки главы (40dp внутри touch-таргета 48dp).
- * Долю (0..1) анимируем, без доли — индикатор вращается сам; в центре
- * процент либо глиф облака. contentDescription задаётся здесь, чтобы у
- * кнопки всегда была подпись для TalkBack.
- *
- * Пока доля слишком мала (0f — например манга без ни одной скачанной
- * страницы), дуга была бы короче штриха и кольцо выглядело бы пустым:
- * в этом диапазоне кольцо вращается, а в центре остаётся процент.
- */
 @Composable
 private fun DownloadRing(progress: Float?, description: String) {
-    val colors = MaterialTheme.colorScheme
+    val colors = NovelaTheme.colors
     val animatedProgress by animateFloatAsState(
         targetValue = progress ?: 0f,
         animationSpec = tween(300),
-        label = "chapterDownloadProgress"
+        label = "chapterDownloadProgress",
     )
-    // Порог видимости дуги: доля, дающая длину дуги меньше штриха (4dp).
     val isSpinning = progress == null || progress < 0.03f
     Box(
         modifier = Modifier
-            .size(40.dp)
+            .size(38.dp)
             .clearAndSetSemantics { contentDescription = description },
         contentAlignment = Alignment.Center,
     ) {
         if (isSpinning) {
             CircularProgressIndicator(
-                modifier = Modifier.size(40.dp),
-                color = colors.primary,
+                modifier = Modifier.size(36.dp),
+                strokeWidth = 2.5.dp,
+                color = colors.accent,
             )
         } else {
             CircularProgressIndicator(
                 progress = { animatedProgress },
-                modifier = Modifier.size(40.dp),
-                color = colors.primary,
-                trackColor = colors.surfaceVariant,
+                modifier = Modifier.size(36.dp),
+                strokeWidth = 2.5.dp,
+                color = colors.accent,
+                trackColor = colors.accentSoft,
             )
         }
         if (progress == null) {
             Icon(
                 Icons.Outlined.CloudDownload,
                 null,
-                modifier = Modifier.size(16.dp),
-                tint = colors.onSurfaceVariant,
+                modifier = Modifier.size(15.dp),
+                tint = colors.accent,
             )
         } else {
             Text(
                 text = "${(animatedProgress * 100).roundToInt()}%",
                 style = MaterialTheme.typography.labelSmall,
-                color = colors.onSurface,
+                color = colors.textPrimary,
             )
         }
     }
 }
 
-
 @PreviewThemes
 @Composable
 private fun PreviewView(
-    @PreviewParameter(PreviewProvider::class) previewProviderState: PreviewProviderState
+    @PreviewParameter(PreviewProvider::class) previewProviderState: PreviewProviderState,
 ) {
     InternalTheme {
         ChaptersScreenChapterItem(
@@ -386,17 +427,15 @@ private fun PreviewView(
             onDownload = {},
             onPauseDownload = {},
             onResumeDownload = {},
-            onCancelDownload = {}
+            onCancelDownload = {},
         )
     }
 }
-
 
 private data class PreviewProviderState(
     val chapterWithContext: ChapterWithContext,
     val downloadUi: ChapterDownloadUi? = null,
     val selected: Boolean,
-    // false — не-видео книга: «X» отмены в трейлинге не рисуется.
     val showCancelAction: Boolean = true,
 )
 
@@ -405,21 +444,20 @@ private class PreviewProvider : PreviewParameterProvider<PreviewProviderState> {
         PreviewProviderState(
             chapterWithContext = ChapterWithContext(
                 chapter = Chapter(
-                    title = "Title of the chapter",
+                    title = "Chapter 1: Awakening in the Abyss",
                     url = "url",
                     bookUrl = "bookUrl",
                     lastReadOffset = 0,
                     lastReadPosition = 0,
                     position = 0,
-                    read = false
+                    read = false,
                 ),
                 downloaded = false,
-                lastReadChapter = false
+                lastReadChapter = false,
             ),
             downloadUi = ChapterDownloadUi(ChapterDownloadUiState.DOWNLOADING, progress = 0.42f),
-            selected = false
+            selected = false,
         ),
-        // Доля 0f: кольцо вращается, отмена рядом с паузой.
         PreviewProviderState(
             chapterWithContext = ChapterWithContext(
                 chapter = Chapter(
@@ -429,47 +467,47 @@ private class PreviewProvider : PreviewParameterProvider<PreviewProviderState> {
                     lastReadOffset = 0,
                     lastReadPosition = 0,
                     position = 1,
-                    read = false
+                    read = false,
                 ),
                 downloaded = false,
-                lastReadChapter = false
+                lastReadChapter = false,
             ),
             downloadUi = ChapterDownloadUi(ChapterDownloadUiState.DOWNLOADING, progress = 0f),
-            selected = false
+            selected = false,
         ),
         PreviewProviderState(
             chapterWithContext = ChapterWithContext(
                 chapter = Chapter(
-                    title = "Title of the chapter, Title of the chapter, Title of the chapter, Title of the chapter, Title of the chapter,Title of the chapter ,Title of the chapter",
+                    title = "Chapter 3: A Very Long Chapter Title Spanning Multiple Lines in the Directory",
                     url = "url",
                     bookUrl = "bookUrl",
                     lastReadOffset = 0,
                     lastReadPosition = 0,
                     position = 0,
-                    read = true
+                    read = true,
                 ),
                 downloaded = true,
-                lastReadChapter = false
+                lastReadChapter = false,
             ),
             downloadUi = ChapterDownloadUi(ChapterDownloadUiState.PAUSED, progress = 0.75f),
             selected = false,
-            showCancelAction = false
+            showCancelAction = false,
         ),
         PreviewProviderState(
             chapterWithContext = ChapterWithContext(
                 chapter = Chapter(
-                    title = "Title of the chapter",
+                    title = "Chapter 4: Last Read Milestone",
                     url = "url",
                     bookUrl = "bookUrl",
                     lastReadOffset = 0,
                     lastReadPosition = 0,
                     position = 0,
-                    read = false
+                    read = false,
                 ),
                 downloaded = true,
-                lastReadChapter = true
+                lastReadChapter = true,
             ),
-            selected = true
-        )
+            selected = true,
+        ),
     )
 }

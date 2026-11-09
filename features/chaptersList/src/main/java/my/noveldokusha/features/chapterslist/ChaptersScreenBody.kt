@@ -1,21 +1,27 @@
 package my.noveldokusha.features.chapterslist
 
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AutoStories
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -34,8 +40,13 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
-import my.noveldokusha.coreui.components.ErrorView
 import my.noveldokusha.chapterslist.R
+import my.noveldokusha.coreui.components.ErrorView
+import my.noveldokusha.coreui.theme.NovelaRadius
+import my.noveldokusha.coreui.theme.NovelaSize
+import my.noveldokusha.coreui.theme.NovelaSpacing
+import my.noveldokusha.coreui.theme.NovelaTheme
+import my.noveldokusha.coreui.theme.NovelaType
 import my.noveldokusha.feature.local_database.ChapterWithContext
 import my.noveldokusha.scraper.Scraper
 
@@ -51,6 +62,9 @@ internal fun ChaptersScreenBody(
     showTranslateButton: Boolean,
     onTranslateClick: () -> Unit,
     onClearTranslationClick: () -> Unit,
+    onResumeReading: () -> Unit = {},
+    onLibraryToggle: () -> Unit = {},
+    onOpenSortSheet: () -> Unit = {},
     onChapterClick: (chapter: ChapterWithContext) -> Unit,
     onChapterLongClick: (chapter: ChapterWithContext) -> Unit,
     onChapterDownload: (chapter: ChapterWithContext) -> Unit,
@@ -94,8 +108,6 @@ internal fun ChaptersScreenBody(
         lazyListState.animateScrollToItem(index, scrollOffset)
     }
 
-    // Список элементов LazyColumn: главы + заголовки групп по volume.
-    // Порядок глав не меняется, заголовки вставляются только на границе групп.
     val chapterListItems by remember { derivedStateOf { buildChapterListItems(state.chapters) } }
 
     val lastReadChapterIndex = remember(state.book.value.lastReadChapter, chapterListItems) {
@@ -122,8 +134,6 @@ internal fun ChaptersScreenBody(
     if (showGoToChapterDialog) {
         GoToChapterDialog(
             chapters = state.chapters,
-            // Диалог ищет главу по url; индекс LazyColumn считаем по списку
-            // с заголовками групп (позиция диалога не учитывает их).
             onChapterSelected = { _, url ->
                 coroutineScope.launch {
                     val index = lazyIndexForChapterUrl(chapterListItems, url)
@@ -133,7 +143,7 @@ internal fun ChaptersScreenBody(
                     highlightedChapterUrl = null
                 }
             },
-            onDismiss = { showGoToChapterDialog = false }
+            onDismiss = { showGoToChapterDialog = false },
         )
     }
 
@@ -145,15 +155,15 @@ internal fun ChaptersScreenBody(
     ) {
         LazyColumn(
             state = lazyListState,
-            contentPadding = PaddingValues(bottom = 300.dp),
+            contentPadding = PaddingValues(bottom = 260.dp),
         ) {
+            // Item 0 MUST remain the single book header item (enforced by lazyIndexForChapterUrl / ChapterListGroupingTest).
             item(
                 key = "header",
                 contentType = { 0 },
             ) {
                 ChaptersScreenHeader(
                     bookState = state.book.value,
-                    // Referer обложки: у Body нет доступа к ChaptersViewModel — считаем через scraper.
                     coverReferer = scraper.coverReferer(state.book.value.url),
                     genres = state.genres.value,
                     rating = state.rating.value,
@@ -175,6 +185,9 @@ internal fun ChaptersScreenBody(
                     showTranslateButton = showTranslateButton,
                     onTranslateClick = onTranslateClick,
                     onClearTranslationClick = onClearTranslationClick,
+                    onResumeReading = onResumeReading,
+                    onLibraryToggle = onLibraryToggle,
+                    onOpenSortSheet = onOpenSortSheet,
                     onCoverLongClick = onCoverLongClick,
                     onGlobalSearchClick = onGlobalSearchClick,
                     onScrollToLastRead = onScrollToLastRead,
@@ -187,14 +200,13 @@ internal fun ChaptersScreenBody(
 
             chapterListItems.forEach { entry ->
                 when (entry) {
-                    // Заголовок сезона/тома: прилипает к верху при скролле группы.
                     is ChapterListItem.VolumeHeader -> stickyHeader(key = entry.key) {
                         ChapterVolumeHeader(volume = entry.volume)
                     }
 
                     is ChapterListItem.Chapter -> item(
                         key = "_" + entry.data.chapter.url,
-                        contentType = { 1 }
+                        contentType = { 1 },
                     ) {
                         ChaptersScreenChapterItem(
                             chapterWithContext = entry.data,
@@ -210,35 +222,29 @@ internal fun ChaptersScreenBody(
                             onDownload = { onChapterDownload(entry.data) },
                             onPauseDownload = { onPauseDownload(entry.data) },
                             onResumeDownload = { onResumeDownload(entry.data) },
-                            onCancelDownload = { onCancelDownload(entry.data) }
+                            onCancelDownload = { onCancelDownload(entry.data) },
                         )
                     }
                 }
             }
 
-            if (state.error.value.isNotBlank()) item(
-                key = "error",
-                contentType = { 2 }
-            ) {
-                ErrorView(error = state.error.value)
+            if (state.error.value.isNotBlank()) {
+                item(
+                    key = "error",
+                    contentType = { 2 },
+                ) {
+                    ErrorView(error = state.error.value)
+                }
             }
         }
     }
 }
 
-/** Элемент списка глав: глава либо заголовок группы (сезон/том из volume). */
 internal sealed interface ChapterListItem {
-    /** Заголовок группы. Ключ содержит порядковый номер: volume может повторяться. */
     data class VolumeHeader(val volume: String, val key: String) : ChapterListItem
-
     data class Chapter(val data: ChapterWithContext) : ChapterListItem
 }
 
-/**
- * Группировка глав по volume с сохранением порядка входного списка.
- * Заголовок ставится только на границе группы: у глав с null/пустым volume
- * заголовка нет, у подряд идущих глав с одинаковым volume — один общий.
- */
 internal fun buildChapterListItems(chapters: List<ChapterWithContext>): List<ChapterListItem> {
     val items = ArrayList<ChapterListItem>(chapters.size)
     val headerOrdinals = HashMap<String, Int>()
@@ -256,35 +262,48 @@ internal fun buildChapterListItems(chapters: List<ChapterWithContext>): List<Cha
     return items
 }
 
-/**
- * Индекс элемента LazyColumn для главы с данным url
- * (позиция 0 занимает хедер книги); -1, если глава не найдена.
- */
 internal fun lazyIndexForChapterUrl(items: List<ChapterListItem>, url: String): Int {
     val index = items.indexOfFirst { it is ChapterListItem.Chapter && it.data.chapter.url == url }
     return if (index == -1) -1 else index + 1
 }
 
-/**
- * Заголовок группы глав. Непрозрачный фон — при sticky главы не просвечивают.
- * Визуально отделён от списка (капитель + разделитель), чтобы не читался
- * как обычная неактивная глава. Отступ старта (24.dp) выровнен с названием главы.
- */
 @Composable
 private fun ChapterVolumeHeader(volume: String) {
+    val colors = NovelaTheme.colors
     Surface(
         color = MaterialTheme.colorScheme.background,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
     ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            Text(
-                text = volume.uppercase(),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(start = 24.dp, end = 16.dp, top = 16.dp, bottom = 8.dp)
-            )
-            HorizontalDivider()
-            Spacer(modifier = Modifier.height(8.dp))
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = NovelaSpacing.lg, vertical = 6.dp),
+        ) {
+            Surface(
+                shape = RoundedCornerShape(NovelaRadius.md),
+                color = colors.surfaceSubtle,
+                border = BorderStroke(NovelaSize.hairline, colors.borderSubtle),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.AutoStories,
+                        contentDescription = null,
+                        tint = colors.accent,
+                        modifier = Modifier.size(15.dp),
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = volume.uppercase(),
+                        style = NovelaType.sectionEyebrow,
+                        color = colors.accent,
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(2.dp))
         }
     }
 }

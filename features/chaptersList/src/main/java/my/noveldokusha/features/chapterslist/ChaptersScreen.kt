@@ -1,6 +1,11 @@
 package my.noveldokusha.features.chapterslist
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
@@ -10,46 +15,50 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Done
-import androidx.compose.material.icons.filled.DoneAll
-import androidx.compose.material.icons.filled.DoneOutline
-import androidx.compose.material.icons.filled.FilterList
-import androidx.compose.material.icons.filled.FolderOpen
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.RemoveDone
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.Sort
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.CloudDownload
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.DeleteSweep
-import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.outlined.FolderOpen
 import androidx.compose.material.icons.outlined.PublishedWithChanges
 import androidx.compose.material.icons.outlined.SelectAll
 import androidx.compose.material.icons.outlined.Translate
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.Done
+import androidx.compose.material.icons.rounded.DoneAll
+import androidx.compose.material.icons.rounded.DoneOutline
+import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.RemoveDone
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -69,31 +78,30 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import android.content.Context
-import android.content.Intent
-import android.net.Uri
 import my.nanihadesuka.compose.InternalLazyColumnScrollbar
-import my.noveldokusha.coreui.theme.isAtTop
-import my.noveldokusha.coreui.theme.textPadding
 import my.noveldokusha.chapterslist.R
 import my.noveldokusha.core.isLocalUri
+import my.noveldokusha.coreui.components.NovelaFilterChip
+import my.noveldokusha.coreui.components.NovelaPrimaryButton
+import my.noveldokusha.coreui.components.NovelaSecondaryButton
+import my.noveldokusha.coreui.theme.NovelaRadius
+import my.noveldokusha.coreui.theme.NovelaSize
+import my.noveldokusha.coreui.theme.NovelaSpacing
+import my.noveldokusha.coreui.theme.NovelaTheme
+import my.noveldokusha.coreui.theme.isAtTop
 import my.noveldokusha.feature.local_database.ChapterWithContext
 import my.noveldokusha.scraper.Scraper
 import my.noveldokusha.strings.R as StringsR
 import timber.log.Timber
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 internal fun ChaptersScreen(
     state: ChaptersScreenState,
@@ -147,6 +155,7 @@ internal fun ChaptersScreen(
     onClearBookInfoTranslation: () -> Unit,
     scraper: Scraper,
 ) {
+    val colors = NovelaTheme.colors
     var showDropDown by rememberSaveable { mutableStateOf(false) }
     var showBottomSheet by rememberSaveable { mutableStateOf(false) }
     var showCategoryPicker by rememberSaveable { mutableStateOf(false) }
@@ -155,14 +164,10 @@ internal fun ChaptersScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
 
-    // Folder picker launcher for export
     val directoryPicker = rememberLauncherForActivityResult(
-        contract = OpenDocumentTreeReadPersistent()
+        contract = OpenDocumentTreeReadPersistent(),
     ) { uri ->
         if (uri == null) {
-            // Пользователь закрыл пикер: если ждали папку для экспорта — закрываем
-            // диалог (поток возвращается в Hidden); если меняли папку из
-            // ContentChoice — остаёмся в нём, выбор контента не теряем.
             if (exportDialogState is ExportDialogState.NeedDirectory) {
                 onExportDialogDismiss()
             }
@@ -170,24 +175,22 @@ internal fun ChaptersScreen(
             try {
                 context.contentResolver.takePersistableUriPermission(
                     uri,
-                    Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION,
                 )
             } catch (e: SecurityException) {
-                // Отказ в persistable permission — не блокируем экспорт:
-                // каталог всё равно запомним, следующий экспорт переспросит.
-                Timber.w("Не удалось получить persistable permission для $uri: ${e.message}")
+                Timber.w("Failed to take persistable permission for $uri: ${e.message}")
             }
             onExportDirectorySaved(uri.toString())
         }
     }
 
-    // One-shot export message
     LaunchedEffect(exportMessage) {
         if (exportMessage != null) {
             snackbarHostState.showSnackbar(exportMessage)
             onExportMessageShown()
         }
     }
+
     val areSelectedChaptersRead by remember {
         derivedStateOf {
             val readUrls = state.chapters.asSequence()
@@ -198,145 +201,239 @@ internal fun ChaptersScreen(
         }
     }
 
-    if (state.isInSelectionMode.value) BackHandler {
-        onCloseSelectionBar()
+    if (state.isInSelectionMode.value) {
+        BackHandler { onCloseSelectionBar() }
     }
+
+    val isAtTop by lazyListState.isAtTop(threshold = 72.dp)
+    val isPastHeroCta by lazyListState.isAtTop(threshold = 240.dp)
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         containerColor = MaterialTheme.colorScheme.background,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            val isAtTop by lazyListState.isAtTop(threshold = 40.dp)
-            val alpha by animateFloatAsState(targetValue = if (isAtTop) 0f else 1f, label = "")
+            val alpha by animateFloatAsState(
+                targetValue = if (isAtTop) 0f else 0.96f,
+                label = "chaptersBarAlpha",
+            )
             val backgroundColor by animateColorAsState(
                 targetValue = MaterialTheme.colorScheme.background.copy(alpha = alpha),
-                label = ""
+                label = "chaptersBarBg",
             )
             val titleColor by animateColorAsState(
-                targetValue = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha),
-                label = ""
+                targetValue = colors.textPrimary.copy(alpha = alpha),
+                label = "chaptersBarTitle",
             )
-            Surface(color = backgroundColor) {
-                Column {
-                    TopAppBar(
-                        scrollBehavior = scrollBehavior,
-                        colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = Color.Transparent,
-                            scrolledContainerColor = Color.Transparent,
-                        ),
-                        title = {
-                            Text(
-                                text = state.book.value.title,
-                                style = MaterialTheme.typography.headlineSmall,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                color = titleColor
-                            )
-                        },
-                        navigationIcon = {
-                            IconButton(onClick = onPressBack) {
-                                Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
-                            }
-                        },
-                        actions = {
-                            IconButton(onClick = onLibraryToggle) {
-                                Icon(
-                                    if (state.book.value.inLibrary) Icons.Outlined.Favorite else Icons.Outlined.FavoriteBorder,
-                                    stringResource(R.string.open_the_web_view),
-                                    tint = MaterialTheme.colorScheme.error
+
+            Box {
+                Surface(color = backgroundColor) {
+                    Column {
+                        TopAppBar(
+                            scrollBehavior = scrollBehavior,
+                            colors = TopAppBarDefaults.topAppBarColors(
+                                containerColor = Color.Transparent,
+                                scrolledContainerColor = Color.Transparent,
+                            ),
+                            title = {
+                                Text(
+                                    text = translatedTitle ?: state.book.value.title,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    color = titleColor,
                                 )
-                            }
-                            IconButton(onClick = { showBottomSheet = !showBottomSheet }) {
-                                Icon(
-                                    Icons.Filled.FilterList,
-                                    stringResource(R.string.filter),
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
-                            }
-                            IconButton(onClick = { showDropDown = !showDropDown }) {
-                                Icon(
-                                    Icons.Filled.MoreVert,
-                                    stringResource(R.string.options_panel)
-                                )
-                                DropdownMenu(
-                                    expanded = showDropDown,
-                                    onDismissRequest = { showDropDown = false }) {
-                                    ChaptersDropDown(
-                                        isLocalSource = state.isLocalSource.value,
-                                        bookUrl = state.book.value.url,
-                                        bookTitle = state.book.value.title,
-                                        openInBrowser = {
-                                            if (!state.book.value.url.isLocalUri) {
-                                                onOpenInBrowser(state.book.value.url)
-                                            }
-                                        },
-                                        onSearchBookInDatabase = onSearchBookInDatabase,
-                                        onResumeReading = onResumeReading,
-                                        onChangeCover = onChangeCover,
-                                        onDownloadNext100Chapters = onDownloadNext100Chapters,
-                                        onDownloadAllChapters = onDownloadAllChapters,
-                                        onExport = onExport,
-                                        onMigrateBook = onMigrateBook,
-                                        onDeleteTranslations = onDeleteTranslations,
-                                        onFixBook = onFixBook,
+                            },
+                            navigationIcon = {
+                                TopBarCircleIcon(
+                                    isTranslucent = isAtTop,
+                                    onClick = onPressBack,
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                                        contentDescription = null,
+                                        tint = if (isAtTop) Color.White else colors.textPrimary,
+                                        modifier = Modifier.size(20.dp),
                                     )
                                 }
-                            }
-                        }
-                    )
-                    HorizontalDivider(Modifier.alpha(alpha))
+                            },
+                            actions = {
+                                TopBarCircleIcon(
+                                    isTranslucent = isAtTop,
+                                    onClick = onLibraryToggle,
+                                ) {
+                                    Icon(
+                                        imageVector = if (state.book.value.inLibrary) {
+                                            Icons.Rounded.Favorite
+                                        } else {
+                                            Icons.Outlined.FavoriteBorder
+                                        },
+                                        contentDescription = stringResource(R.string.open_the_web_view),
+                                        tint = if (state.book.value.inLibrary) {
+                                            colors.favoriteCrimson
+                                        } else if (isAtTop) {
+                                            Color.White
+                                        } else {
+                                            colors.textPrimary
+                                        },
+                                        modifier = Modifier.size(20.dp),
+                                    )
+                                }
+                                Spacer(Modifier.width(4.dp))
+                                TopBarCircleIcon(
+                                    isTranslucent = isAtTop,
+                                    onClick = { showBottomSheet = !showBottomSheet },
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Rounded.Sort,
+                                        contentDescription = stringResource(R.string.filter),
+                                        tint = if (isAtTop) Color.White else colors.accent,
+                                        modifier = Modifier.size(20.dp),
+                                    )
+                                }
+                                Spacer(Modifier.width(4.dp))
+                                Box {
+                                    TopBarCircleIcon(
+                                        isTranslucent = isAtTop,
+                                        onClick = { showDropDown = !showDropDown },
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.MoreVert,
+                                            contentDescription = stringResource(R.string.options_panel),
+                                            tint = if (isAtTop) Color.White else colors.textPrimary,
+                                            modifier = Modifier.size(20.dp),
+                                        )
+                                    }
+                                    DropdownMenu(
+                                        expanded = showDropDown,
+                                        onDismissRequest = { showDropDown = false },
+                                    ) {
+                                        ChaptersDropDown(
+                                            isLocalSource = state.isLocalSource.value,
+                                            bookUrl = state.book.value.url,
+                                            bookTitle = state.book.value.title,
+                                            openInBrowser = {
+                                                showDropDown = false
+                                                if (!state.book.value.url.isLocalUri) {
+                                                    onOpenInBrowser(state.book.value.url)
+                                                }
+                                            },
+                                            onSearchBookInDatabase = {
+                                                showDropDown = false
+                                                onSearchBookInDatabase()
+                                            },
+                                            onResumeReading = {
+                                                showDropDown = false
+                                                onResumeReading()
+                                            },
+                                            onChangeCover = {
+                                                showDropDown = false
+                                                onChangeCover()
+                                            },
+                                            onDownloadNext100Chapters = {
+                                                showDropDown = false
+                                                onDownloadNext100Chapters()
+                                            },
+                                            onDownloadAllChapters = {
+                                                showDropDown = false
+                                                onDownloadAllChapters()
+                                            },
+                                            onExport = { bUrl, bTitle ->
+                                                showDropDown = false
+                                                onExport(bUrl, bTitle)
+                                            },
+                                            onMigrateBook = {
+                                                showDropDown = false
+                                                onMigrateBook()
+                                            },
+                                            onDeleteTranslations = {
+                                                showDropDown = false
+                                                onDeleteTranslations()
+                                            },
+                                            onFixBook = {
+                                                showDropDown = false
+                                                onFixBook()
+                                            },
+                                        )
+                                    }
+                                }
+                                Spacer(Modifier.width(6.dp))
+                            },
+                        )
+                        HorizontalDivider(
+                            thickness = NovelaSize.hairline,
+                            color = colors.borderSubtle,
+                            modifier = Modifier.alpha(alpha),
+                        )
+                    }
                 }
-            }
-            AnimatedVisibility(
-                visible = state.isInSelectionMode.value,
-                enter = expandVertically(initialHeight = { it / 8 }, expandFrom = Alignment.Top)
-                        + fadeIn(animationSpec = tween(120)),
-                exit = shrinkVertically(targetHeight = { it / 8 }, shrinkTowards = Alignment.Top)
-                        + fadeOut(animationSpec = tween(120)),
-            ) {
-                Surface(color = MaterialTheme.colorScheme.primary) {
-                    TopAppBar(
-                        scrollBehavior = scrollBehavior,
-                        colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            scrolledContainerColor = MaterialTheme.colorScheme.primary,
-                            titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                            actionIconContentColor = MaterialTheme.colorScheme.onPrimary,
-                            navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
-                        ),
-                        title = {
-                            Text(
-                                text = state.selectedChaptersUrl.size.toString(),
-                                style = MaterialTheme.typography.headlineSmall,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.animateContentSize()
+
+                // Multi-chapter selection top bar
+                AnimatedVisibility(
+                    visible = state.isInSelectionMode.value,
+                    enter = expandVertically(initialHeight = { it / 8 }, expandFrom = Alignment.Top) +
+                        fadeIn(animationSpec = tween(120)),
+                    exit = shrinkVertically(targetHeight = { it / 8 }, shrinkTowards = Alignment.Top) +
+                        fadeOut(animationSpec = tween(120)),
+                ) {
+                    Surface(color = colors.surfaceFloating) {
+                        Column {
+                            TopAppBar(
+                                scrollBehavior = scrollBehavior,
+                                colors = TopAppBarDefaults.topAppBarColors(
+                                    containerColor = colors.surfaceFloating,
+                                    scrolledContainerColor = colors.surfaceFloating,
+                                ),
+                                title = {
+                                    Surface(
+                                        shape = RoundedCornerShape(NovelaRadius.pill),
+                                        color = colors.accentSoft,
+                                    ) {
+                                        Text(
+                                            text = stringResource(
+                                                StringsR.string.selected_count,
+                                                state.selectedChaptersUrl.size,
+                                            ),
+                                            style = MaterialTheme.typography.labelLarge,
+                                            fontWeight = FontWeight.Bold,
+                                            color = colors.accent,
+                                            maxLines = 1,
+                                            modifier = Modifier
+                                                .padding(horizontal = 12.dp, vertical = 5.dp)
+                                                .animateContentSize(),
+                                        )
+                                    }
+                                },
+                                navigationIcon = {
+                                    IconButton(onClick = onCloseSelectionBar) {
+                                        Icon(
+                                            Icons.Outlined.Close,
+                                            stringResource(id = R.string.close_selection_bar),
+                                            tint = colors.textPrimary,
+                                        )
+                                    }
+                                },
+                                actions = {
+                                    IconButton(onClick = onSelectAllChapters) {
+                                        Icon(
+                                            Icons.Outlined.SelectAll,
+                                            stringResource(id = R.string.select_all_chapters),
+                                            tint = colors.textPrimary,
+                                        )
+                                    }
+                                    IconButton(onClick = onSelectedInvertSelection) {
+                                        Icon(
+                                            Icons.Outlined.PublishedWithChanges,
+                                            stringResource(id = R.string.close_selection_bar),
+                                            tint = colors.textPrimary,
+                                        )
+                                    }
+                                },
                             )
-                        },
-                        navigationIcon = {
-                            IconButton(onClick = onCloseSelectionBar) {
-                                Icon(
-                                    Icons.Outlined.Close,
-                                    stringResource(id = R.string.close_selection_bar)
-                                )
-                            }
-                        },
-                        actions = {
-                            IconButton(onClick = onSelectAllChapters) {
-                                Icon(
-                                    Icons.Outlined.SelectAll,
-                                    stringResource(id = R.string.select_all_chapters)
-                                )
-                            }
-                            IconButton(onClick = onSelectedInvertSelection) {
-                                Icon(
-                                    Icons.Outlined.PublishedWithChanges,
-                                    stringResource(id = R.string.close_selection_bar)
-                                )
-                            }
+                            HorizontalDivider(thickness = NovelaSize.hairline, color = colors.borderSubtle)
                         }
-                    )
+                    }
                 }
             }
         },
@@ -351,8 +448,19 @@ internal fun ChaptersScreen(
                 showTranslateButton = showTranslateButton,
                 onTranslateClick = onTranslateBookInfo,
                 onClearTranslationClick = onClearBookInfoTranslation,
-                onChapterClick = if (state.isInSelectionMode.value) onSelectionModeChapterClick else onChapterClick,
-                onChapterLongClick = if (state.isInSelectionMode.value) onSelectionModeChapterLongClick else onChapterLongClick,
+                onResumeReading = onResumeReading,
+                onLibraryToggle = onLibraryToggle,
+                onOpenSortSheet = { showBottomSheet = true },
+                onChapterClick = if (state.isInSelectionMode.value) {
+                    onSelectionModeChapterClick
+                } else {
+                    onChapterClick
+                },
+                onChapterLongClick = if (state.isInSelectionMode.value) {
+                    onSelectionModeChapterLongClick
+                } else {
+                    onChapterLongClick
+                },
                 onChapterDownload = onChapterDownload,
                 onPauseDownload = onPauseDownload,
                 onResumeDownload = onResumeDownload,
@@ -375,55 +483,66 @@ internal fun ChaptersScreen(
                 enter = expandVertically(initialHeight = { it / 8 }) + fadeIn(animationSpec = tween(120)),
                 exit = shrinkVertically(targetHeight = { it / 8 }) + fadeOut(animationSpec = tween(120)),
             ) {
-                BottomAppBar(
-                    modifier = Modifier.clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)),
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                Surface(
+                    shape = RoundedCornerShape(topStart = NovelaRadius.sheet, topEnd = NovelaRadius.sheet),
+                    color = colors.glassSurface,
+                    border = BorderStroke(NovelaSize.hairline, colors.glassBorder),
+                    shadowElevation = 12.dp,
                 ) {
                     Row(
-                        horizontalArrangement = Arrangement.Center,
-                        modifier = Modifier.fillMaxWidth()
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .navigationBarsPadding()
+                            .padding(horizontal = NovelaSpacing.md, vertical = 8.dp),
                     ) {
                         if (!state.isLocalSource.value) {
                             IconButton(onClick = onSelectedDeleteDownloads) {
                                 Icon(
                                     Icons.Outlined.Delete,
-                                    stringResource(id = R.string.remove_selected_chapters_downloads)
+                                    stringResource(id = R.string.remove_selected_chapters_downloads),
+                                    tint = colors.danger,
                                 )
                             }
                             IconButton(onClick = onSelectedDownload) {
                                 Icon(
                                     Icons.Outlined.CloudDownload,
-                                    stringResource(id = R.string.download_selected_chapters)
+                                    stringResource(id = R.string.download_selected_chapters),
+                                    tint = colors.accent,
                                 )
                             }
                         }
                         IconButton(onClick = onSelectedTranslate) {
                             Icon(
                                 Icons.Outlined.Translate,
-                                stringResource(id = R.string.translate_selected_chapters)
+                                stringResource(id = R.string.translate_selected_chapters),
+                                tint = colors.accent,
                             )
                         }
                         if (state.isLocalSource.value) {
                             IconButton(onClick = onSelectedDeleteTranslations) {
                                 Icon(
                                     Icons.Outlined.DeleteSweep,
-                                    stringResource(id = R.string.delete_selected_chapters_translations)
+                                    stringResource(id = R.string.delete_selected_chapters_translations),
+                                    tint = colors.danger,
                                 )
                             }
                         }
                         if (areSelectedChaptersRead) {
                             IconButton(onClick = onSelectedSetUnread) {
                                 Icon(
-                                    Icons.Filled.DoneOutline,
-                                    stringResource(id = R.string.set_as_not_read_selected_chapters)
+                                    Icons.Rounded.DoneOutline,
+                                    stringResource(id = R.string.set_as_not_read_selected_chapters),
+                                    tint = colors.textPrimary,
                                 )
                             }
                         } else {
                             IconButton(onClick = onSelectedSetRead) {
                                 Icon(
-                                    Icons.Filled.Done,
-                                    stringResource(id = R.string.set_as_read_selected_chapters)
+                                    Icons.Rounded.Done,
+                                    stringResource(id = R.string.set_as_read_selected_chapters),
+                                    tint = colors.accent,
                                 )
                             }
                         }
@@ -431,15 +550,17 @@ internal fun ChaptersScreen(
                             if (areSelectedChaptersRead) {
                                 IconButton(onClick = onSelectedSetReadUpToChapterUnread) {
                                     Icon(
-                                        Icons.Filled.RemoveDone,
-                                        stringResource(id = R.string.set_as_Unread_up_to_selected_chapter)
+                                        Icons.Rounded.RemoveDone,
+                                        stringResource(id = R.string.set_as_Unread_up_to_selected_chapter),
+                                        tint = colors.textPrimary,
                                     )
                                 }
                             } else {
                                 IconButton(onClick = onSelectedSetReadUpToChapterRead) {
                                     Icon(
-                                        Icons.Filled.DoneAll,
-                                        stringResource(id = R.string.set_as_read_up_to_selected_chapter)
+                                        Icons.Rounded.DoneAll,
+                                        stringResource(id = R.string.set_as_read_up_to_selected_chapter),
+                                        tint = colors.accent,
                                     )
                                 }
                             }
@@ -449,96 +570,90 @@ internal fun ChaptersScreen(
             }
         },
         floatingActionButton = {
-            FloatingActionButton(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-                onClick = onResumeReading
+            AnimatedVisibility(
+                visible = !isPastHeroCta && !state.isInSelectionMode.value,
+                enter = fadeIn(tween(180)),
+                exit = fadeOut(tween(150)),
             ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.textPadding()
+                FloatingActionButton(
+                    shape = RoundedCornerShape(NovelaRadius.pill),
+                    containerColor = colors.accent,
+                    contentColor = colors.onAccent,
+                    onClick = onResumeReading,
                 ) {
-                    Icon(
-                        Icons.Filled.PlayArrow,
-                        contentDescription = stringResource(id = R.string.open_last_read_chapter),
-
-                    )
-                    AnimatedVisibility(visible = lazyListState.isAtTop(threshold = 100.dp).value) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.PlayArrow,
+                            contentDescription = stringResource(id = R.string.open_last_read_chapter),
+                            modifier = Modifier.size(20.dp),
+                        )
                         Text(
                             text = stringResource(id = R.string.resume_reading),
-                            modifier = Modifier.padding(end = 8.dp)
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold,
                         )
                     }
                 }
             }
-        }
+        },
     )
 
     ChaptersBottomSheet(
         visible = showBottomSheet,
         onDismiss = { showBottomSheet = false },
-        state = state
+        state = state,
     )
 
     if (showCategoryPicker) {
-        val categoryList = categories().let { cats ->
-            cats.map { category ->
-                val label = when (category) {
-                    "" -> stringResource(R.string.reading)
-                    "Completed" -> stringResource(R.string.completed)
-                    else -> category
-                }
-                category to label
+        val categoryList = categories().map { category ->
+            val label = when (category) {
+                "" -> stringResource(R.string.reading)
+                "Completed" -> stringResource(R.string.completed)
+                else -> category
             }
+            category to label
         }
         AlertDialog(
             onDismissRequest = { showCategoryPicker = false },
+            shape = RoundedCornerShape(NovelaRadius.sheet),
+            containerColor = colors.surfaceFloating,
             title = {
-                Text(text = stringResource(R.string.category_name))
+                Text(
+                    text = stringResource(R.string.category_name),
+                    fontWeight = FontWeight.Bold,
+                )
             },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
                     categoryList.forEach { (category, label) ->
                         val isSelected = state.book.value.category == category
-                        if (isSelected) {
-                            FilledTonalButton(
-                                onClick = {},
-                                shape = RoundedCornerShape(8.dp),
-                                colors = ButtonDefaults.filledTonalButtonColors(
-                                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                                ),
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text(text = label)
-                            }
-                        } else {
-                            OutlinedButton(
-                                onClick = {
-                                    onUpdateCategory(category)
-                                    showCategoryPicker = false
-                                },
-                                shape = RoundedCornerShape(8.dp),
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text(text = label)
-                            }
-                        }
+                        NovelaFilterChip(
+                            label = label,
+                            selected = isSelected,
+                            onClick = {
+                                onUpdateCategory(category)
+                                showCategoryPicker = false
+                            },
+                        )
                     }
                 }
             },
             confirmButton = {
-                TextButton(
-                    onClick = { showCategoryPicker = false }
-                ) {
+                TextButton(onClick = { showCategoryPicker = false }) {
                     Text(text = stringResource(android.R.string.cancel))
                 }
-            }
+            },
         )
     }
 
-    // Export content choice dialog
     when (val ds = exportDialogState) {
         is ExportDialogState.ContentChoice -> {
             var selectedMode by rememberSaveable { mutableStateOf("original") }
@@ -547,12 +662,16 @@ internal fun ChaptersScreen(
 
             AlertDialog(
                 onDismissRequest = onExportDialogDismiss,
+                shape = RoundedCornerShape(NovelaRadius.sheet),
+                containerColor = colors.surfaceFloating,
                 title = {
-                    Text(text = stringResource(StringsR.string.export))
+                    Text(
+                        text = stringResource(StringsR.string.export),
+                        fontWeight = FontWeight.Bold,
+                    )
                 },
                 text = {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        // Original option
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         ExportContentOption(
                             text = stringResource(StringsR.string.export_original),
                             selected = selectedMode == "original",
@@ -560,10 +679,9 @@ internal fun ChaptersScreen(
                                 selectedMode = "original"
                                 selectedSourceLang = ""
                                 selectedTargetLang = ""
-                            }
+                            },
                         )
 
-                        // Translation options
                         ds.availableTranslations.forEach { pair ->
                             val modeKey = "translation_${pair.sourceLang}_${pair.targetLang}"
                             val isSelected = selectedMode == modeKey
@@ -571,42 +689,52 @@ internal fun ChaptersScreen(
                                 text = stringResource(
                                     StringsR.string.export_translation,
                                     pair.sourceLang,
-                                    pair.targetLang
+                                    pair.targetLang,
                                 ),
                                 selected = isSelected,
                                 onClick = {
                                     selectedMode = modeKey
                                     selectedSourceLang = pair.sourceLang
                                     selectedTargetLang = pair.targetLang
-                                }
+                                },
                             )
                         }
 
-                        // Folder line
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.fillMaxWidth()
+                        Surface(
+                            shape = RoundedCornerShape(NovelaRadius.md),
+                            color = colors.surfaceSubtle,
+                            border = BorderStroke(NovelaSize.hairline, colors.borderSubtle),
                         ) {
-                            Icon(
-                                Icons.Filled.FolderOpen,
-                                contentDescription = null,
-                                modifier = Modifier.padding(end = 8.dp)
-                            )
-                            Text(
-                                text = stringResource(
-                                    StringsR.string.export_folder,
-                                    ds.exportDirectoryName ?: stringResource(StringsR.string.not_set)
-                                ),
-                                style = MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier.weight(1f)
-                            )
-                            TextButton(onClick = { directoryPicker.launch(null) }) {
-                                Text(text = stringResource(StringsR.string.export_change_folder))
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                            ) {
+                                Icon(
+                                    Icons.Outlined.FolderOpen,
+                                    contentDescription = null,
+                                    tint = colors.accent,
+                                    modifier = Modifier.padding(end = 8.dp),
+                                )
+                                Text(
+                                    text = stringResource(
+                                        StringsR.string.export_folder,
+                                        ds.exportDirectoryName ?: stringResource(StringsR.string.not_set),
+                                    ),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = colors.textPrimary,
+                                    modifier = Modifier.weight(1f),
+                                )
+                                TextButton(onClick = { directoryPicker.launch(null) }) {
+                                    Text(
+                                        text = stringResource(StringsR.string.export_change_folder),
+                                        color = colors.accent,
+                                    )
+                                }
                             }
                         }
 
-                        // Stats — счётчик выбранного режима: скачанные тела для
-                        // оригинала, переведённые главы для выбранной пары.
                         val (shownDownloaded, shownTotal) = if (selectedMode == "original") {
                             ds.downloadedChapters to ds.totalChapters
                         } else {
@@ -620,65 +748,72 @@ internal fun ChaptersScreen(
                             text = stringResource(
                                 R.string.chapter_x_over_n,
                                 shownDownloaded,
-                                shownTotal
+                                shownTotal,
                             ),
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = colors.textMuted,
                         )
                     }
                 },
                 confirmButton = {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
-                        FilledTonalButton(
+                        NovelaSecondaryButton(
+                            text = stringResource(android.R.string.cancel),
                             onClick = onExportDialogDismiss,
-                            shape = RoundedCornerShape(8.dp),
-                            colors = ButtonDefaults.filledTonalButtonColors(
-                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                            ),
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text(
-                                text = stringResource(android.R.string.cancel),
-                                fontSize = 12.sp,
-                                textAlign = TextAlign.Center
-                            )
-                        }
-                        FilledTonalButton(
+                            modifier = Modifier.weight(1f),
+                        )
+                        NovelaPrimaryButton(
+                            text = stringResource(StringsR.string.export),
                             onClick = {
                                 val mode = if (selectedMode == "original") "original" else "translation"
                                 val source = if (selectedMode == "original") "" else selectedSourceLang
                                 val target = if (selectedMode == "original") "" else selectedTargetLang
                                 onExportContentChosen(mode, source, target)
                             },
-                            shape = RoundedCornerShape(8.dp),
-                            colors = ButtonDefaults.filledTonalButtonColors(
-                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                            ),
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text(
-                                text = stringResource(StringsR.string.export),
-                                fontSize = 12.sp,
-                                textAlign = TextAlign.Center
-                            )
-                        }
+                            modifier = Modifier.weight(1f),
+                        )
                     }
                 },
-                dismissButton = {}
+                dismissButton = {},
             )
         }
         ExportDialogState.NeedDirectory -> {
-            // Trigger folder picker, no dialog
             LaunchedEffect(Unit) {
                 directoryPicker.launch(null)
             }
         }
-        ExportDialogState.Hidden -> { /* no-op */ }
+        ExportDialogState.Hidden -> Unit
+    }
+}
+
+@Composable
+private fun TopBarCircleIcon(
+    isTranslucent: Boolean,
+    onClick: () -> Unit,
+    content: @Composable () -> Unit,
+) {
+    val colors = NovelaTheme.colors
+    if (isTranslucent) {
+        Surface(
+            onClick = onClick,
+            shape = CircleShape,
+            color = colors.coverBadgeBg,
+            border = BorderStroke(0.5.dp, colors.coverBadgeBorder),
+            modifier = Modifier
+                .padding(horizontal = 2.dp)
+                .size(38.dp),
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                content()
+            }
+        }
+    } else {
+        IconButton(onClick = onClick) {
+            content()
+        }
     }
 }
 
@@ -687,8 +822,8 @@ private class OpenDocumentTreeReadPersistent : ActivityResultContracts.OpenDocum
         return super.createIntent(context, input)
             .addFlags(
                 Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION or
-                        Intent.FLAG_GRANT_READ_URI_PERMISSION or
-                        Intent.FLAG_GRANT_PREFIX_URI_PERMISSION
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                    Intent.FLAG_GRANT_PREFIX_URI_PERMISSION
             )
     }
 }
@@ -699,26 +834,36 @@ private fun ExportContentOption(
     selected: Boolean,
     onClick: () -> Unit,
 ) {
-    if (selected) {
-        FilledTonalButton(
-            onClick = onClick,
-            shape = RoundedCornerShape(8.dp),
-            colors = ButtonDefaults.filledTonalButtonColors(
-                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-            ),
-            modifier = Modifier.fillMaxWidth()
+    val colors = NovelaTheme.colors
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(NovelaRadius.md),
+        color = if (selected) colors.accentSoft else colors.surfaceSubtle,
+        border = BorderStroke(
+            width = if (selected) 1.25.dp else NovelaSize.hairline,
+            color = if (selected) colors.accent else colors.borderSubtle,
+        ),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(text = text, modifier = Modifier.weight(1f))
-            Icon(Icons.Filled.Check, contentDescription = null)
-        }
-    } else {
-        OutlinedButton(
-            onClick = onClick,
-            shape = RoundedCornerShape(8.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(text = text)
+            Text(
+                text = text,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                color = if (selected) colors.accent else colors.textPrimary,
+                modifier = Modifier.weight(1f),
+            )
+            if (selected) {
+                Icon(
+                    imageVector = Icons.Rounded.Check,
+                    contentDescription = null,
+                    tint = colors.accent,
+                    modifier = Modifier.size(18.dp),
+                )
+            }
         }
     }
 }
