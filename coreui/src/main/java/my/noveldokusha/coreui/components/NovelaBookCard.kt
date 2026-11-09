@@ -45,6 +45,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import my.noveldokusha.coreui.AppTestTags
 import my.noveldokusha.coreui.R
 import my.noveldokusha.coreui.theme.NovelaMotion
 import my.noveldokusha.coreui.theme.NovelaRadius
@@ -52,7 +53,6 @@ import my.noveldokusha.coreui.theme.NovelaSize
 import my.noveldokusha.coreui.theme.NovelaSpacing
 import my.noveldokusha.coreui.theme.NovelaTheme
 import my.noveldokusha.coreui.theme.NovelaType
-import my.noveldokusha.coreui.uitesting.AppTestTags
 
 /**
  * Editorial WebNovel-style vertical book card with subtle press scale, optional unread count,
@@ -62,13 +62,14 @@ import my.noveldokusha.coreui.uitesting.AppTestTags
 @Composable
 fun NovelaBookCard(
     title: String,
-    coverImageModel: Any?,
+    coverImageModel: Any,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
     unreadCount: Int = 0,
     progress: Float? = null,
     selected: Boolean = false,
+    referer: String? = null,
     topStartBadge: (@Composable () -> Unit)? = null,
     topEndBadge: (@Composable () -> Unit)? = null,
     onLongClick: () -> Unit = {},
@@ -116,6 +117,7 @@ fun NovelaBookCard(
                 contentDescription = title,
                 modifier = Modifier.fillMaxSize(),
                 error = R.drawable.default_book_cover,
+                referer = referer,
             )
 
             if (unreadCount > 0 || (progress != null && progress > 0f)) {
@@ -226,13 +228,14 @@ fun NovelaBookCard(
 @Composable
 fun NovelaBookRow(
     title: String,
-    coverImageModel: Any?,
+    coverImageModel: Any,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
     caption: String? = null,
     rating: String? = null,
-    libraryBadgeState: LibraryBadgeState = LibraryBadgeState.None,
+    referer: String? = null,
+    topLeftBadge: (@Composable () -> Unit)? = null,
     rank: Int? = null,
     progress: Float? = null,
     onLongClick: () -> Unit = {},
@@ -278,14 +281,12 @@ fun NovelaBookRow(
                     contentDescription = title,
                     modifier = Modifier.fillMaxSize(),
                     error = R.drawable.default_book_cover,
+                    referer = referer,
                 )
-                if (libraryBadgeState != LibraryBadgeState.None) {
-                    InLibraryBadge(
-                        state = libraryBadgeState,
-                        modifier = Modifier
-                            .align(Alignment.TopStart)
-                            .padding(4.dp),
-                    )
+                if (topLeftBadge != null) {
+                    Box(modifier = Modifier.align(Alignment.TopStart)) {
+                        topLeftBadge()
+                    }
                 }
             }
 
@@ -311,7 +312,7 @@ fun NovelaBookRow(
                         text = subtitle,
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.textSecondary,
-                        maxLines = 1,
+                        maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
                 }

@@ -28,7 +28,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -45,45 +44,26 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import my.noveldokusha.core.appPreferences.SourceStripPosition
+import my.noveldokusha.coreui.AppTestTags
 import my.noveldokusha.coreui.R
-import my.noveldokusha.coreui.theme.ImageBorderShape
 import my.noveldokusha.coreui.theme.InternalTheme
 import my.noveldokusha.coreui.theme.NovelaMotion
 import my.noveldokusha.coreui.theme.NovelaRadius
 import my.noveldokusha.coreui.theme.NovelaSize
 import my.noveldokusha.coreui.theme.NovelaTheme
 import my.noveldokusha.coreui.theme.NovelaType
+import my.noveldokusha.coreui.theme.PreviewThemes
 import my.noveldokusha.coreui.theme.textPadding
-import my.noveldokusha.coreui.uitesting.AppTestTags
 
 enum class BookTitlePosition {
     Inside, Outside, Hidden
 }
 
-@Immutable
-private data class StripSizing(
-    val fontSize: TextUnit,
-    val badgeFontSize: TextUnit,
-    val titleFontSize: TextUnit,
-    val titleLineHeight: TextUnit,
-    val hPad: Dp,
-    val vPad: Dp,
-)
-
-private fun stripSizingFor(gridColumns: Int): StripSizing = when {
-    gridColumns <= 2 -> StripSizing(11.5.sp, 10.5.sp, 14.sp, 19.sp, 8.dp, 4.dp)
-    gridColumns == 3 -> StripSizing(10.5.sp, 10.sp, 13.sp, 17.5.sp, 6.dp, 3.dp)
-    gridColumns == 4 -> StripSizing(9.5.sp, 9.sp, 11.5.sp, 15.5.sp, 5.dp, 2.5.dp)
-    else -> StripSizing(8.5.sp, 8.5.sp, 10.5.sp, 14.sp, 4.dp, 2.dp)
-}
-
-internal fun String?.toContentTypeBadgeIcon(): Int = when (this) {
+/** Content type icon resolver (tested by ContentTypeBadgeTest). */
+fun String?.toContentTypeBadgeIcon(): Int = when (this) {
     "manga" -> R.drawable.ic_content_type_manga
     "video" -> R.drawable.ic_content_type_video
     else -> R.drawable.ic_content_type_novel
@@ -118,46 +98,48 @@ fun BookContentTypeBadge(
 
 /**
  * Primary WebNovel-inspired Book Cover Card used across Library, Source Catalog,
- * Global Search, Database Search, and Migration grids.
- *
- * Supports all three [SourceStripPosition] styles (`OnCover`, `BelowCover`, `InfoPanel`)
- * and all [BookTitlePosition] modes while maintaining test tag compatibility.
+ * Global Search, Database Search, Book Info Hero, and Migration grids.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun BookImageButtonView(
     title: String,
-    coverImageModel: Any?,
+    coverImageModel: Any,
     modifier: Modifier = Modifier,
     bookTitlePosition: BookTitlePosition = BookTitlePosition.Outside,
-    indication: Indication? = LocalIndication.current,
-    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    sourceName: String? = null,
-    unreadCount: Int = 0,
+    indication: Indication = LocalIndication.current,
+    interactionSource: MutableInteractionSource? = null,
+    topLeftBadge: (@Composable () -> Unit)? = null,
+    topRightBadge: (@Composable () -> Unit)? = null,
+    sourceStripUnreadCount: Int? = null,
+    sourceStripSourceName: String? = null,
     sourceStripPosition: SourceStripPosition = SourceStripPosition.BelowCover,
-    gridColumns: Int = 3,
+    forceCache: Boolean = false,
+    referer: String? = null,
+    fadeInDurationMillis: Int = 250,
     progressFraction: Float? = null,
-    topStartBadge: (@Composable () -> Unit)? = null,
-    topEndBadge: (@Composable () -> Unit)? = null,
     onClick: () -> Unit,
     onLongClick: () -> Unit = { },
 ) {
     val colors = NovelaTheme.colors
-    val hasStripContent = !sourceName.isNullOrBlank() || unreadCount > 0
-    val sizing = remember(gridColumns) { stripSizingFor(gridColumns) }
+    val rememberedInteractionSource = remember { MutableInteractionSource() }
+    val effectiveInteractionSource = interactionSource ?: rememberedInteractionSource
 
-    val isPressed by interactionSource.collectIsPressedAsState()
+    val unreadCount = sourceStripUnreadCount ?: 0
+    val hasStripContent = !sourceStripSourceName.isNullOrBlank() || unreadCount > 0
+    val showTitle = title.isNotBlank() && bookTitlePosition == BookTitlePosition.Outside
+    val isInfoPanel = sourceStripPosition == SourceStripPosition.InfoPanel
+
+    val isPressed by effectiveInteractionSource.collectIsPressedAsState()
     val scale by animateFloatAsState(
         targetValue = if (isPressed) 0.965f else 1f,
         animationSpec = tween(durationMillis = NovelaMotion.fastMs),
         label = "bookCardPressScale",
     )
 
-    val cardCorner = NovelaRadius.cover
-    val isInfoPanel = sourceStripPosition == SourceStripPosition.InfoPanel
-
-    val containerModifier = if (isInfoPanel) {
+    val cardModifier = if (isInfoPanel) {
         modifier
+            .testTag(AppTestTags.BOOK_IMAGE_BUTTON_VIEW)
             .graphicsLayer {
                 scaleX = scale
                 scaleY = scale
@@ -170,19 +152,21 @@ fun BookImageButtonView(
                 shape = RoundedCornerShape(NovelaRadius.md),
             )
     } else {
-        modifier.graphicsLayer {
-            scaleX = scale
-            scaleY = scale
-        }
+        modifier
+            .testTag(AppTestTags.BOOK_IMAGE_BUTTON_VIEW)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
     }
 
-    Column(modifier = containerModifier) {
-        val coverShape = if (isInfoPanel) {
-            RoundedCornerShape(topStart = NovelaRadius.md, topEnd = NovelaRadius.md)
-        } else {
-            RoundedCornerShape(cardCorner)
-        }
+    val coverShape = if (isInfoPanel && (showTitle || hasStripContent)) {
+        RoundedCornerShape(topStart = NovelaRadius.md, topEnd = NovelaRadius.md)
+    } else {
+        RoundedCornerShape(NovelaRadius.cover)
+    }
 
+    Column(modifier = cardModifier) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -202,27 +186,23 @@ fun BookImageButtonView(
                 )
                 .combinedClickable(
                     indication = indication,
-                    interactionSource = interactionSource,
+                    interactionSource = effectiveInteractionSource,
                     role = Role.Button,
                     onClick = onClick,
                     onLongClick = onLongClick,
                 )
-                .testTag(AppTestTags.BOOK_IMAGE_BUTTON_VIEW)
         ) {
             ImageView(
                 imageModel = coverImageModel,
                 contentDescription = title,
                 modifier = Modifier.fillMaxSize(),
+                fadeInDurationMillis = fadeInDurationMillis,
                 error = R.drawable.default_book_cover,
+                forceCache = forceCache,
+                referer = referer,
             )
 
-            // Inside-cover title gradient (used in horizontal rails like Global Search)
-            if (bookTitlePosition == BookTitlePosition.Inside) {
-                val bottomReserved = if (sourceStripPosition == SourceStripPosition.OnCover && hasStripContent) {
-                    24.dp
-                } else {
-                    0.dp
-                }
+            if (title.isNotBlank() && bookTitlePosition == BookTitlePosition.Inside) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -234,46 +214,48 @@ fun BookImageButtonView(
                                 1f to Color(0xEB07090F),
                             )
                         )
-                        .padding(
-                            top = 24.dp,
-                            bottom = 8.dp + bottomReserved,
-                            start = 7.dp,
-                            end = 7.dp,
-                        )
+                        .padding(top = 24.dp, bottom = 8.dp, start = 7.dp, end = 7.dp)
                 ) {
                     Text(
                         text = title,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
-                        style = NovelaType.bookCardTitle.copy(
-                            fontSize = sizing.titleFontSize,
-                            lineHeight = sizing.titleLineHeight,
-                            fontWeight = FontWeight.Bold,
-                        ),
+                        style = NovelaType.bookCardTitle.copy(fontWeight = FontWeight.Bold),
                         color = Color.White,
                     )
                 }
             }
 
-            // OnCover mode: dark frosted gradient bar along cover bottom
             if (sourceStripPosition == SourceStripPosition.OnCover && hasStripContent) {
-                OnCoverMetadataOverlay(
-                    sourceName = sourceName,
-                    unreadCount = unreadCount,
-                    sizing = sizing,
-                    modifier = Modifier.align(Alignment.BottomCenter),
-                )
-            } else if (unreadCount > 0 && bookTitlePosition == BookTitlePosition.Inside) {
-                UnreadCountCapsule(
-                    unreadCount = unreadCount,
-                    fontSize = sizing.badgeFontSize,
+                Row(
                     modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(6.dp),
-                )
+                        .fillMaxWidth()
+                        .align(Alignment.BottomCenter)
+                        .background(
+                            Brush.verticalGradient(
+                                0f to Color.Transparent,
+                                0.3f to Color(0x9E07090F),
+                                1f to Color(0xEB07090F),
+                            )
+                        )
+                        .padding(start = 7.dp, end = 7.dp, top = 12.dp, bottom = 5.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Text(
+                        text = sourceStripSourceName.orEmpty(),
+                        color = Color.White.copy(alpha = 0.90f),
+                        style = NovelaType.bookCardMeta.copy(fontSize = 10.sp),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f),
+                    )
+                    if (unreadCount > 0) {
+                        UnreadCountCapsule(unreadCount = unreadCount)
+                    }
+                }
             }
 
-            // Optional thin reading progress bar along bottom edge of cover
             if (progressFraction != null && progressFraction > 0f) {
                 Box(
                     modifier = Modifier
@@ -291,41 +273,37 @@ fun BookImageButtonView(
                 }
             }
 
-            if (topStartBadge != null) {
+            if (topLeftBadge != null) {
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopStart)
-                        .padding(6.dp)
+                        .padding(4.dp)
                 ) {
-                    topStartBadge()
+                    topLeftBadge()
                 }
             }
 
-            if (topEndBadge != null) {
+            if (topRightBadge != null) {
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .padding(6.dp)
+                        .padding(5.dp)
                 ) {
-                    topEndBadge()
+                    topRightBadge()
                 }
             }
         }
 
-        // BelowCover & InfoPanel metadata block
         when (sourceStripPosition) {
             SourceStripPosition.BelowCover -> {
-                if (bookTitlePosition == BookTitlePosition.Outside) {
+                if (showTitle) {
                     Spacer(Modifier.height(6.dp))
                     Text(
                         text = title,
                         maxLines = 2,
                         minLines = 2,
                         overflow = TextOverflow.Ellipsis,
-                        style = NovelaType.bookCardTitle.copy(
-                            fontSize = sizing.titleFontSize,
-                            lineHeight = sizing.titleLineHeight,
-                        ),
+                        style = NovelaType.bookCardTitle,
                         color = colors.textPrimary,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -335,54 +313,48 @@ fun BookImageButtonView(
                 if (hasStripContent) {
                     Spacer(Modifier.height(3.dp))
                     BelowCoverMetaRow(
-                        sourceName = sourceName,
+                        sourceName = sourceStripSourceName,
                         unreadCount = unreadCount,
-                        sizing = sizing,
                         modifier = Modifier.padding(horizontal = 2.dp),
                     )
                 }
             }
             SourceStripPosition.InfoPanel -> {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 8.dp, vertical = 7.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                ) {
-                    if (bookTitlePosition == BookTitlePosition.Outside) {
-                        Text(
-                            text = title,
-                            maxLines = 2,
-                            minLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                            style = NovelaType.bookCardTitle.copy(
-                                fontSize = sizing.titleFontSize,
-                                lineHeight = sizing.titleLineHeight,
-                            ),
-                            color = colors.textPrimary,
-                        )
-                    }
-                    if (hasStripContent) {
-                        BelowCoverMetaRow(
-                            sourceName = sourceName,
-                            unreadCount = unreadCount,
-                            sizing = sizing,
-                        )
+                if (showTitle || hasStripContent) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp, vertical = 7.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        if (showTitle) {
+                            Text(
+                                text = title,
+                                maxLines = 2,
+                                minLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                                style = NovelaType.bookCardTitle,
+                                color = colors.textPrimary,
+                            )
+                        }
+                        if (hasStripContent) {
+                            BelowCoverMetaRow(
+                                sourceName = sourceStripSourceName,
+                                unreadCount = unreadCount,
+                            )
+                        }
                     }
                 }
             }
             SourceStripPosition.OnCover -> {
-                if (bookTitlePosition == BookTitlePosition.Outside) {
+                if (showTitle) {
                     Spacer(Modifier.height(6.dp))
                     Text(
                         text = title,
                         maxLines = 2,
                         minLines = 2,
                         overflow = TextOverflow.Ellipsis,
-                        style = NovelaType.bookCardTitle.copy(
-                            fontSize = sizing.titleFontSize,
-                            lineHeight = sizing.titleLineHeight,
-                        ),
+                        style = NovelaType.bookCardTitle,
                         color = colors.textPrimary,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -395,53 +367,9 @@ fun BookImageButtonView(
 }
 
 @Composable
-private fun OnCoverMetadataOverlay(
-    sourceName: String?,
-    unreadCount: Int,
-    sizing: StripSizing,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(
-                Brush.verticalGradient(
-                    0f to Color.Transparent,
-                    0.3f to Color(0x9E07090F),
-                    1f to Color(0xEB07090F),
-                )
-            )
-            .padding(
-                start = sizing.hPad,
-                end = sizing.hPad,
-                top = 12.dp,
-                bottom = sizing.vPad + 2.dp,
-            ),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        Text(
-            text = sourceName.orEmpty(),
-            color = Color.White.copy(alpha = 0.90f),
-            style = NovelaType.bookCardMeta.copy(fontSize = sizing.fontSize),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f),
-        )
-        if (unreadCount > 0) {
-            UnreadCountCapsule(
-                unreadCount = unreadCount,
-                fontSize = sizing.badgeFontSize,
-            )
-        }
-    }
-}
-
-@Composable
 private fun BelowCoverMetaRow(
     sourceName: String?,
     unreadCount: Int,
-    sizing: StripSizing,
     modifier: Modifier = Modifier,
 ) {
     val colors = NovelaTheme.colors
@@ -454,7 +382,7 @@ private fun BelowCoverMetaRow(
             Text(
                 text = sourceName,
                 color = colors.textMuted,
-                style = NovelaType.bookCardMeta.copy(fontSize = sizing.fontSize),
+                style = NovelaType.bookCardMeta.copy(fontSize = 10.5.sp),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f),
@@ -463,10 +391,7 @@ private fun BelowCoverMetaRow(
             Spacer(Modifier.weight(1f))
         }
         if (unreadCount > 0) {
-            UnreadCountCapsule(
-                unreadCount = unreadCount,
-                fontSize = sizing.badgeFontSize,
-            )
+            UnreadCountCapsule(unreadCount = unreadCount)
         }
     }
 }
@@ -474,21 +399,21 @@ private fun BelowCoverMetaRow(
 @Composable
 private fun UnreadCountCapsule(
     unreadCount: Int,
-    fontSize: TextUnit,
     modifier: Modifier = Modifier,
 ) {
     val colors = NovelaTheme.colors
+    val label = if (unreadCount > 999) "999+" else unreadCount.toString()
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(NovelaRadius.pill),
         color = colors.accent,
     ) {
         Text(
-            text = unreadCount.toString(),
+            text = label,
             color = colors.onAccent,
             style = MaterialTheme.typography.labelSmall.copy(
-                fontSize = fontSize,
-                lineHeight = fontSize,
+                fontSize = 10.sp,
+                lineHeight = 11.sp,
                 fontWeight = FontWeight.Bold,
             ),
             maxLines = 1,
@@ -539,30 +464,29 @@ fun BookTitleMetadata(
     }
 }
 
-@Preview
+@PreviewThemes
 @Composable
 private fun PreviewView() {
     InternalTheme {
-        Row {
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             BookImageButtonView(
                 title = "Shadow Slave",
-                coverImageModel = null,
+                coverImageModel = "",
                 onClick = { },
                 onLongClick = { },
-                sourceName = "WebNovel",
-                unreadCount = 12,
-                bookTitlePosition = BookTitlePosition.Outside,
+                sourceStripUnreadCount = 12,
+                sourceStripSourceName = "WebNovel",
+                sourceStripPosition = SourceStripPosition.BelowCover,
                 modifier = Modifier.weight(1f)
             )
             BookImageButtonView(
                 title = "Lord of the Mysteries: Circle of Inevitability",
-                coverImageModel = null,
+                coverImageModel = "",
                 onClick = { },
                 onLongClick = { },
-                sourceName = "RoyalRoad",
-                unreadCount = 3,
+                sourceStripUnreadCount = 3,
+                sourceStripSourceName = "RoyalRoad",
                 sourceStripPosition = SourceStripPosition.InfoPanel,
-                bookTitlePosition = BookTitlePosition.Outside,
                 modifier = Modifier.weight(1f)
             )
         }
