@@ -150,9 +150,11 @@ fun NovelaSectionHeader(
     modifier: Modifier = Modifier,
     badgeText: String? = null,
     actionLabel: String? = null,
+    actionText: String? = null,
     onActionClick: (() -> Unit)? = null,
 ) {
     val colors = NovelaTheme.colors
+    val resolvedAction = actionLabel ?: actionText
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -188,9 +190,9 @@ fun NovelaSectionHeader(
             }
         }
         Spacer(Modifier.weight(1f))
-        if (actionLabel != null && onActionClick != null) {
+        if (resolvedAction != null && onActionClick != null) {
             Text(
-                text = actionLabel,
+                text = resolvedAction,
                 style = MaterialTheme.typography.labelLarge,
                 color = colors.accent,
                 modifier = Modifier
@@ -563,11 +565,13 @@ fun NovelaEmptyState(
     subtitle: String? = null,
     icon: ImageVector? = null,
     actionLabel: String? = null,
+    actionText: String? = null,
     onActionClick: (() -> Unit)? = null,
     onAction: (() -> Unit)? = null,
 ) {
     val colors = NovelaTheme.colors
     val body = subtitle?.takeIf { it.isNotBlank() } ?: message
+    val resolvedAction = actionLabel ?: actionText
     val actionHandler = onActionClick ?: onAction
 
     Column(
@@ -611,10 +615,10 @@ fun NovelaEmptyState(
                 textAlign = TextAlign.Center,
             )
         }
-        if (actionLabel != null && actionHandler != null) {
+        if (resolvedAction != null && actionHandler != null) {
             Spacer(Modifier.height(NovelaSpacing.xl))
             NovelaPrimaryButton(
-                text = actionLabel,
+                text = resolvedAction,
                 onClick = actionHandler,
             )
         }

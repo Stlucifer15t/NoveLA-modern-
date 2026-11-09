@@ -232,6 +232,7 @@ fun NovelaBookRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
+    description: String? = null,
     caption: String? = null,
     rating: String? = null,
     referer: String? = null,
@@ -243,6 +244,7 @@ fun NovelaBookRow(
 ) {
     val colors = NovelaTheme.colors
     val coverShape = RoundedCornerShape(NovelaRadius.sm)
+    val resolvedSubtitle = subtitle ?: description
 
     Surface(
         shape = RoundedCornerShape(NovelaRadius.card),
@@ -307,9 +309,9 @@ fun NovelaBookRow(
                 if (!rating.isNullOrBlank()) {
                     BookRatingChip(rating = rating)
                 }
-                if (!subtitle.isNullOrBlank()) {
+                if (!resolvedSubtitle.isNullOrBlank()) {
                     Text(
-                        text = subtitle,
+                        text = resolvedSubtitle,
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.textSecondary,
                         maxLines = 2,

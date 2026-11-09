@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.luminance
 @Immutable
 data class NovelaColors(
     // Core surfaces & borders
+    val background: Color,
     val surfaceSubtle: Color,
     val surfaceCard: Color,
     val surfaceElevated: Color,
@@ -63,6 +64,15 @@ data class NovelaColors(
     val isDark: Boolean,
     val isLight: Boolean,
 ) {
+    val surfaceMuted: Color
+        get() = surfaceSubtle
+
+    val goldStar: Color
+        get() = starGold
+
+    val goldStarSoft: Color
+        get() = starGoldSoft
+
     val ctaBrush: Brush
         get() = Brush.horizontalGradient(
             colors = listOf(
@@ -118,6 +128,7 @@ internal fun deriveNovelaColors(
     val success = if (isDark) Color(0xFF34D399) else Color(0xFF059669)
 
     return NovelaColors(
+        background = scheme.background,
         surfaceSubtle = surfaceSubtle,
         surfaceCard = surfaceCard,
         surfaceElevated = surfaceElevated,
@@ -164,6 +175,7 @@ internal fun deriveNovelaColors(
 
 val LocalNovelaColors = staticCompositionLocalOf {
     NovelaColors(
+        background = Color(0xFF0E1117),
         surfaceSubtle = Color(0xFF151821),
         surfaceCard = Color(0xFF171A24),
         surfaceElevated = Color(0xFF1C202C),

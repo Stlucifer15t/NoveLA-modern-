@@ -118,6 +118,7 @@ fun BookImageButtonView(
     referer: String? = null,
     fadeInDurationMillis: Int = 250,
     progressFraction: Float? = null,
+    selected: Boolean = false,
     onClick: () -> Unit,
     onLongClick: () -> Unit = { },
 ) {
@@ -147,8 +148,8 @@ fun BookImageButtonView(
             .clip(RoundedCornerShape(NovelaRadius.md))
             .background(colors.surfaceCard)
             .border(
-                width = NovelaSize.hairline,
-                color = colors.borderSubtle,
+                width = if (selected) 2.dp else NovelaSize.hairline,
+                color = if (selected) colors.accent else colors.borderSubtle,
                 shape = RoundedCornerShape(NovelaRadius.md),
             )
     } else {

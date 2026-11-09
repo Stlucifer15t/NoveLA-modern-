@@ -78,7 +78,6 @@ import my.noveldokusha.tooling.novel_migration.ui.MigrationOptionsDialog
 import my.noveldokusha.tooling.novel_migration.ui.MigrationResultsScreen
 import my.noveldokusha.tooling.novel_migration.ui.MigrationUiState
 import my.noveldokusha.tooling.novel_migration.ui.MigrationViewModel
-import my.noveldokusha.tooling.novel_migration.ui.resolveName
 
 private enum class MigrationStep {
     BOOK_PICKER,

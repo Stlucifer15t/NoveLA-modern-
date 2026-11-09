@@ -45,7 +45,9 @@ object NovelaRadius {
 
     val cover: Dp = 10.dp
     val coverHero: Dp = 12.dp
+    val badge: Dp = 8.dp
     val card: Dp = 16.dp
+    val cardLarge: Dp = 20.dp
     val sheet: Dp = 24.dp
 
     val coverShape = RoundedCornerShape(cover)
