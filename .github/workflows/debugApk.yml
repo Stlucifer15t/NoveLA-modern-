@@ -1,6 +1,9 @@
 name: Debug APK
 
 on:
+  push:
+    branches:
+      - "arena/**"
   workflow_dispatch:
     inputs:
       ref:
