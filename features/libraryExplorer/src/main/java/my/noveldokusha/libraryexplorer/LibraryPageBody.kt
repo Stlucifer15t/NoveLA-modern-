@@ -4,13 +4,13 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleOut
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -19,22 +19,21 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Book
-import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.outlined.AutoStories
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil3.SingletonImageLoader
@@ -44,12 +43,16 @@ import coil3.request.CachePolicy
 import coil3.request.ImageRequest
 import my.noveldokusha.core.AppFileResolver
 import my.noveldokusha.core.appPreferences.SourceStripPosition
+import my.noveldokusha.core.rememberResolvedBookImagePath
 import my.noveldokusha.core.utils.refererFor
 import my.noveldokusha.coreui.R
+import my.noveldokusha.coreui.components.BookContentTypeBadge
 import my.noveldokusha.coreui.components.BookImageButtonView
 import my.noveldokusha.coreui.components.BookRatingBadge
-import my.noveldokusha.coreui.components.toContentTypeBadgeIcon
-import my.noveldokusha.core.rememberResolvedBookImagePath
+import my.noveldokusha.coreui.components.NovelaEmptyState
+import my.noveldokusha.coreui.theme.NovelaRadius
+import my.noveldokusha.coreui.theme.NovelaSpacing
+import my.noveldokusha.coreui.theme.NovelaTheme
 import my.noveldokusha.feature.local_database.BookWithContext
 
 @Composable
@@ -58,113 +61,129 @@ internal fun LibraryPageBody(
     onClick: (BookWithContext) -> Unit,
     onLongClick: (BookWithContext) -> Unit,
     getSourceName: (String) -> String,
-    // Количество колонок: от 2 до 6, дефолт 3
     gridColumns: Int = 3,
-    // Позиция полосы источника: кромка обложки (OnCover) или плашка под обложкой (BelowCover)
     sourceStripPosition: SourceStripPosition = SourceStripPosition.BelowCover,
     selectedBooks: Map<String, Boolean> = emptyMap(),
     isSelectionMode: Boolean = false,
     pendingRemoval: Set<String> = emptySet(),
     gridState: LazyGridState = rememberLazyGridState(),
-    // bookUrl → переведённое название новеллы (берётся из BookTranslation).
-    // Пустая/отсутствующая запись = показываем оригинал.
     translatedTitles: Map<String, String> = emptyMap(),
+    onImportEpub: (() -> Unit)? = null,
 ) {
+    val colors = NovelaTheme.colors
+
     if (list.isEmpty()) {
         Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(bottom = 88.dp),
+            contentAlignment = Alignment.Center,
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Icon(
-                    imageVector = Icons.Filled.Book,
-                    contentDescription = null,
-                    modifier = Modifier.size(64.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                )
-                Spacer(Modifier.height(16.dp))
-                Text(
-                    text = stringResource(R.string.no_books_in_library),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+            NovelaEmptyState(
+                icon = Icons.Outlined.AutoStories,
+                title = stringResource(R.string.no_books_in_library),
+                actionLabel = if (onImportEpub != null) stringResource(R.string.import_epub) else null,
+                onActionClick = onImportEpub,
+            )
         }
     } else {
         LazyVerticalGrid(
             state = gridState,
             columns = GridCells.Fixed(gridColumns.coerceIn(2, 6)),
-            contentPadding = PaddingValues(top = 4.dp, bottom = 100.dp, start = 4.dp, end = 4.dp),
+            contentPadding = PaddingValues(
+                top = NovelaSpacing.sm,
+                bottom = 120.dp,
+                start = NovelaSpacing.gridHorizontal,
+                end = NovelaSpacing.gridHorizontal,
+            ),
+            horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.gridGutter),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             items(
                 items = list,
                 key = { it.book.url },
-                contentType = { "book" }
-            ) {
-                val isSelected = selectedBooks[it.book.url] ?: false
-                val isRemoving = it.book.url in pendingRemoval
+                contentType = { "book" },
+            ) { item ->
+                val isSelected = selectedBooks[item.book.url] ?: false
+                val isRemoving = item.book.url in pendingRemoval
+
                 AnimatedVisibility(
                     visible = !isRemoving,
-                    exit = fadeOut(animationSpec = tween(300)) + scaleOut(animationSpec = tween(300))
+                    exit = fadeOut(animationSpec = tween(260)) + scaleOut(animationSpec = tween(260)),
                 ) {
                     Box {
-                        val notReadCount = (it.chaptersCount - it.chaptersReadCount).coerceAtLeast(0)
+                        val notReadCount = (item.chaptersCount - item.chaptersReadCount).coerceAtLeast(0)
+                        val progress = if (item.chaptersCount > 0 && item.chaptersReadCount > 0) {
+                            item.chaptersReadCount.toFloat() / item.chaptersCount.toFloat()
+                        } else {
+                            null
+                        }
+
                         BookImageButtonView(
-                            title = translatedTitles[it.book.url]?.takeIf { t -> t.isNotBlank() } ?: it.book.title,
+                            title = translatedTitles[item.book.url]?.takeIf { t -> t.isNotBlank() }
+                                ?: item.book.title,
                             coverImageModel = rememberResolvedBookImagePath(
-                                bookUrl = it.book.url,
-                                imagePath = it.book.coverImageUrl
+                                bookUrl = item.book.url,
+                                imagePath = item.book.coverImageUrl,
                             ),
-                            onClick = { onClick(it) },
-                            onLongClick = { onLongClick(it) },
+                            onClick = { onClick(item) },
+                            onLongClick = { onLongClick(item) },
                             sourceStripUnreadCount = notReadCount,
-                            sourceStripSourceName = getSourceName(it.book.url),
+                            sourceStripSourceName = getSourceName(item.book.url),
                             sourceStripPosition = sourceStripPosition,
-                            fadeInDurationMillis = 250,
+                            progressFraction = progress,
+                            fadeInDurationMillis = 220,
                             topLeftBadge = {
-                                Box(
-                                    modifier = Modifier
-                                        .padding(4.dp)
-                                        .size(20.dp)
-                                        .clip(CircleShape)
-                                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.75f)),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        painter = painterResource(it.book.contentType.toContentTypeBadgeIcon()),
-                                        contentDescription = null,
-                                        modifier = Modifier.size(12.dp),
-                                        tint = MaterialTheme.colorScheme.onPrimary
-                                    )
-                                }
+                                BookContentTypeBadge(contentType = item.book.contentType)
                             },
-                            topRightBadge = { BookRatingBadge(rating = it.book.rating) },
-                            forceCache = true
+                            topRightBadge = if (isSelectionMode) {
+                                {
+                                    Surface(
+                                        shape = CircleShape,
+                                        color = if (isSelected) colors.accent else colors.coverBadgeBg,
+                                        border = BorderStroke(
+                                            width = 1.5.dp,
+                                            color = if (isSelected) Color.White else Color.White.copy(alpha = 0.7f),
+                                        ),
+                                        modifier = Modifier.size(24.dp),
+                                    ) {
+                                        if (isSelected) {
+                                            Box(contentAlignment = Alignment.Center) {
+                                                Icon(
+                                                    imageVector = Icons.Rounded.Check,
+                                                    contentDescription = null,
+                                                    tint = colors.onAccent,
+                                                    modifier = Modifier.size(15.dp),
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            } else if (item.book.rating.isNotBlank()) {
+                                { BookRatingBadge(rating = item.book.rating) }
+                            } else null,
+                            forceCache = true,
                         )
 
-                        // Selection overlay
                         if (isSelectionMode && isSelected) {
                             Box(
                                 modifier = Modifier
                                     .matchParentSize()
-                                    .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.5f))
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.CheckCircle,
-                                    contentDescription = stringResource(R.string.selected),
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier
-                                        .align(Alignment.Center)
-                                        .size(48.dp)
-                                )
-                            }
+                                    .clip(RoundedCornerShape(NovelaRadius.cover))
+                                    .background(colors.accent.copy(alpha = 0.14f))
+                                    .border(
+                                        width = 2.dp,
+                                        color = colors.accent,
+                                        shape = RoundedCornerShape(NovelaRadius.cover),
+                                    )
+                            )
                         }
                     }
                 }
             }
         }
+
         // Prefetch next images while scrolling to avoid decode spikes
-        // ponytail: track all disposables — previous code leaked 4 of 5 prefetch requests
         val context = LocalContext.current
         val imageLoader = SingletonImageLoader.get(context)
         val appFileResolver = remember(context) { AppFileResolver(context) }
@@ -181,15 +200,19 @@ internal fun LibraryPageBody(
                 for (i in startIndex until endIndex) {
                     val book = list[i]
                     val request = ImageRequest.Builder(context)
-                        .data(appFileResolver.resolvedBookImagePath(
-                            bookUrl = book.book.url,
-                            imagePath = book.book.coverImageUrl
-                        ))
+                        .data(
+                            appFileResolver.resolvedBookImagePath(
+                                bookUrl = book.book.url,
+                                imagePath = book.book.coverImageUrl,
+                            )
+                        )
                         .memoryCachePolicy(CachePolicy.ENABLED)
                         .diskCachePolicy(CachePolicy.ENABLED)
                         .apply {
                             val url = book.book.coverImageUrl
-                            val referer = url?.takeIf { it.startsWith("http://") || it.startsWith("https://") }?.let(::refererFor)
+                            val referer = url
+                                ?.takeIf { it.startsWith("http://") || it.startsWith("https://") }
+                                ?.let(::refererFor)
                             if (!referer.isNullOrEmpty()) {
                                 httpHeaders(
                                     NetworkHeaders.Builder()
@@ -205,5 +228,3 @@ internal fun LibraryPageBody(
         }
     }
 }
-
-

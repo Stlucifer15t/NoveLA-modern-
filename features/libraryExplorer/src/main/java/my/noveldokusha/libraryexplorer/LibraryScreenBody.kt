@@ -1,32 +1,35 @@
 package my.noveldokusha.libraryexplorer
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.outlined.DeleteOutline
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -35,26 +38,29 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import my.noveldokusha.core.appPreferences.SourceStripPosition
+import my.noveldokusha.core.domain.LibraryCategory
 import my.noveldokusha.coreui.R
 import my.noveldokusha.coreui.components.NovelaFilterChip
+import my.noveldokusha.coreui.theme.NovelaRadius
 import my.noveldokusha.coreui.theme.NovelaSpacing
-import my.noveldokusha.core.domain.LibraryCategory
+import my.noveldokusha.coreui.theme.NovelaTheme
 import my.noveldokusha.feature.local_database.BookWithContext
 
 @OptIn(
     ExperimentalFoundationApi::class,
     ExperimentalMaterial3Api::class,
-    ExperimentalLayoutApi::class
+    ExperimentalLayoutApi::class,
 )
 @Composable
 internal fun LibraryScreenBody(
@@ -63,7 +69,6 @@ internal fun LibraryScreenBody(
     onBookClick: (BookWithContext) -> Unit,
     onBookLongClick: (BookWithContext) -> Unit,
     gridColumns: Int = 3,
-    // Позиция полосы источника на карточке книги (кромка обложки / плашка под обложкой)
     sourceStripPosition: SourceStripPosition = SourceStripPosition.BelowCover,
     selectedBooks: Map<String, Boolean> = emptyMap(),
     isSelectionMode: Boolean = false,
@@ -72,8 +77,10 @@ internal fun LibraryScreenBody(
     customCategories: List<String> = emptyList(),
     onCreateCategory: () -> Unit = {},
     onDeleteCategory: (String) -> Unit = {},
+    onImportEpub: (() -> Unit)? = null,
     viewModel: LibraryPageViewModel = viewModel(),
 ) {
+    val colors = NovelaTheme.colors
     val pullToRefreshState = rememberPullToRefreshState()
     val gridState = rememberLazyGridState()
     var showDeleteCategoryPicker by remember { mutableStateOf(false) }
@@ -85,17 +92,19 @@ internal fun LibraryScreenBody(
             viewModel.onLibraryCategoryRefresh(LibraryCategory.DEFAULT)
         },
         state = pullToRefreshState,
-        modifier = Modifier.padding(innerPadding)
+        modifier = Modifier.padding(innerPadding),
     ) {
-        Column {
-            // Category filter chips (like LanguageFilterChips in Finder)
-            if (showCategories) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            AnimatedVisibility(
+                visible = showCategories,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically(),
+            ) {
                 val selectedCategories by viewModel.selectedCategories.collectAsStateWithLifecycle()
                 val catCounts by viewModel.categoryCounts
                 val allCategories = buildList {
                     add("" to stringResource(R.string.reading))
                     add("Completed" to stringResource(R.string.completed))
-                    // Пользовательские категории — по алфавиту, после системных
                     customCategories.sorted().forEach { cat ->
                         add(cat to cat)
                     }
@@ -104,50 +113,48 @@ internal fun LibraryScreenBody(
 
                 FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.sm),
-                    verticalArrangement = Arrangement.spacedBy(NovelaSpacing.xs),
+                    verticalArrangement = Arrangement.spacedBy(NovelaSpacing.xs + 2.dp),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = NovelaSpacing.screenH, vertical = NovelaSpacing.sm)
+                        .padding(horizontal = NovelaSpacing.screenH, vertical = NovelaSpacing.sm),
                 ) {
-                    // "All" chip
                     NovelaFilterChip(
-                        label = "${stringResource(R.string.all_categories)} ($totalCount)",
+                        label = stringResource(R.string.all_categories),
+                        count = totalCount,
                         selected = selectedCategories.isEmpty(),
                         onClick = { viewModel.clearCategoryFilters() },
                     )
-                    // Category chips
                     allCategories.forEach { (category, label) ->
                         val count = catCounts[category] ?: 0
                         val isSelected = category in selectedCategories
                         NovelaFilterChip(
-                            label = "$label ($count)",
+                            label = label,
+                            count = count,
                             selected = isSelected,
                             onClick = { viewModel.toggleCategory(category) },
                         )
                     }
-                    // "+" chip
                     NovelaFilterChip(
                         label = stringResource(R.string.create_category),
                         selected = false,
                         onClick = onCreateCategory,
-                        leadingIcon = Icons.Filled.Add,
+                        leadingIcon = Icons.Rounded.Add,
                     )
-                    // Delete chip (only when custom categories exist)
                     if (customCategories.isNotEmpty()) {
                         NovelaFilterChip(
                             label = stringResource(R.string.delete_category),
                             selected = false,
                             onClick = { showDeleteCategoryPicker = true },
-                            leadingIcon = Icons.Filled.Delete,
+                            leadingIcon = Icons.Outlined.DeleteOutline,
                         )
                     }
                 }
             }
 
-            // Single list filtered by selected categories
             val list by viewModel.filteredList
             val sources by viewModel.luaSources.collectAsStateWithLifecycle()
             val translatedTitles by viewModel.translatedTitles.collectAsStateWithLifecycle()
+
             if (viewModel.isLibraryLoaded) {
                 LibraryPageBody(
                     list = list,
@@ -161,62 +168,55 @@ internal fun LibraryScreenBody(
                     pendingRemoval = pendingRemoval,
                     gridState = gridState,
                     translatedTitles = translatedTitles,
+                    onImportEpub = onImportEpub,
                 )
             } else {
                 Box(
                     modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
-                    CircularProgressIndicator()
+                    CircularProgressIndicator(color = colors.accent)
                 }
             }
         }
     }
 
-    // Delete category picker dialog (choose which category to delete)
     if (showDeleteCategoryPicker && customCategories.isNotEmpty()) {
         AlertDialog(
             onDismissRequest = { showDeleteCategoryPicker = false },
+            shape = RoundedCornerShape(NovelaRadius.sheet),
             title = {
                 Text(
                     text = stringResource(R.string.delete_category),
-                    style = MaterialTheme.typography.titleLarge
+                    style = MaterialTheme.typography.titleLarge,
                 )
             },
             text = {
-                Column(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = "Select a category to delete:",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                    HorizontalDivider()
-                    LazyColumn(
-                        modifier = Modifier.height(200.dp)
-                    ) {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    HorizontalDivider(color = colors.borderSubtle)
+                    LazyColumn(modifier = Modifier.heightIn(max = 240.dp)) {
                         items(customCategories) { category ->
-                            androidx.compose.material3.ListItem(
+                            ListItem(
                                 headlineContent = {
                                     Text(
                                         text = category,
                                         style = MaterialTheme.typography.bodyLarge,
-                                        color = MaterialTheme.colorScheme.error
+                                        color = colors.danger,
                                     )
                                 },
                                 leadingContent = {
                                     Icon(
-                                        Icons.Filled.Delete,
+                                        Icons.Outlined.DeleteOutline,
                                         contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.error
+                                        tint = colors.danger,
                                     )
                                 },
-                                modifier = Modifier.clickable {
-                                    showDeleteCategoryPicker = false
-                                    showDeleteCategoryConfirm = category
-                                }
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(NovelaRadius.sm))
+                                    .clickable {
+                                        showDeleteCategoryPicker = false
+                                        showDeleteCategoryConfirm = category
+                                    },
                             )
                         }
                     }
@@ -226,24 +226,24 @@ internal fun LibraryScreenBody(
                 TextButton(onClick = { showDeleteCategoryPicker = false }) {
                     Text(stringResource(R.string.cancel))
                 }
-            }
+            },
         )
     }
 
-    // Delete category confirmation dialog
     showDeleteCategoryConfirm?.let { category ->
         AlertDialog(
             onDismissRequest = { showDeleteCategoryConfirm = null },
+            shape = RoundedCornerShape(NovelaRadius.sheet),
             title = {
                 Text(
                     text = stringResource(R.string.delete_category),
-                    style = MaterialTheme.typography.titleLarge
+                    style = MaterialTheme.typography.titleLarge,
                 )
             },
             text = {
                 Text(
                     text = stringResource(R.string.category_delete_confirm, category),
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
                 )
             },
             confirmButton = {
@@ -251,21 +251,19 @@ internal fun LibraryScreenBody(
                     onClick = {
                         onDeleteCategory(category)
                         showDeleteCategoryConfirm = null
-                    }
+                    },
                 ) {
                     Text(
                         stringResource(R.string.delete),
-                        color = MaterialTheme.colorScheme.error
+                        color = colors.danger,
                     )
                 }
             },
             dismissButton = {
-                TextButton(
-                    onClick = { showDeleteCategoryConfirm = null }
-                ) {
+                TextButton(onClick = { showDeleteCategoryConfirm = null }) {
                     Text(stringResource(R.string.cancel))
                 }
-            }
+            },
         )
     }
 }
