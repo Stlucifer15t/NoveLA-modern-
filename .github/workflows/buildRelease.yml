@@ -33,12 +33,41 @@ jobs:
         uses: gradle/actions/setup-gradle@v6.3.0
 
       - name: Setup APK signing
+        env:
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+          KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
+          ALIAS: ${{ secrets.ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          echo -n ${{ secrets.SIGNING_KEY }} | base64 -d > app/storeFile.jks
-          echo storeFile=storeFile.jks          > custom.properties
-          echo storePassword=${{ secrets.KEY_STORE_PASSWORD }} >> custom.properties
-          echo keyAlias=${{ secrets.ALIAS }}    >> custom.properties
-          echo keyPassword=${{ secrets.KEY_PASSWORD }} >> custom.properties
+          CLEAN_KEY="$(printf '%s' "$SIGNING_KEY" | tr -d '[:space:]')"
+          if [ -n "$CLEAN_KEY" ]; then
+            echo "Using repository SIGNING_KEY secret..."
+            printf '%s' "$CLEAN_KEY" | base64 -d > app/storeFile.jks
+            STORE_PASS="${KEY_STORE_PASSWORD}"
+            KEY_ALIAS="${ALIAS:-novela}"
+            KEY_PASS="${KEY_PASSWORD:-$KEY_STORE_PASSWORD}"
+          else
+            echo "SIGNING_KEY secret not set; generating fallback PKCS12 keystore..."
+            STORE_PASS="novela_ci_keystore"
+            KEY_ALIAS="novela"
+            KEY_PASS="novela_ci_keystore"
+            keytool -genkeypair -v \
+              -keystore app/storeFile.jks \
+              -storetype PKCS12 \
+              -keyalg RSA \
+              -keysize 2048 \
+              -validity 10000 \
+              -alias "$KEY_ALIAS" \
+              -storepass "$STORE_PASS" \
+              -keypass "$KEY_PASS" \
+              -dname "CN=NoveLA, OU=Android, O=NoveLA, L=Lagos, ST=Lagos, C=NG"
+          fi
+          {
+            echo "storeFile=storeFile.jks"
+            echo "storePassword=${STORE_PASS}"
+            echo "keyAlias=${KEY_ALIAS}"
+            echo "keyPassword=${KEY_PASS}"
+          } > custom.properties
 
       - name: Remove local Java home from gradle.properties
         run: sed -i '/org\.gradle\.java\.home/d' gradle.properties
@@ -60,9 +89,6 @@ jobs:
           mkdir -p release-artifacts
           find app/build/outputs/apk/release -maxdepth 1 -name '*.apk' \
             -exec cp {} release-artifacts/ \;
-          # R8 mapping — нужен для деобфускации стекрейсов крашей.
-          # Имя уникально на коммит, чтобы сборки не затирали mapping друг друга.
-          # Пакуем в gzip — 132 МБ текста сжимаются ~10x
           if [ -f app/build/outputs/mapping/release/mapping.txt ]; then
             gzip -9 -c app/build/outputs/mapping/release/mapping.txt > "release-artifacts/mapping-${SHORT_SHA}.txt.gz"
           fi
@@ -100,4 +126,3 @@ jobs:
             ## Screenshots
             [ССЫЛКИ НА ИЗОБРАЖЕНИЯ]
           files: release-artifacts/*
-          # mapping-<sha>.txt.gz (R8) лежит рядом с APK — для деобфускации крашей
