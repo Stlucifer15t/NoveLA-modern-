@@ -89,26 +89,46 @@ jobs:
       - name: Assemble Debug APK
         run: |
           set -o pipefail
-          if ! ./gradlew assembleDebug --stacktrace 2>&1 | tee debug-build.log; then
-            grep -E "(^e: |FAILURE:|What went wrong:|^\* |> |Exception:|Error:|Unresolved)" debug-build.log | head -n 35 | while IFS= read -r line; do
-              echo "::error title=AssembleDebug::${line}"
-            done
+          if ! ./gradlew assembleDebug --continue 2>&1 | tee debug-build.log; then
+            python3 - <<'PY'
+          import pathlib
+          lines = pathlib.Path("debug-build.log").read_text(errors="replace").splitlines()
+          out = [l for l in lines if l.startswith("e: ") or l.endswith(" FAILED")]
+          for i, l in enumerate(lines):
+              if "What went wrong:" in l:
+                  out.extend(lines[i:i+30])
+                  break
+          if not out:
+              out = lines[-40:]
+          msg = "\n".join(out[:80]).replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+          print(f"::error title=DebugBuildFailure::{msg}")
+          PY
             exit 1
           fi
 
       - name: Assemble Signed Release APK
         run: |
           set -o pipefail
-          if ! ./gradlew assembleRelease -PlocalPropertiesFilePath=custom.properties --stacktrace 2>&1 | tee release-build.log; then
-            grep -E "(^e: |FAILURE:|What went wrong:|^\* |> |Exception:|Error:|Missing class|Lint found)" release-build.log | head -n 40 | while IFS= read -r line; do
-              echo "::error title=AssembleRelease::${line}"
-            done
+          if ! ./gradlew assembleRelease -PlocalPropertiesFilePath=custom.properties 2>&1 | tee release-build.log; then
+            python3 - <<'PY'
+          import pathlib
+          lines = pathlib.Path("release-build.log").read_text(errors="replace").splitlines()
+          out = [l for l in lines if l.startswith("e: ") or l.endswith(" FAILED") or "Missing class" in l]
+          for i, l in enumerate(lines):
+              if "What went wrong:" in l:
+                  out.extend(lines[i:i+35])
+                  break
+          if not out:
+              out = lines[-40:]
+          msg = "\n".join(out[:80]).replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+          print(f"::error title=ReleaseBuildFailure::{msg}")
+          PY
             exit 1
           fi
 
       - name: Run unit tests
         continue-on-error: true
-        run: ./gradlew testDebugUnitTest --stacktrace
+        run: ./gradlew testDebugUnitTest
 
       - name: Collect APKs
         run: |
