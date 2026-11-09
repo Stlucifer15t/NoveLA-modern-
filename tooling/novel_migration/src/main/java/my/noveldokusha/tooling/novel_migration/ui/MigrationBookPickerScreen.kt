@@ -1,29 +1,57 @@
 package my.noveldokusha.tooling.novel_migration.ui
 
-import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.layout.PaddingValues
+import my.noveldokusha.core.appPreferences.SourceStripPosition
 import my.noveldokusha.core.rememberResolvedBookImagePath
 import my.noveldokusha.coreui.components.BookImageButtonView
-import my.noveldokusha.core.appPreferences.SourceStripPosition
-import my.noveldokusha.coreui.components.MyButton
+import my.noveldokusha.coreui.components.NovelaFilterChip
+import my.noveldokusha.coreui.components.NovelaPrimaryButton
+import my.noveldokusha.coreui.theme.NovelaRadius
+import my.noveldokusha.coreui.theme.NovelaSize
+import my.noveldokusha.coreui.theme.NovelaSpacing
+import my.noveldokusha.coreui.theme.NovelaTheme
+import my.noveldokusha.coreui.theme.NovelaType
 import my.noveldokusha.feature.local_database.tables.Book
 import my.noveldokusha.scraper.SourceInterface
 import my.noveldokusha.scraper.displayName
@@ -45,52 +73,70 @@ fun MigrationBookPickerScreen(
     onSetTargetSource: (SourceInterface.Catalog?) -> Unit,
     onStartSearch: () -> Unit,
 ) {
+    val colors = NovelaTheme.colors
+
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.migration_select_books, sourceName)) },
-                navigationIcon = {
-                    IconButton(onClick = onPressBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
-                    }
-                }
-            )
-        }
+            Column {
+                TopAppBar(
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.background,
+                        scrolledContainerColor = MaterialTheme.colorScheme.background,
+                    ),
+                    title = {
+                        Text(
+                            text = stringResource(R.string.migration_select_books, sourceName),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = colors.textPrimary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = onPressBack) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                                contentDescription = null,
+                                tint = colors.textPrimary,
+                            )
+                        }
+                    },
+                )
+                HorizontalDivider(thickness = NovelaSize.hairline, color = colors.borderSubtle)
+            }
+        },
     ) { padding ->
         Column(
-            modifier = Modifier.fillMaxSize().padding(padding),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding),
         ) {
             if (targetSources.isNotEmpty()) {
                 Text(
-                    text = stringResource(R.string.migration_migrate_to),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(start = 16.dp, top = 8.dp, bottom = 4.dp),
+                    text = stringResource(R.string.migration_migrate_to).uppercase(),
+                    style = NovelaType.sectionEyebrow,
+                    color = colors.accent,
+                    modifier = Modifier.padding(start = NovelaSpacing.lg, top = 12.dp, bottom = 6.dp),
                 )
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .horizontalScroll(rememberScrollState())
-                        .padding(horizontal = 12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        .padding(horizontal = NovelaSpacing.lg),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    FilterChip(
+                    NovelaFilterChip(
+                        label = stringResource(R.string.all_sources),
                         selected = targetSource == null,
                         onClick = { onSetTargetSource(null) },
-                        label = { Text(stringResource(R.string.all_sources), style = MaterialTheme.typography.labelSmall) },
                     )
                     targetSources.forEach { source ->
-                        FilterChip(
+                        NovelaFilterChip(
+                            label = source.displayName(),
                             selected = targetSource == source,
                             onClick = { onSetTargetSource(source) },
-                            label = {
-                                Text(
-                                    source.displayName(),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            },
                         )
                     }
                 }
@@ -99,40 +145,55 @@ fun MigrationBookPickerScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .padding(horizontal = NovelaSpacing.lg, vertical = 10.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    stringResource(R.string.migration_books_count, books.size),
+                    text = stringResource(R.string.migration_books_count, books.size),
                     style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = colors.textPrimary,
                 )
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    MyButton(
-                        text = stringResource(R.string.select_all),
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Surface(
                         onClick = onSelectAll,
-                        outerPadding = 0.dp,
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
-                        minHeight = 32.dp,
-                    )
-                    if (selectedBooks.isNotEmpty()) {
-                        MyButton(
-                            text = stringResource(R.string.migration_clear_selection),
-                            onClick = onClearSelection,
-                            outerPadding = 0.dp,
-                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
-                            minHeight = 32.dp,
+                        shape = RoundedCornerShape(NovelaRadius.pill),
+                        color = colors.accentSoft,
+                    ) {
+                        Text(
+                            text = stringResource(R.string.select_all),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = colors.accent,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                         )
+                    }
+                    if (selectedBooks.isNotEmpty()) {
+                        Surface(
+                            onClick = onClearSelection,
+                            shape = RoundedCornerShape(NovelaRadius.pill),
+                            color = colors.surfaceSubtle,
+                            border = BorderStroke(NovelaSize.hairline, colors.borderSubtle),
+                        ) {
+                            Text(
+                                text = stringResource(R.string.migration_clear_selection),
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = colors.textSecondary,
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            )
+                        }
                     }
                 }
             }
 
             LazyVerticalGrid(
-                columns = GridCells.Adaptive(minSize = 110.dp),
+                columns = GridCells.Adaptive(minSize = 108.dp),
                 modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(horizontal = NovelaSpacing.lg, vertical = 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
                 items(books, key = { it.url }) { book ->
                     val isSelected = book.url in selectedBooks
@@ -143,58 +204,64 @@ fun MigrationBookPickerScreen(
                             bookUrl = book.url,
                             imagePath = book.coverImageUrl,
                         ),
+                        selected = isSelected,
                         onClick = { onToggleSelection(book) },
                         onLongClick = {},
-                        modifier = Modifier.width(110.dp),
+                        modifier = Modifier.width(108.dp),
                         sourceStripPosition = SourceStripPosition.InfoPanel,
-                        topLeftBadge = {
-                            if (chapterCount > 0) {
-                                Text(
-                                    text = "$chapterCount",
-                                    color = MaterialTheme.colorScheme.onPrimary,
-                                    modifier = Modifier
-                                        .background(
-                                            color = MaterialTheme.colorScheme.primary,
-                                            shape = RoundedCornerShape(topStart = 0.dp, bottomEnd = 12.dp),
-                                        )
-                                        .padding(horizontal = 6.dp, vertical = 2.dp),
-                                    style = MaterialTheme.typography.labelSmall.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 8.sp,
-                                    ),
-                                )
-                            }
-                        },
-                        topRightBadge = {
-                            if (isSelected) {
+                        topLeftBadge = if (chapterCount > 0) {
+                            {
                                 Surface(
-                                    shape = RoundedCornerShape(12.dp),
-                                    color = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.padding(4.dp),
+                                    shape = RoundedCornerShape(NovelaRadius.badge),
+                                    color = colors.coverBadgeBg,
+                                    border = BorderStroke(0.5.dp, colors.coverBadgeBorder),
                                 ) {
                                     Text(
-                                        text = "\u2713",
-                                        color = MaterialTheme.colorScheme.onPrimary,
-                                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                                        modifier = Modifier.padding(4.dp),
+                                        text = "$chapterCount",
+                                        color = Color.White,
+                                        style = NovelaType.badge,
+                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                                     )
                                 }
                             }
-                        },
+                        } else null,
+                        topRightBadge = if (isSelected) {
+                            {
+                                Surface(
+                                    shape = CircleShape,
+                                    color = colors.accent,
+                                    border = BorderStroke(1.5.dp, Color.White),
+                                    modifier = Modifier.size(22.dp),
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.Check,
+                                            contentDescription = null,
+                                            tint = colors.onAccent,
+                                            modifier = Modifier.size(14.dp),
+                                        )
+                                    }
+                                }
+                            }
+                        } else null,
                     )
                 }
             }
 
-            Spacer(Modifier.height(12.dp))
-
-            MyButton(
-                text = stringResource(R.string.migration_search_matches),
-                onClick = onStartSearch,
-                enabled = selectedBooks.isNotEmpty(),
+            HorizontalDivider(thickness = NovelaSize.hairline, color = colors.borderSubtle)
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-            )
+                    .navigationBarsPadding()
+                    .padding(horizontal = NovelaSpacing.lg, vertical = 12.dp),
+            ) {
+                NovelaPrimaryButton(
+                    text = stringResource(R.string.migration_search_matches),
+                    onClick = onStartSearch,
+                    enabled = selectedBooks.isNotEmpty(),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
         }
     }
 }

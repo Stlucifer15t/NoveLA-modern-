@@ -1,23 +1,26 @@
 package my.noveldokusha.globalsourcesearch
 
 import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
@@ -30,17 +33,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import my.noveldokusha.coreui.components.AnimatedTransition
 import my.noveldokusha.coreui.components.LibraryBadgeMaps
 import my.noveldokusha.coreui.components.LibraryBadgeState
+import my.noveldokusha.coreui.components.NovelaFilterChip
 import my.noveldokusha.coreui.components.ToolbarMode
 import my.noveldokusha.coreui.components.TopAppBarSearch
 import my.noveldokusha.coreui.theme.InternalTheme
+import my.noveldokusha.coreui.theme.NovelaSize
+import my.noveldokusha.coreui.theme.NovelaSpacing
+import my.noveldokusha.coreui.theme.NovelaTheme
 import my.noveldokusha.feature.local_database.BookMetadata
 import my.noveldokusha.strings.R as StringsR
-
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
@@ -52,14 +59,15 @@ internal fun GlobalSourceSearchScreen(
     onBookClick: (book: BookMetadata) -> Unit,
     onPressBack: () -> Unit,
     getLibraryBadge: (String, String) -> LibraryBadgeState? = { _, _ -> null },
-    libraryBadgeData: State<LibraryBadgeMaps> = androidx.compose.runtime.mutableStateOf(LibraryBadgeMaps()),
+    libraryBadgeData: State<LibraryBadgeMaps> = mutableStateOf(LibraryBadgeMaps()),
     selectedScope: String = "",
     onScopeChange: (String) -> Unit = {},
 ) {
+    val colors = NovelaTheme.colors
     val focusRequester = remember { FocusRequester() }
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(
         snapAnimationSpec = null,
-        flingAnimationSpec = null
+        flingAnimationSpec = null,
     )
 
     var toolbarMode by remember {
@@ -68,33 +76,44 @@ internal fun GlobalSourceSearchScreen(
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             Column {
                 AnimatedTransition(targetState = toolbarMode) { target ->
                     when (target) {
                         ToolbarMode.MAIN -> {
-                            MediumTopAppBar(
+                            TopAppBar(
                                 scrollBehavior = scrollBehavior,
-                                colors = TopAppBarDefaults.mediumTopAppBarColors(
-                                    containerColor = MaterialTheme.colorScheme.surface,
-                                    scrolledContainerColor = MaterialTheme.colorScheme.surface,
+                                colors = TopAppBarDefaults.topAppBarColors(
+                                    containerColor = MaterialTheme.colorScheme.background,
+                                    scrolledContainerColor = MaterialTheme.colorScheme.background,
                                 ),
                                 title = {
                                     Text(
                                         text = stringResource(R.string.global_search),
-                                        style = MaterialTheme.typography.headlineMedium
+                                        style = MaterialTheme.typography.titleLarge,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = colors.textPrimary,
                                     )
                                 },
                                 navigationIcon = {
                                     IconButton(onClick = onPressBack) {
-                                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
+                                        Icon(
+                                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                                            contentDescription = null,
+                                            tint = colors.textPrimary,
+                                        )
                                     }
                                 },
                                 actions = {
                                     IconButton(onClick = { toolbarMode = ToolbarMode.SEARCH }) {
-                                        Icon(Icons.Default.Search, stringResource(R.string.global_search))
+                                        Icon(
+                                            imageVector = Icons.Rounded.Search,
+                                            contentDescription = stringResource(R.string.global_search),
+                                            tint = colors.textPrimary,
+                                        )
                                     }
-                                }
+                                },
                             )
                         }
 
@@ -118,11 +137,12 @@ internal fun GlobalSourceSearchScreen(
                     }
                 }
 
-                // Селектор типа контента: показывается всегда (и при входе
-                // из глобального поиска, и со страницы книги).
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                        .padding(horizontal = NovelaSpacing.lg, vertical = 8.dp),
                 ) {
                     val scopeOptions = listOf(
                         "" to stringResource(StringsR.string.all_categories),
@@ -131,10 +151,10 @@ internal fun GlobalSourceSearchScreen(
                         "video" to stringResource(StringsR.string.content_type_video),
                     )
                     scopeOptions.forEach { (value, label) ->
-                        FilterChip(
+                        NovelaFilterChip(
+                            label = label,
                             selected = selectedScope == value,
                             onClick = { onScopeChange(value) },
-                            label = { Text(label) },
                         )
                     }
                 }
@@ -146,13 +166,21 @@ internal fun GlobalSourceSearchScreen(
                         finishedCount.toFloat() / totalCount.toFloat()
                     }
                 }
-                // При пустой выборке (scope без источников) не показываем —
-                // иначе индикатор висит вечно над "нет результатов".
                 if (progress < 1f && listSources.isNotEmpty()) {
                     LinearProgressIndicator(
                         progress = { progress },
-                        modifier = Modifier.fillMaxWidth(),
-                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(3.dp),
+                        color = colors.accent,
+                        trackColor = colors.accentSoft,
+                        gapSize = 0.dp,
+                        drawStopIndicator = {},
+                    )
+                } else {
+                    HorizontalDivider(
+                        thickness = NovelaSize.hairline,
+                        color = colors.borderSubtle,
                     )
                 }
             }
@@ -165,7 +193,7 @@ internal fun GlobalSourceSearchScreen(
                 getLibraryBadge = getLibraryBadge,
                 libraryBadgeData = libraryBadgeData,
             )
-        }
+        },
     )
 }
 

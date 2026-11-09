@@ -5,44 +5,80 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import my.noveldokusha.strings.R
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
+import my.noveldokusha.core.appPreferences.SourceStripPosition
+import my.noveldokusha.core.rememberResolvedBookImagePath
 import my.noveldokusha.core.utils.Extra_Boolean
 import my.noveldokusha.core.utils.Extra_String
 import my.noveldokusha.core.utils.Extra_StringNullable
-import my.noveldokusha.core.rememberResolvedBookImagePath
 import my.noveldokusha.coreui.BaseActivity
 import my.noveldokusha.coreui.components.BookImageButtonView
-import my.noveldokusha.core.appPreferences.SourceStripPosition
+import my.noveldokusha.coreui.components.NovelaSectionHeader
+import my.noveldokusha.coreui.theme.NovelaRadius
+import my.noveldokusha.coreui.theme.NovelaSize
+import my.noveldokusha.coreui.theme.NovelaSpacing
+import my.noveldokusha.coreui.theme.NovelaTheme
+import my.noveldokusha.coreui.theme.NovelaType
 import my.noveldokusha.coreui.theme.Theme
 import my.noveldokusha.data.ScraperRepository
-import my.noveldokusha.feature.local_database.BookMetadata
-import my.noveldokusha.navigation.NavigationRoutes
 import my.noveldokusha.feature.local_database.tables.Book
+import my.noveldokusha.navigation.NavigationRoutes
 import my.noveldokusha.scraper.SourceInterface
+import my.noveldokusha.strings.R
 import my.noveldokusha.tooling.novel_migration.data.MigrationOptions
-import my.noveldokusha.tooling.novel_migration.data.MigrationRepository
-import my.noveldokusha.tooling.novel_migration.ui.*
-import javax.inject.Inject
+import my.noveldokusha.tooling.novel_migration.ui.MassMigrationViewModel
+import my.noveldokusha.tooling.novel_migration.ui.MigratingBook
+import my.noveldokusha.tooling.novel_migration.ui.MigrationBookPickerScreen
+import my.noveldokusha.tooling.novel_migration.ui.MigrationHistoryScreen
+import my.noveldokusha.tooling.novel_migration.ui.MigrationHistoryViewModel
+import my.noveldokusha.tooling.novel_migration.ui.MigrationOptionsDialog
+import my.noveldokusha.tooling.novel_migration.ui.MigrationResultsScreen
+import my.noveldokusha.tooling.novel_migration.ui.MigrationUiState
+import my.noveldokusha.tooling.novel_migration.ui.MigrationViewModel
+import my.noveldokusha.tooling.novel_migration.ui.resolveName
 
 private enum class MigrationStep {
     BOOK_PICKER,
@@ -80,8 +116,8 @@ class MigrationActivity : BaseActivity() {
         super.onCreate(savedInstanceState)
         val intentData = IntentData(intent)
 
-        val isMassMigration = intentData.massMigrationSourceUrl?.isNotEmpty() == true
-                || intentData.massMigrationUnknownSource
+        val isMassMigration = intentData.massMigrationSourceUrl?.isNotEmpty() == true ||
+            intentData.massMigrationUnknownSource
         val isHistory = intentData.showHistory
 
         if (isHistory) {
@@ -101,25 +137,27 @@ class MigrationActivity : BaseActivity() {
         startActivity(
             navigationRoutes.main(this).apply {
                 flags = Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK
-            }
+            },
         )
         finish()
     }
 
-    private fun showHistoryScreen(intentData: IntentData) {
+    private fun showHistoryScreen(@Suppress("UNUSED_PARAMETER") intentData: IntentData) {
         setContent {
             Theme(themeProvider = themeProvider) {
                 val groups by historyViewModel.groups.collectAsStateWithLifecycle()
                 MigrationHistoryScreen(
                     groups = groups,
                     onPressBack = { finish() },
-                    onDeleteGroup = { oldSourceId, newSourceId -> historyViewModel.deleteGroup(oldSourceId, newSourceId) },
+                    onDeleteGroup = { oldSourceId, newSourceId ->
+                        historyViewModel.deleteGroup(oldSourceId, newSourceId)
+                    },
                 )
             }
         }
     }
 
-    private fun initSingleMigration(intentData: IntentData) {
+    private fun initSingleMigration(@Suppress("UNUSED_PARAMETER") intentData: IntentData) {
         setContent {
             var showOptions by remember { mutableStateOf(false) }
 
@@ -162,15 +200,19 @@ class MigrationActivity : BaseActivity() {
                     }
                     else -> {
                         val migratingBooks = if (state.isSearching || state.searchResults.isNotEmpty() || state.isMatching || state.isMigrating) {
-                            listOf(MigratingBook(
-                                book = Book(title = state.bookTitle, url = state.bookUrl),
-                                result = state.selectedResult,
-                                isSearching = state.isSearching || state.isMatching,
-                                isDone = state.isComplete,
-                                isSkipped = state.error != null && state.searchResults.isEmpty(),
-                                error = state.error,
-                            ))
-                        } else emptyList()
+                            listOf(
+                                MigratingBook(
+                                    book = Book(title = state.bookTitle, url = state.bookUrl),
+                                    result = state.selectedResult,
+                                    isSearching = state.isSearching || state.isMatching,
+                                    isDone = state.isComplete,
+                                    isSkipped = state.error != null && state.searchResults.isEmpty(),
+                                    error = state.error,
+                                ),
+                            )
+                        } else {
+                            emptyList()
+                        }
 
                         MigrationResultsScreen(
                             title = state.bookTitle,
@@ -211,55 +253,93 @@ class MigrationActivity : BaseActivity() {
         onResultPicked: (Int) -> Unit,
         onPressBack: () -> Unit,
     ) {
+        val colors = NovelaTheme.colors
         val groupedResults = remember(state.searchResults) {
             state.searchResults.withIndex()
                 .groupBy({ (_, r) -> r.source }, { (idx, r) -> idx to r })
         }
 
         Scaffold(
+            containerColor = MaterialTheme.colorScheme.background,
             topBar = {
-                TopAppBar(
-                    title = { Text(state.bookTitle) },
-                    navigationIcon = {
-                        IconButton(onClick = onPressBack) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
-                        }
-                    }
-                )
-            }
+                Column {
+                    TopAppBar(
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = MaterialTheme.colorScheme.background,
+                            scrolledContainerColor = MaterialTheme.colorScheme.background,
+                        ),
+                        title = {
+                            Text(
+                                text = state.bookTitle,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.textPrimary,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        },
+                        navigationIcon = {
+                            IconButton(onClick = onPressBack) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                                    contentDescription = null,
+                                    tint = colors.textPrimary,
+                                )
+                            }
+                        },
+                    )
+                    HorizontalDivider(thickness = NovelaSize.hairline, color = colors.borderSubtle)
+                }
+            },
         ) { padding ->
             if (state.isSearching) {
-                Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding),
+                    contentAlignment = Alignment.Center,
+                ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        CircularProgressIndicator()
-                        Spacer(Modifier.height(8.dp))
-                        Text(stringResource(R.string.migration_searching))
+                        CircularProgressIndicator(color = colors.accent)
+                        Spacer(Modifier.height(10.dp))
+                        Text(
+                            text = stringResource(R.string.migration_searching),
+                            color = colors.textSecondary,
+                        )
                     }
                 }
             } else {
-                if (state.error != null) {
-                    Text(
-                        state.error,
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.padding(16.dp),
-                    )
-                }
-
                 LazyColumn(
-                    modifier = Modifier.fillMaxSize().padding(padding),
-                    contentPadding = PaddingValues(top = 12.dp, bottom = 240.dp),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding),
+                    contentPadding = PaddingValues(top = 12.dp, bottom = 220.dp),
+                    verticalArrangement = Arrangement.spacedBy(18.dp),
                 ) {
+                    if (state.error != null) {
+                        item {
+                            Text(
+                                text = state.error,
+                                color = colors.danger,
+                                modifier = Modifier.padding(horizontal = NovelaSpacing.lg),
+                            )
+                        }
+                    }
+
                     groupedResults.forEach { (source, indexedResults) ->
                         item {
-                            Column(modifier = Modifier.padding(bottom = 16.dp)) {
-                                Text(
-                                    text = source.resolveName(this@MigrationActivity),
-                                    style = MaterialTheme.typography.titleLarge,
-                                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp),
+                            Column {
+                                NovelaSectionHeader(
+                                    title = source.resolveName(this@MigrationActivity),
+                                    badgeText = indexedResults.size.toString(),
                                 )
+                                Spacer(Modifier.height(8.dp))
                                 LazyRow(
-                                    contentPadding = PaddingValues(start = 12.dp, end = 30.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    contentPadding = PaddingValues(
+                                        start = NovelaSpacing.lg,
+                                        end = NovelaSpacing.xl,
+                                    ),
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
                                 ) {
                                     items(indexedResults) { (flatIndex, result) ->
                                         BookImageButtonView(
@@ -270,26 +350,28 @@ class MigrationActivity : BaseActivity() {
                                             ),
                                             onClick = { onResultPicked(flatIndex) },
                                             onLongClick = {},
-                                            modifier = Modifier.width(130.dp),
+                                            modifier = Modifier.width(120.dp),
                                             sourceStripPosition = SourceStripPosition.InfoPanel,
                                             topLeftBadge = {
                                                 if (state.chaptersLoadingIndex == flatIndex) {
-                                                    CircularProgressIndicator(modifier = Modifier.size(19.dp), strokeWidth = 2.dp)
-                                                } else if (result.isLoaded) {
-                                                    Text(
-                                                        text = "${result.chapterCount}",
-                                                        color = MaterialTheme.colorScheme.onPrimary,
-                                                        modifier = Modifier
-                                                            .background(
-                                                                color = MaterialTheme.colorScheme.primary,
-                                                                shape = RoundedCornerShape(topStart = 0.dp, bottomEnd = 12.dp),
-                                                            )
-                                                            .padding(horizontal = 6.dp, vertical = 2.dp),
-                                                        style = MaterialTheme.typography.labelSmall.copy(
-                                                            fontWeight = FontWeight.Bold,
-                                                            fontSize = 8.sp,
-                                                        ),
+                                                    CircularProgressIndicator(
+                                                        modifier = Modifier.size(18.dp),
+                                                        strokeWidth = 2.dp,
+                                                        color = colors.accent,
                                                     )
+                                                } else if (result.isLoaded) {
+                                                    Surface(
+                                                        shape = RoundedCornerShape(NovelaRadius.badge),
+                                                        color = colors.coverBadgeBg,
+                                                        border = BorderStroke(0.5.dp, colors.coverBadgeBorder),
+                                                    ) {
+                                                        Text(
+                                                            text = "${result.chapterCount}",
+                                                            color = Color.White,
+                                                            style = NovelaType.badge,
+                                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                                        )
+                                                    }
                                                 }
                                             },
                                         )
@@ -327,7 +409,6 @@ class MigrationActivity : BaseActivity() {
                 }
             }
 
-            // Заголовок обоих шагов: имя выбранного источника либо подпись unknown-режима.
             val sourceName = selectedSource?.let { it.resolveName(this@MigrationActivity) }
                 ?: if (isUnknownSource) stringResource(R.string.migration_unknown_source) else null
 
@@ -370,12 +451,11 @@ class MigrationActivity : BaseActivity() {
                                     navigateToLibrary()
                                 } else {
                                     massViewModel.reset()
-                                    // reset() обнуляет UI-состояние (в т.ч. unknown-режим
-                                    // и выбранный источник), а LaunchedEffect(sourceUrl) не
-                                    // перезапускается — без переинициализации список
-                                    // останется пустым навсегда.
-                                    if (isUnknownSource) massViewModel.setUnknownSource()
-                                    else selectedSource?.let { massViewModel.setSource(it) }
+                                    if (isUnknownSource) {
+                                        massViewModel.setUnknownSource()
+                                    } else {
+                                        selectedSource?.let { massViewModel.setSource(it) }
+                                    }
                                     step = MigrationStep.BOOK_PICKER
                                 }
                             },
@@ -387,7 +467,6 @@ class MigrationActivity : BaseActivity() {
                             onReturnToLibrary = { navigateToLibrary() },
                         )
                     }
-
                 }
 
                 if (showOptions) {
