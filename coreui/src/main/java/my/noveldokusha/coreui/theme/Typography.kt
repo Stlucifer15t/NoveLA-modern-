@@ -4,89 +4,203 @@ import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.sp
 
 /**
- * NoveLA type scale.
- *
- * Sizes stay close to the Material 3 defaults so existing layouts keep their
- * measurements; what changes is weight, tracking and line height, which is what
- * makes the app read as "editorial" instead of "utility".
- *
- * Applied globally through [typography], so every screen picks it up without
- * call-site changes.
+ * Editorial WebNovel-style typography scale for NoveLA Modern.
  */
-
-private val Default = FontFamily.Default
-
-private val TightLineHeight = LineHeightStyle(
-    alignment = LineHeightStyle.Alignment.Center,
-    trim = LineHeightStyle.Trim.None,
-)
-
-private fun base(
-    size: Int,
-    lineHeight: Int,
-    weight: FontWeight,
-    tracking: Float = 0f,
-) = TextStyle(
-    fontFamily = Default,
-    fontWeight = weight,
-    fontSize = size.sp,
-    lineHeight = lineHeight.sp,
-    letterSpacing = tracking.sp,
-    lineHeightStyle = TightLineHeight,
-)
-
 val typography = Typography(
-    // Hero areas: empty states, big numbers.
-    displayLarge = base(52, 58, FontWeight.Bold, (-1.5f)),
-    displayMedium = base(42, 48, FontWeight.Bold, (-1f)),
-    displaySmall = base(34, 40, FontWeight.Bold, (-0.5f)),
-
-    // Screen and section titles.
-    headlineLarge = base(28, 34, FontWeight.Bold, (-0.4f)),
-    headlineMedium = base(24, 30, FontWeight.Bold, (-0.3f)),
-    headlineSmall = base(21, 27, FontWeight.SemiBold, (-0.2f)),
-
-    // Card titles, dialog titles, app bar titles.
-    titleLarge = base(19, 25, FontWeight.SemiBold, (-0.1f)),
-    titleMedium = base(16, 22, FontWeight.SemiBold),
-    titleSmall = base(14, 19, FontWeight.SemiBold),
-
-    // Reading and descriptive copy.
-    bodyLarge = base(16, 24, FontWeight.Normal),
-    bodyMedium = base(14, 21, FontWeight.Normal),
-    bodySmall = base(12, 17, FontWeight.Normal),
-
-    // Metadata, chips, buttons.
-    labelLarge = base(14, 18, FontWeight.Medium, 0.1f),
-    labelMedium = base(12, 16, FontWeight.Medium, 0.2f),
-    labelSmall = base(11, 14, FontWeight.Medium, 0.3f),
+    displayLarge = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.ExtraBold,
+        fontSize = 48.sp,
+        lineHeight = 54.sp,
+        letterSpacing = (-1.2).sp,
+    ),
+    displayMedium = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.ExtraBold,
+        fontSize = 38.sp,
+        lineHeight = 44.sp,
+        letterSpacing = (-0.9).sp,
+    ),
+    displaySmall = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.ExtraBold,
+        fontSize = 30.sp,
+        lineHeight = 36.sp,
+        letterSpacing = (-0.6).sp,
+    ),
+    headlineLarge = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.ExtraBold,
+        fontSize = 26.sp,
+        lineHeight = 32.sp,
+        letterSpacing = (-0.5).sp,
+    ),
+    headlineMedium = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.Bold,
+        fontSize = 22.sp,
+        lineHeight = 28.sp,
+        letterSpacing = (-0.3).sp,
+    ),
+    headlineSmall = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.Bold,
+        fontSize = 19.sp,
+        lineHeight = 25.sp,
+        letterSpacing = (-0.2).sp,
+    ),
+    titleLarge = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.Bold,
+        fontSize = 18.sp,
+        lineHeight = 24.sp,
+        letterSpacing = (-0.15).sp,
+    ),
+    titleMedium = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 15.sp,
+        lineHeight = 21.sp,
+        letterSpacing = 0.sp,
+    ),
+    titleSmall = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 13.5.sp,
+        lineHeight = 19.sp,
+        letterSpacing = 0.sp,
+    ),
+    bodyLarge = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.Normal,
+        fontSize = 15.sp,
+        lineHeight = 23.sp,
+        letterSpacing = 0.1.sp,
+    ),
+    bodyMedium = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.Normal,
+        fontSize = 13.5.sp,
+        lineHeight = 20.sp,
+        letterSpacing = 0.1.sp,
+    ),
+    bodySmall = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.Normal,
+        fontSize = 12.sp,
+        lineHeight = 17.sp,
+        letterSpacing = 0.15.sp,
+    ),
+    labelLarge = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 13.sp,
+        lineHeight = 18.sp,
+        letterSpacing = 0.1.sp,
+    ),
+    labelMedium = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 11.5.sp,
+        lineHeight = 15.sp,
+        letterSpacing = 0.2.sp,
+    ),
+    labelSmall = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.Medium,
+        fontSize = 10.5.sp,
+        lineHeight = 14.sp,
+        letterSpacing = 0.25.sp,
+    ),
 )
 
-/**
- * Extra emphasis styles that the Material scale has no slot for.
- * Book titles in a grid need to be bolder than [titleSmall] but smaller than
- * [titleMedium], which is exactly the gap this fills.
- */
 object NovelaType {
-    /** Bold 2-line title under a book cover. */
-    val bookTitle = base(13, 17, FontWeight.Bold, (-0.1f))
-
-    /** Single-line gray metadata under a book title. */
-    val bookMeta = base(11, 15, FontWeight.Normal, 0.1f)
-
-    /** Count badge / pill label. */
-    val badge = base(10, 12, FontWeight.Bold, 0.2f)
-
-    /** Section header on a home/list screen. */
-    val sectionTitle = base(18, 24, FontWeight.Bold, (-0.2f))
-
-    /** "See all" style trailing action. */
-    val sectionAction = base(13, 18, FontWeight.Medium, 0f)
-
-    /** Large ordinal number in ranked lists (1, 2, 3…). */
-    val rank = base(15, 18, FontWeight.Black, (-0.5f))
+    val heroTitle = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.ExtraBold,
+        fontSize = 20.sp,
+        lineHeight = 26.sp,
+        letterSpacing = (-0.3).sp,
+    )
+    val bookTitle = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 13.sp,
+        lineHeight = 17.5.sp,
+        letterSpacing = (-0.05).sp,
+    )
+    val bookCardTitle = bookTitle
+    val bookMeta = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.Medium,
+        fontSize = 11.sp,
+        lineHeight = 14.sp,
+        letterSpacing = 0.1.sp,
+    )
+    val bookCardMeta = bookMeta
+    val badge = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.Bold,
+        fontSize = 10.5.sp,
+        lineHeight = 13.sp,
+        letterSpacing = 0.15.sp,
+    )
+    val sectionTitle = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.Bold,
+        fontSize = 17.sp,
+        lineHeight = 22.sp,
+        letterSpacing = (-0.2).sp,
+    )
+    val sectionAction = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 13.sp,
+        lineHeight = 18.sp,
+    )
+    val rank = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.Black,
+        fontSize = 15.sp,
+        lineHeight = 18.sp,
+        letterSpacing = (-0.4).sp,
+    )
+    val statValue = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.Bold,
+        fontSize = 15.sp,
+        lineHeight = 19.sp,
+        letterSpacing = (-0.15).sp,
+    )
+    val statLabel = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.Medium,
+        fontSize = 11.sp,
+        lineHeight = 14.sp,
+        letterSpacing = 0.2.sp,
+    )
+    val chapterTitle = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.Medium,
+        fontSize = 14.sp,
+        lineHeight = 20.sp,
+        letterSpacing = 0.sp,
+    )
+    val navLabel = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 11.sp,
+        lineHeight = 14.sp,
+        letterSpacing = 0.15.sp,
+    )
+    val sectionEyebrow = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.Bold,
+        fontSize = 11.sp,
+        lineHeight = 14.sp,
+        letterSpacing = 0.8.sp,
+    )
 }

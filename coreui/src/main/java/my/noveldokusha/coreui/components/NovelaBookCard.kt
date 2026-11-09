@@ -2,6 +2,7 @@ package my.noveldokusha.coreui.components
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -20,12 +21,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -33,11 +35,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import my.noveldokusha.coreui.R
 import my.noveldokusha.coreui.theme.NovelaMotion
 import my.noveldokusha.coreui.theme.NovelaRadius
@@ -45,284 +52,324 @@ import my.noveldokusha.coreui.theme.NovelaSize
 import my.noveldokusha.coreui.theme.NovelaSpacing
 import my.noveldokusha.coreui.theme.NovelaTheme
 import my.noveldokusha.coreui.theme.NovelaType
+import my.noveldokusha.coreui.uitesting.AppTestTags
 
 /**
- * The redesigned book card.
- *
- * Layout (top to bottom):
- *  - cover, 1:1.45, 8dp corners, hairline border, subtle press scale
- *  - optional badges floating on the cover (unread count, "new", selection tick)
- *  - bold 2-line title
- *  - optional muted metadata line (source / chapter progress)
- *
- * This is additive: [BookImageButtonView] is untouched, so existing call sites
- * keep working while screens migrate to this one.
+ * Editorial WebNovel-style vertical book card with subtle press scale, optional unread count,
+ * progress indicator, and badge slots.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun NovelaBookCard(
     title: String,
-    coverModel: Any?,
+    coverImageModel: Any?,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
-    unreadCount: Int? = null,
-    isSelected: Boolean = false,
-    isSelectionMode: Boolean = false,
-    cornerRadius: androidx.compose.ui.unit.Dp = NovelaRadius.cover,
-    onClick: () -> Unit,
+    unreadCount: Int = 0,
+    progress: Float? = null,
+    selected: Boolean = false,
+    topStartBadge: (@Composable () -> Unit)? = null,
+    topEndBadge: (@Composable () -> Unit)? = null,
     onLongClick: () -> Unit = {},
 ) {
-    val interaction = remember { MutableInteractionSource() }
-    val pressed by interaction.collectIsPressedAsState()
+    val colors = NovelaTheme.colors
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
     val scale by animateFloatAsState(
-        targetValue = if (pressed) 0.97f else 1f,
-        animationSpec = tween(NovelaMotion.INSTANT),
-        label = "cardPress",
+        targetValue = if (isPressed) 0.965f else 1f,
+        animationSpec = tween(durationMillis = NovelaMotion.fastMs),
+        label = "novelaCardScale",
     )
+
+    val coverShape = RoundedCornerShape(NovelaRadius.cover)
 
     Column(
         modifier = modifier
-            .widthIn(min = 96.dp)
-            .scale(scale)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
             .combinedClickable(
-                interactionSource = interaction,
+                interactionSource = interactionSource,
                 indication = null,
+                role = Role.Button,
                 onClick = onClick,
                 onLongClick = onLongClick,
             )
+            .testTag(AppTestTags.BOOK_IMAGE_BUTTON_VIEW)
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .aspectRatio(NovelaSize.COVER_ASPECT)
-                .clip(RoundedCornerShape(cornerRadius))
-                .background(MaterialTheme.colorScheme.surfaceContainer)
+                .aspectRatio(NovelaSize.coverAspectRatio)
+                .clip(coverShape)
+                .background(colors.surfaceSubtle)
                 .border(
-                    width = 0.5.dp,
-                    color = NovelaTheme.colors.hairline,
-                    shape = RoundedCornerShape(cornerRadius),
-                ),
+                    width = if (selected) 2.dp else NovelaSize.hairline,
+                    color = if (selected) colors.accent else colors.borderSubtle,
+                    shape = coverShape,
+                )
         ) {
             ImageView(
-                imageModel = coverModel,
+                imageModel = coverImageModel,
                 contentDescription = title,
                 modifier = Modifier.fillMaxSize(),
                 error = R.drawable.default_book_cover,
             )
 
-            // Bottom scrim: keeps a floating unread pill readable on busy art.
-            if (unreadCount != null && unreadCount > 0) {
+            if (unreadCount > 0 || (progress != null && progress > 0f)) {
                 Box(
-                    Modifier
-                        .fillMaxSize()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(40.dp)
+                        .align(Alignment.BottomCenter)
                         .background(
                             Brush.verticalGradient(
-                                0.72f to Color.Transparent,
-                                1f to Color.Black.copy(alpha = 0.45f),
+                                0f to Color.Transparent,
+                                1f to Color.Black.copy(alpha = 0.65f),
                             )
                         )
                 )
-                UnreadPill(
-                    count = unreadCount,
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(NovelaSpacing.xs),
-                )
             }
 
-            // Selection tick, top-start, matching the library's selection affordance.
-            if (isSelectionMode) {
+            if (topStartBadge != null) {
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopStart)
-                        .padding(NovelaSpacing.xs)
-                        .size(24.dp)
-                        .clip(RoundedCornerShape(NovelaRadius.sm))
-                        .background(
-                            if (isSelected) MaterialTheme.colorScheme.primary
-                            else Color.Black.copy(alpha = 0.35f)
-                        ),
-                    contentAlignment = Alignment.Center,
+                        .padding(NovelaSpacing.xs + 2.dp)
                 ) {
-                    if (isSelected) {
-                        Icon(
-                            imageVector = Icons.Filled.Check,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier.size(16.dp),
-                        )
-                    }
+                    topStartBadge()
                 }
             }
 
-            // Dim the cover while a book is selected, so the set reads at a glance.
-            if (isSelectionMode && isSelected) {
+            if (topEndBadge != null) {
                 Box(
-                    Modifier
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(NovelaSpacing.xs + 2.dp)
+                ) {
+                    topEndBadge()
+                }
+            }
+
+            if (unreadCount > 0) {
+                Surface(
+                    shape = RoundedCornerShape(NovelaRadius.pill),
+                    color = colors.accent,
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(6.dp),
+                ) {
+                    Text(
+                        text = if (unreadCount > 999) "999+" else unreadCount.toString(),
+                        style = NovelaType.badge,
+                        color = colors.onAccent,
+                        maxLines = 1,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                    )
+                }
+            }
+
+            if (progress != null && progress > 0f) {
+                LinearProgressIndicator(
+                    progress = { progress.coerceIn(0f, 1f) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(2.5.dp)
+                        .align(Alignment.BottomCenter),
+                    color = colors.accent,
+                    trackColor = Color.White.copy(alpha = 0.24f),
+                    strokeCap = StrokeCap.Square,
+                )
+            }
+
+            if (selected) {
+                Box(
+                    modifier = Modifier
                         .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.16f))
+                        .background(colors.accent.copy(alpha = 0.22f))
                 )
             }
         }
 
-        Spacer(Modifier.height(NovelaSpacing.sm))
+        Spacer(Modifier.height(NovelaSpacing.xs + 2.dp))
 
         Text(
             text = title,
-            style = NovelaType.bookTitle,
-            color = MaterialTheme.colorScheme.onSurface,
+            style = NovelaType.bookCardTitle,
+            color = colors.textPrimary,
             maxLines = 2,
+            minLines = 2,
             overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.fillMaxWidth(),
         )
 
-        if (subtitle != null) {
+        if (!subtitle.isNullOrBlank()) {
             Spacer(Modifier.height(2.dp))
             Text(
                 text = subtitle,
-                style = NovelaType.bookMeta,
-                color = NovelaTheme.colors.textMuted,
+                style = NovelaType.bookCardMeta,
+                color = colors.textMuted,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.fillMaxWidth(),
             )
         }
     }
 }
 
 /**
- * Compact horizontal card for "Continue reading" carousels: small cover on the
- * left, title + progress on the right.
+ * WebNovel Horizontal Novel Card — used in VerticalList catalog mode, ranked lists, and search rails.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun NovelaBookRow(
     title: String,
-    coverModel: Any?,
+    coverImageModel: Any?,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
+    caption: String? = null,
+    rating: String? = null,
+    libraryBadgeState: LibraryBadgeState = LibraryBadgeState.None,
+    rank: Int? = null,
     progress: Float? = null,
-    onClick: () -> Unit,
     onLongClick: () -> Unit = {},
+    trailing: (@Composable () -> Unit)? = null,
 ) {
-    val interaction = remember { MutableInteractionSource() }
-    val pressed by interaction.collectIsPressedAsState()
-    val scale by animateFloatAsState(
-        targetValue = if (pressed) 0.98f else 1f,
-        animationSpec = tween(NovelaMotion.INSTANT),
-        label = "rowPress",
-    )
+    val colors = NovelaTheme.colors
+    val coverShape = RoundedCornerShape(NovelaRadius.sm)
 
-    Row(
+    Surface(
+        shape = RoundedCornerShape(NovelaRadius.card),
+        color = colors.surfaceCard,
+        border = BorderStroke(NovelaSize.hairline, colors.borderSubtle),
         modifier = modifier
             .fillMaxWidth()
-            .scale(scale)
-            .clip(NovelaRadius.cardShape)
+            .clip(RoundedCornerShape(NovelaRadius.card))
             .combinedClickable(
-                interactionSource = interaction,
-                indication = null,
+                role = Role.Button,
                 onClick = onClick,
                 onLongClick = onLongClick,
             )
-            .padding(vertical = NovelaSpacing.sm),
-        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(
+        Row(
             modifier = Modifier
-                .width(NovelaSize.carouselCoverWidth)
-                .aspectRatio(NovelaSize.COVER_ASPECT)
-                .clip(NovelaRadius.coverShape)
-                .background(MaterialTheme.colorScheme.surfaceContainer)
-                .border(0.5.dp, NovelaTheme.colors.hairline, NovelaRadius.coverShape),
+                .fillMaxWidth()
+                .padding(NovelaSpacing.md),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            ImageView(
-                imageModel = coverModel,
-                contentDescription = title,
-                modifier = Modifier.fillMaxSize(),
-                error = R.drawable.default_book_cover,
-            )
-        }
+            if (rank != null) {
+                RankBadge(rank = rank)
+                Spacer(Modifier.width(NovelaSpacing.md))
+            }
 
-        Spacer(Modifier.width(NovelaSpacing.md))
+            Box(
+                modifier = Modifier
+                    .width(62.dp)
+                    .aspectRatio(NovelaSize.coverAspectRatio)
+                    .clip(coverShape)
+                    .background(colors.surfaceSubtle)
+                    .border(NovelaSize.hairline, colors.borderSubtle, coverShape)
+            ) {
+                ImageView(
+                    imageModel = coverImageModel,
+                    contentDescription = title,
+                    modifier = Modifier.fillMaxSize(),
+                    error = R.drawable.default_book_cover,
+                )
+                if (libraryBadgeState != LibraryBadgeState.None) {
+                    InLibraryBadge(
+                        state = libraryBadgeState,
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(4.dp),
+                    )
+                }
+            }
 
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.Center,
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-            if (subtitle != null) {
-                Spacer(Modifier.height(2.dp))
+            Spacer(Modifier.width(NovelaSpacing.md))
+
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
                 Text(
-                    text = subtitle,
-                    style = NovelaType.bookMeta,
-                    color = NovelaTheme.colors.textMuted,
-                    maxLines = 1,
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.textPrimary,
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
+                if (!rating.isNullOrBlank()) {
+                    BookRatingChip(rating = rating)
+                }
+                if (!subtitle.isNullOrBlank()) {
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.textSecondary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                if (!caption.isNullOrBlank()) {
+                    Text(
+                        text = caption,
+                        style = NovelaType.bookCardMeta,
+                        color = colors.textMuted,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                if (progress != null) {
+                    Spacer(Modifier.height(2.dp))
+                    LinearProgressIndicator(
+                        progress = { progress.coerceIn(0f, 1f) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(3.dp)
+                            .clip(RoundedCornerShape(NovelaRadius.pill)),
+                        color = colors.accent,
+                        trackColor = colors.accentSoft,
+                    )
+                }
             }
-            if (progress != null && progress > 0f) {
-                Spacer(Modifier.height(NovelaSpacing.sm))
-                ProgressBar(progress = progress.coerceIn(0f, 1f))
+
+            Spacer(Modifier.width(NovelaSpacing.sm))
+
+            if (trailing != null) {
+                trailing()
+            } else {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                    contentDescription = null,
+                    tint = colors.textMuted,
+                    modifier = Modifier.size(20.dp),
+                )
             }
         }
     }
 }
 
 @Composable
-private fun UnreadPill(
-    count: Int,
-    modifier: Modifier = Modifier,
-) {
-    Box(
-        modifier = modifier
-            .clip(NovelaRadius.chipShape)
-            .background(NovelaTheme.colors.badgeBackground)
-            .padding(horizontal = 6.dp, vertical = 2.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = if (count > 99) "99+" else count.toString(),
-            style = NovelaType.badge,
-            color = NovelaTheme.colors.badgeText,
-        )
+fun RankBadge(rank: Int, modifier: Modifier = Modifier) {
+    val colors = NovelaTheme.colors
+    val badgeColor = when (rank) {
+        1 -> Color(0xFFFFBC1F)
+        2 -> Color(0xFF94A3B8)
+        3 -> Color(0xFFD97706)
+        else -> colors.textMuted
     }
-}
-
-@Composable
-private fun ProgressBar(progress: Float) {
-    Box(
-        Modifier
-            .fillMaxWidth()
-            .height(3.dp)
-            .clip(NovelaRadius.chipShape)
-            .background(MaterialTheme.colorScheme.surfaceVariant)
-    ) {
-        Box(
-            Modifier
-                .fillMaxWidth(progress)
-                .height(3.dp)
-                .clip(NovelaRadius.chipShape)
-                .background(MaterialTheme.colorScheme.primary)
-        )
-    }
-}
-
-/**
- * Ranked-list badge: a large ordinal in the accent color, used by "Top" rails.
- */
-@Composable
-fun RankBadge(
-    rank: Int,
-    modifier: Modifier = Modifier,
-) {
     Text(
-        text = rank.toString(),
-        style = NovelaType.rank,
-        color = if (rank <= 3) MaterialTheme.colorScheme.primary else NovelaTheme.colors.textMuted,
-        modifier = modifier.width(20.dp),
+        text = rank.toString().padStart(2, '0'),
+        style = MaterialTheme.typography.titleMedium.copy(
+            fontWeight = FontWeight.ExtraBold,
+            fontSize = 16.sp,
+        ),
+        color = badgeColor,
+        modifier = modifier.width(24.dp),
     )
 }

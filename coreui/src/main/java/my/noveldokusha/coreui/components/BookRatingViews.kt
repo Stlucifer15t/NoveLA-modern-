@@ -1,14 +1,16 @@
 package my.noveldokusha.coreui.components
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.EmojiEvents
-import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.automirrored.rounded.StarHalf
+import androidx.compose.material.icons.rounded.EmojiEvents
+import androidx.compose.material.icons.rounded.Star
+import androidx.compose.material.icons.rounded.StarOutline
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -17,123 +19,190 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import my.noveldokusha.strings.R
+import my.noveldokusha.coreui.R
+import my.noveldokusha.coreui.theme.NovelaRadius
+import my.noveldokusha.coreui.theme.NovelaTheme
 import java.util.Locale
+import kotlin.math.floor
 
-/** Тип рейтинга книги: оценка по шкале или позиция в рейтинге (ранг). */
-enum class BookRatingType { Score, Rank }
+internal enum class BookRatingType { Score, Rank }
 
-/** Разобранный рейтинг: тип, отображаемое значение и нормализованный балл (для Score). */
-data class ParsedBookRating(
+internal data class ParsedBookRating(
     val type: BookRatingType,
     val value: String,
     val score: Float? = null,
 )
 
-// Regex ловит только цифры: отрицательные значения ("-3") намеренно коэрсятся
-// в модуль ("3") — сознательная всеядность под грязные данные источников, соответствует примерам спека.
-private val NUMBER_REGEX = Regex("""\d+(?:[.,]\d+)?""")
-private val SCALE_REGEX = Regex("""/(\d+(?:[.,]\d+)?)""")
-private val RANK_REGEX = Regex("""\brank\b|#\d+""", RegexOption.IGNORE_CASE)
+private val RANK_WORD_REGEX = Regex("""(?i)\brank\b\D*(\d+(?:[.,]\d+)?)""")
+private val RANK_HASH_REGEX = Regex("""#\s*(\d+(?:[.,]\d+)?)""")
+private val FRACTION_REGEX = Regex("""(\d+(?:[.,]\d+)?)\s*/\s*(\d+(?:[.,]\d+)?)""")
+private val NUMBER_REGEX = Regex("""(\d+(?:[.,]\d+)?)""")
 
-/**
- * Нормализует «сырую» строку рейтинга из источника в [ParsedBookRating].
- * Источники отдают гетерогенные форматы: "4.5", "4,8/5", "Rank: 3", "#12" и т.п.
- */
-fun parseBookRating(raw: String?): ParsedBookRating? {
-    val trimmed = raw?.trim() ?: return null
-    if (trimmed.isEmpty()) return null
+internal fun parseBookRating(raw: String?): ParsedBookRating? {
+    val text = raw?.trim()?.takeIf { it.isNotEmpty() } ?: return null
 
-    val numberMatch = NUMBER_REGEX.find(trimmed) ?: return null
-    val numberStr = numberMatch.value.replace(',', '.')
-
-    // Ранг: "Rank 3", "Rank #12" → целое значение, балл не считается.
-    if (RANK_REGEX.containsMatchIn(trimmed)) {
-        val intValue = numberStr.toIntOrNull() ?: return null
-        return ParsedBookRating(BookRatingType.Rank, intValue.toString())
+    (RANK_WORD_REGEX.find(text) ?: RANK_HASH_REGEX.find(text))?.let { match ->
+        val rawNum = match.groupValues[1]
+        if (rawNum.contains('.') || rawNum.contains(',')) return null
+        val rank = rawNum.toIntOrNull() ?: return null
+        if (rank <= 0) return null
+        return ParsedBookRating(type = BookRatingType.Rank, value = rank.toString())
     }
 
-    // Иначе — оценка по шкале ("4.6/5", "8.7/10") или голое число ("4.3").
-    val value = numberStr.toFloat()
-    val scaleMatch = SCALE_REGEX.find(trimmed)
-    val normalized = if (scaleMatch != null) {
-        val scale = scaleMatch.groupValues[1].replace(',', '.').toFloat()
-        // Защита от деления на ноль: "0/0" и прочие патологические "/0" → null (иначе NaN).
-        if (scale <= 0f) return null
-        if (value > scale) return null
-        value / scale * 5f
-    } else {
-        if (value > 5f) return null
-        value
+    FRACTION_REGEX.find(text)?.let { match ->
+        val numerator = match.groupValues[1].replace(',', '.').toFloatOrNull() ?: return null
+        val scale = match.groupValues[2].replace(',', '.').toFloatOrNull() ?: return null
+        if (scale <= 0f || numerator < 0f || numerator > scale) return null
+        val normalized = (numerator / scale) * 5f
+        return ParsedBookRating(
+            type = BookRatingType.Score,
+            value = formatScore(normalized),
+            score = normalized,
+        )
     }
 
-    if (normalized > 5f) return null
+    val value = NUMBER_REGEX.find(text)
+        ?.groupValues?.get(1)
+        ?.replace(',', '.')
+        ?.toFloatOrNull() ?: return null
+    if (value < 0f || value > 5f) return null
 
-    val display = String.format(Locale.US, "%.1f", normalized).trimEnd('0').trimEnd('.')
-    return ParsedBookRating(BookRatingType.Score, display, normalized)
+    return ParsedBookRating(
+        type = BookRatingType.Score,
+        value = formatScore(value),
+        score = value,
+    )
 }
 
-/** Компактный бейдж рейтинга на обложке книги (каталог/библиотека/поиск). */
+private fun formatScore(score: Float): String {
+    val truncated = floor((score + 1e-4f) * 10f) / 10f
+    val formatted = String.format(Locale.US, "%.1f", truncated)
+    return formatted.removeSuffix(".0")
+}
+
+/**
+ * Compact WebNovel-style frosted gold rating/rank capsule for book covers.
+ * Uses a dark smoked backdrop so the score remains crisp over any cover artwork.
+ */
 @Composable
-fun BookRatingBadge(rating: String?, modifier: Modifier = Modifier) {
+fun BookRatingBadge(
+    rating: String,
+    modifier: Modifier = Modifier,
+) {
     val parsed = remember(rating) { parseBookRating(rating) } ?: return
+    val colors = NovelaTheme.colors
+    val gold = Color(0xFFFFBC1F)
+
     Surface(
-        // Скруглённая плашка «уголок» в правом верхнем углу обложки.
-        // Полупрозрачный primary (эффект «стекла») — контент onPrimary контрастен в обеих темах.
-        shape = RoundedCornerShape(topStart = 6.dp, topEnd = 0.dp, bottomStart = 6.dp, bottomEnd = 6.dp),
-        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.75f),
         modifier = modifier,
+        shape = RoundedCornerShape(NovelaRadius.pill),
+        color = colors.coverBadgeBg,
+        border = BorderStroke(0.5.dp, colors.coverBadgeBorder),
+        shadowElevation = 2.dp,
     ) {
         Row(
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.5.dp),
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+            horizontalArrangement = Arrangement.spacedBy(2.5.dp),
         ) {
             Icon(
-                imageVector = if (parsed.type == BookRatingType.Rank) Icons.Filled.EmojiEvents else Icons.Filled.Star,
+                imageVector = when (parsed.type) {
+                    BookRatingType.Score -> Icons.Rounded.Star
+                    BookRatingType.Rank -> Icons.Rounded.EmojiEvents
+                },
                 contentDescription = null,
-                modifier = Modifier.size(8.dp),
-                tint = MaterialTheme.colorScheme.onPrimary
+                modifier = Modifier.size(11.dp),
+                tint = gold,
             )
-            Spacer(modifier = Modifier.width(2.dp))
             Text(
-                text = parsed.value,
+                text = when (parsed.type) {
+                    BookRatingType.Score -> parsed.value
+                    BookRatingType.Rank -> "#${parsed.value}"
+                },
                 style = MaterialTheme.typography.labelSmall.copy(
+                    fontSize = 10.sp,
+                    lineHeight = 12.sp,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 8.sp
                 ),
-                color = MaterialTheme.colorScheme.onPrimary
+                color = Color.White,
+                maxLines = 1,
             )
         }
     }
 }
 
-/** Чип рейтинга со словами на странице книги. */
+/**
+ * WebNovel Book Detail star-bar + score pill (`★★★★★ 4.8` or `🏆 Rank #3`).
+ */
 @Composable
-fun BookRatingChip(rating: String?, modifier: Modifier = Modifier) {
+fun BookRatingChip(
+    rating: String,
+    modifier: Modifier = Modifier,
+) {
     val parsed = remember(rating) { parseBookRating(rating) } ?: return
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier
+    val colors = NovelaTheme.colors
+
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(NovelaRadius.pill),
+        color = colors.starGoldSoft,
+        border = BorderStroke(0.75.dp, colors.starGold.copy(alpha = 0.35f)),
     ) {
-        Icon(
-            imageVector = if (parsed.type == BookRatingType.Rank) Icons.Filled.EmojiEvents else Icons.Filled.Star,
-            contentDescription = null,
-            modifier = Modifier.size(16.dp),
-            tint = MaterialTheme.colorScheme.primary
-        )
-        Spacer(modifier = Modifier.width(6.dp))
-        Text(
-            text = if (parsed.type == BookRatingType.Rank) {
-                stringResource(R.string.book_rank_format, parsed.value)
-            } else {
-                stringResource(R.string.book_rating_format, parsed.value)
-            },
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        Row(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(5.dp),
+        ) {
+            when (parsed.type) {
+                BookRatingType.Score -> {
+                    val scoreVal = parsed.score ?: 0f
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(1.dp),
+                    ) {
+                        for (starIndex in 1..5) {
+                            val icon = when {
+                                scoreVal >= starIndex - 0.2f -> Icons.Rounded.Star
+                                scoreVal >= starIndex - 0.75f -> Icons.AutoMirrored.Rounded.StarHalf
+                                else -> Icons.Rounded.StarOutline
+                            }
+                            Icon(
+                                imageVector = icon,
+                                contentDescription = null,
+                                modifier = Modifier.size(13.dp),
+                                tint = colors.starGold,
+                            )
+                        }
+                    }
+                    Text(
+                        text = parsed.value,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = colors.textPrimary,
+                        maxLines = 1,
+                    )
+                }
+                BookRatingType.Rank -> {
+                    Icon(
+                        imageVector = Icons.Rounded.EmojiEvents,
+                        contentDescription = null,
+                        modifier = Modifier.size(14.dp),
+                        tint = colors.starGold,
+                    )
+                    Text(
+                        text = stringResource(id = R.string.book_rank_format, "#${parsed.value}"),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.textPrimary,
+                        maxLines = 1,
+                    )
+                }
+            }
+        }
     }
 }

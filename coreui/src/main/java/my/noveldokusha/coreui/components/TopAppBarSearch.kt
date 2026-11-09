@@ -1,29 +1,36 @@
 package my.noveldokusha.coreui.components
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandIn
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkOut
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.runtime.remember
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
@@ -38,12 +45,16 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.material3.DropdownMenu
 import my.noveldokusha.coreui.R
-import my.noveldokusha.coreui.theme.clickableNoIndicator
+import my.noveldokusha.coreui.theme.NovelaRadius
+import my.noveldokusha.coreui.theme.NovelaSize
+import my.noveldokusha.coreui.theme.NovelaTheme
 
 enum class ToolbarMode { MAIN, SEARCH }
 
@@ -55,7 +66,7 @@ fun TopAppBarSearch(
     onSearchTextChange: (String) -> Unit,
     onClose: () -> Unit,
     onTextDone: (String) -> Unit,
-    containerColor: Color = MaterialTheme.colorScheme.surface,
+    containerColor: Color = MaterialTheme.colorScheme.background,
     placeholderText: String = stringResource(R.string.search_here),
     scrollBehavior: TopAppBarScrollBehavior? = null,
     inputEnabled: Boolean = true,
@@ -65,16 +76,17 @@ fun TopAppBarSearch(
     onMenuClick: (() -> Unit)? = null,
     dropdownContent: @Composable (() -> Unit)? = null,
 ) {
+    val colors = NovelaTheme.colors
     val keyboardController = LocalSoftwareKeyboardController.current
     var dropdownExpanded by remember { mutableStateOf(false) }
+    var isFocused by remember { mutableStateOf(false) }
 
-    // Many hacks going on here to make it scrollBehavior compatible
     TopAppBar(
         modifier = modifier.clickable(
             interactionSource = remember { MutableInteractionSource() },
             indication = null
         ) {
-            focusRequester.requestFocus()
+            if (inputEnabled) focusRequester.requestFocus()
         },
         scrollBehavior = scrollBehavior,
         colors = TopAppBarDefaults.topAppBarColors(
@@ -82,104 +94,148 @@ fun TopAppBarSearch(
             scrolledContainerColor = containerColor,
         ),
         navigationIcon = {
-            IconButton(onClick = {
-                keyboardController?.hide()
-                onClose()
-            }, modifier = Modifier.padding(start = 2.dp)) {
+            IconButton(
+                onClick = {
+                    keyboardController?.hide()
+                    onClose()
+                },
+                modifier = Modifier.padding(start = 2.dp),
+            ) {
                 Icon(
-                    Icons.AutoMirrored.Filled.ArrowBack,
+                    imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurface
+                    tint = colors.textPrimary,
                 )
             }
         },
         title = {
-            TextField(
-                value = searchTextInput,
-                onValueChange = onSearchTextChange,
-                textStyle = MaterialTheme.typography.bodyLarge.copy(
-                    color = MaterialTheme.colorScheme.onSurface
+            Surface(
+                shape = RoundedCornerShape(NovelaRadius.pill),
+                color = colors.surfaceSubtle,
+                border = BorderStroke(
+                    width = if (isFocused) 1.25.dp else NovelaSize.hairline,
+                    color = if (isFocused) colors.accent else colors.borderSubtle,
                 ),
-                singleLine = true,
-                maxLines = 1,
-                enabled = inputEnabled,
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                    disabledContainerColor = Color.Transparent,
-                    cursorColor = MaterialTheme.colorScheme.primary,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    disabledIndicatorColor = Color.Transparent,
-                    focusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    focusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                ),
-                shape = RoundedCornerShape(16.dp),
-                label = labelText?.let {
-                    { Text(text = it) }
-                },
-                keyboardActions = KeyboardActions(onDone = {
-                    if (searchTextInput.isNotBlank()) {
-                        onTextDone(searchTextInput)
-                    }
-                }),
                 modifier = Modifier
-                    .focusRequester(focusRequester)
-                    .onFocusChanged { focusState ->
-                        if (!focusState.isFocused) {
-                            keyboardController?.hide()
-                        }
-                    }
-                    .fillMaxWidth(),
-                placeholder = {
-                    Text(
-                        text = placeholderText,
-                        modifier = Modifier.fillMaxWidth()
+                    .fillMaxWidth()
+                    .padding(end = 10.dp)
+                    .height(NovelaSize.searchBarHeight),
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Search,
+                        contentDescription = null,
+                        tint = if (isFocused) colors.accent else colors.textMuted,
+                        modifier = Modifier.size(18.dp),
                     )
-                },
-                trailingIcon = {
-                    if (searchTextInput.isNotEmpty()) {
-                        AnimatedVisibility(
-                            visible = true,
-                            enter = fadeIn() + expandIn(expandFrom = Alignment.Center),
-                            exit = fadeOut() + shrinkOut(shrinkTowards = Alignment.Center)
+                    Spacer(Modifier.width(8.dp))
+                    Box(
+                        modifier = Modifier.weight(1f),
+                        contentAlignment = Alignment.CenterStart,
+                    ) {
+                        if (searchTextInput.isEmpty()) {
+                            Text(
+                                text = labelText ?: placeholderText,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = colors.textMuted,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                        BasicTextField(
+                            value = searchTextInput,
+                            onValueChange = onSearchTextChange,
+                            enabled = inputEnabled,
+                            singleLine = true,
+                            textStyle = MaterialTheme.typography.bodyMedium.copy(
+                                color = colors.textPrimary,
+                            ),
+                            cursorBrush = SolidColor(colors.accent),
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                            keyboardActions = KeyboardActions(
+                                onSearch = {
+                                    keyboardController?.hide()
+                                    if (searchTextInput.isNotBlank()) {
+                                        onTextDone(searchTextInput)
+                                    }
+                                },
+                                onDone = {
+                                    keyboardController?.hide()
+                                    if (searchTextInput.isNotBlank()) {
+                                        onTextDone(searchTextInput)
+                                    }
+                                }
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .focusRequester(focusRequester)
+                                .onFocusChanged { focusState ->
+                                    isFocused = focusState.isFocused
+                                    if (!focusState.isFocused) {
+                                        keyboardController?.hide()
+                                    }
+                                },
+                        )
+                    }
+                    AnimatedVisibility(
+                        visible = searchTextInput.isNotEmpty(),
+                        enter = fadeIn(),
+                        exit = fadeOut(),
+                    ) {
+                        Surface(
+                            shape = CircleShape,
+                            color = colors.borderSubtle,
+                            modifier = Modifier
+                                .size(22.dp)
+                                .clickable {
+                                    onSearchTextChange("")
+                                    if (inputEnabled) focusRequester.requestFocus()
+                                },
                         ) {
-                            IconButton(onClick = {
-                                onSearchTextChange("")
-                                focusRequester.requestFocus()
-                            }) {
+                            Box(contentAlignment = Alignment.Center) {
                                 Icon(
-                                    Icons.Filled.Close,
-                                    contentDescription = null
+                                    imageVector = Icons.Rounded.Close,
+                                    contentDescription = null,
+                                    tint = colors.textSecondary,
+                                    modifier = Modifier.size(13.dp),
                                 )
                             }
                         }
-                    } else if (showMenuButton) {
+                    }
+                    if (searchTextInput.isEmpty() && showMenuButton) {
                         Box {
-                            IconButton(onClick = {
-                                if (dropdownContent != null) {
-                                    dropdownExpanded = !dropdownExpanded
-                                } else {
-                                    onMenuClick?.invoke()
-                                }
-                            }) {
+                            IconButton(
+                                onClick = {
+                                    if (dropdownContent != null) {
+                                        dropdownExpanded = !dropdownExpanded
+                                    } else {
+                                        onMenuClick?.invoke()
+                                    }
+                                },
+                                modifier = Modifier.size(32.dp),
+                            ) {
                                 Icon(
-                                    Icons.Filled.MoreVert,
-                                    contentDescription = null
+                                    imageVector = Icons.Rounded.MoreVert,
+                                    contentDescription = null,
+                                    tint = colors.textSecondary,
+                                    modifier = Modifier.size(18.dp),
                                 )
                             }
                             DropdownMenu(
                                 expanded = dropdownExpanded,
-                                onDismissRequest = { dropdownExpanded = false }
+                                onDismissRequest = { dropdownExpanded = false },
                             ) {
                                 dropdownContent?.invoke()
                             }
                         }
                     }
                 }
-            )
+            }
         }
     )
 }
