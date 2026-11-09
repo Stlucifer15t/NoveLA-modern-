@@ -98,6 +98,8 @@ import androidx.compose.ui.unit.dp
 import my.noveldokusha.core.appPreferences.AppPreferences
 import my.noveldokusha.coreui.theme.AppTheme
 import my.noveldokusha.coreui.theme.DarkMode
+import my.noveldokusha.coreui.theme.NovelaRadius
+import my.noveldokusha.coreui.theme.NovelaSpacing
 import my.noveldokusha.coreui.theme.InternalTheme
 import my.noveldokusha.coreui.theme.rememberMutableStateOf
 import my.noveldokusha.features.reader.domain.ReaderItem
@@ -243,10 +245,25 @@ internal fun ReaderScreen(
                             state.settings.selectedSetting.value = if (selectedSetting == type) Type.None else type
                         }
 
+                        // Floating rounded reader toolbar — keeps every action,
+                        // but reads as a card over the page instead of a slab.
+                        Surface(
+                            color = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.94f),
+                            shape = RoundedCornerShape(NovelaRadius.xl),
+                            shadowElevation = 8.dp,
+                            tonalElevation = 0.dp,
+                            border = androidx.compose.foundation.BorderStroke(
+                                width = 0.5.dp,
+                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f),
+                            ),
+                            modifier = Modifier
+                                .padding(horizontal = NovelaSpacing.sm, vertical = NovelaSpacing.xs)
+                                .animateContentSize(),
+                        ) {
                         TopAppBar(
                             colors = TopAppBarDefaults.topAppBarColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.90f),
-                                scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.90f),
+                                containerColor = Color.Transparent,
+                                scrolledContainerColor = Color.Transparent,
                             ),
                             title = {
                                 Text(
@@ -301,9 +318,7 @@ internal fun ReaderScreen(
                                 }
                             }
                         )
-                        HorizontalDivider()
-                        // Панель скорости автопрокрутки: видна ТОЛЬКО при включённой
-                        // автопрокрутке — вкл/выкл кнопкой тулбара (filled/outlined).
+                        }
                         if (autoscrollOn) {
                             Row(
                                 modifier = Modifier
@@ -397,9 +412,10 @@ internal fun ReaderScreen(
 
                         BottomAppBar(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
+                                .padding(horizontal = NovelaSpacing.sm, vertical = NovelaSpacing.xs)
+                                .clip(RoundedCornerShape(NovelaRadius.xxl))
                                 .animateContentSize(),
-                            containerColor = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.90f),
+                            containerColor = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.94f),
                         ) {
                             val chapterCurrentNumber by state.readerInfo.chapterCurrentNumber
                             val chaptersCount by state.readerInfo.chaptersCount

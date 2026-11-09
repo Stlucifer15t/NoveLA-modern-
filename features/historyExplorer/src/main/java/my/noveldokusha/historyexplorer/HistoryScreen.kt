@@ -53,6 +53,8 @@ import coil3.network.httpHeaders
 import coil3.request.ImageRequest
 import my.noveldokusha.core.rememberResolvedBookImagePath
 import my.noveldokusha.core.utils.refererFor
+import my.noveldokusha.coreui.components.NovelaEmptyState
+import my.noveldokusha.coreui.components.NovelaScreenHeader
 import my.noveldokusha.feature.local_database.BookMetadata
 import my.noveldokusha.navigation.NavigationRouteViewModel
 import my.noveldokusha.strings.R as StringsR
@@ -71,16 +73,8 @@ fun HistoryScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                ),
-                title = {
-                    Text(
-                        text = stringResource(id = StringsR.string.title_history),
-                        style = MaterialTheme.typography.headlineMedium
-                    )
-                },
+            NovelaScreenHeader(
+                title = stringResource(id = StringsR.string.title_history),
                 actions = {
                     if (uiState is HistoryUiState.Content) {
                         IconButton(onClick = { showMenu = true }) {
@@ -129,20 +123,12 @@ fun HistoryScreen(
                         .padding(innerPadding),
                     contentAlignment = Alignment.Center
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(
-                            Icons.Filled.History,
-                            contentDescription = null,
-                            modifier = Modifier.size(64.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                        )
-                        Spacer(Modifier.height(16.dp))
-                        Text(
-                            text = stringResource(StringsR.string.no_history_yet),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+                    NovelaEmptyState(
+                        icon = Icons.Filled.History,
+                        title = stringResource(StringsR.string.no_history_yet),
+                        message = "",
+                        modifier = Modifier.padding(innerPadding),
+                    )
                 }
 
                 is HistoryUiState.Content -> LazyColumn(

@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
+import my.noveldokusha.coreui.components.NovelaScreenHeader
 import my.noveldokusha.coreui.theme.LocalAppTheme
 import my.noveldokusha.coreui.theme.LocalIsDark
 import my.noveldokusha.tooling.backup_create.onBackupCreate
@@ -51,16 +52,8 @@ fun SettingsScreen(
     androidx.compose.runtime.key(appTheme, isDark) {
         Scaffold(
             topBar = {
-            TopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                ),
-                title = {
-                    Text(
-                        text = stringResource(id = R.string.title_settings),
-                        style = MaterialTheme.typography.headlineMedium
-                    )
-                }
+            NovelaScreenHeader(
+                title = stringResource(id = R.string.title_settings),
             )
         },
         content = { innerPadding ->

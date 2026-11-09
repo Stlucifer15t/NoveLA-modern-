@@ -60,3 +60,6 @@ repomix.config.json
 /.opencode
 /.planning
 /docs
+
+# Harness agent scratch (build wrapper, logs, memory)
+/.harness

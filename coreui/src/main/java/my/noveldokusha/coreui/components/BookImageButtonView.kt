@@ -46,7 +46,7 @@ import androidx.compose.ui.unit.sp
 import my.noveldokusha.core.appPreferences.SourceStripPosition
 import my.noveldokusha.coreui.AppTestTags
 import my.noveldokusha.coreui.R
-import my.noveldokusha.coreui.theme.ImageBorderShape
+import my.noveldokusha.coreui.theme.NovelaRadius
 import my.noveldokusha.coreui.theme.InternalTheme
 import my.noveldokusha.coreui.theme.PreviewThemes
 
@@ -77,13 +77,12 @@ fun BookImageButtonView(
     val showStrip = stripUnreadCount != null || stripSourceName != null
     val isOnCover = sourceStripPosition == SourceStripPosition.OnCover
     val isInfoPanel = sourceStripPosition == SourceStripPosition.InfoPanel
-    val titleBottomPadding = if (showStrip && isOnCover) 32.dp else 8.dp
 
     Column(modifier = modifier.testTag(AppTestTags.BOOK_IMAGE_BUTTON_VIEW)) {
         Box(
             Modifier
                 .padding(2.dp)
-                .clip(ImageBorderShape)
+                .clip(NovelaRadius.coverShape)
                 .fillMaxWidth()
                 .aspectRatio(1 / 1.45f)
         ) {
@@ -118,48 +117,6 @@ fun BookImageButtonView(
                 Box(modifier = Modifier.align(Alignment.TopEnd)) { it() }
             }
 
-            // Gradient title overlay — always show unless InfoPanel
-            if (!isInfoPanel) {
-                Text(
-                    text = title,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .align(Alignment.BottomCenter)
-                        .background(
-                            Brush.verticalGradient(
-                                0f to MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.0f),
-                                0.4f to MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f),
-                                1f to MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f),
-                            )
-                        )
-                        .padding(top = 30.dp, bottom = titleBottomPadding)
-                        .padding(horizontal = 8.dp),
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        fontWeight = FontWeight.ExtraBold,
-                        color = MaterialTheme.colorScheme.inverseSurface,
-                        drawStyle = Stroke(
-                            miter = 4f,
-                            width = 4f,
-                            join = StrokeJoin.Miter
-                        )
-                    )
-                )
-                Text(
-                    text = title,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .align(Alignment.BottomCenter)
-                        .padding(top = 30.dp, bottom = titleBottomPadding)
-                        .padding(horizontal = 8.dp),
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        fontWeight = FontWeight.ExtraBold,
-                        color = MaterialTheme.colorScheme.inverseOnSurface,
-                    )
-                )
-            }
-
             // Source strip on cover
             if (isOnCover && showStrip) {
                 SourceStrip(
@@ -171,6 +128,31 @@ fun BookImageButtonView(
                         .align(Alignment.BottomCenter)
                 )
             }
+        }
+
+        // Title below the cover — the modern web-novel card layout.
+        // InfoPanel keeps its own framed panel further down instead.
+        if (!isInfoPanel) {
+            Text(
+                text = title,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 6.dp)
+                    .padding(horizontal = 2.dp),
+                style = MaterialTheme.typography.labelMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    lineHeight = 16.sp,
+                    lineHeightStyle = LineHeightStyle(
+                        alignment = LineHeightStyle.Alignment.Center,
+                        trim = LineHeightStyle.Trim.None,
+                    ),
+                    lineBreak = LineBreak.Heading,
+                    hyphens = Hyphens.Auto,
+                ),
+                color = MaterialTheme.colorScheme.onSurface,
+            )
         }
 
         // Below-cover: source strip or InfoPanel

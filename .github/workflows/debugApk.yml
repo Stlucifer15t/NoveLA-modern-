@@ -1,0 +1,69 @@
+name: Debug APK
+
+# Builds an unsigned-debug APK on GitHub's runners, where a working aapt2 exists.
+# Use this to verify a UI change compiles AND packages before merging.
+#
+# Trigger: Actions -> "Debug APK" -> Run workflow.
+# The APK is attached to the run as a downloadable artifact.
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Branch, tag or SHA to build'
+        required: false
+        default: ''
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: debug-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Assemble debug APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+
+      - name: Set up JDK environment
+        uses: actions/setup-java@v6
+        with:
+          distribution: 'temurin'
+          java-version: 21
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6.3.0
+
+      # gradle.properties may carry a developer's local org.gradle.java.home,
+      # which does not exist on the runner.
+      - name: Remove local Java home from gradle.properties
+        run: sed -i '/org\.gradle\.java\.home/d' gradle.properties
+
+      - name: Assemble debug APK
+        run: ./gradlew assembleDebug --stacktrace
+
+      - name: Run unit tests
+        # Kept non-fatal for now: the suite needs Robolectric resources and
+        # currently has pre-existing failures unrelated to UI work.
+        continue-on-error: true
+        run: ./gradlew testDebugUnitTest --stacktrace
+
+      - name: Collect APKs
+        run: |
+          mkdir -p release-artifacts
+          find app/build/outputs/apk -name '*.apk' -exec cp {} release-artifacts/ \;
+          ls -lah release-artifacts
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v7
+        with:
+          name: NoveLA-debug-${{ github.sha }}
+          path: release-artifacts/
+          retention-days: 30

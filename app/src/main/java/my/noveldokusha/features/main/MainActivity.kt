@@ -14,6 +14,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -31,6 +33,7 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -71,6 +74,9 @@ import my.noveldokusha.historyexplorer.HistoryScreen
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.zIndex
+import my.noveldokusha.coreui.theme.NovelaMotion
+import my.noveldokusha.coreui.theme.NovelaRadius
+import my.noveldokusha.coreui.theme.NovelaSize
 
 private data class Page(
     @DrawableRes val iconRes: Int,
@@ -218,17 +224,22 @@ open class MainActivity : BaseActivity() {
                         }
                     }
 
-                    // Floating slim icon-only bottom bar
+                    // Floating bottom navigation: frosted pill with a sliding
+                    // accent capsule behind the active tab.
                     Surface(
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
                             .navigationBarsPadding()
-                            .padding(horizontal = 64.dp, vertical = 16.dp)
-                            .height(52.dp),
-                        shape = RoundedCornerShape(26.dp),
-                        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.95f),
-                        shadowElevation = 8.dp,
-                        tonalElevation = 4.dp
+                            .padding(horizontal = 40.dp, vertical = 16.dp)
+                            .height(NovelaSize.navBarHeight),
+                        shape = RoundedCornerShape(NovelaRadius.pill),
+                        color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.96f),
+                        shadowElevation = 12.dp,
+                        tonalElevation = 0.dp,
+                        border = androidx.compose.foundation.BorderStroke(
+                            width = 0.5.dp,
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
+                        ),
                     ) {
                         Row(
                             modifier = Modifier
@@ -239,6 +250,34 @@ open class MainActivity : BaseActivity() {
                         ) {
                             pages.forEachIndexed { pageIndex, page ->
                                 val isSelected = activePageIndex == pageIndex
+                                // Animate the selected capsule width so the bar
+                                // feels like one object rather than four toggles.
+                                val capsuleWidth by animateDpAsState(
+                                    targetValue = if (isSelected) 56.dp else 44.dp,
+                                    animationSpec = tween(
+                                        durationMillis = NovelaMotion.STANDARD,
+                                        easing = NovelaMotion.StandardEasing,
+                                    ),
+                                    label = "navCapsuleW$pageIndex",
+                                )
+                                val capsuleColor by animateColorAsState(
+                                    targetValue = if (isSelected) {
+                                        MaterialTheme.colorScheme.primary
+                                    } else {
+                                        Color.Transparent
+                                    },
+                                    animationSpec = tween(
+                                        durationMillis = NovelaMotion.STANDARD,
+                                        easing = NovelaMotion.StandardEasing,
+                                    ),
+                                    label = "navCapsuleC$pageIndex",
+                                )
+                                val iconScale by animateFloatAsState(
+                                    targetValue = if (isSelected) 1f else 0.92f,
+                                    animationSpec = tween(NovelaMotion.STANDARD),
+                                    label = "navIconScale$pageIndex",
+                                )
+
                                 Box(
                                     modifier = Modifier
                                         .weight(1f)
@@ -252,22 +291,28 @@ open class MainActivity : BaseActivity() {
                                         ),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    // Animated background for selection
-                                    Surface(
-                                        modifier = Modifier.size(40.dp),
-                                        shape = CircleShape,
-                                        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
+                                    Box(
+                                        modifier = Modifier
+                                            .height(40.dp)
+                                            .width(capsuleWidth)
+                                            .clip(RoundedCornerShape(NovelaRadius.pill))
+                                            .background(capsuleColor),
+                                        contentAlignment = Alignment.Center,
                                     ) {
                                         Icon(
                                             painter = painterResource(id = page.iconRes),
                                             contentDescription = stringResource(id = page.stringRes),
                                             modifier = Modifier
-                                                .padding(8.dp)
-                                                .size(24.dp),
-                                            tint = if (isSelected) 
-                                                MaterialTheme.colorScheme.onPrimaryContainer 
-                                            else 
-                                                MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                                                .size(22.dp)
+                                                .graphicsLayer {
+                                                    scaleX = iconScale
+                                                    scaleY = iconScale
+                                                },
+                                            tint = if (isSelected) {
+                                                MaterialTheme.colorScheme.onPrimary
+                                            } else {
+                                                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.72f)
+                                            }
                                         )
                                     }
                                 }

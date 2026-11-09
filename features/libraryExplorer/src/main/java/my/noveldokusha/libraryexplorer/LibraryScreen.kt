@@ -39,6 +39,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.filled.MoreVert
 import my.noveldokusha.coreui.components.AnimatedTransition
+import my.noveldokusha.coreui.components.NovelaScreenHeader
 import my.noveldokusha.coreui.components.ToolbarMode
 import my.noveldokusha.coreui.components.TopAppBarSearch
 import my.noveldokusha.navigation.NavigationRouteViewModel
@@ -176,52 +177,45 @@ fun LibraryScreen(
                 ) {
                     AnimatedTransition(targetState = uiState.toolbarMode) { target ->
                         when (target) {
-                            ToolbarMode.MAIN -> TopAppBar(
-                                colors = TopAppBarDefaults.topAppBarColors(
-                                    containerColor = MaterialTheme.colorScheme.surface,
-                                ),
-                                title = {
-                                    Text(
-                                        text = "NoveLA",
-                                        style = MaterialTheme.typography.titleLarge,
-                                        color = MaterialTheme.colorScheme.onBackground
-                                    )
-                                },
-                                actions = {
-                                    if (pageViewModel.isUpdating) {
-                                        IconButton(onClick = { pageViewModel.cancelLibraryUpdates() }) {
+                            ToolbarMode.MAIN -> Column {
+                                NovelaScreenHeader(
+                                    title = "NoveLA",
+                                    subtitle = stringResource(R.string.reading),
+                                    actions = {
+                                        if (pageViewModel.isUpdating) {
+                                            IconButton(onClick = { pageViewModel.cancelLibraryUpdates() }) {
+                                                Icon(
+                                                    Icons.Filled.Close,
+                                                    stringResource(R.string.cancel),
+                                                    tint = MaterialTheme.colorScheme.error
+                                                )
+                                            }
+                                        }
+                                        IconButton(onClick = { libraryModel.setToolbarMode(ToolbarMode.SEARCH) }) {
+                                            Icon(Icons.Filled.Search, stringResource(R.string.search_for_title))
+                                        }
+                                        IconButton(onClick = { libraryModel.setShowBottomSheet(true) }) {
+                                            Icon(Icons.AutoMirrored.Filled.Sort, stringResource(R.string.filter))
+                                        }
+                                        // Category toggle button (like language filter in Finder)
+                                        IconButton(
+                                            onClick = { libraryModel.toggleShowCategories() }
+                                        ) {
                                             Icon(
-                                                Icons.Filled.Close,
-                                                stringResource(R.string.cancel),
-                                                tint = MaterialTheme.colorScheme.error
+                                                Icons.Filled.FolderOpen,
+                                                stringResource(R.string.categories),
+                                                tint = if (uiState.showCategories)
+                                                    MaterialTheme.colorScheme.primary
+                                                else MaterialTheme.colorScheme.onSurface
                                             )
                                         }
-                                    }
-                                    IconButton(onClick = { libraryModel.setToolbarMode(ToolbarMode.SEARCH) }) {
-                                        Icon(Icons.Filled.Search, stringResource(R.string.search_for_title))
-                                    }
-                                    IconButton(onClick = { libraryModel.setShowBottomSheet(true) }) {
-                                        Icon(Icons.AutoMirrored.Filled.Sort, stringResource(R.string.filter))
-                                    }
-                                    // Category toggle button (like language filter in Finder)
-                                    IconButton(
-                                        onClick = { libraryModel.toggleShowCategories() }
-                                    ) {
-                                        Icon(
-                                            Icons.Filled.FolderOpen,
-                                            stringResource(R.string.categories),
-                                            tint = if (uiState.showCategories)
-                                                MaterialTheme.colorScheme.primary
-                                            else MaterialTheme.colorScheme.onSurface
-                                        )
-                                    }
-                                    IconButton(onClick = { showDropdownMenu.value = true }) {
-                                        Icon(Icons.Filled.MoreVert, stringResource(R.string.options_panel))
-                                    }
-                                    androidx.compose.material3.DropdownMenu(
-                                        expanded = showDropdownMenu.value,
-                                        onDismissRequest = { showDropdownMenu.value = false }
-                                    ) {
+                                        IconButton(onClick = { showDropdownMenu.value = true }) {
+                                            Icon(Icons.Filled.MoreVert, stringResource(R.string.options_panel))
+                                        }
+                                        androidx.compose.material3.DropdownMenu(
+                                            expanded = showDropdownMenu.value,
+                                            onDismissRequest = { showDropdownMenu.value = false }
+                                        ) {
                                         androidx.compose.material3.DropdownMenuItem(
                                             leadingIcon = {
                                                 Icon(Icons.Filled.Checklist, stringResource(R.string.select_books))
@@ -241,7 +235,8 @@ fun LibraryScreen(
                                         )
                                     }
                                 }
-                            )
+                                )
+                            }
                             ToolbarMode.SEARCH -> TopAppBarSearch(
                                 focusRequester = remember { androidx.compose.ui.focus.FocusRequester() },
                                 searchTextInput = pageViewModel.searchQuery,

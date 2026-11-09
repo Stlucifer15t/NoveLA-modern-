@@ -140,6 +140,7 @@ fun InternalTheme(
                 CompositionLocalProvider(
                     LocalContentColor provides MaterialTheme.colorScheme.onSurface,
                     LocalTextSelectionColors provides textSelectionColors,
+                    LocalNovelaColors provides rememberNovelaColors(),
                     content = content
                 )
             }

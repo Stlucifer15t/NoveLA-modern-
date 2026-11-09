@@ -1,6 +1,9 @@
 package my.noveldokusha.catalogexplorer
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Alignment
@@ -57,6 +61,10 @@ import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import my.noveldokusha.coreui.components.ChipOption
+import my.noveldokusha.coreui.components.NovelaScreenHeader
+import my.noveldokusha.coreui.theme.NovelaMotion
+import my.noveldokusha.coreui.theme.NovelaRadius
+import my.noveldokusha.coreui.theme.NovelaSpacing
 import my.noveldokusha.coreui.components.LanguageFilterChips
 import my.noveldokusha.navigation.NavigationRouteViewModel
 import my.noveldokusha.coreui.components.AddByUrlDialog
@@ -159,16 +167,9 @@ fun CatalogExplorerScreen(
     Scaffold(
         topBar = {
             Column {
-                TopAppBar(
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
-                    ),
-                        title = {
-                            Text(
-                                text = stringResource(R.string.title_finder),
-                                style = MaterialTheme.typography.headlineMedium
-                            )
-                    },
+                NovelaScreenHeader(
+                    title = stringResource(R.string.title_finder),
+                    subtitle = stringResource(R.string.title_browse),
                     actions = {
                         // Show different actions based on selected tab
                         when (uiState.selectedTabIndex) {
@@ -193,58 +194,55 @@ fun CatalogExplorerScreen(
                     }
                 )
 
-                // Tab row with icons
-                val selectedColor = MaterialTheme.colorScheme.onSurface
+                // Tab row with icons — segmented pill control
+                val selectedColor = MaterialTheme.colorScheme.onPrimary
                 val unselectedColor = MaterialTheme.colorScheme.onSurfaceVariant
                 val tabTitles = listOf(
                     R.string.title_browse to Icons.Outlined.Explore,
                     R.string.title_extensions to Icons.Outlined.Extension,
                     R.string.migration_tab to Icons.AutoMirrored.Outlined.AltRoute,
                 )
-                TabRow(
-                    selectedTabIndex = uiState.selectedTabIndex,
-                    containerColor = MaterialTheme.colorScheme.background,
-                    indicator = {
-                        val tabPos = it[uiState.selectedTabIndex]
-                        Box(
-                            modifier = Modifier
-                                .tabIndicatorOffset(tabPos)
-                                .fillMaxSize()
-                                .padding(4.dp)
-                                .background(
-                                    MaterialTheme.colorScheme.surfaceContainerHigh,
-                                    RoundedCornerShape(4.dp)
-                                )
-                                .zIndex(-1f)
-                        )
-                    },
-                    divider = {},
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = NovelaSpacing.screenH, vertical = NovelaSpacing.xs)
+                        .clip(NovelaRadius.chipShape)
+                        .background(MaterialTheme.colorScheme.surfaceContainer)
+                        .padding(NovelaSpacing.xxs),
+                    horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.xxs),
                 ) {
                     tabTitles.forEachIndexed { index, (titleRes, icon) ->
-                        Tab(
-                            selected = uiState.selectedTabIndex == index,
-                            modifier = Modifier.clip(RoundedCornerShape(8.dp)),
-                            onClick = { viewModel.setTabIndex(index) },
+                        val isSelected = uiState.selectedTabIndex == index
+                        val bg by animateColorAsState(
+                            targetValue = if (isSelected) MaterialTheme.colorScheme.primary
+                            else Color.Transparent,
+                            animationSpec = tween(NovelaMotion.STANDARD, easing = NovelaMotion.StandardEasing),
+                            label = "tabBg$index",
+                        )
+                        Row(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(40.dp)
+                                .clip(NovelaRadius.chipShape)
+                                .background(bg)
+                                .clickable { viewModel.setTabIndex(index) }
+                                .padding(horizontal = NovelaSpacing.sm),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center,
                         ) {
-                            Row(
-                                modifier = Modifier
-                                    .height(48.dp)
-                                    .padding(horizontal = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Icon(
-                                    icon, null, Modifier.size(18.dp),
-                                    tint = if (uiState.selectedTabIndex == index) selectedColor else unselectedColor
-                                )
-                                Spacer(Modifier.width(2.dp))
-                                Text(
-                                    stringResource(titleRes),
-                                    modifier = Modifier.weight(1f, fill = false),
-                                    color = if (uiState.selectedTabIndex == index) selectedColor else unselectedColor,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            }
+                            Icon(
+                                icon, null, Modifier.size(17.dp),
+                                tint = if (isSelected) selectedColor else unselectedColor
+                            )
+                            Spacer(Modifier.width(NovelaSpacing.xs))
+                            Text(
+                                stringResource(titleRes),
+                                modifier = Modifier.weight(1f, fill = false),
+                                color = if (isSelected) selectedColor else unselectedColor,
+                                style = MaterialTheme.typography.labelLarge,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
                         }
                     }
                 }

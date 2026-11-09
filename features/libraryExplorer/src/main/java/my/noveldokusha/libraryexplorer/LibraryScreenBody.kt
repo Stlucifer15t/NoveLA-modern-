@@ -46,6 +46,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import my.noveldokusha.core.appPreferences.SourceStripPosition
 import my.noveldokusha.coreui.R
+import my.noveldokusha.coreui.components.NovelaFilterChip
+import my.noveldokusha.coreui.theme.NovelaSpacing
 import my.noveldokusha.core.domain.LibraryCategory
 import my.noveldokusha.feature.local_database.BookWithContext
 
@@ -101,103 +103,42 @@ internal fun LibraryScreenBody(
                 val totalCount = catCounts.values.sum()
 
                 FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.sm),
+                    verticalArrangement = Arrangement.spacedBy(NovelaSpacing.xs),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 8.dp)
-                        .background(
-                            color = MaterialTheme.colorScheme.surfaceContainerLow,
-                            shape = RoundedCornerShape(12.dp)
-                        )
-                        .padding(8.dp)
+                        .padding(horizontal = NovelaSpacing.screenH, vertical = NovelaSpacing.sm)
                 ) {
                     // "All" chip
-                    FilterChip(
+                    NovelaFilterChip(
+                        label = "${stringResource(R.string.all_categories)} ($totalCount)",
                         selected = selectedCategories.isEmpty(),
                         onClick = { viewModel.clearCategoryFilters() },
-                        label = {
-                            Text(
-                                text = "${stringResource(R.string.all_categories)} ($totalCount)",
-                                style = MaterialTheme.typography.labelMedium
-                            )
-                        },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-                            selectedLabelColor = MaterialTheme.colorScheme.primary,
-                        ),
-                        border = FilterChipDefaults.filterChipBorder(
-                            enabled = true,
-                            selected = selectedCategories.isEmpty(),
-                            selectedBorderColor = MaterialTheme.colorScheme.primary,
-                        )
                     )
                     // Category chips
                     allCategories.forEach { (category, label) ->
                         val count = catCounts[category] ?: 0
                         val isSelected = category in selectedCategories
-                        FilterChip(
+                        NovelaFilterChip(
+                            label = "$label ($count)",
                             selected = isSelected,
                             onClick = { viewModel.toggleCategory(category) },
-                            label = {
-                                Text(
-                                    text = "$label ($count)",
-                                    style = MaterialTheme.typography.labelMedium
-                                )
-                            },
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-                                selectedLabelColor = MaterialTheme.colorScheme.primary,
-                            ),
-                            border = FilterChipDefaults.filterChipBorder(
-                                enabled = true,
-                                selected = isSelected,
-                                selectedBorderColor = MaterialTheme.colorScheme.primary,
-                            )
                         )
                     }
                     // "+" chip
-                    FilterChip(
+                    NovelaFilterChip(
+                        label = stringResource(R.string.create_category),
                         selected = false,
                         onClick = onCreateCategory,
-                        label = {
-                            Icon(
-                                Icons.Filled.Add,
-                                contentDescription = stringResource(R.string.create_category),
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                            selectedLabelColor = MaterialTheme.colorScheme.primary,
-                        ),
-                        border = FilterChipDefaults.filterChipBorder(
-                            enabled = true,
-                            selected = false,
-                            borderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
-                        )
+                        leadingIcon = Icons.Filled.Add,
                     )
                     // Delete chip (only when custom categories exist)
                     if (customCategories.isNotEmpty()) {
-                        FilterChip(
+                        NovelaFilterChip(
+                            label = stringResource(R.string.delete_category),
                             selected = false,
                             onClick = { showDeleteCategoryPicker = true },
-                            label = {
-                                Icon(
-                                    Icons.Filled.Delete,
-                                    contentDescription = stringResource(R.string.delete_category),
-                                    tint = MaterialTheme.colorScheme.error
-                                )
-                            },
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = MaterialTheme.colorScheme.errorContainer,
-                                selectedLabelColor = MaterialTheme.colorScheme.error,
-                            ),
-                            border = FilterChipDefaults.filterChipBorder(
-                                enabled = true,
-                                selected = false,
-                                borderColor = MaterialTheme.colorScheme.error.copy(alpha = 0.5f),
-                            )
+                            leadingIcon = Icons.Filled.Delete,
                         )
                     }
                 }
