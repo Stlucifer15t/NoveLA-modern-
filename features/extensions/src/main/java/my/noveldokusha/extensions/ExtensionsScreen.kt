@@ -72,6 +72,7 @@ import my.noveldokusha.coreui.components.ImageView
 import my.noveldokusha.core.Extension
 import my.noveldokusha.coreui.components.MyButton
 import my.noveldokusha.coreui.components.SlimListItem
+import my.noveldokusha.extension_compat.core.CompatEcosystem
 import java.util.Locale
 import my.noveldokusha.core.getLanguageDisplayName
 import kotlinx.coroutines.delay
@@ -162,13 +163,15 @@ private fun UnifiedExtensionsScreen(
                 val filteredExtensions = state.availableExtensions
                     .filter { state.selectedLanguages.isEmpty() || it.language in state.selectedLanguages }
                     .filter { state.selectedContentType.isEmpty() || it.contentType == state.selectedContentType || (state.selectedContentType == "novel" && it.contentType.isEmpty()) }
+                    .filter { state.selectedEcosystem.isEmpty() || getEcosystemForExtension(it.id) == state.selectedEcosystem }
 
-                val localInstalledExtensions = remember(state.extensions, state.availableExtensions, state.selectedLanguages, state.selectedContentType) {
+                val localInstalledExtensions = remember(state.extensions, state.availableExtensions, state.selectedLanguages, state.selectedContentType, state.selectedEcosystem) {
                     val ids = filteredExtensions.map { it.id }.toSet()
                     state.extensions
                         .filter { it.id !in ids }
                         .filter { state.selectedLanguages.isEmpty() || it.language in state.selectedLanguages }
                         .filter { state.selectedContentType.isEmpty() || it.contentType == state.selectedContentType || (state.selectedContentType == "novel" && it.contentType.isEmpty()) }
+                        .filter { state.selectedEcosystem.isEmpty() || getEcosystemForExtension(it.id) == state.selectedEcosystem }
                         .map { installed ->
                             ExtensionInfo(
                                 id = installed.id,
@@ -248,6 +251,32 @@ private fun UnifiedExtensionsScreen(
                         singleLine = true
                     )
 
+                    // Ecosystem filter chips
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        val ecosystemOptions = listOf(
+                            "" to stringResource(StringsR.string.all_categories),
+                            "lua" to "Lua (NoveLA)",
+                            "tachiyomi" to "Mihon/Tachiyomi",
+                            "aniyomi" to "Aniyomi",
+                            "legado" to "Legado",
+                            "lnreader" to "LNReader",
+                            "mangayomi" to "Mangayomi",
+                            "cloudstream" to "CloudStream",
+                        )
+                        ecosystemOptions.forEach { (value, label) ->
+                            FilterChip(
+                                selected = state.selectedEcosystem == value,
+                                onClick = { viewModel.onEvent(ExtensionsScreenEvent.OnEcosystemFilterToggle(value)) },
+                                label = { Text(label) },
+                            )
+                        }
+                    }
+
                     // Content type filter chips
                     Row(
                         modifier = Modifier
@@ -323,7 +352,24 @@ private fun UnifiedExtensionsScreen(
                                             onClick = { viewModel.onEvent(ExtensionsScreenEvent.OnUpdateAll) }
                                         ) {
                                             Text(stringResource(StringsR.string.update_all))
-                                        }
+}
+
+// Helper function to determine ecosystem from extension ID
+private fun getEcosystemForExtension(extensionId: String): String {
+    return when {
+        extensionId.startsWith("compat_") || extensionId.contains("#") -> {
+            if (extensionId.contains("tachiyomi")) "tachiyomi"
+            else if (extensionId.contains("aniyomi")) "aniyomi"
+            else if (extensionId.contains("legado")) "legado"
+            else if (extensionId.contains("lnreader")) "lnreader"
+            else if (extensionId.contains("mangayomi")) "mangayomi"
+            else if (extensionId.contains("cloudstream")) "cloudstream"
+            else "compat"
+        }
+        extensionId.startsWith("local_") -> "lua"
+        else -> "lua" // Default to Lua for built-in extensions
+    }
+}
                                     }
                                 }
                             }
@@ -481,6 +527,32 @@ private fun ContentTypeBadge(contentType: String) {
 }
 
 @Composable
+private fun EcosystemBadge(extensionId: String) {
+    val ecosystem = getEcosystemForExtension(extensionId)
+    val (textRes, color) = when (ecosystem) {
+        "tachiyomi" -> "Mihon/Tachiyomi" to MaterialTheme.colorScheme.primary
+        "aniyomi" -> "Aniyomi" to MaterialTheme.colorScheme.secondary
+        "legado" -> "Legado" to MaterialTheme.colorScheme.tertiary
+        "lnreader" -> "LNReader" to MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
+        "mangayomi" -> "Mangayomi" to MaterialTheme.colorScheme.secondary.copy(alpha = 0.8f)
+        "cloudstream" -> "CloudStream" to MaterialTheme.colorScheme.tertiary.copy(alpha = 0.8f)
+        "lua" -> "Lua (NoveLA)" to MaterialTheme.colorScheme.outline
+        else -> "Compat" to MaterialTheme.colorScheme.outline
+    }
+    Text(
+        text = textRes,
+        style = MaterialTheme.typography.labelSmall,
+        color = color,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        modifier = Modifier
+            .padding(start = 6.dp)
+            .background(color.copy(alpha = 0.12f), RoundedCornerShape(4.dp))
+            .padding(horizontal = 6.dp, vertical = 2.dp)
+    )
+}
+
+@Composable
 private fun ExtensionListItem(
     extension: ExtensionInfo,
     viewModel: ExtensionsManagerViewModel
@@ -497,6 +569,7 @@ private fun ExtensionListItem(
                     modifier = Modifier.weight(1f, fill = false)
                 )
                 ContentTypeBadge(contentType = extension.contentType)
+                EcosystemBadge(extensionId = extension.id)
                 Row {
                     if (extension.isUpdateAvailable) {
                         Text(

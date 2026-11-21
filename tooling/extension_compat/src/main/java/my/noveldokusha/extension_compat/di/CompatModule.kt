@@ -10,9 +10,19 @@ import dagger.hilt.components.SingletonComponent
 import dagger.multibindings.IntoSet
 import my.noveldokusha.extension_compat.core.CompatExtensionLoader
 import my.noveldokusha.extension_compat.core.CompatLoaders
+import my.noveldokusha.extension_compat.core.CompatRepositoryManager
 import my.noveldokusha.extension_compat.core.CompatSourceProviderImpl
 import my.noveldokusha.extension_compat.core.CompatStorage
+import my.noveldokusha.extension_compat.cloudstream.CloudStreamExtensionLoader
+import my.noveldokusha.extension_compat.cloudstream.CloudStreamRepositoryHandler
 import my.noveldokusha.extension_compat.legado.LegadoExtensionLoader
+import my.noveldokusha.extension_compat.legado.LegadoRepositoryHandler
+import my.noveldokusha.extension_compat.lnreader.LNReaderExtensionLoader
+import my.noveldokusha.extension_compat.lnreader.LNReaderRepositoryHandler
+import my.noveldokusha.extension_compat.mangayomi.MangayomiExtensionLoader
+import my.noveldokusha.extension_compat.mangayomi.MangayomiRepositoryHandler
+import my.noveldokusha.extension_compat.tachiyomi.TachiyomiExtensionLoader
+import my.noveldokusha.extension_compat.tachiyomi.TachiyomiRepositoryHandler
 import my.noveldokusha.scraper.CompatSourceProvider
 import java.io.File
 import javax.inject.Singleton
@@ -35,11 +45,88 @@ abstract class CompatModule {
     @IntoSet
     abstract fun bindLegadoLoader(impl: LegadoExtensionLoader): CompatExtensionLoader
 
+    @Binds
+    @Singleton
+    @CompatLoaders
+    @IntoSet
+    abstract fun bindTachiyomiLoader(impl: TachiyomiExtensionLoader): CompatExtensionLoader
+
+    @Binds
+    @Singleton
+    @CompatLoaders
+    @IntoSet
+    abstract fun bindLNReaderLoader(impl: LNReaderExtensionLoader): CompatExtensionLoader
+
+    @Binds
+    @Singleton
+    @CompatLoaders
+    @IntoSet
+    abstract fun bindMangayomiLoader(impl: MangayomiExtensionLoader): CompatExtensionLoader
+
+    @Binds
+    @Singleton
+    @CompatLoaders
+    @IntoSet
+    abstract fun bindCloudStreamLoader(impl: CloudStreamExtensionLoader): CompatExtensionLoader
+
     companion object {
 
         @Provides
         @Singleton
         fun provideCompatStorage(@ApplicationContext context: Context): CompatStorage =
             CompatStorage(File(context.filesDir, CompatStorage.DIR_NAME))
+
+        @Provides
+        @Singleton
+        fun provideTachiyomiRepositoryHandler(
+            networkClient: my.noveldokusha.network.NetworkClient,
+            storage: CompatStorage,
+        ): TachiyomiRepositoryHandler = TachiyomiRepositoryHandler(networkClient, storage)
+
+        @Provides
+        @Singleton
+        fun provideLegadoRepositoryHandler(
+            networkClient: my.noveldokusha.network.NetworkClient,
+            storage: CompatStorage,
+        ): LegadoRepositoryHandler = LegadoRepositoryHandler(networkClient, storage)
+
+        @Provides
+        @Singleton
+        fun provideLNReaderRepositoryHandler(
+            networkClient: my.noveldokusha.network.NetworkClient,
+            storage: CompatStorage,
+        ): LNReaderRepositoryHandler = LNReaderRepositoryHandler(networkClient, storage)
+
+        @Provides
+        @Singleton
+        fun provideMangayomiRepositoryHandler(
+            networkClient: my.noveldokusha.network.NetworkClient,
+            storage: CompatStorage,
+        ): MangayomiRepositoryHandler = MangayomiRepositoryHandler(networkClient, storage)
+
+        @Provides
+        @Singleton
+        fun provideCloudStreamRepositoryHandler(
+            networkClient: my.noveldokusha.network.NetworkClient,
+            storage: CompatStorage,
+        ): CloudStreamRepositoryHandler = CloudStreamRepositoryHandler(networkClient, storage)
+
+        @Provides
+        @Singleton
+        fun provideCompatRepositoryManager(
+            networkClient: my.noveldokusha.network.NetworkClient,
+            tachiyomiHandler: TachiyomiRepositoryHandler,
+            legadoHandler: LegadoRepositoryHandler,
+            lnReaderHandler: LNReaderRepositoryHandler,
+            mangayomiHandler: MangayomiRepositoryHandler,
+            cloudStreamHandler: CloudStreamRepositoryHandler,
+        ): CompatRepositoryManager = CompatRepositoryManager(
+            networkClient,
+            tachiyomiHandler,
+            legadoHandler,
+            lnReaderHandler,
+            mangayomiHandler,
+            cloudStreamHandler,
+        )
     }
 }

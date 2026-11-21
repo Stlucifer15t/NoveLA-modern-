@@ -22,6 +22,10 @@ import com.google.gson.Gson
 import my.noveldokusha.core.ExtensionManager
 import my.noveldokusha.core.appPreferences.AppPreferences
 import my.noveldokusha.core.appPreferences.ExtensionInfoCached
+import my.noveldokusha.extension_compat.core.CompatRepositoryManager
+import my.noveldokusha.extension_compat.core.CompatSourceProvider
+import my.noveldokusha.extension_compat.core.CompatEcosystem
+import my.noveldokusha.extension_compat.core.CompatInstallRecord
 import my.noveldokusha.network.NetworkClient
 import my.noveldokusha.scraper.LuaSourceLoader
 import my.noveldokusha.scraper.LuaSourceProvider
@@ -42,6 +46,9 @@ class ExtensionsManagerViewModel @Inject constructor(
     private val luaSourceLoader: LuaSourceLoader,          // ← для скачивания .lua
     private val luaSourceProvider: LuaSourceProvider,
     private val translationManager: TranslationManager,
+    // Compat layer
+    private val compatRepositoryManager: CompatRepositoryManager,
+    private val compatSourceProvider: CompatSourceProvider,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ExtensionsScreenState())
@@ -69,10 +76,31 @@ class ExtensionsManagerViewModel @Inject constructor(
             )
         }
 
-        // Реактивно синхронизируем список установленных расширений
+        // Реактивно синхронизируем список установленных расширений (Lua + Compat)
         viewModelScope.launch {
             extensionManager.getInstalledExtensionsFlow().collectLatest { extensions ->
                 _state.update { it.copy(extensions = extensions) }
+                updateAvailableExtensionsStatus()
+            }
+        }
+
+        // Реактивно синхронизируем compat-источники
+        viewModelScope.launch {
+            compatSourceProvider.sourcesFlow.collectLatest { compatSources ->
+                _state.update { state ->
+                    val compatExtensions = compatSources.map { source ->
+                        core.Extension(
+                            id = source.id,
+                            name = source.resolveName(context),
+                            version = "1.0.0",
+                            language = source.language?.iso639_1 ?: "en",
+                            enabled = true,
+                            imageUrl = source.iconUrl,
+                            settings = null,
+                        )
+                    }
+                    state.copy(extensions = state.extensions + compatExtensions)
+                }
                 updateAvailableExtensionsStatus()
             }
         }
@@ -81,6 +109,13 @@ class ExtensionsManagerViewModel @Inject constructor(
         viewModelScope.launch {
             loadCachedExtensions()        // выставляет cachedAvailableExtensions + lastFetchTime
             loadAllAvailableExtensions()
+            syncCompatRepositories()
+        }
+    }
+
+    private fun syncCompatRepositories() {
+        viewModelScope.launch {
+            compatRepositoryManager.syncAll()
         }
     }
 
@@ -95,6 +130,7 @@ class ExtensionsManagerViewModel @Inject constructor(
         is ExtensionsScreenEvent.OnLanguageFilterToggle  -> toggleLanguageFilter(event.languageCode)
         is ExtensionsScreenEvent.OnLanguageFilterClear   -> clearLanguageFilter(event.languageCode)
         is ExtensionsScreenEvent.OnContentTypeFilterToggle -> toggleContentTypeFilter(event.contentType)
+        is ExtensionsScreenEvent.OnEcosystemFilterToggle -> toggleEcosystemFilter(event.ecosystem)
         ExtensionsScreenEvent.OnBackPressed              -> Unit
         is ExtensionsScreenEvent.OnExtensionInstall      -> installExtension(event.extensionId)
         ExtensionsScreenEvent.OnUpdateAll                -> updateAllExtensions()
@@ -105,6 +141,12 @@ class ExtensionsManagerViewModel @Inject constructor(
         ExtensionsScreenEvent.OnLuaEditorSave             -> saveLuaEditor()
         is ExtensionsScreenEvent.OnResetLuaClick          -> resetLuaExtension(event.extensionId)
         ExtensionsScreenEvent.OnTranslationSettingsDismiss -> closeTranslationSettings()
+    }
+
+    private fun toggleEcosystemFilter(ecosystem: String) {
+        _state.update { state ->
+            state.copy(selectedEcosystem = if (state.selectedEcosystem == ecosystem) "" else ecosystem)
+        }
     }
 
     // ── Загрузка доступных расширений из репозитория ─────────────────────────
@@ -299,38 +341,58 @@ class ExtensionsManagerViewModel @Inject constructor(
 
     /**
      * Процесс установки:
-     * 1. Скачать .lua файл на диск через LuaSourceLoader
-     * 2. Сохранить запись в БД через ExtensionManager
-     *    (codeUrl сохраняется в settings как JSON для последующей загрузки)
-     * 3. Scraper перезагрузится реактивно через Flow установленных расширений
+     * 1. Для Lua: скачать .lua файл на диск через LuaSourceLoader
+     * 2. Для Compat: установить через CompatRepositoryManager
+     * 3. Сохранить запись в БД через ExtensionManager
+     * 4. Scraper перезагрузится реактивно через Flow установленных расширений
      */
     private fun installExtension(extensionId: String) {
         viewModelScope.launch {
             val extInfo = _state.value.availableExtensions.find { it.id == extensionId } ?: return@launch
             setInstalling(extensionId, true)
             try {
-                // Шаг 1: Скачать .lua на диск
-                val downloaded = luaSourceLoader.downloadAndCacheScript(extensionId, extInfo.codeUrl)
-                if (!downloaded) {
-                    _state.update { it.copy(error = context.getString(my.noveldokusha.strings.R.string.ext_failed_to_download, extInfo.name)) }
-                    return@launch
+                // Check if this is a compat extension (has ecosystem metadata)
+                val isCompat = extInfo.id.contains("#") || extInfo.id.startsWith("compat_")
+
+                if (isCompat) {
+                    // Install via compat repository manager
+                    val repoUrl = appPreferences.EXTENSIONS_REPOSITORY_URL.value
+                    val result = compatRepositoryManager.installExtension(repoUrl, extensionId)
+                    result.fold(
+                        onSuccess = { record ->
+                            Timber.d("Installed compat extension: ${record.name}")
+                            // Compat source provider will pick it up reactively
+                        },
+                        onFailure = { e ->
+                            Timber.e(e, "Failed to install compat extension")
+                            _state.update { it.copy(error = context.getString(my.noveldokusha.strings.R.string.ext_failed_to_install, extInfo.name, e.message)) }
+                        }
+                    )
+                } else {
+                    // Lua extension installation
+                    // Шаг 1: Скачать .lua на диск
+                    val downloaded = luaSourceLoader.downloadAndCacheScript(extensionId, extInfo.codeUrl)
+                    if (!downloaded) {
+                        _state.update { it.copy(error = context.getString(my.noveldokusha.strings.R.string.ext_failed_to_download, extInfo.name)) }
+                        return@launch
+                    }
+
+                    // Шаг 2: Записать в БД с НОВОЙ версией
+                    extensionManager.installExtensionFromInfo(
+                        id       = extensionId,
+                        name     = extInfo.name,
+                        version  = extInfo.remoteVersion, // Используем новую версию!
+                        language = extInfo.language,
+                        imageUrl = extInfo.iconUrl,
+                        codeUrl  = extInfo.codeUrl
+                    )
+                    // Шаг 2б: Сохранить codeUrl и content_type в settings как JSON,
+                    // чтобы LuaSourceLoader знал откуда перескачать при следующем запуске
+                    val settingsJson = Gson().toJson(mapOf("codeUrl" to extInfo.codeUrl, "content_type" to extInfo.contentType))
+                    extensionManager.updateExtensionSettings(extensionId, settingsJson)
+
+                    Timber.d("Installed extension: ${extInfo.name}")
                 }
-
-                // Шаг 2: Записать в БД с НОВОЙ версией
-                extensionManager.installExtensionFromInfo(
-                    id       = extensionId,
-                    name     = extInfo.name,
-                    version  = extInfo.remoteVersion, // Используем новую версию!
-                    language = extInfo.language,
-                    imageUrl = extInfo.iconUrl,
-                    codeUrl  = extInfo.codeUrl
-                )
-                // Шаг 2б: Сохранить codeUrl и content_type в settings как JSON,
-                // чтобы LuaSourceLoader знал откуда перескачать при следующем запуске
-                val settingsJson = Gson().toJson(mapOf("codeUrl" to extInfo.codeUrl, "content_type" to extInfo.contentType))
-                extensionManager.updateExtensionSettings(extensionId, settingsJson)
-
-                Timber.d("Installed extension: ${extInfo.name}")
                 // Шаг 3: Scraper обновится реактивно через extensionRepository.getInstalledExtensionsFlow()
             } catch (e: CancellationException) {
                 throw e
@@ -361,8 +423,14 @@ class ExtensionsManagerViewModel @Inject constructor(
     private fun uninstallExtensionById(extensionId: String) {
         viewModelScope.launch {
             try {
-                extensionManager.uninstallExtension(extensionId)
-                luaSourceLoader.removeScript(extensionId)
+                val isCompat = extensionId.contains("#") || extensionId.startsWith("compat_")
+                if (isCompat) {
+                    // Uninstall from compat layer
+                    compatSourceProvider.uninstall(extensionId)
+                } else {
+                    extensionManager.uninstallExtension(extensionId)
+                    luaSourceLoader.removeScript(extensionId)
+                }
                 // Scraper обновится реактивно
             } catch (e: CancellationException) {
                 throw e
