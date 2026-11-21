@@ -64,7 +64,9 @@ snakeyaml = "2.7"
 quickjs-kt = "1.0.5"
 rhino = "1.7.15"
 json-path = "2.9.0"
-injekt-core = "1.1.1"
+# 1.16.1 = what Mihon/keiyoushi hosts provide. 1.1.1 (pre-1.2.0) ships
+# InjektPackage in BOTH injekt-api and injekt-core -> dex duplicate-class error.
+injekt-core = "1.16.1"
 rxjava1 = "1.3.8"
 
 okhttp = "5.5.0"

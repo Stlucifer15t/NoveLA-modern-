@@ -39,9 +39,10 @@ dependencies {
     implementation(libs.androidx.preference)
     implementation(libs.okhttp.interceptor.logging)
 
-    // LNReader / Mangayomi JS plugin runtime
-    implementation(libs.quickjs.kt)
-
+    // LNReader / Mangayomi JS plugin runtime: only the JVM variant is used for
+    // now (testImplementation below) — the Android artifact carries the same
+    // classes and would duplicate them on the unit-test classpath. Main code
+    // re-gains a quickjs dependency when those adapters are implemented.
     testImplementation(libs.test.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     // JVM natives for QuickJS so unit tests execute real plugin code on CI
