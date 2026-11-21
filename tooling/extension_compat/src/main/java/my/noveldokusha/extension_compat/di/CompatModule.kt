@@ -14,6 +14,7 @@ import my.noveldokusha.extension_compat.core.CompatRepositoryManager
 import my.noveldokusha.extension_compat.core.CompatSourceProviderImpl
 import my.noveldokusha.extension_compat.core.CompatStorage
 import my.noveldokusha.extension_compat.legado.LegadoExtensionLoader
+import my.noveldokusha.extension_compat.legado.LegadoRepositoryHandler
 import my.noveldokusha.extension_compat.lnreader.LNReaderExtensionLoader
 import my.noveldokusha.extension_compat.lnreader.LNReaderRepositoryHandler
 import my.noveldokusha.scraper.CompatSourceProvider
