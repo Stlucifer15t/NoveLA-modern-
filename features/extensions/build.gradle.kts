@@ -18,6 +18,7 @@ dependencies {
     implementation(projects.strings)
     implementation(projects.tooling.localDatabase)
     implementation(projects.tooling.textTranslator.domain)
+    implementation(projects.tooling.extensionCompat)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.snakeyaml)
     implementation(libs.gson)
