@@ -7,6 +7,7 @@ import my.noveldokusha.network.NetworkClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
 import timber.log.Timber
 import java.nio.charset.Charsets
 
@@ -152,7 +153,7 @@ class LegadoRepositoryHandler @javax.inject.Inject constructor(
                     payloadPath = "${source.id}.json",
                     enabled = true,
                     installedAt = System.currentTimeMillis(),
-                    extra = json.encodeToString(source).jsonObject,
+                    extra = (json.encodeToJsonElement(source) as JsonObject),
                 )
 
                 // Write JSON payload
@@ -231,7 +232,7 @@ class LegadoRepositoryHandler @javax.inject.Inject constructor(
                 payloadPath = "$id.json",
                 enabled = true,
                 installedAt = System.currentTimeMillis(),
-                extra = json.encodeToString(this).jsonObject,
+                extra = (json.encodeToJsonElement(this) as JsonObject),
             )
         }
     }
