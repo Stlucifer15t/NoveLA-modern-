@@ -7,16 +7,12 @@ import my.noveldokusha.network.NetworkClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.contentOrNull
 import timber.log.Timber
 import java.net.URL
 import java.nio.charset.Charsets
-import java.nio.charset.Charsets
 
-/**
- * Handles LNReader plugin repositories.
- *
- * Repository format: plugins.min.json manifest with plugin metadata and code URLs.
- */
 class LNReaderRepositoryHandler @javax.inject.Inject constructor(
     private val networkClient: NetworkClient,
     private val storage: CompatStorage,
@@ -34,22 +30,19 @@ class LNReaderRepositoryHandler @javax.inject.Inject constructor(
         val version: String,
         val site: String,
         val icon: String,
-        val codeUrl: String, // URL to the compiled .js file
+        val codeUrl: String,
         val languages: List<String>? = null,
         val tags: List<String>? = null,
     )
 
-    /**
-     * Fetch and parse a repository manifest, returning available plugins.
-     */
-    suspend fun fetchRepository(repoUrl: String): Result<List<RepoPluginInfo>> {
+    suspend fun fetchRepository(repoUrl: String): my.noveldokusha.extension_compat.core.Result<List<RepoPluginInfo>> {
         return withContext(Dispatchers.IO) {
             try {
                 val response = networkClient.get(repoUrl)
                 if (!response.isSuccessful) {
-                    return@withContext Result.failure(Exception("HTTP ${response.code}"))
+                    return@withContext my.noveldokusha.extension_compat.core.Result.failure(Exception("HTTP ${response.code}"))
                 }
-                val body = response.body?.string() ?: return@withContext Result.failure(Exception("Empty response"))
+                val body = response.body?.string() ?: return@withContext my.noveldokusha.extension_compat.core.Result.failure(Exception("Empty response"))
                 val manifest = json.decodeFromString<PluginManifest>(body)
 
                 val plugins = manifest.plugins.map { entry ->
@@ -64,27 +57,23 @@ class LNReaderRepositoryHandler @javax.inject.Inject constructor(
                         repoUrl = repoUrl,
                     )
                 }
-                Result.success(plugins)
+                my.noveldokusha.extension_compat.core.Result.success(plugins)
             } catch (e: Exception) {
                 Timber.e(e, "Failed to fetch LNReader repository: $repoUrl")
-                Result.failure(e)
+                my.noveldokusha.extension_compat.core.Result.failure(e)
             }
         }
     }
 
-    /**
-     * Download a plugin's JavaScript code and create an install record.
-     */
-    suspend fun downloadAndInstall(plugin: RepoPluginInfo): Result<CompatInstallRecord> {
+    suspend fun downloadAndInstall(plugin: RepoPluginInfo): my.noveldokusha.extension_compat.core.Result<CompatInstallRecord> {
         return withContext(Dispatchers.IO) {
             try {
                 val response = networkClient.get(plugin.codeUrl)
                 if (!response.isSuccessful) {
-                    return@withContext Result.failure(Exception("HTTP ${response.code}"))
+                    return@withContext my.noveldokusha.extension_compat.core.Result.failure(Exception("HTTP ${response.code}"))
                 }
-                val jsCode = response.body?.string() ?: return@withContext Result.failure(Exception("Empty plugin code"))
+                val jsCode = response.body?.string() ?: return@withContext my.noveldokusha.extension_compat.core.Result.failure(Exception("Empty plugin code"))
 
-                // Create install record
                 val record = CompatInstallRecord(
                     id = plugin.id,
                     ecosystem = CompatEcosystem.LNREADER,
@@ -94,33 +83,31 @@ class LNReaderRepositoryHandler @javax.inject.Inject constructor(
                     payloadPath = "${plugin.id}.js",
                     enabled = true,
                     installedAt = System.currentTimeMillis(),
-                    extra = json.encodeToString(plugin).jsonObject,
+                    extra = (json.encodeToJsonElement(plugin) as JsonObject),
                 )
 
-                // Write JS payload
                 storage.writePayload(CompatEcosystem.LNREADER, record.payloadPath, jsCode.toByteArray(Charsets.UTF_8))
                 storage.upsert(record)
 
-                Result.success(record)
+                my.noveldokusha.extension_compat.core.Result.success(record)
             } catch (e: Exception) {
                 Timber.e(e, "Failed to download LNReader plugin: ${plugin.id}")
-                Result.failure(e)
+                my.noveldokusha.extension_compat.core.Result.failure(e)
             }
         }
     }
 
-    /**
-     * Check for updates to installed plugins.
-     */
     suspend fun checkUpdates(installedRecords: List<CompatInstallRecord>): List<RepoPluginInfo> {
         val repoGroups = installedRecords
             .filter { it.ecosystem == CompatEcosystem.LNREADER }
-            .groupBy { it.extra?.get("repoUrl")?.contentOrNull ?: "" }
+            .groupBy { it.extra?.get("repoUrl")?.let { (it as? kotlinx.serialization.json.JsonPrimitive)?.contentOrNull } ?: "" }
 
         val updates = mutableListOf<RepoPluginInfo>()
         for ((repoUrl, records) in repoGroups) {
             if (repoUrl.isBlank()) continue
-            fetchRepository(repoUrl).onSuccess { repoPlugins ->
+            val result = fetchRepository(repoUrl)
+            if (result.isSuccess) {
+                val repoPlugins = result.getOrThrow()
                 val installedMap = records.associateBy { it.id }
                 for (repoPlugin in repoPlugins) {
                     installedMap[repoPlugin.id]?.let { installed ->
@@ -169,7 +156,7 @@ class LNReaderRepositoryHandler @javax.inject.Inject constructor(
         val languages: List<String>,
         val repoUrl: String,
     ) {
-        fun toCompatInstallRecord(): CompatInstallRecord {
+        fun toCompatInstallRecord(jsonInstance: Json): CompatInstallRecord {
             return CompatInstallRecord(
                 id = id,
                 ecosystem = CompatEcosystem.LNREADER,
@@ -179,7 +166,7 @@ class LNReaderRepositoryHandler @javax.inject.Inject constructor(
                 payloadPath = "$id.js",
                 enabled = true,
                 installedAt = System.currentTimeMillis(),
-                extra = json.encodeToString(this).jsonObject,
+                extra = (jsonInstance.encodeToJsonElement(this) as JsonObject),
             )
         }
     }

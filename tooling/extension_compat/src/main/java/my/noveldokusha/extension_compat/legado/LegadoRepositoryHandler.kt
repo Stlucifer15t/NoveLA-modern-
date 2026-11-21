@@ -12,11 +12,6 @@ import kotlinx.serialization.json.contentOrNull
 import timber.log.Timber
 import java.nio.charset.Charsets
 
-/**
- * Handles Legado bookSource repositories.
- *
- * Repository format: JSON array of bookSource objects or URLs to .json files.
- */
 class LegadoRepositoryHandler @javax.inject.Inject constructor(
     private val networkClient: NetworkClient,
     private val storage: CompatStorage,
@@ -25,45 +20,34 @@ class LegadoRepositoryHandler @javax.inject.Inject constructor(
     private val json = Json { ignoreUnknownKeys = true; isLenient = true }
 
     data class RepositoryIndex(
-        val sources: List<SourceEntry>,
+        val sources: List<LegadoBookSource>,
     )
 
-    data class SourceEntry(
-        val id: String,
-        val name: String,
-        val version: String,
-        val versionCode: Int,
-        val downloadUrl: String, // URL to the bookSource.json file
-        val iconUrl: String? = null,
-        val author: String? = null,
-        val description: String? = null,
-        val language: String = "en",
-        val contentType: String = "", // novel, manga, video
+    data class LegadoBookSource(
+        val bookSourceName: String = "",
+        val bookSourceUrl: String = "",
+        val bookSourceType: Int = 0,
+        val bookSourceComment: String = "",
     )
 
-    /**
-     * Fetch and parse a repository index, returning available sources.
-     */
-    suspend fun fetchRepository(repoUrl: String): Result<List<RepoSourceInfo>> {
+    suspend fun fetchRepository(repoUrl: String): my.noveldokusha.extension_compat.core.Result<List<RepoSourceInfo>> {
         return withContext(Dispatchers.IO) {
             try {
                 val response = networkClient.get(repoUrl)
                 if (!response.isSuccessful) {
-                    return@withContext Result.failure(Exception("HTTP ${response.code}"))
+                    return@withContext my.noveldokusha.extension_compat.core.Result.failure(Exception("HTTP ${response.code}"))
                 }
-                val body = response.body?.string() ?: return@withContext Result.failure(Exception("Empty response"))
-
+                val body = response.body?.string() ?: return@withContext my.noveldokusha.extension_compat.core.Result.failure(Exception("Empty response"))
                 val sources = parseRepositoryIndex(body, repoUrl)
-                Result.success(sources)
+                my.noveldokusha.extension_compat.core.Result.success(sources)
             } catch (e: Exception) {
                 Timber.e(e, "Failed to fetch Legado repository: $repoUrl")
-                Result.failure(e)
+                my.noveldokusha.extension_compat.core.Result.failure(e)
             }
         }
     }
 
     private fun parseRepositoryIndex(body: String, repoUrl: String): List<RepoSourceInfo> {
-        // Try parsing as array of bookSources
         val trimmed = body.trim()
         if (trimmed.startsWith("[")) {
             val bookSources = json.decodeFromString<List<LegadoBookSource>>(trimmed)
@@ -73,7 +57,7 @@ class LegadoRepositoryHandler @javax.inject.Inject constructor(
                     name = bs.bookSourceName,
                     version = "1.0.0",
                     versionCode = 1L,
-                    downloadUrl = repoUrl, // The repo URL itself contains the bookSource
+                    downloadUrl = repoUrl,
                     iconUrl = null,
                     author = null,
                     description = bs.bookSourceComment,
@@ -87,64 +71,20 @@ class LegadoRepositoryHandler @javax.inject.Inject constructor(
                 )
             }
         }
-
-        // Try parsing as object with sources array
-        if (trimmed.startsWith("{")) {
-            val obj = json.parseToJsonElement(trimmed).jsonObject
-            for (key in listOf("sources", "bookSources", "data")) {
-                val array = obj[key] as? kotlinx.serialization.json.JsonArray ?: continue
-                val bookSources = array.mapNotNull { el ->
-                    try {
-                        json.decodeFromJsonElement(LegadoBookSource.serializer(), el)
-                    } catch (e: Exception) {
-                        null
-                    }
-                }
-                if (bookSources.isNotEmpty()) {
-                    return bookSources.mapIndexed { index, bs ->
-                        RepoSourceInfo(
-                            id = bs.bookSourceUrl.ifBlank { bs.bookSourceName }.ifBlank { "source_$index" },
-                            name = bs.bookSourceName,
-                            version = "1.0.0",
-                            versionCode = 1L,
-                            downloadUrl = repoUrl,
-                            iconUrl = null,
-                            author = null,
-                            description = bs.bookSourceComment,
-                            language = "en",
-                            contentType = when (bs.bookSourceType) {
-                                2 -> "manga"
-                                4 -> "video"
-                                else -> "novel"
-                            },
-                            repoUrl = repoUrl,
-                        )
-                    }
-                }
-            }
-        }
-
         return emptyList()
     }
 
-    /**
-     * Download a bookSource and create an install record.
-     */
-    suspend fun downloadAndInstall(source: RepoSourceInfo): Result<CompatInstallRecord> {
+    suspend fun downloadAndInstall(source: RepoSourceInfo): my.noveldokusha.extension_compat.core.Result<CompatInstallRecord> {
         return withContext(Dispatchers.IO) {
             try {
-                // For Legado, the repo URL IS the bookSource JSON
                 val response = networkClient.get(source.downloadUrl)
                 if (!response.isSuccessful) {
-                    return@withContext Result.failure(Exception("HTTP ${response.code}"))
+                    return@withContext my.noveldokusha.extension_compat.core.Result.failure(Exception("HTTP ${response.code}"))
                 }
-                val body = response.body?.string() ?: return@withContext Result.failure(Exception("Empty response"))
-
-                // Parse to get the specific bookSource if it's an array
+                val body = response.body?.string() ?: return@withContext my.noveldokusha.extension_compat.core.Result.failure(Exception("Empty response"))
                 val bookSource = parseSingleBookSource(body, source.id)
                 val jsonPayload = json.encodeToString(bookSource)
 
-                // Create install record
                 val record = CompatInstallRecord(
                     id = source.id,
                     ecosystem = CompatEcosystem.LEGADO,
@@ -154,17 +94,16 @@ class LegadoRepositoryHandler @javax.inject.Inject constructor(
                     payloadPath = "${source.id}.json",
                     enabled = true,
                     installedAt = System.currentTimeMillis(),
-                    extra = (json.encodeToJsonElement(source) as JsonObject),
+                    extra = (json.encodeToJsonElement(bookSource) as JsonObject),
                 )
 
-                // Write JSON payload
                 storage.writePayload(CompatEcosystem.LEGADO, record.payloadPath, jsonPayload.toByteArray(Charsets.UTF_8))
                 storage.upsert(record)
 
-                Result.success(record)
+                my.noveldokusha.extension_compat.core.Result.success(record)
             } catch (e: Exception) {
                 Timber.e(e, "Failed to download Legado source: ${source.id}")
-                Result.failure(e)
+                my.noveldokusha.extension_compat.core.Result.failure(e)
             }
         }
     }
@@ -178,18 +117,15 @@ class LegadoRepositoryHandler @javax.inject.Inject constructor(
             } ?: bookSources.first()
         }
         if (trimmed.startsWith("{")) {
-            return json.decodeFromString<LegadoBookSource>(trimmed)
+            return json.decodeFromString(trimmed)
         }
         throw Exception("Invalid bookSource format")
     }
 
-    /**
-     * Check for updates to installed sources.
-     */
     suspend fun checkUpdates(installedRecords: List<CompatInstallRecord>): List<RepoSourceInfo> {
         val repoGroups = installedRecords
             .filter { it.ecosystem == CompatEcosystem.LEGADO }
-            .groupBy { it.extra?.get("repoUrl")?.contentOrNull ?: "" }
+            .groupBy { it.extra?.get("repoUrl")?.let { (it as? kotlinx.serialization.json.JsonPrimitive)?.contentOrNull } ?: "" }
 
         val updates = mutableListOf<RepoSourceInfo>()
         for ((repoUrl, records) in repoGroups) {
@@ -223,17 +159,17 @@ class LegadoRepositoryHandler @javax.inject.Inject constructor(
         val contentType: String,
         val repoUrl: String,
     ) {
-        fun toCompatInstallRecord(): CompatInstallRecord {
+        fun toCompatInstallRecord(jsonInstance: Json): CompatInstallRecord {
             return CompatInstallRecord(
                 id = id,
                 ecosystem = CompatEcosystem.LEGADO,
                 name = name,
                 version = version,
                 versionCode = versionCode,
-                payloadPath = "$id.json",
+                payloadPath = "$id.js",
                 enabled = true,
                 installedAt = System.currentTimeMillis(),
-                extra = (json.encodeToJsonElement(this) as JsonObject),
+                extra = (jsonInstance.encodeToJsonElement(this) as JsonObject),
             )
         }
     }
