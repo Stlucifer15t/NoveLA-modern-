@@ -8,7 +8,7 @@ import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import timber.log.Timber
 import java.io.File
-import java.util.concurrent.ReentrantLock
+import java.util.concurrent.locks.ReentrantLock
 
 /**
  * Персистентное хранилище compat-расширений:
@@ -36,7 +36,7 @@ class CompatStorage(
     }
 
     private val registryFile = File(rootDir, "registry.json")
-    private val mutex = java.util.concurrent.ReentrantLock()
+    private val mutex = java.util.concurrent.locks.ReentrantLock()
 
     private val _records = MutableStateFlow<List<CompatInstallRecord>>(emptyList())
     val records: StateFlow<List<CompatInstallRecord>> = _records.asStateFlow()
