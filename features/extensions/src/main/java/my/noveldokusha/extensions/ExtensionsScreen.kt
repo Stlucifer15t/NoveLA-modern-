@@ -330,22 +330,7 @@ private fun UnifiedExtensionsScreen(
                                             Text(stringResource(StringsR.string.update_all))
 }
 
-// Helper function to determine ecosystem from extension ID
-private fun getEcosystemForExtension(extensionId: String): String {
-    return when {
-        extensionId.startsWith("compat_") || extensionId.contains("#") -> {
-            if (extensionId.contains("tachiyomi")) "tachiyomi"
-            else if (extensionId.contains("aniyomi")) "aniyomi"
-            else if (extensionId.contains("legado")) "legado"
-            else if (extensionId.contains("lnreader")) "lnreader"
-            else if (extensionId.contains("mangayomi")) "mangayomi"
-            else if (extensionId.contains("cloudstream")) "cloudstream"
-            else "compat"
-        }
-        extensionId.startsWith("local_") -> "lua"
-        else -> "lua" // Default to Lua for built-in extensions
-    }
-}
+
                                     }
                                 }
                             }
@@ -502,31 +487,7 @@ private fun ContentTypeBadge(contentType: String) {
     )
 }
 
-@Composable
-private fun EcosystemBadge(extensionId: String) {
-    val ecosystem = getEcosystemForExtension(extensionId)
-    val (textRes, color) = when (ecosystem) {
-        "tachiyomi" -> "Mihon/Tachiyomi" to MaterialTheme.colorScheme.primary
-        "aniyomi" -> "Aniyomi" to MaterialTheme.colorScheme.secondary
-        "legado" -> "Legado" to MaterialTheme.colorScheme.tertiary
-        "lnreader" -> "LNReader" to MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
-        "mangayomi" -> "Mangayomi" to MaterialTheme.colorScheme.secondary.copy(alpha = 0.8f)
-        "cloudstream" -> "CloudStream" to MaterialTheme.colorScheme.tertiary.copy(alpha = 0.8f)
-        "lua" -> "Lua (NoveLA)" to MaterialTheme.colorScheme.outline
-        else -> "Compat" to MaterialTheme.colorScheme.outline
-    }
-    Text(
-        text = textRes,
-        style = MaterialTheme.typography.labelSmall,
-        color = color,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-        modifier = Modifier
-            .padding(start = 6.dp)
-            .background(color.copy(alpha = 0.12f), RoundedCornerShape(4.dp))
-            .padding(horizontal = 6.dp, vertical = 2.dp)
-    )
-}
+
 
 @Composable
 private fun ExtensionListItem(
@@ -545,7 +506,6 @@ private fun ExtensionListItem(
                     modifier = Modifier.weight(1f, fill = false)
                 )
                 ContentTypeBadge(contentType = extension.contentType)
-                EcosystemBadge(extensionId = extension.id)
                 Row {
                     if (extension.isUpdateAvailable) {
                         Text(

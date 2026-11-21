@@ -22,7 +22,6 @@ import com.google.gson.Gson
 import my.noveldokusha.core.ExtensionManager
 import my.noveldokusha.core.appPreferences.AppPreferences
 import my.noveldokusha.core.appPreferences.ExtensionInfoCached
-import my.noveldokusha.extension_compat.core.CompatRepositoryManager
 import my.noveldokusha.network.NetworkClient
 import my.noveldokusha.scraper.LuaSourceLoader
 import my.noveldokusha.scraper.LuaSourceProvider
@@ -43,8 +42,6 @@ class ExtensionsManagerViewModel @Inject constructor(
     private val luaSourceLoader: LuaSourceLoader,          // ← для скачивания .lua
     private val luaSourceProvider: LuaSourceProvider,
     private val translationManager: TranslationManager,
-    // Compat layer
-    private val compatRepositoryManager: CompatRepositoryManager,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ExtensionsScreenState())
@@ -107,7 +104,7 @@ class ExtensionsManagerViewModel @Inject constructor(
         is ExtensionsScreenEvent.OnLanguageFilterToggle  -> toggleLanguageFilter(event.languageCode)
         is ExtensionsScreenEvent.OnLanguageFilterClear   -> clearLanguageFilter(event.languageCode)
         is ExtensionsScreenEvent.OnContentTypeFilterToggle -> toggleContentTypeFilter(event.contentType)
-        is ExtensionsScreenEvent.OnEcosystemFilterToggle -> toggleEcosystemFilter(event.ecosystem)
+
         ExtensionsScreenEvent.OnBackPressed              -> Unit
         is ExtensionsScreenEvent.OnExtensionInstall      -> installExtension(event.extensionId)
         ExtensionsScreenEvent.OnUpdateAll                -> updateAllExtensions()
@@ -120,11 +117,7 @@ class ExtensionsManagerViewModel @Inject constructor(
         ExtensionsScreenEvent.OnTranslationSettingsDismiss -> closeTranslationSettings()
     }
 
-    private fun toggleEcosystemFilter(ecosystem: String) {
-        _state.update { state ->
-            state.copy(selectedEcosystem = if (state.selectedEcosystem == ecosystem) "" else ecosystem)
-        }
-    }
+
 
     // ── Загрузка доступных расширений из репозитория ─────────────────────────
 

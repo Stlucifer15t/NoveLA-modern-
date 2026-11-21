@@ -10,7 +10,6 @@ data class ExtensionsScreenState(
     val availableLanguages: List<ExtensionLanguage> = emptyList(),
     val selectedLanguages: Set<String> = emptySet(),
     val selectedContentType: String = "", // "" = All, "manga", "novel"
-    val selectedEcosystem: String = "", // "" = All, "lua", "tachiyomi", "aniyomi", "legado", "lnreader", "mangayomi", "cloudstream"
     val isLoading: Boolean = false,
     val error: String? = null,
     val showRepositoryDialog: Boolean = false,
@@ -63,7 +62,6 @@ sealed interface ExtensionsScreenEvent {
     data class OnLanguageFilterToggle(val languageCode: String) : ExtensionsScreenEvent // toggle language in filter
     data class OnLanguageFilterClear(val languageCode: String?) : ExtensionsScreenEvent // null = clear all
     data class OnContentTypeFilterToggle(val contentType: String) : ExtensionsScreenEvent // "" = All, "manga", "novel"
-    data class OnEcosystemFilterToggle(val ecosystem: String) : ExtensionsScreenEvent // "" = All, "lua", "tachiyomi", "aniyomi", "legado", "lnreader", "mangayomi", "cloudstream"
     data object OnBackPressed : ExtensionsScreenEvent // New event for back navigation
     data class OnExtensionInstall(val extensionId: String) : ExtensionsScreenEvent
     data object OnUpdateAll : ExtensionsScreenEvent
