@@ -57,7 +57,7 @@ class CloudStreamRuntime {
     private fun createClassLoader(pluginFile: File): URLClassLoader {
         val urls = arrayOf(pluginFile.toURI().toURL())
         // Parent-last (child-first) classloader to isolate plugin classes
-        return URLClassLoader(urls, ClassLoader.getSystemClassLoader()) {
+        return object : URLClassLoader(urls, ClassLoader.getSystemClassLoader()) {
             override fun loadClass(name: String, resolve: Boolean): Class<*> {
                 // First try to load from plugin JAR
                 return try {

@@ -31,7 +31,7 @@ class CloudStreamExtensionLoader @javax.inject.Inject constructor(
             val loadResult = runtime.loadPlugin(context, record.id, pluginFile)
 
             if (loadResult.isFailure) {
-                throw CompatException("Failed to load CloudStream plugin: ${loadResult.exceptionOrNull()?.message}", operation = "load", ecosystem = ecosystem)
+                throw CompatException("Failed to load CloudStream plugin: ${loadResult.exceptionOrNull()?.message}", operation = "load")
             }
 
             val pluginInstance = loadResult.getOrThrow()

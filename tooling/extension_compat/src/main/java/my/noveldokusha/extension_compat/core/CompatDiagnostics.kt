@@ -67,7 +67,7 @@ class CompatDiagnostics @Inject constructor() {
 /**
  * Ошибки compat-слоя, отделённые от обычных сетевых ошибок источника.
  */
-class CompatException(
+open class CompatException(
     message: String,
     cause: Throwable? = null,
     /** Операция: "load", "search", "details", "chapters", "pages", "video"... */

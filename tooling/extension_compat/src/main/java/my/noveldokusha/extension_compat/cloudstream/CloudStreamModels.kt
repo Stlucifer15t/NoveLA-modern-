@@ -16,68 +16,30 @@ data class CloudStreamPluginManifest(
 )
 
 /**
- * SearchResponse types
+ * SearchResponse - using a flat data class with type discriminator instead of sealed class
+ * for kotlinx.serialization compatibility.
  */
-sealed class SearchResponse {
-    @Serializable
-    data class Anime(
-        @SerialName("name") val name: String = "",
-        @SerialName("url") val url: String = "",
-        @SerialName("apiName") val apiName: String = "",
-        @SerialName("type") val type: String = "Anime",
-        @SerialName("posterUrl") val posterUrl: String? = null,
-        @SerialName("posterHeaders") val posterHeaders: Map<String, String>? = null,
-        @SerialName("id") val id: Int? = null,
-        @SerialName("quality") val quality: String? = null,
-    ) : SearchResponse()
+@Serializable
+data class SearchResponse(
+    @SerialName("name") val name: String = "",
+    @SerialName("url") val url: String = "",
+    @SerialName("apiName") val apiName: String = "",
+    @SerialName("type") val type: String = "",
+    @SerialName("posterUrl") val posterUrl: String? = null,
+    @SerialName("posterHeaders") val posterHeaders: Map<String, String>? = null,
+    @SerialName("id") val id: Int? = null,
+    @SerialName("quality") val quality: String? = null,
+)
 
-    @Serializable
-    data class Movie(
-        @SerialName("name") val name: String = "",
-        @SerialName("url") val url: String = "",
-        @SerialName("apiName") val apiName: String = "",
-        @SerialName("type") val type: String = "Movie",
-        @SerialName("posterUrl") val posterUrl: String? = null,
-        @SerialName("posterHeaders") val posterHeaders: Map<String, String>? = null,
-        @SerialName("id") val id: Int? = null,
-        @SerialName("quality") val quality: String? = null,
-    ) : SearchResponse()
-
-    @Serializable
-    data class TvSeries(
-        @SerialName("name") val name: String = "",
-        @SerialName("url") val url: String = "",
-        @SerialName("apiName") val apiName: String = "",
-        @SerialName("type") val type: String = "TvSeries",
-        @SerialName("posterUrl") val posterUrl: String? = null,
-        @SerialName("posterHeaders") val posterHeaders: Map<String, String>? = null,
-        @SerialName("id") val id: Int? = null,
-        @SerialName("quality") val quality: String? = null,
-    ) : SearchResponse()
-
-    @Serializable
-    data class Torrent(
-        @SerialName("name") val name: String = "",
-        @SerialName("url") val url: String = "",
-        @SerialName("apiName") val apiName: String = "",
-        @SerialName("type") val type: String = "Torrent",
-        @SerialName("posterUrl") val posterUrl: String? = null,
-        @SerialName("posterHeaders") val posterHeaders: Map<String, String>? = null,
-        @SerialName("id") val id: Int? = null,
-        @SerialName("quality") val quality: String? = null,
-    ) : SearchResponse()
-
-    @Serializable
-    data class Live(
-        @SerialName("name") val name: String = "",
-        @SerialName("url") val url: String = "",
-        @SerialName("apiName") val apiName: String = "",
-        @SerialName("type") val type: String = "Live",
-        @SerialName("posterUrl") val posterUrl: String? = null,
-        @SerialName("posterHeaders") val posterHeaders: Map<String, String>? = null,
-        @SerialName("id") val id: Int? = null,
-        @SerialName("quality") val quality: String? = null,
-    ) : SearchResponse()
+/**
+ * SearchResponse type constants
+ */
+object SearchResponseType {
+    const val Anime = "Anime"
+    const val Movie = "Movie"
+    const val TvSeries = "TvSeries"
+    const val Torrent = "Torrent"
+    const val Live = "Live"
 }
 
 /**
@@ -101,36 +63,26 @@ data class HomePageResponse(
 )
 
 /**
- * LoadResponse types
+ * LoadResponse - flat data class with type discriminator
  */
-sealed class LoadResponse {
-    @Serializable
-    data class Anime(
-        @SerialName("name") val name: String = "",
-        @SerialName("url") val url: String = "",
-        @SerialName("type") val type: String = "Anime",
-        @SerialName("posterUrl") val posterUrl: String? = null,
-        @SerialName("episodes") val episodes: List<Episode> = emptyList(),
-        @SerialName("seasons") val seasons: List<Season> = emptyList(),
-    ) : LoadResponse()
+@Serializable
+data class LoadResponse(
+    @SerialName("name") val name: String = "",
+    @SerialName("url") val url: String = "",
+    @SerialName("type") val type: String = "",
+    @SerialName("posterUrl") val posterUrl: String? = null,
+    @SerialName("episodes") val episodes: List<Episode> = emptyList(),
+    @SerialName("seasons") val seasons: List<Season> = emptyList(),
+    @SerialName("videoUrl") val videoUrl: String? = null,
+)
 
-    @Serializable
-    data class Movie(
-        @SerialName("name") val name: String = "",
-        @SerialName("url") val url: String = "",
-        @SerialName("type") val type: String = "Movie",
-        @SerialName("posterUrl") val posterUrl: String? = null,
-        @SerialName("videoUrl") val videoUrl: String? = null,
-    ) : LoadResponse()
-
-    @Serializable
-    data class TvSeries(
-        @SerialName("name") val name: String = "",
-        @SerialName("url") val url: String = "",
-        @SerialName("type") val type: String = "TvSeries",
-        @SerialName("posterUrl") val posterUrl: String? = null,
-        @SerialName("seasons") val seasons: List<Season> = emptyList(),
-    ) : LoadResponse()
+/**
+ * LoadResponse type constants
+ */
+object LoadResponseType {
+    const val Anime = "Anime"
+    const val Movie = "Movie"
+    const val TvSeries = "TvSeries"
 }
 
 @Serializable

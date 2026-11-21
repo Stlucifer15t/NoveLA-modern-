@@ -141,34 +141,39 @@ class CompatRepositoryManager @Inject constructor(
 
         return when (repo.ecosystem) {
             CompatEcosystem.TACHIYOMI -> {
-                tachiyomiHandler.fetchRepository(repo.url).flatMap { extensions ->
-                    extensions.find { it.id == extensionId }?.let { tachiyomiHandler.downloadAndInstall(it) }
-                        ?: Result.failure(Exception("Extension not found in repo"))
-                }
+                val result = tachiyomiHandler.fetchRepository(repo.url)
+                if (result.isFailure) return Result.failure(result.exceptionOrNull() ?: Exception("Fetch failed"))
+                val extension = result.getOrThrow().find { it.id == extensionId }
+                    ?: return Result.failure(Exception("Extension not found in repo"))
+                tachiyomiHandler.downloadAndInstall(extension)
             }
             CompatEcosystem.LEGADO -> {
-                legadoHandler.fetchRepository(repo.url).flatMap { extensions ->
-                    extensions.find { it.id == extensionId }?.let { legadoHandler.downloadAndInstall(it) }
-                        ?: Result.failure(Exception("Extension not found in repo"))
-                }
+                val result = legadoHandler.fetchRepository(repo.url)
+                if (result.isFailure) return Result.failure(result.exceptionOrNull() ?: Exception("Fetch failed"))
+                val extension = result.getOrThrow().find { it.id == extensionId }
+                    ?: return Result.failure(Exception("Extension not found in repo"))
+                legadoHandler.downloadAndInstall(extension)
             }
             CompatEcosystem.LNREADER -> {
-                lnReaderHandler.fetchRepository(repo.url).flatMap { extensions ->
-                    extensions.find { it.id == extensionId }?.let { lnReaderHandler.downloadAndInstall(it) }
-                        ?: Result.failure(Exception("Extension not found in repo"))
-                }
+                val result = lnReaderHandler.fetchRepository(repo.url)
+                if (result.isFailure) return Result.failure(result.exceptionOrNull() ?: Exception("Fetch failed"))
+                val extension = result.getOrThrow().find { it.id == extensionId }
+                    ?: return Result.failure(Exception("Extension not found in repo"))
+                lnReaderHandler.downloadAndInstall(extension)
             }
             CompatEcosystem.MANGAYOMI -> {
-                mangayomiHandler.fetchRepository(repo.url).flatMap { extensions ->
-                    extensions.find { it.id == extensionId }?.let { mangayomiHandler.downloadAndInstall(it) }
-                        ?: Result.failure(Exception("Extension not found in repo"))
-                }
+                val result = mangayomiHandler.fetchRepository(repo.url)
+                if (result.isFailure) return Result.failure(result.exceptionOrNull() ?: Exception("Fetch failed"))
+                val extension = result.getOrThrow().find { it.id == extensionId }
+                    ?: return Result.failure(Exception("Extension not found in repo"))
+                mangayomiHandler.downloadAndInstall(extension)
             }
             CompatEcosystem.CLOUDSTREAM -> {
-                cloudStreamHandler.fetchRepository(repo.url).flatMap { extensions ->
-                    extensions.find { it.id == extensionId }?.let { cloudStreamHandler.downloadAndInstall(it) }
-                        ?: Result.failure(Exception("Extension not found in repo"))
-                }
+                val result = cloudStreamHandler.fetchRepository(repo.url)
+                if (result.isFailure) return Result.failure(result.exceptionOrNull() ?: Exception("Fetch failed"))
+                val extension = result.getOrThrow().find { it.id == extensionId }
+                    ?: return Result.failure(Exception("Extension not found in repo"))
+                cloudStreamHandler.downloadAndInstall(extension)
             }
             else -> Result.failure(Exception("Unsupported ecosystem"))
         }

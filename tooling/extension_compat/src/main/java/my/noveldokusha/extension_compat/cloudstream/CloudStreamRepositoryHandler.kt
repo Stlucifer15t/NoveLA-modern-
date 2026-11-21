@@ -95,8 +95,7 @@ class CloudStreamRepositoryHandler @javax.inject.Inject constructor(
                     payloadPath = "${plugin.id}.jar",
                     enabled = true,
                     installedAt = System.currentTimeMillis(),
-                    updatedAt = System.currentTimeMillis(),
-                    metadata = json.encodeToString(plugin),
+                    extra = json.toJsonElement(plugin).jsonObject,
                 )
 
                 // Write plugin payload
@@ -117,12 +116,14 @@ class CloudStreamRepositoryHandler @javax.inject.Inject constructor(
     suspend fun checkUpdates(installedRecords: List<CompatInstallRecord>): List<RepoPluginInfo> {
         val repoGroups = installedRecords
             .filter { it.ecosystem == CompatEcosystem.CLOUDSTREAM }
-            .groupBy { it.metadata?.let { json.decodeFromString<RepoPluginInfo>(it)?.repoUrl } ?: "" }
+            .groupBy { it.extra?.get("repoUrl")?.contentOrNull ?: "" }
 
         val updates = mutableListOf<RepoPluginInfo>()
         for ((repoUrl, records) in repoGroups) {
             if (repoUrl.isBlank()) continue
-            fetchRepository(repoUrl).onSuccess { repoPlugins ->
+            val result = fetchRepository(repoUrl)
+            if (result.isSuccess) {
+                val repoPlugins = result.getOrThrow()
                 val installedMap = records.associateBy { it.id }
                 for (repoPlugin in repoPlugins) {
                     installedMap[repoPlugin.id]?.let { installed ->
@@ -159,8 +160,7 @@ class CloudStreamRepositoryHandler @javax.inject.Inject constructor(
                 payloadPath = "$id.jar",
                 enabled = true,
                 installedAt = System.currentTimeMillis(),
-                updatedAt = System.currentTimeMillis(),
-                metadata = json.encodeToString(this),
+                extra = json.toJsonElement(this).jsonObject,
             )
         }
     }
