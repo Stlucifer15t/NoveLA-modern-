@@ -33,10 +33,7 @@ dependencies {
     implementation(libs.rhino)
     implementation(libs.json.path)
 
-    // Tachiyomi/Mihon/Aniyomi extension runtime ABI (compileOnly stubs)
-    implementation(libs.tachiyomix)
-
-    // Tachiyomi/Aniyomi extension runtime deps (vendored sources need these)
+    // Tachiyomi/Mihon/Aniyomi extension runtime deps (vendored sources need these)
     implementation(libs.injekt.core)
     implementation(libs.rxjava1)
     implementation(libs.androidx.preference)
