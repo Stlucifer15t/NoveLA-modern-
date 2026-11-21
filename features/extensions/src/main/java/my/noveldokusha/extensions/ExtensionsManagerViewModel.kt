@@ -23,9 +23,6 @@ import my.noveldokusha.core.ExtensionManager
 import my.noveldokusha.core.appPreferences.AppPreferences
 import my.noveldokusha.core.appPreferences.ExtensionInfoCached
 import my.noveldokusha.extension_compat.core.CompatRepositoryManager
-import my.noveldokusha.extension_compat.core.CompatSourceProvider
-import my.noveldokusha.extension_compat.core.CompatEcosystem
-import my.noveldokusha.extension_compat.core.CompatInstallRecord
 import my.noveldokusha.network.NetworkClient
 import my.noveldokusha.scraper.LuaSourceLoader
 import my.noveldokusha.scraper.LuaSourceProvider
@@ -48,7 +45,6 @@ class ExtensionsManagerViewModel @Inject constructor(
     private val translationManager: TranslationManager,
     // Compat layer
     private val compatRepositoryManager: CompatRepositoryManager,
-    private val compatSourceProvider: CompatSourceProvider,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ExtensionsScreenState())
@@ -84,26 +80,7 @@ class ExtensionsManagerViewModel @Inject constructor(
             }
         }
 
-        // Реактивно синхронизируем compat-источники
-        viewModelScope.launch {
-            compatSourceProvider.sourcesFlow.collectLatest { compatSources ->
-                _state.update { state ->
-                    val compatExtensions = compatSources.map { source ->
-                        core.Extension(
-                            id = source.id,
-                            name = source.resolveName(context),
-                            version = "1.0.0",
-                            language = source.language?.iso639_1 ?: "en",
-                            enabled = true,
-                            imageUrl = source.iconUrl,
-                            settings = null,
-                        )
-                    }
-                    state.copy(extensions = state.extensions + compatExtensions)
-                }
-                updateAvailableExtensionsStatus()
-            }
-        }
+        // Compat layer not yet implemented - skip sync
 
         // Загружаем кеш и (при необходимости) актуальные данные из сети — на фоновом потоке
         viewModelScope.launch {
@@ -423,11 +400,10 @@ class ExtensionsManagerViewModel @Inject constructor(
     private fun uninstallExtensionById(extensionId: String) {
         viewModelScope.launch {
             try {
-                val isCompat = extensionId.contains("#") || extensionId.startsWith("compat_")
-                if (isCompat) {
-                    // Uninstall from compat layer
-                    compatSourceProvider.uninstall(extensionId)
-                } else {
+                    val isCompat = false // Compat layer not yet implemented
+                    if (isCompat) {
+                        // Uninstall from compat layer
+                    } else {
                     extensionManager.uninstallExtension(extensionId)
                     luaSourceLoader.removeScript(extensionId)
                 }
