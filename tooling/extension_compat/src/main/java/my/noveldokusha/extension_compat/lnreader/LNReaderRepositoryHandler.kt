@@ -10,6 +10,7 @@ import kotlinx.serialization.json.Json
 import timber.log.Timber
 import java.net.URL
 import java.nio.charset.Charsets
+import java.nio.charset.Charsets
 
 /**
  * Handles LNReader plugin repositories.
@@ -89,12 +90,11 @@ class LNReaderRepositoryHandler @javax.inject.Inject constructor(
                     ecosystem = CompatEcosystem.LNREADER,
                     name = plugin.name,
                     version = plugin.version,
-                    versionCode = parseVersionCode(plugin.version),
+                    versionCode = plugin.versionCode,
                     payloadPath = "${plugin.id}.js",
                     enabled = true,
                     installedAt = System.currentTimeMillis(),
-                    updatedAt = System.currentTimeMillis(),
-                    metadata = json.encodeToString(plugin),
+                    extra = json.encodeToString(plugin).jsonObject,
                 )
 
                 // Write JS payload
@@ -115,7 +115,7 @@ class LNReaderRepositoryHandler @javax.inject.Inject constructor(
     suspend fun checkUpdates(installedRecords: List<CompatInstallRecord>): List<RepoPluginInfo> {
         val repoGroups = installedRecords
             .filter { it.ecosystem == CompatEcosystem.LNREADER }
-            .groupBy { it.metadata?.let { json.decodeFromString<RepoPluginInfo>(it)?.repoUrl } ?: "" }
+            .groupBy { it.extra?.get("repoUrl")?.contentOrNull ?: "" }
 
         val updates = mutableListOf<RepoPluginInfo>()
         for ((repoUrl, records) in repoGroups) {
@@ -179,8 +179,7 @@ class LNReaderRepositoryHandler @javax.inject.Inject constructor(
                 payloadPath = "$id.js",
                 enabled = true,
                 installedAt = System.currentTimeMillis(),
-                updatedAt = System.currentTimeMillis(),
-                metadata = json.encodeToString(this),
+                extra = json.encodeToString(this).jsonObject,
             )
         }
     }
