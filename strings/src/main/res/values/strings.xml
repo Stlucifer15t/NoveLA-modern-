@@ -917,4 +917,52 @@
     <string name="video_gesture_swap_sides">Swap screen halves</string>
     <string name="video_gesture_sensitivity">Swipe sensitivity</string>
     <string name="video_subtitle_track">Subtitle track</string>
+
+    <!-- Home / Discover -->
+    <string name="title_home">Home</string>
+    <string name="see_all">See all</string>
+    <string name="continue_reading">Continue reading</string>
+    <string name="trending_now">Trending now</string>
+    <string name="recently_updated">Recently updated</string>
+    <string name="popular_categories">Popular categories</string>
+    <string name="browse_all_categories">Browse all categories</string>
+    <string name="home_search_hint">Search books, authors, genres…</string>
+    <string name="rankings">Rankings</string>
+    <string name="top_rated">Top rated</string>
+    <string name="rankings_empty">No rankings available</string>
+    <string name="discover">Discover</string>
+    <string name="editor_picks">Editor\'s picks</string>
+    <string name="fresh_releases">Fresh releases</string>
+    <string name="most_popular">Most popular</string>
+
+    <!-- Search -->
+    <string name="recent_searches">Recent searches</string>
+    <string name="clear_recent_searches">Clear recent searches</string>
+    <string name="search_suggestions">Suggestions</string>
+    <string name="search_in_library">In your library</string>
+
+    <!-- Book details / chapters -->
+    <string name="start_reading">Start reading</string>
+    <string name="resume_chapter">Resume</string>
+    <string name="view_all_chapters">View all chapters</string>
+    <string name="chapters_count">%1$d chapters</string>
+    <string name="chapter_read_count">%1$d / %2$d read</string>
+    <string name="book_details">Book details</string>
+    <string name="table_of_contents">Table of contents</string>
+
+    <!-- Reader -->
+    <string name="reader_chapters_list">Chapters</string>
+    <string name="reader_previous_chapter">Previous chapter</string>
+    <string name="reader_next_chapter">Next chapter</string>
+
+    <!-- Settings groups -->
+    <string name="settings_group_general">General</string>
+    <string name="settings_group_appearance">Appearance</string>
+    <string name="settings_group_library">Library</string>
+    <string name="settings_group_data">Data &amp; storage</string>
+    <string name="settings_group_network">Network</string>
+    <string name="settings_group_translation">Translation</string>
+    <string name="settings_group_backup">Backup</string>
+    <string name="settings_group_updates">Updates</string>
+    <string name="settings_group_about">About</string>
 </resources>
