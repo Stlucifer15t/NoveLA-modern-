@@ -31,6 +31,6 @@ abstract class CompatModule {
 
         @Provides
         @Singleton
-        fun provideCompatExtensionLoaders(): Set<CompatExtensionLoader> = emptySet()
+        fun provideCompatExtensionLoaders(): Set<@JvmSuppressWildcards CompatExtensionLoader> = emptySet()
     }
 }
