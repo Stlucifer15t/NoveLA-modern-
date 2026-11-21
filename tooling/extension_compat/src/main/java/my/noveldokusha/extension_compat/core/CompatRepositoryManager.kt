@@ -1,10 +1,7 @@
 package my.noveldokusha.extension_compat.core
 
-import my.noveldokusha.extension_compat.cloudstream.CloudStreamRepositoryHandler
 import my.noveldokusha.extension_compat.legado.LegadoRepositoryHandler
 import my.noveldokusha.extension_compat.lnreader.LNReaderRepositoryHandler
-import my.noveldokusha.extension_compat.mangayomi.MangayomiRepositoryHandler
-import my.noveldokusha.extension_compat.tachiyomi.TachiyomiRepositoryHandler
 import my.noveldokusha.network.NetworkClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,15 +15,18 @@ import javax.inject.Singleton
 /**
  * Unified repository manager for all extension ecosystems.
  * Handles repository registration, fetching, and extension installation.
+ * 
+ * Note: Tachiyomi, Mangayomi, CloudStream adapters are temporarily disabled
+ * due to compilation errors. They can be re-enabled once fixed.
  */
 @Singleton
 class CompatRepositoryManager @Inject constructor(
     private val networkClient: NetworkClient,
-    private val tachiyomiHandler: TachiyomiRepositoryHandler,
     private val legadoHandler: LegadoRepositoryHandler,
     private val lnReaderHandler: LNReaderRepositoryHandler,
-    private val mangayomiHandler: MangayomiRepositoryHandler,
-    private val cloudStreamHandler: CloudStreamRepositoryHandler,
+    // private val tachiyomiHandler: TachiyomiRepositoryHandler, // TODO: re-enable
+    // private val mangayomiHandler: MangayomiRepositoryHandler, // TODO: re-enable
+    // private val cloudStreamHandler: CloudStreamRepositoryHandler, // TODO: re-enable
 ) {
 
     private val _repositories = MutableStateFlow<List<RepoInfo>>(emptyList())
@@ -96,11 +96,11 @@ class CompatRepositoryManager @Inject constructor(
         _syncState.value = SyncState.Syncing(repo.ecosystem)
 
         val result = when (repo.ecosystem) {
-            CompatEcosystem.TACHIYOMI -> tachiyomiHandler.fetchRepository(repo.url)
+            // CompatEcosystem.TACHIYOMI -> tachiyomiHandler.fetchRepository(repo.url) // TODO: re-enable
             CompatEcosystem.LEGADO -> legadoHandler.fetchRepository(repo.url)
             CompatEcosystem.LNREADER -> lnReaderHandler.fetchRepository(repo.url)
-            CompatEcosystem.MANGAYOMI -> mangayomiHandler.fetchRepository(repo.url)
-            CompatEcosystem.CLOUDSTREAM -> cloudStreamHandler.fetchRepository(repo.url)
+            // CompatEcosystem.MANGAYOMI -> mangayomiHandler.fetchRepository(repo.url) // TODO: re-enable
+            // CompatEcosystem.CLOUDSTREAM -> cloudStreamHandler.fetchRepository(repo.url) // TODO: re-enable
             else -> Result.failure(Exception("Unsupported ecosystem: ${repo.ecosystem}"))
         }
 
@@ -140,13 +140,13 @@ class CompatRepositoryManager @Inject constructor(
         val repo = _repositories.value.find { it.id == repoId } ?: return Result.failure(Exception("Repository not found"))
 
         return when (repo.ecosystem) {
-            CompatEcosystem.TACHIYOMI -> {
-                val result = tachiyomiHandler.fetchRepository(repo.url)
-                if (result.isFailure) return Result.failure(result.exceptionOrNull() ?: Exception("Fetch failed"))
-                val extension = result.getOrThrow().find { it.id == extensionId }
-                    ?: return Result.failure(Exception("Extension not found in repo"))
-                tachiyomiHandler.downloadAndInstall(extension)
-            }
+            // CompatEcosystem.TACHIYOMI -> { // TODO: re-enable
+            //     val result = tachiyomiHandler.fetchRepository(repo.url)
+            //     if (result.isFailure) return Result.failure(result.exceptionOrNull() ?: Exception("Fetch failed"))
+            //     val extension = result.getOrThrow().find { it.id == extensionId }
+            //         ?: return Result.failure(Exception("Extension not found in repo"))
+            //     tachiyomiHandler.downloadAndInstall(extension)
+            // }
             CompatEcosystem.LEGADO -> {
                 val result = legadoHandler.fetchRepository(repo.url)
                 if (result.isFailure) return Result.failure(result.exceptionOrNull() ?: Exception("Fetch failed"))
@@ -161,20 +161,20 @@ class CompatRepositoryManager @Inject constructor(
                     ?: return Result.failure(Exception("Extension not found in repo"))
                 lnReaderHandler.downloadAndInstall(extension)
             }
-            CompatEcosystem.MANGAYOMI -> {
-                val result = mangayomiHandler.fetchRepository(repo.url)
-                if (result.isFailure) return Result.failure(result.exceptionOrNull() ?: Exception("Fetch failed"))
-                val extension = result.getOrThrow().find { it.id == extensionId }
-                    ?: return Result.failure(Exception("Extension not found in repo"))
-                mangayomiHandler.downloadAndInstall(extension)
-            }
-            CompatEcosystem.CLOUDSTREAM -> {
-                val result = cloudStreamHandler.fetchRepository(repo.url)
-                if (result.isFailure) return Result.failure(result.exceptionOrNull() ?: Exception("Fetch failed"))
-                val extension = result.getOrThrow().find { it.id == extensionId }
-                    ?: return Result.failure(Exception("Extension not found in repo"))
-                cloudStreamHandler.downloadAndInstall(extension)
-            }
+            // CompatEcosystem.MANGAYOMI -> { // TODO: re-enable
+            //     val result = mangayomiHandler.fetchRepository(repo.url)
+            //     if (result.isFailure) return Result.failure(result.exceptionOrNull() ?: Exception("Fetch failed"))
+            //     val extension = result.getOrThrow().find { it.id == extensionId }
+            //         ?: return Result.failure(Exception("Extension not found in repo"))
+            //     mangayomiHandler.downloadAndInstall(extension)
+            // }
+            // CompatEcosystem.CLOUDSTREAM -> { // TODO: re-enable
+            //     val result = cloudStreamHandler.fetchRepository(repo.url)
+            //     if (result.isFailure) return Result.failure(result.exceptionOrNull() ?: Exception("Fetch failed"))
+            //     val extension = result.getOrThrow().find { it.id == extensionId }
+            //         ?: return Result.failure(Exception("Extension not found in repo"))
+            //     cloudStreamHandler.downloadAndInstall(extension)
+            // }
             else -> Result.failure(Exception("Unsupported ecosystem"))
         }
     }
@@ -187,11 +187,11 @@ class CompatRepositoryManager @Inject constructor(
 
         for (repo in _repositories.value.filter { it.enabled }) {
             val ecosystemUpdates = when (repo.ecosystem) {
-                CompatEcosystem.TACHIYOMI -> tachiyomiHandler.checkUpdates(installedRecords.filter { it.ecosystem == CompatEcosystem.TACHIYOMI })
+                // CompatEcosystem.TACHIYOMI -> tachiyomiHandler.checkUpdates(installedRecords.filter { it.ecosystem == CompatEcosystem.TACHIYOMI }) // TODO: re-enable
                 CompatEcosystem.LEGADO -> legadoHandler.checkUpdates(installedRecords.filter { it.ecosystem == CompatEcosystem.LEGADO })
                 CompatEcosystem.LNREADER -> lnReaderHandler.checkUpdates(installedRecords.filter { it.ecosystem == CompatEcosystem.LNREADER })
-                CompatEcosystem.MANGAYOMI -> mangayomiHandler.checkUpdates(installedRecords.filter { it.ecosystem == CompatEcosystem.MANGAYOMI })
-                CompatEcosystem.CLOUDSTREAM -> cloudStreamHandler.checkUpdates(installedRecords.filter { it.ecosystem == CompatEcosystem.CLOUDSTREAM })
+                // CompatEcosystem.MANGAYOMI -> mangayomiHandler.checkUpdates(installedRecords.filter { it.ecosystem == CompatEcosystem.MANGAYOMI }) // TODO: re-enable
+                // CompatEcosystem.CLOUDSTREAM -> cloudStreamHandler.checkUpdates(installedRecords.filter { it.ecosystem == CompatEcosystem.CLOUDSTREAM }) // TODO: re-enable
                 else -> emptyList()
             }
             if (ecosystemUpdates.isNotEmpty()) {
