@@ -83,13 +83,6 @@ class ExtensionsManagerViewModel @Inject constructor(
         viewModelScope.launch {
             loadCachedExtensions()        // выставляет cachedAvailableExtensions + lastFetchTime
             loadAllAvailableExtensions()
-            syncCompatRepositories()
-        }
-    }
-
-    private fun syncCompatRepositories() {
-        viewModelScope.launch {
-            compatRepositoryManager.syncAll()
         }
     }
 

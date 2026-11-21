@@ -165,7 +165,7 @@ private fun UnifiedExtensionsScreen(
                     .filter { state.selectedContentType.isEmpty() || it.contentType == state.selectedContentType || (state.selectedContentType == "novel" && it.contentType.isEmpty()) }
                     .filter { true } // Ecosystem filter removed - no compat layer yet
 
-                val localInstalledExtensions = remember(state.extensions, state.availableExtensions, state.selectedLanguages, state.selectedContentType, state.selectedEcosystem) {
+                val localInstalledExtensions = remember(state.extensions, state.availableExtensions, state.selectedLanguages, state.selectedContentType) {
                     val ids = filteredExtensions.map { it.id }.toSet()
                     state.extensions
                         .filter { it.id !in ids }
