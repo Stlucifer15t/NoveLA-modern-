@@ -152,8 +152,7 @@ class LegadoRepositoryHandler @javax.inject.Inject constructor(
                     payloadPath = "${source.id}.json",
                     enabled = true,
                     installedAt = System.currentTimeMillis(),
-                    updatedAt = System.currentTimeMillis(),
-                    metadata = json.encodeToString(source),
+                    extra = json.encodeToString(source).jsonObject,
                 )
 
                 // Write JSON payload
@@ -188,12 +187,14 @@ class LegadoRepositoryHandler @javax.inject.Inject constructor(
     suspend fun checkUpdates(installedRecords: List<CompatInstallRecord>): List<RepoSourceInfo> {
         val repoGroups = installedRecords
             .filter { it.ecosystem == CompatEcosystem.LEGADO }
-            .groupBy { it.metadata?.let { json.decodeFromString<RepoSourceInfo>(it)?.repoUrl } ?: "" }
+            .groupBy { it.extra?.get("repoUrl")?.contentOrNull ?: "" }
 
         val updates = mutableListOf<RepoSourceInfo>()
         for ((repoUrl, records) in repoGroups) {
             if (repoUrl.isBlank()) continue
-            fetchRepository(repoUrl).onSuccess { repoSources ->
+            val result = fetchRepository(repoUrl)
+            if (result.isSuccess) {
+                val repoSources = result.getOrThrow()
                 val installedMap = records.associateBy { it.id }
                 for (repoSource in repoSources) {
                     installedMap[repoSource.id]?.let { installed ->
@@ -230,8 +231,7 @@ class LegadoRepositoryHandler @javax.inject.Inject constructor(
                 payloadPath = "$id.json",
                 enabled = true,
                 installedAt = System.currentTimeMillis(),
-                updatedAt = System.currentTimeMillis(),
-                metadata = json.encodeToString(this),
+                extra = json.encodeToString(this).jsonObject,
             )
         }
     }
