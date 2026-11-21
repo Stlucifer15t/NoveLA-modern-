@@ -24,7 +24,10 @@ class Scraper @Inject constructor(
     localSources: Set<@JvmSuppressWildcards LocalSource>,
     @Suppress("UNUSED_PARAMETER") appPreferences: AppPreferences,
     // Интерфейс вместо LuaSourceLoader — нет зависимости от Android Context
-    private val luaSourceProvider: LuaSourceProvider
+    private val luaSourceProvider: LuaSourceProvider,
+    // Compat-источники других экосистем (Tachiyomi/Legado/LNReader/...).
+    // Дефолт — пустой провайдер, чтобы тесты и DI без binding'а не падали.
+    private val compatSourceProvider: CompatSourceProvider = EmptyCompatSourceProvider,
 ) {
     val databasesList = setOf(
         NovelUpdates(networkClient),
@@ -38,6 +41,9 @@ class Scraper @Inject constructor(
     private val _luaSources = MutableStateFlow<Set<SourceInterface>>(emptySet())
     val luaSources: StateFlow<Set<SourceInterface>> = _luaSources.asStateFlow()
 
+    private val _compatSources = MutableStateFlow<Set<SourceInterface>>(emptySet())
+    val compatSources: StateFlow<Set<SourceInterface>> = _compatSources.asStateFlow()
+
     init {
         scraperScope.launch {
             luaSourceProvider.sourcesFlow.collect { sources ->
@@ -45,23 +51,37 @@ class Scraper @Inject constructor(
                 Timber.d("Lua sources updated: ${sources.size}")
             }
         }
+        scraperScope.launch {
+            compatSourceProvider.sourcesFlow.collect { sources ->
+                _compatSources.value = sources.toSet()
+                Timber.d("Compat sources updated: ${sources.size}")
+            }
+        }
     }
 
-    suspend fun awaitLoaded() = luaSourceProvider.awaitLoaded()
+    suspend fun awaitLoaded() {
+        luaSourceProvider.awaitLoaded()
+        compatSourceProvider.awaitLoaded()
+    }
 
-    fun clearCache() = luaSourceProvider.clearCache()
+    fun clearCache() {
+        luaSourceProvider.clearCache()
+        compatSourceProvider.clearCache()
+    }
 
     /** Все источники включая CachedSource заглушки (для UI) */
     val sourcesList: Set<SourceInterface>
-        get() = localSourcesList + _luaSources.value
+        get() = localSourcesList + _luaSources.value + _compatSources.value
 
-    /** Только загруженные реальные Lua-источники (для data-операций) */
+    /** Только загруженные реальные Lua + compat источники (для data-операций) */
     val loadedSourcesList: Set<SourceInterface>
-        get() = localSourcesList + luaSourceProvider.loadedSourcesFlow.value.toSet()
+        get() = localSourcesList +
+            luaSourceProvider.loadedSourcesFlow.value.toSet() +
+            compatSourceProvider.loadedSourcesFlow.value.toSet()
 
     val sourcesCatalogListFlow: kotlinx.coroutines.flow.Flow<List<SourceInterface.Catalog>> =
-        _luaSources.map { lua ->
-            (localSourcesList + lua).filterIsInstance<SourceInterface.Catalog>()
+        kotlinx.coroutines.flow.combine(_luaSources, _compatSources) { lua, compat ->
+            (localSourcesList + lua + compat).filterIsInstance<SourceInterface.Catalog>()
         }
 
     val sourcesLanguagesListFlow: kotlinx.coroutines.flow.Flow<List<my.noveldokusha.core.LanguageCode>> =

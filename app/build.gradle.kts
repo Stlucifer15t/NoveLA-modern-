@@ -124,6 +124,7 @@ dependencies {
     implementation(projects.networking)
     implementation(projects.strings)
     implementation(projects.scraper)
+    implementation(projects.tooling.extensionCompat)
 
     // Translation feature (FOSS - Gemini API only)
     implementation(projects.tooling.textTranslator.translatorNop)
