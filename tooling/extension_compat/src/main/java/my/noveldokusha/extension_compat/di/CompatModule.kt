@@ -13,8 +13,6 @@ import my.noveldokusha.extension_compat.core.CompatLoaders
 import my.noveldokusha.extension_compat.core.CompatRepositoryManager
 import my.noveldokusha.extension_compat.core.CompatSourceProviderImpl
 import my.noveldokusha.extension_compat.core.CompatStorage
-import my.noveldokusha.extension_compat.legado.LegadoExtensionLoader
-import my.noveldokusha.extension_compat.lnreader.LNReaderExtensionLoader
 import my.noveldokusha.scraper.CompatSourceProvider
 import java.io.File
 import javax.inject.Singleton
@@ -26,18 +24,6 @@ abstract class CompatModule {
     @Binds
     @Singleton
     abstract fun bindCompatSourceProvider(impl: CompatSourceProviderImpl): CompatSourceProvider
-
-    @Binds
-    @Singleton
-    @CompatLoaders
-    @IntoSet
-    abstract fun bindLegadoLoader(impl: LegadoExtensionLoader): CompatExtensionLoader
-
-    @Binds
-    @Singleton
-    @CompatLoaders
-    @IntoSet
-    abstract fun bindLNReaderLoader(impl: LNReaderExtensionLoader): CompatExtensionLoader
 
     companion object {
 
