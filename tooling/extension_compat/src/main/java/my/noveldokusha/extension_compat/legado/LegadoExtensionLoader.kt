@@ -12,10 +12,6 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import java.nio.charset.Charsets
 
-/**
- * Загрузчик Legado bookSource: payload — JSON одного bookSource или массива.
- * Один record может содержать массив — создаётся по одному источнику на bookSource.
- */
 @Singleton
 class LegadoExtensionLoader @Inject constructor(
     private val networkClient: NetworkClient,
@@ -35,9 +31,8 @@ class LegadoExtensionLoader @Inject constructor(
         if (sources.isEmpty()) {
             throw CompatException("No bookSource found in payload for ${record.id}", operation = "load")
         }
-        // record описывает установку; id источника — из bookSourceUrl/имени
         return sources.mapIndexed { index, bs ->
-val srcId = if (sources.size == 1) record.id else "${record.id}#${bs.bookSourceUrl.ifBlank { bs.bookSourceName }#$index}"
+            val srcId = if (sources.size == 1) record.id else "${record.id}#${bs.bookSourceUrl.ifBlank { bs.bookSourceName }}#$index"
             LegadoSourceAdapter(
                 bookSource = bs,
                 networkClient = networkClient,
@@ -53,14 +48,12 @@ val srcId = if (sources.size == 1) record.id else "${record.id}#${bs.bookSourceU
             '[' -> try {
                 json.decodeFromString(ListSerializer(LegadoBookSource.serializer()), trimmed)
             } catch (e: Exception) {
-                // Массив с мусором/объектами-обёртками — пробуем поэлементно
                 parseLooseArray(trimmed)
             }
             '{' -> listOf(
                 try {
                     json.decodeFromString(LegadoBookSource.serializer(), trimmed)
                 } catch (e: Exception) {
-                    // Возможно, это обёртка {"data":[...]} / {"bookSources":[...]}
                     parseLooseObject(trimmed) ?: throw CompatException(
                         "Invalid bookSource JSON: ${e.message}", operation = "load",
                     )

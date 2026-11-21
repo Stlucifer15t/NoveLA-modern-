@@ -30,19 +30,19 @@ class LegadoRepositoryHandler @javax.inject.Inject constructor(
         val bookSourceComment: String = "",
     )
 
-    suspend fun fetchRepository(repoUrl: String): my.noveldokusha.extension_compat.core.Result<List<RepoSourceInfo>> {
+    suspend fun fetchRepository(repoUrl: String): kotlin.Result<List<RepoSourceInfo>> {
         return withContext(Dispatchers.IO) {
             try {
                 val response = networkClient.get(repoUrl)
                 if (!response.isSuccessful) {
-                    return@withContext my.noveldokusha.extension_compat.core.Result.failure(Exception("HTTP ${response.code}"))
+                    return@withContext kotlin.Result.failure(Exception("HTTP ${response.code}"))
                 }
-                val body = response.body?.string() ?: return@withContext my.noveldokusha.extension_compat.core.Result.failure(Exception("Empty response"))
+                val body = response.body?.string() ?: return@withContext kotlin.Result.failure(Exception("Empty response"))
                 val sources = parseRepositoryIndex(body, repoUrl)
-                my.noveldokusha.extension_compat.core.Result.success(sources)
+                kotlin.Result.success(sources)
             } catch (e: Exception) {
                 Timber.e(e, "Failed to fetch Legado repository: $repoUrl")
-                my.noveldokusha.extension_compat.core.Result.failure(e)
+                kotlin.Result.failure(e)
             }
         }
     }
@@ -74,14 +74,14 @@ class LegadoRepositoryHandler @javax.inject.Inject constructor(
         return emptyList()
     }
 
-    suspend fun downloadAndInstall(source: RepoSourceInfo): my.noveldokusha.extension_compat.core.Result<CompatInstallRecord> {
+    suspend fun downloadAndInstall(source: RepoSourceInfo): kotlin.Result<CompatInstallRecord> {
         return withContext(Dispatchers.IO) {
             try {
                 val response = networkClient.get(source.downloadUrl)
                 if (!response.isSuccessful) {
-                    return@withContext my.noveldokusha.extension_compat.core.Result.failure(Exception("HTTP ${response.code}"))
+                    return@withContext kotlin.Result.failure(Exception("HTTP ${response.code}"))
                 }
-                val body = response.body?.string() ?: return@withContext my.noveldokusha.extension_compat.core.Result.failure(Exception("Empty response"))
+                val body = response.body?.string() ?: return@withContext kotlin.Result.failure(Exception("Empty response"))
                 val bookSource = parseSingleBookSource(body, source.id)
                 val jsonPayload = json.encodeToString(bookSource)
 
@@ -100,10 +100,10 @@ class LegadoRepositoryHandler @javax.inject.Inject constructor(
                 storage.writePayload(CompatEcosystem.LEGADO, record.payloadPath, jsonPayload.toByteArray(Charsets.UTF_8))
                 storage.upsert(record)
 
-                my.noveldokusha.extension_compat.core.Result.success(record)
+                kotlin.Result.success(record)
             } catch (e: Exception) {
                 Timber.e(e, "Failed to download Legado source: ${source.id}")
-                my.noveldokusha.extension_compat.core.Result.failure(e)
+                kotlin.Result.failure(e)
             }
         }
     }

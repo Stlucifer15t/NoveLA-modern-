@@ -51,7 +51,7 @@ interface CompatExtensionLoader {
 class CompatSourceProviderImpl @Inject constructor(
     private val storage: CompatStorage,
     private val diagnostics: CompatDiagnostics,
-    private val loaders: Set<@CompatLoaders CompatExtensionLoader>,
+    private val loaders: Set<CompatExtensionLoader>,
 ) : CompatSourceProvider {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -91,7 +91,7 @@ class CompatSourceProviderImpl @Inject constructor(
     }
 
     override fun clearCache() {
-        loaders.values.forEach { runCatching { it.clearCache() } }
+        loaders.forEach { runCatching { it.clearCache() } }
     }
 
     private suspend fun reloadInternal() {
