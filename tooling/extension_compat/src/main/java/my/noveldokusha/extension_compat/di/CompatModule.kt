@@ -1,6 +1,7 @@
 package my.noveldokusha.extension_compat.di
 
 import android.content.Context
+import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -17,7 +18,7 @@ import javax.inject.Singleton
 @Module
 abstract class CompatModule {
 
-    @dagger.Binds
+    @Binds
     @Singleton
     abstract fun bindCompatSourceProvider(impl: CompatSourceProviderImpl): CompatSourceProvider
 
@@ -26,5 +27,9 @@ abstract class CompatModule {
         @Singleton
         fun provideCompatStorage(@ApplicationContext context: Context): CompatStorage =
             CompatStorage(File(context.filesDir, CompatStorage.DIR_NAME))
+
+        @Provides
+        @Singleton
+        fun provideCompatExtensionLoaders(): Set<CompatExtensionLoader> = emptySet()
     }
 }
