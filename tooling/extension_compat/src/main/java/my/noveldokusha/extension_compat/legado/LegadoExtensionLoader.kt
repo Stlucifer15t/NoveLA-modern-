@@ -37,8 +37,7 @@ class LegadoExtensionLoader @Inject constructor(
         }
         // record описывает установку; id источника — из bookSourceUrl/имени
         return sources.mapIndexed { index, bs ->
-            val srcId = if (sources.size == 1) record.id
-            else "${record.id}#${bs.bookSourceUrl.ifBlank { bs.bookSourceName }#$index}"
+val srcId = if (sources.size == 1) record.id else "${record.id}#${bs.bookSourceUrl.ifBlank { bs.bookSourceName }#$index}"
             LegadoSourceAdapter(
                 bookSource = bs,
                 networkClient = networkClient,

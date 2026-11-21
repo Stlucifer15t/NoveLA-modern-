@@ -300,7 +300,7 @@ class LNReaderRuntime {
             if (result.isException || result.isNullish) {
                 return Result.success(FilterDefinition())
             }
-            val jsonStr = result.isString ? result.string : json.encodeToString(result)
+            val jsonStr = if (result.isString) result.string else json.encodeToString(result)
             return Result.success(json.decodeFromString<FilterDefinition>(jsonStr))
         } catch (e: Exception) {
             Result.failure(e)
@@ -317,7 +317,7 @@ class LNReaderRuntime {
             if (result.isException || result.isNullish) {
                 return Result.success(emptyMap())
             }
-            val jsonStr = result.isString ? result.string : json.encodeToString(result)
+            val jsonStr = if (result.isString) result.string else json.encodeToString(result)
             return Result.success(json.decodeFromString(jsonStr))
         } catch (e: Exception) {
             Result.failure(e)
