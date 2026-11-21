@@ -34,7 +34,9 @@ dependencies {
     implementation(libs.json.path)
 
     // Tachiyomi/Mihon/Aniyomi extension runtime deps (vendored sources need these)
-    implementation(libs.injekt.core)
+    implementation(libs.injekt.core) {
+        exclude(group = "uy.kohesive.injekt", module = "injekt-api")
+    }
     implementation(libs.rxjava1)
     implementation(libs.androidx.preference)
     implementation(libs.okhttp.interceptor.logging)
