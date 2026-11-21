@@ -9,6 +9,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import timber.log.Timber
 import java.net.URL
+import java.nio.charset.Charsets
 
 /**
  * Handles LNReader plugin repositories.

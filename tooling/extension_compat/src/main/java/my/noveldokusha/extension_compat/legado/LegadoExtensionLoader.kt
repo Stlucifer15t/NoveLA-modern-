@@ -10,6 +10,7 @@ import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import javax.inject.Inject
 import javax.inject.Singleton
+import java.nio.charset.Charsets
 
 /**
  * Загрузчик Legado bookSource: payload — JSON одного bookSource или массива.
