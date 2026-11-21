@@ -6,6 +6,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import my.noveldokusha.extension_compat.core.CompatExtensionLoader
 import my.noveldokusha.extension_compat.core.CompatSourceProviderImpl
 import my.noveldokusha.extension_compat.core.CompatStorage
 import my.noveldokusha.scraper.CompatSourceProvider
