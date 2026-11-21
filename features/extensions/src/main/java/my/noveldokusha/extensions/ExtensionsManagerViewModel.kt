@@ -332,19 +332,8 @@ class ExtensionsManagerViewModel @Inject constructor(
                 val isCompat = extInfo.id.contains("#") || extInfo.id.startsWith("compat_")
 
                 if (isCompat) {
-                    // Install via compat repository manager
-                    val repoUrl = appPreferences.EXTENSIONS_REPOSITORY_URL.value
-                    val result = compatRepositoryManager.installExtension(repoUrl, extensionId)
-                    result.fold(
-                        onSuccess = { record ->
-                            Timber.d("Installed compat extension: ${record.name}")
-                            // Compat source provider will pick it up reactively
-                        },
-                        onFailure = { e ->
-                            Timber.e(e, "Failed to install compat extension")
-                            _state.update { it.copy(error = context.getString(my.noveldokusha.strings.R.string.ext_failed_to_install, extInfo.name, e.message)) }
-                        }
-                    )
+                    // Compat layer not yet implemented - skip
+                    Timber.d("Compat installation not yet implemented")
                 } else {
                     // Lua extension installation
                     // Шаг 1: Скачать .lua на диск

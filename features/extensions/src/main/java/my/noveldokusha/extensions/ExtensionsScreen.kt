@@ -163,7 +163,7 @@ private fun UnifiedExtensionsScreen(
                 val filteredExtensions = state.availableExtensions
                     .filter { state.selectedLanguages.isEmpty() || it.language in state.selectedLanguages }
                     .filter { state.selectedContentType.isEmpty() || it.contentType == state.selectedContentType || (state.selectedContentType == "novel" && it.contentType.isEmpty()) }
-                    .filter { state.selectedEcosystem.isEmpty() || getEcosystemForExtension(it.id) == state.selectedEcosystem }
+                    .filter { true } // Ecosystem filter removed - no compat layer yet
 
                 val localInstalledExtensions = remember(state.extensions, state.availableExtensions, state.selectedLanguages, state.selectedContentType, state.selectedEcosystem) {
                     val ids = filteredExtensions.map { it.id }.toSet()
@@ -171,7 +171,7 @@ private fun UnifiedExtensionsScreen(
                         .filter { it.id !in ids }
                         .filter { state.selectedLanguages.isEmpty() || it.language in state.selectedLanguages }
                         .filter { state.selectedContentType.isEmpty() || it.contentType == state.selectedContentType || (state.selectedContentType == "novel" && it.contentType.isEmpty()) }
-                        .filter { state.selectedEcosystem.isEmpty() || getEcosystemForExtension(it.id) == state.selectedEcosystem }
+                        .filter { true } // Ecosystem filter removed - no compat layer yet
                         .map { installed ->
                             ExtensionInfo(
                                 id = installed.id,
@@ -251,31 +251,7 @@ private fun UnifiedExtensionsScreen(
                         singleLine = true
                     )
 
-                    // Ecosystem filter chips
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        val ecosystemOptions = listOf(
-                            "" to stringResource(StringsR.string.all_categories),
-                            "lua" to "Lua (NoveLA)",
-                            "tachiyomi" to "Mihon/Tachiyomi",
-                            "aniyomi" to "Aniyomi",
-                            "legado" to "Legado",
-                            "lnreader" to "LNReader",
-                            "mangayomi" to "Mangayomi",
-                            "cloudstream" to "CloudStream",
-                        )
-                        ecosystemOptions.forEach { (value, label) ->
-                            FilterChip(
-                                selected = state.selectedEcosystem == value,
-                                onClick = { viewModel.onEvent(ExtensionsScreenEvent.OnEcosystemFilterToggle(value)) },
-                                label = { Text(label) },
-                            )
-                        }
-                    }
+                    // Ecosystem filter chips removed - no compat layer yet
 
                     // Content type filter chips
                     Row(
