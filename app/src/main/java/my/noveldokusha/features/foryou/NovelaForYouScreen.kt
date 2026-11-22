@@ -678,6 +678,10 @@ private fun ForYouPool(
                 totalBooks = state.books.size,
                 onOpenBook = onOpenBook,
                 onExpand = { onExpand(rail) },
+                // The grid's own row gap is 14 dp; a section needs room under its covers too,
+                // or two rails read as one long shelf. The reference leaves about 28 dp between
+                // sections, which is what the extra lg here and the arrangement add up to.
+                modifier = Modifier.padding(bottom = NovelaSpacing.lg),
             )
         }
 

@@ -33,6 +33,7 @@ import my.noveldokusha.coreui.theme.textPadding
 import my.noveldokusha.settings.ReadingStats
 import my.noveldokusha.settings.R
 import my.noveldokusha.settings.displayCount
+import my.noveldokusha.settings.watchMinutes
 
 /**
  * What this device has read and watched, separated by kind.
