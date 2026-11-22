@@ -85,6 +85,7 @@ import androidx.media3.common.Tracks
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.mediacodec.MediaCodecSelector
+import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.session.MediaSession
@@ -561,13 +562,6 @@ class VideoPlayerActivity : ComponentActivity() {
                                 }
                             }
                         }
-                        // Прогрев кеша — сразу при получении источников, без
-                        // ожидания открытия окна (ключи — URL, равенство по
-                        // содержимому). Открытый/закрытый диалог эти пробы не
-                        // отменяет: эффект висит на s.videos, а не на окне.
-                        LaunchedEffect(s.videos.map { it.url }) {
-                            probeAll(s.videos.filter { probeStatuses[it.url] == null })
-                        }
                         // Открытие окна — дозапуск: отсутствующие плюс DEAD
                         // (DEAD перепроверяем при каждом открытии, как договорились).
                         LaunchedEffect(showVariantDialog) {
@@ -652,6 +646,13 @@ class VideoPlayerActivity : ComponentActivity() {
                                 delay(2_500)
                                 loadStatus = loadStatus.copy(readyAfterMs = null)
                             }
+                        }
+                        // Прогрев проб — только после первого готового кадра: проба не
+                        // конкурирует с стартом плеера за соединения и полосу. Бейджи
+                        // вариантов появятся чуть позже, открытие окна дозапустит пробы.
+                        LaunchedEffect(s.videos.map { it.url }, loadStatus.phase) {
+                            if (loadStatus.phase != LoadPhase.Ready) return@LaunchedEffect
+                            probeAll(s.videos.filter { probeStatuses[it.url] == null })
                         }
                         var sleepTimer by remember { mutableStateOf<SleepTimer>(SleepTimer.Off) }
                         var showSleepDialog by remember { mutableStateOf(false) }
@@ -1472,8 +1473,21 @@ private fun PlayerSurface(
                     OkHttpDataSource.Factory(mediaClient)
                         .setDefaultRequestProperties(video.headers)
                 )
+                // Буфер: старт по 0.5 с данных вместо дефолтных 2.5 с (порог первого кадра),
+                // после перебуферизации — 2 с (дефолт 5 с). Минимум 15 с вместо дефолтных 50 с,
+                // максимум 50 с как у дефолта: меньше данных держим наперёд, память не растёт.
+                // Эффект на время старта проверяется замером (плашка «Готово за N с»).
+                val loadControl = DefaultLoadControl.Builder()
+                    .setBufferDurationsMs(
+                        /* minBufferMs = */ 15_000,
+                        /* maxBufferMs = */ 50_000,
+                        /* bufferForPlaybackMs = */ 500,
+                        /* bufferForPlaybackAfterRebufferMs = */ 2_000,
+                    )
+                    .build()
                 val exoPlayer = ExoPlayer.Builder(ctx, createRenderersFactory(ctx, preferSoftwareDecoder))
                     .setMediaSourceFactory(DefaultMediaSourceFactory(dataSourceFactory))
+                    .setLoadControl(loadControl)
                     // Аудио-фокус: handleAudioFocus=true обязателен — без второго
                     // аргумента плеер фокус не запрашивает. Becoming-noisy: вынутые
                     // наушники ставят паузу сами.
