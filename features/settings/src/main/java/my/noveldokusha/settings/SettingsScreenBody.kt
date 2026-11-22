@@ -34,6 +34,7 @@ import my.noveldokusha.coreui.theme.NovelaSpacing
 import my.noveldokusha.coreui.theme.NovelaTheme
 import my.noveldokusha.settings.ui.SettingsGroup
 import my.noveldokusha.settings.ui.SettingsGroupCard
+import my.noveldokusha.settings.ui.SettingsGroupHero
 import my.noveldokusha.settings.ui.SettingsGroupSpec
 import my.noveldokusha.settings.ui.SettingsSearchField
 import androidx.compose.foundation.isSystemInDarkTheme
