@@ -1112,7 +1112,6 @@
     <string name="stats_books">Books</string>
     <string name="stats_movies">Movies</string>
     <string name="stats_library_books">On the shelf</string>
-    <string name="stats_chapters_read">Chapters read</string>
     <string name="stats_books_finished">Finished</string>
     <string name="stats_streak">Day streak</string>
     <string name="stats_episodes_watched">Episodes watched</string>
