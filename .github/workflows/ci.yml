@@ -155,10 +155,41 @@ jobs:
           LOG="$RUNNER_TEMP/build-output.log"
           [ -f "$LOG" ] || exit 0
           mkdir -p /tmp/logpub
+          # JUnit XML carries the assertion text that gradle's plain console hides.
+          python3 - > /tmp/logpub/tests.txt <<'PYEOF' || true
+          import glob, os, xml.etree.ElementTree as ET
+          root = os.environ.get("GITHUB_WORKSPACE", ".")
+          files = glob.glob(os.path.join(root, "**/build/test-results/**/*.xml"), recursive=True)
+          if not files:
+              print("(no test-results xml found)")
+          for f in files:
+              try:
+                  tree = ET.parse(f)
+              except Exception as e:
+                  print(f"# {f}: unreadable ({e})"); continue
+              suite = tree.getroot()
+              name = suite.get("name", os.path.basename(f))
+              print(f"## {name}  tests={suite.get('tests')} failures={suite.get('failures')} errors={suite.get('errors')}")
+              for tc in suite.iter("testcase"):
+                  for tag in ("failure", "error"):
+                      el = tc.find(tag)
+                      if el is None:
+                          continue
+                      msg = (el.get("message") or "").strip().replace("\r", " ")
+                      body = (el.text or "").strip().replace("\r", " ")
+                      body = "\n".join(body.split("\n")[:14])
+                      print(f"- FAIL `{tc.get('name')}`")
+                      if msg:
+                          print(f"  message: {msg[:400]}")
+                      if body:
+                          print(f"  ```\n{body}\n  ```")
+          PYEOF
           {
             echo "# CI build log"
             echo "run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
             echo "commit: ${GITHUB_SHA}"
+            echo
+            cat /tmp/logpub/tests.txt
             echo
             grep -E '^e: |^> Task .* FAILED|FAILED$|\* What went wrong|^Caused by|error:' "$LOG" | head -400
             echo

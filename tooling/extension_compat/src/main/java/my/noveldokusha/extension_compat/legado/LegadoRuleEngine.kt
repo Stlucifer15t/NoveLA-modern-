@@ -274,6 +274,7 @@ class LegadoRuleEngine(
             else -> null
         } ?: return emptyList<Any>()
         val w3c = W3CDom().fromJsoup(doc)
+        stripHtmlNamespace(w3c)
         val xpath = XPathFactory.newInstance().newXPath()
         val nodes = try {
             xpath.evaluate(expression, w3c, XPathConstants.NODESET) as? org.w3c.dom.NodeList
@@ -291,6 +292,24 @@ class LegadoRuleEngine(
             }
         }
         return out
+    }
+
+    /**
+     * Jsoup is namespace-aware for HTML: every element it produces lives in the
+     * `html:` namespace, and `W3CDom` keeps that. An XPath like `//ul/li` then matches
+     * nothing, because the document's element names are `html:ul` / `html:li`. Renaming
+     * to the local name is what makes the `//…` rules of real Legado sources work.
+     */
+    private fun stripHtmlNamespace(doc: org.w3c.dom.Document) {
+        val nodes = doc.getElementsByTagName("*")
+        for (i in 0 until nodes.length) {
+            val node = nodes.item(i) as? org.w3c.dom.Element ?: continue
+            val name = node.nodeName
+            val colon = name.indexOf(':')
+            if (colon > 0) {
+                runCatching { doc.renameNode(node, null, name.substring(colon + 1)) }
+            }
+        }
     }
 
     private fun w3cToJsoup(node: org.w3c.dom.Element): Element? = try {

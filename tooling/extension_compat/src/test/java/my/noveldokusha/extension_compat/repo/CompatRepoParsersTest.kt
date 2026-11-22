@@ -341,7 +341,8 @@ class CompatRepoParsersTest {
         assertEquals(CompatPayloadKind.JS, entry.payloadKind)
         assertEquals("https://kolnovel.com", entry.baseUrl)
         assertEquals("single", entry.extra["typeSource"])
-        assertEquals("true", entry.extra["cloudflare"])
+        // hasCloudflare is false here, and the flag is only stored when true.
+        assertNull(entry.extra["cloudflare"])
     }
 
     @Test
