@@ -1,5 +1,12 @@
 package my.noveldokusha.extensions
 
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.material.icons.outlined.Extension
+import my.noveldokusha.coreui.components.NovelaHeroHeader
+import my.noveldokusha.coreui.components.NovelaHeroPill
 import androidx.compose.material3.HorizontalDivider
 import my.noveldokusha.coreui.components.NovelaIconChip
 import my.noveldokusha.coreui.components.NovelaTileBadge
@@ -90,7 +97,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import my.noveldokusha.coreui.R
 import my.noveldokusha.strings.R as StringsR
-
 
 @Composable
 fun ExtensionsScreen(
@@ -337,13 +343,47 @@ private fun UnifiedExtensionsScreen(
                         searchFilteredExtensions.filter { !it.isInstalled }.sortedBy { it.name.lowercase(Locale.ROOT) }
                     }
 
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        contentPadding = PaddingValues(bottom = 300.dp),
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(2),
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.sm),
+                        verticalArrangement = Arrangement.spacedBy(NovelaSpacing.sm),
+                        contentPadding = PaddingValues(
+                            start = NovelaSpacing.screenH,
+                            end = NovelaSpacing.screenH,
+                            top = NovelaSpacing.xs,
+                            bottom = 240.dp,
+                        ),
                     ) {
+                        // Two columns is the point: the mockups read as a board of cards,
+                        // not a settings list. A short section spans both columns instead of
+                        // leaving a lone half-width tile.
+                        item(span = { GridItemSpan(maxLineSpan) }, contentType = "hero") {
+                            val accent = MaterialTheme.colorScheme.primary
+                            NovelaHeroHeader(
+                                title = stringResource(my.noveldokusha.strings.R.string.title_extensions),
+                                subtitle = stringResource(StringsR.string.extensions_hero_subtitle),
+                                accent = accent,
+                                icon = {
+                                    Icon(
+                                        Icons.Outlined.Extension,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(22.dp),
+                                        tint = accent,
+                                    )
+                                },
+                                pill = {
+                                    NovelaHeroPill(
+                                        value = state.extensions.size.toString(),
+                                        label = stringResource(StringsR.string.installed_count_label),
+                                        accent = accent,
+                                    )
+                                },
+                            )
+                        }
+
                         if (searchInstalledExtensions.isNotEmpty()) {
-                            item(contentType = "header") {
+                            item(span = { GridItemSpan(maxLineSpan) }, contentType = "header") {
                                 NovelaSectionHeader(
                                     title = stringResource(my.noveldokusha.strings.R.string.installed) +
                                         " · ${searchInstalledExtensions.size}",
@@ -354,8 +394,14 @@ private fun UnifiedExtensionsScreen(
                                     },
                                 )
                             }
-
-                            items(searchInstalledExtensions, key = { extension -> "installed_${extension.id}" }, contentType = { "extension" }) { extension ->
+                            items(
+                                items = searchInstalledExtensions,
+                                key = { extension -> "installed_${extension.id}" },
+                                contentType = { "extension" },
+                                span = {
+                                    GridItemSpan(if (searchInstalledExtensions.size > 2) 1 else 2)
+                                },
+                            ) { extension ->
                                 ExtensionTile(
                                     extension = extension,
                                     viewModel = viewModel
@@ -364,14 +410,20 @@ private fun UnifiedExtensionsScreen(
                         }
 
                         if (searchAvailableExtensions.isNotEmpty()) {
-                            item(contentType = "header") {
+                            item(span = { GridItemSpan(maxLineSpan) }, contentType = "header") {
                                 NovelaSectionHeader(
                                     title = stringResource(my.noveldokusha.strings.R.string.available) +
                                         " · ${searchAvailableExtensions.size}",
                                 )
                             }
-
-                            items(searchAvailableExtensions, key = { extension -> "available_${extension.id}" }, contentType = { "extension" }) { extension ->
+                            items(
+                                items = searchAvailableExtensions,
+                                key = { extension -> "available_${extension.id}" },
+                                contentType = { "extension" },
+                                span = {
+                                    GridItemSpan(if (searchAvailableExtensions.size > 2) 1 else 2)
+                                },
+                            ) { extension ->
                                 ExtensionTile(
                                     extension = extension,
                                     viewModel = viewModel
@@ -486,10 +538,7 @@ private fun RepositoryUrlDialog(
     )
 }
 
-
 @Composable
-
-
 
 /**
  * One extension as a tile: icon chip, name, two fact badges, and the install/update
