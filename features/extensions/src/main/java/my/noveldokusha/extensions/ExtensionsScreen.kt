@@ -564,7 +564,7 @@ private fun ExtensionTile(
         ) {
             NovelaTileBadge(
                 text = if (extension.isLocal) {
-                    stringResource(my.noveldokusha.strings.R.string.extension_kind_local)
+                    stringResource(my.noveldokusha.strings.R.string.local)
                 } else {
                     "v" + (if (updateAvailable) extension.remoteVersion else extension.version)
                 },
