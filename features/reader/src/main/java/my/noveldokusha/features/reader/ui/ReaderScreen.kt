@@ -35,6 +35,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Fullscreen
+import androidx.compose.material.icons.filled.List as ListIcon
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.RecordVoiceOver
@@ -496,7 +497,7 @@ internal fun ReaderScreen(
                                     }
                                     IconButton(onClick = { showTableOfContents = true }, modifier = Modifier.size(36.dp)) {
                                         Icon(
-                                            Icons.Filled.List,
+                                            ListIcon,
                                             stringResource(R.string.table_of_contents_title),
                                             modifier = Modifier.size(20.dp),
                                             tint = MaterialTheme.colorScheme.onSurfaceVariant
