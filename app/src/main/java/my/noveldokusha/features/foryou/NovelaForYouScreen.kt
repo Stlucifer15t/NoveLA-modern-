@@ -35,7 +35,14 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Extension
 import androidx.compose.material.icons.outlined.Tune
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.Fullscreen
 import androidx.compose.material.icons.outlined.Update
+import androidx.compose.material3.IconButton
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import my.noveldokusha.core.appPreferences.ListLayoutMode
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -206,46 +213,19 @@ fun NovelaForYouScreen(
             modifier = Modifier.padding(horizontal = NovelaSpacing.screenH),
         )
 
-        // The screenshot this was asked for has a "Highest Rated" rail, and it would be easy to
-        // fake with a shuffled slice. This one is not fake: it is the same pass the grid shows,
-        // ordered by the rating each source declares for the book itself, and it disappears
-        // when nothing in the pass carries a score worth calling high.
+        // One scroll container for the rails and the pool. Two nested ones — a rail scroller
+        // above a grid that scrolls — fight over the fling, and that fight is most of what
+        // makes a screen feel sticky instead of smooth.
         val topRated = remember(state.books) { state.books.highestRated() }
-        if (topRated.size >= 2) {
-            Column(modifier = Modifier.padding(top = NovelaSpacing.lg)) {
-                Text(
-                    text = stringResource(R.string.for_you_highest_rated),
-                    style = NovelaType.sectionTitle,
-                    color = palette.onBackground,
-                    modifier = Modifier.padding(horizontal = NovelaSpacing.screenH),
-                )
-                Text(
-                    text = stringResource(R.string.for_you_highest_rated_note, state.books.size),
-                    style = NovelaType.bookMeta,
-                    color = palette.onSurfaceVariant,
-                    maxLines = 2,
-                    modifier = Modifier.padding(
-                        start = NovelaSpacing.screenH,
-                        end = NovelaSpacing.screenH,
-                        top = NovelaSpacing.xxs,
-                    ),
-                )
-                LazyRow(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = NovelaSpacing.sm),
-                    contentPadding = PaddingValues(
-                        start = NovelaSpacing.screenH,
-                        end = NovelaSpacing.screenH,
-                    ),
-                    horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.md),
-                ) {
-                    items(items = topRated, key = { "rated_" + it.key }) { book ->
-                        ForYouRatedCell(book = book, onOpenBook = onOpenBook)
-                    }
+        val views = remember(state.rails, topRated, state.books.size) {
+            buildList {
+                state.rails.forEach { add(it) }
+                if (topRated.size >= 2) {
+                    add(ForYouRail(genre = null, books = topRated))
                 }
             }
         }
+        var expanded by remember { mutableStateOf<ForYouRail?>(null) }
 
         when {
             state.books.isEmpty() && state.loading -> ForYouPlaceholders()
@@ -276,41 +256,26 @@ fun NovelaForYouScreen(
                 modifier = Modifier.padding(horizontal = NovelaSpacing.screenH),
             )
 
-            else -> LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
+            else -> ForYouPool(
+                views = views,
+                state = state,
+                onOpenBook = onOpenBook,
+                onLoadMore = onLoadMore,
+                onExpand = { expanded = it },
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),
-                contentPadding = PaddingValues(
-                    start = NovelaSpacing.screenH,
-                    end = NovelaSpacing.screenH,
-                    top = NovelaSpacing.sm,
-                ),
-                horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.md),
-                verticalArrangement = Arrangement.spacedBy(NovelaSpacing.lg),
-            ) {
-                items(items = state.books, key = { it.key }) { book ->
-                    ForYouBookCell(book = book, onOpenBook = onOpenBook)
-                }
-                if (state.canLoadMore) {
-                    item(key = "for_you_more", span = { GridItemSpan(maxLineSpan) }) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.Center,
-                        ) {
-                            Button(onClick = onLoadMore, enabled = !state.loadingMore) {
-                                Text(
-                                    text = stringResource(
-                                        if (state.loadingMore) R.string.for_you_loading_more
-                                        else R.string.for_you_load_more
-                                    ),
-                                )
-                            }
-                        }
-                    }
-                }
-            }
+            )
         }
+    }
+
+    expanded?.let { rail ->
+        ForYouExpandedRail(
+            rail = rail,
+            state = state,
+            onOpenBook = onOpenBook,
+            onDismiss = { expanded = null },
+        )
     }
 
     if (showSourcePicker) {
@@ -534,22 +499,83 @@ private fun ForYouBookCell(
  * percentage, which is the number the reference shows and the one this app cannot compute.
  */
 @Composable
-private fun ForYouRatedCell(
+private fun ForYouRailCell(
     book: ForYouBook,
+    showScore: Boolean,
     onOpenBook: (BookMetadata) -> Unit,
 ) {
     val cover = rememberResolvedBookImagePath(
         bookUrl = book.metadata.url,
         imagePath = book.metadata.coverImageUrl,
     )
+    val subtitle = if (showScore) {
+        book.metadata.rating.takeIf { it.isNotBlank() }?.let { "★ " + it } ?: book.sourceName
+    } else if (book.inLibrary) {
+        stringResource(R.string.for_you_in_library)
+    } else {
+        book.sourceName
+    }
     NovelaBookCard(
         title = book.metadata.title,
         coverModel = cover,
-        subtitle = book.metadata.rating.takeIf { it.isNotBlank() }?.let { "★ " + it }
-            ?: book.sourceName,
+        subtitle = subtitle,
         modifier = Modifier.width(NovelaSize.carouselCoverWidth),
         onClick = { onOpenBook(book.metadata) },
     )
+}
+
+/** A pool row, for the Layout setting's list mode: the same facts, in a line. */
+@Composable
+private fun ForYouListRow(
+    book: ForYouBook,
+    onOpenBook: (BookMetadata) -> Unit,
+) {
+    val palette = MaterialTheme.colorScheme
+    val cover = rememberResolvedBookImagePath(
+        bookUrl = book.metadata.url,
+        imagePath = book.metadata.coverImageUrl,
+    )
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(NovelaRadius.md))
+            .clickable { onOpenBook(book.metadata) }
+            .padding(vertical = NovelaSpacing.xs, horizontal = NovelaSpacing.xs),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.md),
+    ) {
+        Box(
+            modifier = Modifier
+                .width(46.dp)
+                .aspectRatio(NovelaSize.COVER_ASPECT)
+                .clip(RoundedCornerShape(NovelaRadius.cover)),
+        ) {
+            ImageView(
+                imageModel = cover,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = book.metadata.title,
+                style = MaterialTheme.typography.bodyLarge,
+                color = palette.onSurface,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text = buildString {
+                    val rating = book.metadata.rating
+                    if (rating.isNotBlank()) append("★ ").append(rating).append(" · ")
+                    append(if (book.inLibrary) stringResource(R.string.for_you_in_library) else book.sourceName)
+                },
+                style = NovelaType.bookMeta,
+                color = palette.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
 }
 
 @Composable
@@ -607,6 +633,318 @@ private fun shimmerAlpha(index: Int): Float {
         label = "forYouShimmerAlpha",
     ).value
 }
+
+/**
+ * The tab's content: the sideways rails, then everything the pass returned in a grid (or a
+ * list, if the Layout setting says so) whose column count is the Layout setting's too.
+ *
+ * Rails are full-span items of the same scroller rather than their own scrolling column.
+ * Nested vertical scrollers steal the fling from each other, which is exactly the "not smooth"
+ * the previous version was criticized for; a full-span header inside the grid keeps one
+ * gesture for the whole tab and still lets each rail swipe sideways.
+ */
+@Composable
+private fun ForYouPool(
+    views: List<ForYouRail>,
+    state: ForYouUiState,
+    onOpenBook: (BookMetadata) -> Unit,
+    onLoadMore: () -> Unit,
+    onExpand: (ForYouRail) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val palette = MaterialTheme.colorScheme
+    val isList = state.layoutMode == ListLayoutMode.VerticalList
+    LazyVerticalGrid(
+        columns = forYouColumns(state),
+        modifier = modifier,
+        contentPadding = PaddingValues(
+            start = NovelaSpacing.screenH,
+            end = NovelaSpacing.screenH,
+            top = NovelaSpacing.sm,
+            // The navigation pill floats over this tab, so the last row needs room of its own
+            // or the bottom of the grid is permanently unreadable.
+            bottom = NovelaSpacing.navBarClearance + NovelaSpacing.lg,
+        ),
+        horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.md),
+        verticalArrangement = Arrangement.spacedBy(NovelaSpacing.lg),
+    ) {
+        items(
+            items = views,
+            key = { "rail_" + (it.genre?.slug ?: "rated") },
+            span = { GridItemSpan(maxLineSpan) },
+        ) { rail ->
+            ForYouRailBlock(
+                rail = rail,
+                totalBooks = state.books.size,
+                onOpenBook = onOpenBook,
+                onExpand = { onExpand(rail) },
+            )
+        }
+
+        if (views.isNotEmpty() && state.pool.isNotEmpty()) {
+            item(key = "pool_title", span = { GridItemSpan(maxLineSpan) }) {
+                Column {
+                    Text(
+                        text = stringResource(R.string.for_you_pool_title),
+                        style = NovelaType.sectionTitle,
+                        color = palette.onBackground,
+                    )
+                    Text(
+                        text = stringResource(R.string.for_you_pool_note, state.books.size),
+                        style = NovelaType.bookMeta,
+                        color = palette.onSurfaceVariant,
+                        maxLines = 2,
+                        modifier = Modifier.padding(top = NovelaSpacing.xxs),
+                    )
+                }
+            }
+        }
+
+        items(items = state.pool, key = { it.key }, span = {
+            if (isList) GridItemSpan(maxLineSpan) else GridItemSpan(1)
+        }) { book ->
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .animateItem(),
+            ) {
+                if (isList) {
+                    ForYouListRow(book = book, onOpenBook = onOpenBook)
+                } else {
+                    ForYouBookCell(book = book, onOpenBook = onOpenBook)
+                }
+            }
+        }
+
+        if (state.canLoadMore) {
+            item(key = "for_you_more", span = { GridItemSpan(maxLineSpan) }) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                ) {
+                    Button(
+                        onClick = onLoadMore,
+                        enabled = !state.loadingMore,
+                        modifier = Modifier.padding(bottom = NovelaSpacing.md),
+                    ) {
+                        Text(
+                            text = stringResource(
+                                if (state.loadingMore) R.string.for_you_loading_more
+                                else R.string.for_you_load_more
+                            ),
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** The grid's column spec, from the Settings → Layout preferences. 0 columns means "auto". */
+@Composable
+private fun forYouColumns(state: ForYouUiState): GridCells = when {
+    state.layoutMode == ListLayoutMode.VerticalList -> GridCells.Fixed(1)
+    state.gridColumns <= 0 -> GridCells.Adaptive(minSize = 112.dp)
+    else -> GridCells.Fixed(state.gridColumns.coerceIn(2, 6))
+}
+
+/**
+ * One category, sideways. The title is the genre the reader picked, and every cover under it
+ * is a book that genre's query actually returned — the rail is a list of answers, not a
+ * decoration over a shuffled pool. [totalBooks] is in the note so the count stays checkable.
+ */
+@Composable
+private fun ForYouRailBlock(
+    rail: ForYouRail,
+    totalBooks: Int,
+    onOpenBook: (BookMetadata) -> Unit,
+    onExpand: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val palette = MaterialTheme.colorScheme
+    val genre = rail.genre
+    val accent = railAccent(genre)
+    val title = genre?.let { stringResource(it.labelRes) }
+        ?: stringResource(R.string.for_you_highest_rated)
+    val note = if (genre == null) {
+        stringResource(R.string.for_you_highest_rated_note, totalBooks)
+    } else {
+        stringResource(R.string.for_you_rail_note, rail.books.size)
+    }
+
+    Column(modifier = modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.sm),
+        ) {
+            // A tinted chip rather than an icon per genre: there are no forty genre glyphs in
+            // this app, and a wrong icon reads as broken faster than a neutral one.
+            Box(
+                modifier = Modifier
+                    .size(28.dp)
+                    .clip(RoundedCornerShape(NovelaRadius.sm))
+                    .background(accent.copy(alpha = 0.16f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = title.take(1).ifEmpty { "★" },
+                    style = NovelaType.badge,
+                    color = accent,
+                )
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    style = NovelaType.sectionTitle,
+                    color = palette.onBackground,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = note,
+                    style = NovelaType.bookMeta,
+                    color = palette.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            NovelaTileIconButton(
+                contentDescription = stringResource(R.string.for_you_rail_expand, title),
+                onClick = onExpand,
+                accent = palette.surfaceVariant,
+            ) {
+                Icon(Icons.Outlined.Fullscreen, null, modifier = Modifier.size(18.dp))
+            }
+        }
+
+        LazyRow(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = NovelaSpacing.sm),
+            horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.md),
+        ) {
+            items(items = rail.books, key = { "rail_cell_" + it.key }) { book ->
+                Box(modifier = Modifier.animateItem()) {
+                    ForYouRailCell(
+                        book = book,
+                        showScore = genre == null,
+                        onOpenBook = onOpenBook,
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * The rail at full screen. Expansion is what makes a sideways rail honest: the row shows five
+ * covers and hides the rest, so the button has to lead somewhere that shows all of them.
+ */
+@Composable
+private fun ForYouExpandedRail(
+    rail: ForYouRail,
+    state: ForYouUiState,
+    onOpenBook: (BookMetadata) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val palette = MaterialTheme.colorScheme
+    val title = rail.genre?.let { stringResource(it.labelRes) }
+        ?: stringResource(R.string.for_you_highest_rated)
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+    ) {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = palette.background,
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .statusBarsPadding(),
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            start = NovelaSpacing.screenH,
+                            end = NovelaSpacing.xs,
+                            top = NovelaSpacing.md,
+                            bottom = NovelaSpacing.sm,
+                        ),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.sm),
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = title,
+                            style = MaterialTheme.typography.titleLarge,
+                            color = palette.onBackground,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        Text(
+                            text = stringResource(R.string.for_you_rail_items, rail.books.size),
+                            style = NovelaType.bookMeta,
+                            color = palette.onSurfaceVariant,
+                        )
+                    }
+                    IconButton(onClick = onDismiss) {
+                        Icon(Icons.Outlined.Close, stringResource(R.string.close))
+                    }
+                }
+                LazyVerticalGrid(
+                    // The reader's column choice, honored here too — except that a full screen
+                    // of one column is a list, and the list mode has its own row rendering.
+                    columns = if (state.gridColumns <= 0) GridCells.Adaptive(minSize = 112.dp)
+                    else GridCells.Fixed(state.gridColumns.coerceIn(2, 6)),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    contentPadding = PaddingValues(
+                        start = NovelaSpacing.screenH,
+                        end = NovelaSpacing.screenH,
+                        top = NovelaSpacing.xs,
+                        bottom = NovelaSpacing.lg,
+                    ),
+                    horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.md),
+                    verticalArrangement = Arrangement.spacedBy(NovelaSpacing.lg),
+                ) {
+                    items(items = rail.books, key = { "expanded_" + it.key }) { book ->
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .animateItem(),
+                        ) {
+                            ForYouBookCell(book = book, onOpenBook = onOpenBook)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Rail colors. A fixed set rather than a random pick: the same genre has to come back the same
+ * color on every open, or the tabs feel like they are reshuffling underneath the reader.
+ */
+private val RAIL_ACCENTS = listOf(
+    Color(0xFF7C4DFF),
+    Color(0xFF00BFA5),
+    Color(0xFFFF6D00),
+    Color(0xFF2979FF),
+    Color(0xFFD81B60),
+    Color(0xFF43A047),
+    Color(0xFFF9A825),
+    Color(0xFF8E24AA),
+)
+
+@Composable
+private fun railAccent(genre: NovelaGenre?): Color =
+    if (genre == null) MaterialTheme.colorScheme.primary
+    else RAIL_ACCENTS[genre.ordinal % RAIL_ACCENTS.size]
 
 /**
  * Which source this tab reads. "Auto" is offered first and is what a fresh install runs on, so

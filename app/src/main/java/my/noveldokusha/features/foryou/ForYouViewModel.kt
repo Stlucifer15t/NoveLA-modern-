@@ -8,6 +8,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import my.noveldokusha.core.appPreferences.AppPreferences
+import my.noveldokusha.core.appPreferences.ListLayoutMode
 import my.noveldokusha.core.foryou.NovelaGenre
 import my.noveldokusha.feature.local_database.DAOs.LibraryDao
 import my.noveldokusha.feature.local_database.DAOs.ReadingHistoryDao
@@ -46,6 +47,20 @@ data class ForYouUiState(
     val boundSourceId: String = "",
     val genres: List<NovelaGenre> = emptyList(),
     val reading: ForYouReading? = null,
+    /**
+     * The sideways rails, grouped by the lane that answered. Kept in the state rather than
+     * derived in the composable so the ordering rule (picked genres, min three) lives in one
+     * place and the screen stays a renderer.
+     */
+    val rails: List<ForYouRail> = emptyList(),
+    /**
+     * What the sideways rails did not claim. The grid shows this rather than the whole pool,
+     * so a book is not printed twice on one screen; when no rail formed, it is the whole pool.
+     */
+    val pool: List<ForYouBook> = emptyList(),
+    /** Grid or list, and how many columns the grid uses. Read from preferences, not stored. */
+    val layoutMode: ListLayoutMode = ListLayoutMode.VerticalGrid,
+    val gridColumns: Int = 0,
     val provision: DefaultSourceStatus = DefaultSourceStatus(),
     val error: String? = null,
 )
@@ -74,6 +89,7 @@ class ForYouViewModel @Inject constructor(
     private var sources: List<SourceInterface.Catalog> = emptyList()
     private var libraryUrls: Set<String> = emptySet()
     private var historyTitles: List<String> = emptyList()
+    /** Keyed by (source, lane) — see [ForYouSlot.key]. */
     private var cursors: Map<String, ForYouCursor> = emptyMap()
     private var seen: MutableSet<String> = HashSet()
     private var activated = false
@@ -129,6 +145,18 @@ class ForYouViewModel @Inject constructor(
                 if (activated) refresh()
             }
         }
+        // The tab's layout comes from the same preferences the Settings → Layout screen writes,
+        // so changing columns there moves this grid without reopening anything.
+        viewModelScope.launch {
+            appPreferences.FOR_YOU_LIST_LAYOUT_MODE.flow().collect { mode ->
+                _state.value = _state.value.copy(layoutMode = mode)
+            }
+        }
+        viewModelScope.launch {
+            appPreferences.FOR_YOU_GRID_COLUMNS.flow().collect { columns ->
+                _state.value = _state.value.copy(gridColumns = columns)
+            }
+        }
     }
 
     /**
@@ -173,6 +201,8 @@ class ForYouViewModel @Inject constructor(
                 loading = true,
                 error = null,
                 books = emptyList(),
+                rails = emptyList(),
+                pool = emptyList(),
                 sourcesOfThisType = resolved.all.size,
                 sources = resolved.all.map { ForYouSourceOption(it.id, engine.sourceName(it)) },
                 boundSourceId = appPreferences.FOR_YOU_SOURCE_ID.value,
@@ -207,10 +237,11 @@ class ForYouViewModel @Inject constructor(
     }
 
     private suspend fun applyStep(resolved: ForYouSources, replace: Boolean) {
-        // The genre words, not the slugs: "slice of life" searches, "slice-of-life" does not.
-        val terms = _state.value.genres.flatMap { it.terms }.distinct()
+        // One lane per picked genre, plus the source's own front page. The words are the
+        // genre's, not the slug: "slice of life" searches, "slice-of-life" does not.
+        val lanes = ForYouLane.for(_state.value.genres) + ForYouLane.Catalog
         val step = try {
-            engine.step(resolved.active, cursors, terms)
+            engine.step(resolved.active, cursors, lanes)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -232,10 +263,15 @@ class ForYouViewModel @Inject constructor(
             seen += fresh.map { it.key }
         }
         val books = (if (replace) emptyList() else _state.value.books) + fresh
+        // Only a fresh pass gets sorted: reshuffling on "Load more" would move the rows
+        // the reader is already looking at.
+        val pool = if (replace) books.sortedBy { it.inLibrary } else books
+        val rails = pool.railsFor(_state.value.genres)
+        val claimed = rails.flatMap { rail -> rail.books }.mapTo(HashSet()) { it.key }
         _state.value = _state.value.copy(
-            // Only a fresh pass gets sorted: reshuffling on "Load more" would move the rows
-            // the reader is already looking at.
-            books = if (replace) books.sortedBy { it.inLibrary } else books,
+            books = pool,
+            rails = rails,
+            pool = if (rails.isEmpty()) pool else pool.filter { it.key !in claimed},
             loading = false,
             loadingMore = false,
             canLoadMore = cursors.values.any { !it.exhausted },

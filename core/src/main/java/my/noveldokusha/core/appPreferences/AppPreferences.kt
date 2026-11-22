@@ -723,6 +723,26 @@ class AppPreferences @Inject constructor(
     val BOOKS_GRID_COLUMNS = object : Preference<Int>("BOOKS_GRID_COLUMNS") {
         override var value by SharedPreference_Int(name, preferences, 3)
     }
+    // Раскладка закладки «Для вас»: своя, а не общая с библиотекой. Полосы-категории
+    // живут только в сетке, поэтому у режима списка есть собственная причина быть.
+    val FOR_YOU_LIST_LAYOUT_MODE = object : Preference<ListLayoutMode>("FOR_YOU_LIST_LAYOUT_MODE") {
+        override var value by SharedPreference_Enum(
+            name,
+            preferences,
+            ListLayoutMode.VerticalGrid
+        ) { enumValueOf(it) }
+    }
+    // Число колонок в сетке «Для вас» (2..6, дефолт 2 — карточки там шире, чем в библиотеке).
+    // 0 = «авто»: количество считается по ширине экрана, как в GridCells.Adaptive.
+    val FOR_YOU_GRID_COLUMNS = object : Preference<Int>("FOR_YOU_GRID_COLUMNS") {
+        override var value by SharedPreference_Int(name, preferences, 0)
+    }
+    // Прочитанные главы (и просмотренные серии) в списке глав гасятся, а не помечаются
+    // значком. Отключается, потому что у кого-то «прочитано» означает «скачано», и тогда
+    // серый список врёт.
+    val GREY_OUT_READ_CHAPTERS = object : Preference<Boolean>("GREY_OUT_READ_CHAPTERS") {
+        override var value by SharedPreference_Bool(name, preferences, true)
+    }
     // Позиция полосы источника на карточке книги в библиотеке:
     // кромка обложки (OnCover) или плашка под обложкой (BelowCover — дефолт).
     val LIBRARY_SOURCE_STRIP_POSITION =

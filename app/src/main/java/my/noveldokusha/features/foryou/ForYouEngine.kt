@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import my.noveldokusha.R
 import my.noveldokusha.core.PagedList
+import my.noveldokusha.core.foryou.NovelaGenre
 import my.noveldokusha.core.Response
 import my.noveldokusha.core.getOrNull
 import my.noveldokusha.data.ScraperRepository
@@ -46,7 +47,11 @@ enum class ForYouContentType(
     }
 }
 
-/** One suggestion. Every field came from a source response or from this device's database. */
+/**
+ * One suggestion. Every field came from a source response or from this device's database, and
+ * [genre] is not an inference either: it is the lane whose query returned the book, i.e. the
+ * piece of the source's answer to "isekai" that this row is.
+ */
 data class ForYouBook(
     val metadata: BookMetadata,
     val sourceName: String,
@@ -57,9 +62,44 @@ data class ForYouBook(
      * model behind it, and pretending otherwise would be decoration over a guess.
      */
     val matchedHistoryTitle: String?,
+    /** The picked genre whose query returned this book; null = the source's front page. */
+    val genre: NovelaGenre? = null,
 ) {
     val key: String get() = metadata.url
+
+    /** The source's own score on a 0..10 scale, or null when it did not state one. */
+    val ratingScore: Double? get() = parseRatingScore(metadata.rating)
 }
+
+/** A genre the tab asks the sources about, and the words it asks with. */
+data class ForYouLane(
+    val slug: String,
+    val terms: List<String>,
+) {
+    companion object {
+        /** The pass that asks for nothing — the source's own front page. */
+        val Catalog = ForYouLane(slug = "", terms = emptyList())
+
+        fun for(genres: List<NovelaGenre>): List<ForYouLane> =
+            genres.map { ForYouLane(it.slug, it.terms) }
+    }
+}
+
+/** One row of the result pool, with its source and the lane that produced it. */
+data class ForYouHit(
+    val source: SourceInterface.Catalog,
+    val book: BookResult,
+    val lane: ForYouLane,
+)
+
+/**
+ * A sideways rail. [genre] is null for the pseudo-rail built from the sources' own ratings,
+ * which is why the label is resolved by the caller rather than stored here.
+ */
+data class ForYouRail(
+    val genre: NovelaGenre?,
+    val books: List<ForYouBook>,
+)
 
 /** Where one source's pager stands. Empty terms means "read its front page". */
 data class ForYouCursor(
@@ -74,6 +114,13 @@ data class ForYouStep(
     val cursor: ForYouCursor,
     val answered: Boolean,
 )
+
+/** A (source, lane) pair, which is what a cursor is actually kept for. */
+data class ForYouSlot(val sourceId: String, val lane: ForYouLane) {
+    companion object {
+        fun key(sourceId: String, lane: ForYouLane): String = "$sourceId#${lane.slug}"
+    }
+}
 
 /** The sources this device can read for one type, with the bound/fallback choice made. */
 data class ForYouSources(
@@ -130,31 +177,49 @@ class ForYouEngine @Inject constructor(
     }
 
     /**
-     * One pager step across the active sources, in parallel. Results are interleaved
-     * round-robin rather than concatenated: appended one source after another, the first
-     * chatty source fills the tab and the rest are never seen.
+     * One pager step across every (source, lane) pair, in parallel. Results are interleaved
+     * round-robin rather than concatenated: appended one after another, the first chatty slot
+     * fills the tab and the rest are never seen.
+     *
+     * Paging a lane per lane is also what makes the sideways rails possible at all. One pass
+     * over the sources with the words of every genre glued into a single list asks one question
+     * at a time and retires the source after its first answer, so the tab would only ever have
+     * data for one genre on screen. With a slot per genre, the first pass already has an
+     * isekai shelf, a romance shelf and a catalog shelf — at the cost of one page request per
+     * slot, which is the price of rails that say something true.
      */
     suspend fun step(
         sources: List<SourceInterface.Catalog>,
         cursors: Map<String, ForYouCursor>,
-        terms: List<String>,
-    ): Pair<Map<String, ForYouCursor>, List<Pair<SourceInterface.Catalog, BookResult>>> =
-        withContext(Dispatchers.IO) {
-            val results = coroutineScope {
-                sources.map { source ->
-                    async { source to step(source, cursors[source.id] ?: ForYouCursor(), terms) }
-                }.awaitAll()
-            }
-            val nextCursors = results.associate { (source, step) -> source.id to step.cursor }
-            val width = results.maxOfOrNull { (_, step) -> step.books.size } ?: 0
-            val merged = ArrayList<Pair<SourceInterface.Catalog, BookResult>>(width * results.size)
-            for (i in 0 until width) {
-                for ((source, step) in results) {
-                    step.books.getOrNull(i)?.let { merged += source to it }
+        lanes: List<ForYouLane>,
+    ): Pair<Map<String, ForYouCursor>, List<ForYouHit>> = withContext(Dispatchers.IO) {
+        val slots = sources.flatMap { source -> lanes.map { source to it } }
+        val results = coroutineScope {
+            slots.map { (source, lane) ->
+                async {
+                    val key = ForYouSlot.key(source.id, lane)
+                    Triple(
+                        source,
+                        lane,
+                        step(source, cursors[key] ?: ForYouCursor(), lane.terms),
+                    )
+                }
+            }.awaitAll()
+        }
+        val nextCursors = results.associate { (source, lane, step) ->
+            ForYouSlot.key(source.id, lane) to step.cursor
+        }
+        val width = results.maxOfOrNull { (_, _, step) -> step.books.size } ?: 0
+        val merged = ArrayList<ForYouHit>(width * results.size)
+        for (i in 0 until width) {
+            for ((source, lane, step) in results) {
+                step.books.getOrNull(i)?.let {
+                    merged += ForYouHit(source = source, book = it, lane = lane)
                 }
             }
-            nextCursors to merged
         }
+        nextCursors to merged
+    }
 
     /**
      * One source's pager. When a genre word runs out the cursor moves to the next word, and
@@ -199,17 +264,22 @@ class ForYouEngine @Inject constructor(
     }
 
     fun decorate(
-        raw: List<Pair<SourceInterface.Catalog, BookResult>>,
+        raw: List<ForYouHit>,
         libraryUrls: Set<String>,
         historyTitles: List<String>,
     ): List<ForYouBook> = raw
-        .map { (source, result) ->
-            val meta = result.mapToBookMetadata()
+        .map { hit ->
+            val meta = hit.book.mapToBookMetadata()
             ForYouBook(
                 metadata = meta,
-                sourceName = sourceName(source),
+                sourceName = sourceName(hit.source),
                 inLibrary = meta.url in libraryUrls,
-                matchedHistoryTitle = historyTitles.firstOrNull { sharedTitleWord(it, meta.title) != null },
+                matchedHistoryTitle = historyTitles.firstOrNull {
+                    sharedTitleWord(it, meta.title) != null
+                },
+                genre = hit.lane.slug.takeIf { it.isNotEmpty() }?.let { slug ->
+                    NovelaGenre.fromSlugs(listOf(slug)).firstOrNull()
+                },
             )
         }
         .filter { it.metadata.title.isNotBlank() && it.metadata.url.isNotBlank() }
@@ -265,6 +335,21 @@ internal fun List<ForYouBook>.highestRated(limit: Int = 10): List<ForYouBook> =
         .take(limit)
         .map { it.first }
         .toList()
+
+/**
+ * The sideways rails: one per picked genre, in the order the genres were picked, holding
+ * exactly the books that genre's query returned. A genre that came back with fewer than
+ * [minItems] answers gets no rail — a row of one cover is noise that looks like a bug, and
+ * "Isekai" with nothing in it is worse than no "Isekai" at all.
+ */
+internal fun List<ForYouBook>.railsFor(
+    genres: List<NovelaGenre>,
+    minItems: Int = 3,
+): List<ForYouRail> =
+    genres.mapNotNull { genre ->
+        val books = filter { it.genre == genre }
+        if (books.size >= minItems) ForYouRail(genre = genre, books = books) else null
+    }
 
 private val STOP_WORDS = setOf("the", "and", "with", "from", "into", "that", "this", "book", "vol", "chapter")
 
