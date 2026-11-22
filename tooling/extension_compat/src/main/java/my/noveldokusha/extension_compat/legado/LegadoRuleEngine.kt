@@ -264,7 +264,7 @@ class LegadoRuleEngine(
     // ── XPath ────────────────────────────────────────────────────────────────
 
     private fun selectXPath(content: Any?, expression: String): Any? {
-        val doc: Document? = when (content) {
+        val doc = when (content) {
             is Document -> content
             is Element -> Jsoup.parse(content.outerHtml())
             is String -> Jsoup.parse(content)

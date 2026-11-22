@@ -106,7 +106,7 @@ jobs:
           by_file = collections.OrderedDict()
           tests = []
           for line in log:
-              m = re.match(r"^e: file://([^:]+):(\d+):\d+: (.*)$", line)
+              m = re.match(r"^\s*(?:e|error): (?:file://)?(\S+?):(\d+):\d+[: ]+ (.*)$", line)
               if m:
                   path, ln, msg = m.group(1), m.group(2), m.group(3)
                   path = path.replace(f"{os.environ.get('GITHUB_WORKSPACE', '')}/", "")
@@ -150,7 +150,7 @@ jobs:
         #   gh api repos/<owner>/<repo>/contents/ci-build.log?ref=ci-log
         if: failure()
         env:
-          GITHUB_TOKEN: ${'$'}{{ github.token }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           LOG="$RUNNER_TEMP/build-output.log"
           [ -f "$LOG" ] || exit 0
