@@ -250,6 +250,8 @@ open class MainActivity : BaseActivity() {
                                 onSetBoundSource = forYouViewModel::setBoundSource,
                                 onRefresh = forYouViewModel::refresh,
                                 onLoadMore = forYouViewModel::loadMore,
+                                onHide = forYouViewModel::hide,
+                                onUndoHide = forYouViewModel::undoHide,
                             )
                         }
 

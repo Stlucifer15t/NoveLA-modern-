@@ -9,6 +9,14 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -98,6 +106,8 @@ fun NovelaForYouScreen(
     onSetBoundSource: (String) -> Unit,
     onRefresh: () -> Unit,
     onLoadMore: () -> Unit,
+    onHide: (ForYouBook) -> Unit,
+    onUndoHide: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val palette = MaterialTheme.colorScheme
@@ -106,169 +116,206 @@ fun NovelaForYouScreen(
     // Declared out here because the expanded rail is rendered beside the column, not inside
     // it: a dialog that lives in the scrolling content would scroll with it.
     var expanded by remember { mutableStateOf<ForYouRail?>(null) }
-
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .statusBarsPadding()
-            .padding(bottom = NovelaSpacing.navBarClearance),
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = NovelaSpacing.screenH)
-                .padding(top = NovelaSpacing.md, bottom = NovelaSpacing.sm),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.md),
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(CircleShape)
-                    .background(palette.primary.copy(alpha = 0.14f)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_for_you_24),
-                    contentDescription = null,
-                    modifier = Modifier.size(24.dp),
-                    tint = palette.primary,
-                )
-            }
-            Column(modifier = Modifier.weight(1f)) {
-                // The reference design opens with a greeting rather than the word "For you" —
-                // the tab in the navigation pill already says what this is, so the header is
-                // free to be a person, not a label.
-                Text(
-                    text = novelaGreeting(),
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = palette.onBackground,
-                )
-                Text(
-                    text = stringResource(R.string.for_you_subtitle),
-                    style = NovelaType.bookMeta,
-                    color = palette.onSurfaceVariant,
-                    maxLines = 2,
-                )
-            }
-            NovelaTileIconButton(
-                contentDescription = stringResource(R.string.for_you_genres_title),
-                onClick = { showGenres = true },
-                accent = palette.surfaceVariant,
-            ) {
-                Icon(Icons.Outlined.Tune, null, modifier = Modifier.size(18.dp))
-            }
-            NovelaTileIconButton(
-                contentDescription = stringResource(R.string.for_you_refresh),
-                onClick = onRefresh,
-                accent = if (state.loading) palette.primary else palette.surfaceVariant,
-            ) {
-                Icon(Icons.Outlined.Update, null, modifier = Modifier.size(18.dp))
-            }
-        }
-
-        // All three tabs are always present. A tab that only appears once a source of that
-        // type exists rearranges the screen under the reader's thumb.
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = NovelaSpacing.screenH)
-                .padding(bottom = NovelaSpacing.sm),
-            horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.sm),
-        ) {
-            ForYouContentType.entries.forEach { type ->
-                NovelaFilterChip(
-                    label = stringResource(type.labelRes),
-                    selected = type == state.type,
-                    onClick = { onSetType(type) },
-                    modifier = Modifier.weight(1f),
-                )
-            }
-        }
-
-        // One line that says which source this tab is reading (or that it is asking all of
-        // them), with the way to change it next to it.
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = NovelaSpacing.screenH)
-                .padding(bottom = NovelaSpacing.sm),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.sm),
-        ) {
-            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
-                ForYouStatusPill(state = state)
-            }
-            TextButton(
-                onClick = { showSourcePicker = true },
-                enabled = state.sourcesOfThisType > 0 || state.boundSourceId.isNotEmpty(),
-            ) {
-                Text(
-                    text = stringResource(R.string.for_you_change),
-                    style = MaterialTheme.typography.labelLarge,
-                )
-            }
-        }
-
-        ForYouReadingCard(
-            reading = state.reading,
-            onOpenBook = onOpenBook,
-            modifier = Modifier.padding(horizontal = NovelaSpacing.screenH),
+    val snackbar = remember { SnackbarHostState() }
+    val hiddenNotice = state.lastHidden?.let { stringResource(R.string.for_you_hidden_notice, it.metadata.title) }
+    val undoLabel = stringResource(R.string.for_you_undo)
+    // Keyed on the token, so hiding the same title twice still shows the notice again.
+    LaunchedEffect(state.hideToken) {
+        val hidden = state.lastHidden ?: return@LaunchedEffect
+        val notice = hiddenNotice ?: return@LaunchedEffect
+        val result = snackbar.showSnackbar(
+            message = notice,
+            actionLabel = undoLabel,
+            duration = SnackbarDuration.Short,
         )
+        if (result == SnackbarResult.ActionPerformed) onUndoHide(hidden.key)
+    }
 
-        // One scroll container for the rails and the pool. Two nested ones — a rail scroller
-        // above a grid that scrolls — fight over the fling, and that fight is most of what
-        // makes a screen feel sticky instead of smooth.
-        val topRated = remember(state.books) { state.books.highestRated() }
-        val views = remember(state.rails, topRated, state.books.size) {
-            buildList {
-                state.rails.forEach { add(it) }
-                if (topRated.size >= 2) {
-                    add(ForYouRail(genre = null, books = topRated))
+    Box(modifier = modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+                .padding(bottom = NovelaSpacing.navBarClearance),
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = NovelaSpacing.screenH)
+                    .padding(top = NovelaSpacing.md, bottom = NovelaSpacing.sm),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.md),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(CircleShape)
+                        .background(palette.primary.copy(alpha = 0.14f)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_for_you_24),
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp),
+                        tint = palette.primary,
+                    )
+                }
+                Column(modifier = Modifier.weight(1f)) {
+                    // The reference design opens with a greeting rather than the word "For you" —
+                    // the tab in the navigation pill already says what this is, so the header is
+                    // free to be a person, not a label.
+                    Text(
+                        text = novelaGreeting(),
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = palette.onBackground,
+                    )
+                    Text(
+                        text = stringResource(R.string.for_you_subtitle),
+                        style = NovelaType.bookMeta,
+                        color = palette.onSurfaceVariant,
+                        maxLines = 2,
+                    )
+                }
+                NovelaTileIconButton(
+                    contentDescription = stringResource(R.string.for_you_genres_title),
+                    onClick = { showGenres = true },
+                    accent = palette.surfaceVariant,
+                ) {
+                    Icon(Icons.Outlined.Tune, null, modifier = Modifier.size(18.dp))
+                }
+                NovelaTileIconButton(
+                    contentDescription = stringResource(R.string.for_you_refresh),
+                    onClick = onRefresh,
+                    accent = if (state.loading) palette.primary else palette.surfaceVariant,
+                ) {
+                    Icon(Icons.Outlined.Update, null, modifier = Modifier.size(18.dp))
+                }
+            }
+
+            // All three tabs are always present. A tab that only appears once a source of that
+            // type exists rearranges the screen under the reader's thumb.
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = NovelaSpacing.screenH)
+                    .padding(bottom = NovelaSpacing.sm),
+                horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.sm),
+            ) {
+                ForYouContentType.entries.forEach { type ->
+                    NovelaFilterChip(
+                        label = stringResource(type.labelRes),
+                        selected = type == state.type,
+                        onClick = { onSetType(type) },
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
+
+            // One line that says which source this tab is reading (or that it is asking all of
+            // them), with the way to change it next to it.
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = NovelaSpacing.screenH)
+                    .padding(bottom = NovelaSpacing.sm),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.sm),
+            ) {
+                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+                    ForYouStatusPill(state = state)
+                }
+                TextButton(
+                    onClick = { showSourcePicker = true },
+                    enabled = state.sourcesOfThisType > 0 || state.boundSourceId.isNotEmpty(),
+                ) {
+                    Text(
+                        text = stringResource(R.string.for_you_change),
+                        style = MaterialTheme.typography.labelLarge,
+                    )
+                }
+            }
+
+            if (state.continueRows.isEmpty()) {
+                ForYouReadingCard(
+                    reading = state.reading,
+                    onOpenBook = onOpenBook,
+                    modifier = Modifier.padding(horizontal = NovelaSpacing.screenH),
+                )
+            } else {
+                ForYouContinueRow(
+                    rows = state.continueRows,
+                    onOpenBook = onOpenBook,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+
+            // One scroll container for the rails and the pool. Two nested ones — a rail scroller
+            // above a grid that scrolls — fight over the fling, and that fight is most of what
+            // makes a screen feel sticky instead of smooth.
+            val topRated = remember(state.books) { state.books.highestRated() }
+            val views = remember(state.rails, topRated, state.books.size) {
+                buildList {
+                    state.rails.forEach { add(it) }
+                    if (topRated.size >= 2) {
+                        add(ForYouRail(genre = null, books = topRated))
+                    }
+                }
+            }
+
+            when {
+                state.books.isEmpty() && state.loading -> ForYouPlaceholders()
+
+                state.empty == ForYouEmpty.NoSourcesOfType -> NovelaEmptyState(
+                    icon = Icons.Outlined.Extension,
+                    title = stringResource(R.string.for_you_no_sources_title),
+                    message = stringResource(
+                        R.string.for_you_no_sources_message,
+                        stringResource(state.type.labelRes),
+                    ),
+                    actionLabel = stringResource(R.string.for_you_open_extensions),
+                    onAction = onOpenExtensions,
+                    modifier = Modifier.padding(horizontal = NovelaSpacing.screenH),
+                )
+
+                state.books.isEmpty() -> NovelaEmptyState(
+                    icon = Icons.Outlined.Update,
+                    title = stringResource(R.string.for_you_no_answer_title),
+                    // The failure text is appended rather than hidden: "the tab is empty and I do
+                    // not know why" is the complaint this whole screen exists to answer.
+                    message = stringResource(
+                        if (state.queriedSources > 0) R.string.for_you_no_answer_message
+                        else R.string.for_you_no_answer_offline
+                    ) + state.error?.let { "\n\n" + it }.orEmpty(),
+                    actionLabel = stringResource(R.string.for_you_refresh),
+                    onAction = onRefresh,
+                    modifier = Modifier.padding(horizontal = NovelaSpacing.screenH),
+                )
+
+                else -> PullToRefreshBox(
+                    isRefreshing = state.loading,
+                    onRefresh = onRefresh,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                ) {
+                    ForYouPool(
+                        views = views,
+                        state = state,
+                        onOpenBook = onOpenBook,
+                        onLoadMore = onLoadMore,
+                        onExpand = { expanded = it },
+                        onHide = onHide,
+                        modifier = Modifier.fillMaxSize(),
+                    )
                 }
             }
         }
-
-        when {
-            state.books.isEmpty() && state.loading -> ForYouPlaceholders()
-
-            state.empty == ForYouEmpty.NoSourcesOfType -> NovelaEmptyState(
-                icon = Icons.Outlined.Extension,
-                title = stringResource(R.string.for_you_no_sources_title),
-                message = stringResource(
-                    R.string.for_you_no_sources_message,
-                    stringResource(state.type.labelRes),
-                ),
-                actionLabel = stringResource(R.string.for_you_open_extensions),
-                onAction = onOpenExtensions,
-                modifier = Modifier.padding(horizontal = NovelaSpacing.screenH),
-            )
-
-            state.books.isEmpty() -> NovelaEmptyState(
-                icon = Icons.Outlined.Update,
-                title = stringResource(R.string.for_you_no_answer_title),
-                // The failure text is appended rather than hidden: "the tab is empty and I do
-                // not know why" is the complaint this whole screen exists to answer.
-                message = stringResource(
-                    if (state.queriedSources > 0) R.string.for_you_no_answer_message
-                    else R.string.for_you_no_answer_offline
-                ) + state.error?.let { "\n\n" + it }.orEmpty(),
-                actionLabel = stringResource(R.string.for_you_refresh),
-                onAction = onRefresh,
-                modifier = Modifier.padding(horizontal = NovelaSpacing.screenH),
-            )
-
-            else -> ForYouPool(
-                views = views,
-                state = state,
-                onOpenBook = onOpenBook,
-                onLoadMore = onLoadMore,
-                onExpand = { expanded = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-            )
-        }
+        SnackbarHost(
+            hostState = snackbar,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = NovelaSpacing.navBarClearance),
+        )
     }
 
     expanded?.let { rail ->
@@ -456,12 +503,82 @@ private fun ForYouReadingCard(
     }
 }
 
+/**
+ * Long-press hides a card, with the same haptic tick the reference gives. Null [onHide]
+ * (the expanded rail) gives a no-op, so a press there does nothing rather than lying.
+ */
+@Composable
+private fun rememberLongPressHide(book: ForYouBook, onHide: ((ForYouBook) -> Unit)?): () -> Unit {
+    val haptic = LocalHapticFeedback.current
+    return remember(book, onHide) {
+        val action: () -> Unit = {
+            if (onHide != null) {
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                onHide(book)
+            }
+        }
+        action
+    }
+}
+
+/**
+ * The "Continue" row: the shelf's recently read books, newest first, each with the source's
+ * own chapter count. Only real history rows; nothing here is invented to fill the row.
+ */
+@Composable
+private fun ForYouContinueRow(
+    rows: List<ForYouReading>,
+    onOpenBook: (BookMetadata) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier) {
+        Text(
+            text = stringResource(R.string.for_you_continue_title),
+            style = NovelaType.sectionTitle,
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier.padding(horizontal = NovelaSpacing.screenH, vertical = NovelaSpacing.sm),
+        )
+        LazyRow(
+            contentPadding = PaddingValues(horizontal = NovelaSpacing.screenH),
+            horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.md),
+        ) {
+            items(items = rows, key = { it.bookUrl }) { row ->
+                val cover = rememberResolvedBookImagePath(
+                    bookUrl = row.bookUrl,
+                    imagePath = row.coverUrl,
+                )
+                NovelaBookCard(
+                    title = row.title,
+                    coverModel = cover,
+                    subtitle = if (row.chaptersTotal > 0) {
+                        stringResource(R.string.for_you_continue_progress, row.chaptersRead, row.chaptersTotal)
+                    } else {
+                        null
+                    },
+                    modifier = Modifier.width(NovelaSize.railCardWidth),
+                    onClick = {
+                        onOpenBook(
+                            BookMetadata(
+                                title = row.title,
+                                url = row.bookUrl,
+                                coverImageUrl = row.coverUrl,
+                            )
+                        )
+                    },
+                )
+            }
+        }
+    }
+}
+
 @Composable
 private fun ForYouBookCell(
     book: ForYouBook,
     onOpenBook: (BookMetadata) -> Unit,
+    onHide: ((ForYouBook) -> Unit)? = null,
 ) {
     val palette = MaterialTheme.colorScheme
+    val onLongPress = rememberLongPressHide(book, onHide)
     val cover = rememberResolvedBookImagePath(
         bookUrl = book.metadata.url,
         imagePath = book.metadata.coverImageUrl,
@@ -482,6 +599,7 @@ private fun ForYouBookCell(
             },
             modifier = Modifier.fillMaxWidth(),
             onClick = { onOpenBook(book.metadata) },
+            onLongClick = onLongPress,
         )
         book.matchedHistoryTitle?.let { from ->
             Spacer(modifier = Modifier.height(NovelaSpacing.xxs))
@@ -505,7 +623,9 @@ private fun ForYouRailCell(
     book: ForYouBook,
     showScore: Boolean,
     onOpenBook: (BookMetadata) -> Unit,
+    onHide: ((ForYouBook) -> Unit)? = null,
 ) {
+    val onLongPress = rememberLongPressHide(book, onHide)
     val cover = rememberResolvedBookImagePath(
         bookUrl = book.metadata.url,
         imagePath = book.metadata.coverImageUrl,
@@ -523,6 +643,7 @@ private fun ForYouRailCell(
         subtitle = subtitle,
         modifier = Modifier.width(NovelaSize.railCardWidth),
         onClick = { onOpenBook(book.metadata) },
+        onLongClick = onLongPress,
     )
 }
 
@@ -652,6 +773,7 @@ private fun ForYouPool(
     onOpenBook: (BookMetadata) -> Unit,
     onLoadMore: () -> Unit,
     onExpand: (ForYouRail) -> Unit,
+    onHide: (ForYouBook) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val palette = MaterialTheme.colorScheme
@@ -680,6 +802,7 @@ private fun ForYouPool(
                 totalBooks = state.books.size,
                 onOpenBook = onOpenBook,
                 onExpand = { onExpand(rail) },
+                onHide = onHide,
                 // The grid's own row gap is 14 dp; a section needs room under its covers too,
                 // or two rails read as one long shelf. The reference leaves about 28 dp between
                 // sections, which is what the extra lg here and the arrangement add up to.
@@ -717,7 +840,7 @@ private fun ForYouPool(
                 if (isList) {
                     ForYouListRow(book = book, onOpenBook = onOpenBook)
                 } else {
-                    ForYouBookCell(book = book, onOpenBook = onOpenBook)
+                    ForYouBookCell(book = book, onOpenBook = onOpenBook, onHide = onHide)
                 }
             }
         }
@@ -765,6 +888,7 @@ private fun ForYouRailBlock(
     totalBooks: Int,
     onOpenBook: (BookMetadata) -> Unit,
     onExpand: () -> Unit,
+    onHide: ((ForYouBook) -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     val palette = MaterialTheme.colorScheme
@@ -836,6 +960,7 @@ private fun ForYouRailBlock(
                         book = book,
                         showScore = genre == null,
                         onOpenBook = onOpenBook,
+                        onHide = onHide,
                     )
                 }
             }

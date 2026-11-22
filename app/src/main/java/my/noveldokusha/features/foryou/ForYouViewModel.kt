@@ -47,6 +47,12 @@ data class ForYouUiState(
     val boundSourceId: String = "",
     val genres: List<NovelaGenre> = emptyList(),
     val reading: ForYouReading? = null,
+    /** The most recently read books, newest first — the "Continue" row. Real history rows only. */
+    val continueRows: List<ForYouReading> = emptyList(),
+    /** The last card hidden with a long-press; the screen shows it with an Undo action. */
+    val lastHidden: ForYouBook? = null,
+    /** Bumps on every hide, so the snackbar re-appears even for the same title. */
+    val hideToken: Int = 0,
     /**
      * The sideways rails, grouped by the lane that answered. Kept in the state rather than
      * derived in the composable so the ordering rule (picked genres, min three) lives in one
@@ -92,6 +98,10 @@ class ForYouViewModel @Inject constructor(
     /** Keyed by (source, lane) — see [ForYouSlot.key]. */
     private var cursors: Map<String, ForYouCursor> = emptyMap()
     private var seen: MutableSet<String> = HashSet()
+    /** Every book this session fetched, in display order, before hidden ones are taken out. */
+    private var allBooks: List<ForYouBook> = emptyList()
+    /** Hidden with a long-press. Session-only: a fresh launch shows everything again. */
+    private val hiddenKeys = HashSet<String>()
     private var activated = false
     private var signature = ""
     private var fetchJob: Job? = null
@@ -115,15 +125,17 @@ class ForYouViewModel @Inject constructor(
             libraryDao.booksInLibraryFlow().collect { books ->
                 libraryUrls = books.mapTo(HashSet()) { it.url }
                 // Re-tagging the grid needs no network: the shelf is local.
-                _state.value = _state.value.copy(
-                    books = _state.value.books.map { it.copy(inLibrary = it.key in libraryUrls) },
-                )
+                allBooks = allBooks.map { it.copy(inLibrary = it.key in libraryUrls) }
+                publish(allBooks)
             }
         }
         viewModelScope.launch {
             readingHistoryDao.getAllFlow().collect { rows ->
                 historyTitles = rows.map { it.bookTitle }
-                _state.value = _state.value.copy(reading = rows.firstOrNull()?.toReading())
+                _state.value = _state.value.copy(
+                    reading = rows.firstOrNull()?.toReading(),
+                    continueRows = rows.take(10).map { it.toReading() },
+                )
             }
         }
         viewModelScope.launch {
@@ -197,6 +209,7 @@ class ForYouViewModel @Inject constructor(
             )
             cursors = emptyMap()
             seen = HashSet()
+            allBooks = emptyList()
             _state.value = _state.value.copy(
                 loading = true,
                 error = null,
@@ -256,30 +269,50 @@ class ForYouViewModel @Inject constructor(
         val (nextCursors, raw) = step
         cursors = nextCursors
         val decorated = engine.decorate(raw, libraryUrls, historyTitles)
-        val fresh = decorated.filter { replace || it.key !in seen }
-        if (replace) {
-            seen = fresh.mapTo(HashSet()) { it.key }
-        } else {
-            seen += fresh.map { it.key }
-        }
-        val books = (if (replace) emptyList() else _state.value.books) + fresh
+        // A hidden book is dropped here too, or a "Load more" would bring the dismissed cover back.
+        val fresh = decorated.filter { (replace || it.key !in seen) && it.key !in hiddenKeys }
+        seen += decorated.map { it.key }
+        val combined = (if (replace) emptyList<ForYouBook>() else allBooks) + fresh
         // Only a fresh pass gets sorted: reshuffling on "Load more" would move the rows
         // the reader is already looking at.
-        val pool = if (replace) books.sortedBy { it.inLibrary } else books
-        val rails = pool.railsFor(_state.value.genres)
-        val claimed = rails.flatMap { rail -> rail.books }.mapTo(HashSet()) { it.key }
+        allBooks = if (replace) combined.sortedBy { it.inLibrary } else combined
+        publish(allBooks)
         _state.value = _state.value.copy(
-            books = pool,
-            rails = rails,
-            pool = if (rails.isEmpty()) pool else pool.filter { it.key !in claimed },
             loading = false,
             loadingMore = false,
             canLoadMore = cursors.values.any { !it.exhausted },
-            empty = when {
-                books.isNotEmpty() -> null
-                else -> ForYouEmpty.NoAnswer
-            },
         )
+    }
+
+    /**
+     * Lays the visible books out: sideways rails first, and the pool gets whatever no rail
+     * claimed. Hide and Undo go through here too, so they re-lay the screen with no network call.
+     */
+    private fun publish(all: List<ForYouBook>) {
+        val visible = all.filterNot { it.key in hiddenKeys }
+        val rails = visible.railsFor(_state.value.genres)
+        val claimed = rails.flatMap { rail -> rail.books }.mapTo(HashSet()) { it.key }
+        _state.value = _state.value.copy(
+            books = visible,
+            rails = rails,
+            pool = if (rails.isEmpty()) visible else visible.filter { it.key !in claimed },
+            empty = if (visible.isNotEmpty()) null else (_state.value.empty ?: ForYouEmpty.NoAnswer),
+        )
+    }
+
+    /** Takes a card off the screen for this session, and offers Undo. */
+    fun hide(book: ForYouBook) {
+        hiddenKeys.add(book.key)
+        publish(allBooks)
+        _state.value = _state.value.copy(
+            lastHidden = book,
+            hideToken = _state.value.hideToken + 1,
+        )
+    }
+
+    fun undoHide(key: String) {
+        if (!hiddenKeys.remove(key)) return
+        publish(allBooks)
     }
 
     private fun signatureOf(list: List<SourceInterface.Catalog>): String =
