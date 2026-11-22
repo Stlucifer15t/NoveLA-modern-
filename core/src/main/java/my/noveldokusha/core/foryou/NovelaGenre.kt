@@ -1,4 +1,4 @@
-package my.noveldokusha.settings.foryou
+package my.noveldokusha.core.foryou
 
 import androidx.annotation.StringRes
 import my.noveldokusha.strings.R

@@ -469,4 +469,77 @@ class CompatRepoParsersTest {
         assertEquals(1, parsed.entries.size)
         assertEquals(setOf("https://dup.example"), parsed.entries.keySet())
     }
+
+    // ── Legado names ───────────────────────────────────────────────────────────
+
+    // Fixtures encoded with urllib.parse.quote("笔趣阁") — not by hand.
+    @Test
+    fun `tree file names are percent decoded so non ascii sources stay readable`() {
+        // GitHub's tree API escapes anything outside ASCII, and most Legado repositories
+        // name their files after the Chinese source they describe.
+        val files = listOf(
+            CompatRepoParsers.TreeFile("%E7%AC%94%E8%B6%A3%E9%98%81.json", 12_000),
+            CompatRepoParsers.TreeFile("sub/%E5%A4%A7%E9%91%AB%E5%86%B0%E7%AE%B1.json", 9_000),
+        )
+        val entries = CompatRepoParsers.parseTree(
+            repoId = repoId,
+            rawBase = "https://raw.githubusercontent.com/o/r/main",
+            files = files,
+            ecosystem = null,
+        )
+        assertEquals(2, entries.size)
+        assertEquals("笔趣阁", entries.minBy { it.key }.name)
+        assertFalse(entries.any { it.name.contains('%') })
+    }
+
+    @Test
+    fun `legado url list names come from the decoded file name`() {
+        val text = "https://raw.githubusercontent.com/o/r/main/%E7%AC%94%E8%B6%A3%E9%98%81.json\n"
+        val parsed = CompatRepoParsers.parseLegado(repoId, "https://host/sources.txt", text)
+        assertEquals("笔趣阁", parsed.entries.single().name)
+    }
+
+    @Test
+    fun `single source payload names itself and gives base url`() {
+        val meta = CompatRepoParsers.legadoPayloadMeta(
+            """
+            {
+              "bookSourceName": "笔趣阁",
+              "bookSourceUrl": "https://www.bqg13.info/search.html?key={{key}}",
+              "bookSourceType": 0,
+              "customOrder": 0
+            }
+            """.trimIndent()
+        )
+        assertEquals("笔趣阁", meta?.name)
+        // The rule placeholder is cut off: a record's baseUrl is the site, not a search URL.
+        assertEquals("https://www.bqg13.info/search.html?key=", meta?.baseUrl)
+        assertEquals("", meta?.contentType)
+    }
+
+    @Test
+    fun `manga and video payload types are mapped`() {
+        assertEquals(
+            "manga",
+            CompatRepoParsers.legadoPayloadMeta("""{"bookSourceName":"M","bookSourceType":2}""")?.contentType,
+        )
+        assertEquals(
+            "video",
+            CompatRepoParsers.legadoPayloadMeta("""{"bookSourceName":"V","bookSourceType":4}""")?.contentType,
+        )
+    }
+
+    @Test
+    fun `a collection payload is not given one invented name`() {
+        val meta = CompatRepoParsers.legadoPayloadMeta(
+            """[{"bookSourceName":"A"},{"bookSourceName":"B"}]"""
+        )
+        assertNull(meta)
+    }
+
+    @Test
+    fun `a payload without a name is not used to rename a record`() {
+        assertNull(CompatRepoParsers.legadoPayloadMeta("""{"bookSourceUrl":"https://x.example"}"""))
+        assertNull(CompatRepoParsers.legadoPayloadMeta("not json at all"))
+    }
 }

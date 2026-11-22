@@ -75,6 +75,8 @@ import my.noveldokusha.settings.ui.ExpressiveSwitch
 enum class SettingsGroup {
     Appearance,
     Reading,
+    Layout,
+    Stats,
     Library,
     Storage,
     Backup,
@@ -395,6 +397,8 @@ fun SettingsGroup.label(): String = stringResource(
     when (this) {
         SettingsGroup.Appearance -> my.noveldokusha.strings.R.string.settings_group_appearance
         SettingsGroup.Reading -> my.noveldokusha.strings.R.string.settings_group_reading
+        SettingsGroup.Layout -> my.noveldokusha.strings.R.string.settings_group_layout
+        SettingsGroup.Stats -> my.noveldokusha.strings.R.string.settings_group_stats
         SettingsGroup.Library -> my.noveldokusha.strings.R.string.settings_group_library
         SettingsGroup.Storage -> my.noveldokusha.strings.R.string.settings_group_data
         SettingsGroup.Backup -> my.noveldokusha.strings.R.string.settings_group_backup
@@ -410,6 +414,8 @@ fun SettingsGroup.hint(): String = stringResource(
     when (this) {
         SettingsGroup.Appearance -> my.noveldokusha.strings.R.string.settings_group_appearance_hint
         SettingsGroup.Reading -> my.noveldokusha.strings.R.string.settings_group_reading_hint
+        SettingsGroup.Layout -> my.noveldokusha.strings.R.string.settings_group_layout_hint
+        SettingsGroup.Stats -> my.noveldokusha.strings.R.string.settings_group_stats_hint
         SettingsGroup.Library -> my.noveldokusha.strings.R.string.settings_group_library_hint
         SettingsGroup.Storage -> my.noveldokusha.strings.R.string.settings_group_data_hint
         SettingsGroup.Backup -> my.noveldokusha.strings.R.string.settings_group_backup_hint

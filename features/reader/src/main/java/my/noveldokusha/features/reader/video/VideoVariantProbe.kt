@@ -67,7 +67,10 @@ object VideoVariantProbe {
         timeoutMs: Long,
         onResponse: (Response) -> T,
     ): CallResult<T> = try {
-        val request = Request.Builder().url(url).apply {
+        // Range 0-0: сервер отдаёт один байт вместо всего файла. Раньше проба
+        // качала весь MP4/сегмент на том же клиенте, что и плеер, и на
+        // HTTP/1.1 обрывала сокет, который плеер мог бы переиспользовать.
+        val request = Request.Builder().url(url).header("Range", "bytes=0-0").apply {
             headers.forEach { (name, value) -> addHeader(name, value) }
         }.build()
         client.newBuilder()

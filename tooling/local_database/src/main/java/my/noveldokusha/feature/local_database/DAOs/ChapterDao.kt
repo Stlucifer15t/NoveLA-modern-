@@ -118,4 +118,30 @@ interface ChapterDao {
 
     @Query("SELECT url FROM Chapter WHERE bookUrl == :bookUrl ORDER BY position ASC")
     suspend fun getChapterUrls(bookUrl: String): List<String>
+
+    /**
+     * Episodes the video player reported a position for. The player is the only writer of
+     * videoPositionMs, so a row counted here was opened in the player — it is not "a chapter
+     * that happens to exist in the list", which is what counting the Book table would give.
+     */
+    @Query("SELECT COUNT(*) FROM Chapter WHERE videoPositionMs > 0")
+    suspend fun countWatchedEpisodes(): Int
+
+    /**
+     * Total watched milliseconds, MIN'd against each episode's own reported length: a stored
+     * position past the end (a resumed video whose duration the source later changed) must not
+     * inflate the number.
+     */
+    @Query(
+        """
+        SELECT SUM(
+            CASE
+                WHEN videoDurationMs > 0 AND videoPositionMs > videoDurationMs THEN videoDurationMs
+                ELSE videoPositionMs
+            END
+        )
+        FROM Chapter WHERE videoPositionMs > 0
+        """
+    )
+    suspend fun sumWatchedMs(): Long?
 }

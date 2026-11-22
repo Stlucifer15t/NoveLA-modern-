@@ -151,6 +151,7 @@ private fun Screen(
                 modifier = Modifier.padding(innerPadding),
                 groups = setOf(group),
                 reading = viewModel.reading,
+                layout = viewModel.layout,
                 onRefreshSizes = viewModel::refreshSizes,
                 onAppThemeSelected = viewModel::onAppThemeChange,
                 onDarkModeSelected = viewModel::onDarkModeChange,

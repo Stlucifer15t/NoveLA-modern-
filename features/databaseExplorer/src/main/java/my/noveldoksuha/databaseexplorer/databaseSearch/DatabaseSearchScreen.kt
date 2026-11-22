@@ -158,6 +158,7 @@ internal fun DatabaseSearchScreen(
                     error = state.fetchIterator.error,
                     loadState = state.fetchIterator.state,
                     layoutMode = state.listLayoutMode.value,
+                    gridColumns = state.gridColumns.value,
                     onLoadNext = state.fetchIterator::fetchNext,
                     onBookClicked = onBookClicked,
                     onBookLongClicked = onBookLongClicked,
@@ -216,6 +217,7 @@ private fun PreviewView() {
             searchTextInput = mutableStateOf(""),
             fetchIterator = fetchIterator,
             listLayoutMode = mutableStateOf(ListLayoutMode.VerticalGrid),
+            gridColumns = mutableStateOf(3),
         )
     }
 

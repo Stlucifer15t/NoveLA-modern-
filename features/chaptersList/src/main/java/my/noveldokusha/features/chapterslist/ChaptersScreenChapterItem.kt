@@ -68,6 +68,9 @@ internal fun ChaptersScreenChapterItem(
     // отмена снимает всю задачу книги, а не одну главу (см. onCancelChapterDownload).
     showCancelAction: Boolean,
     highlighted: Boolean = false,
+    // Пункт «Раскладка → Гасить прочитанные главы». Выключается, потому что у части
+    // источников «прочитано» появляется от скачивания, и тогда серый список врёт.
+    greyOutRead: Boolean = true,
     modifier: Modifier = Modifier,
     onLongClick: () -> Unit,
     onClick: () -> Unit,
@@ -154,10 +157,24 @@ internal fun ChaptersScreenChapterItem(
         ) {
             SlimListItem(
                 headlineContent = {
+                    // Серый — не «галочка», а состояние строки: читатель, вернувшись к
+                    // списку, глазами ищет первую не потускневшую строку. Прочитана ли
+                    // серия — решает тот же флаг read, который ставит плеер на 95%, поэтому
+                    // у видео и у глав один язык, а не два разных.
+                    val faded = greyOutRead && chapter.read
+                    val titleColor by animateColorAsState(
+                        targetValue = if (faded) {
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f)
+                        } else {
+                            MaterialTheme.colorScheme.onSurface
+                        },
+                        animationSpec = tween(durationMillis = 200),
+                        label = "chapterReadFade",
+                    )
                     Text(
                         text = translatedTitle ?: chapter.title,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = if (chapter.read) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
+                        color = titleColor
                     )
                 },
                 supportingContent = if (badge != null || sizeLabel != null) {

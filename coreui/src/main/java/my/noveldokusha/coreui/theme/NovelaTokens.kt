@@ -87,6 +87,13 @@ object NovelaSize {
 
     val carouselCoverWidth: Dp = 116.dp
 
+    /**
+     * Width of a card inside a For You rail. Wider than the compact carousel cover on purpose:
+     * a sideways rail carries four or five covers across the screen and has to be readable at a
+     * glance, which is the one thing the reference does better than the compact grid.
+     */
+    val railCardWidth: Dp = 152.dp
+
     /** Minimum touch target. */
     val minTouchTarget: Dp = 48.dp
 

@@ -273,18 +273,131 @@ line height 1.0–2.5, paragraph spacing 0–40 dp, margins 0–100 dp). Margins
 (the reader keeps left/right apart; this writes both and shows the wider). Prefetch is a stepper
 over `0,1,2,3,5,8` — a slider invites a number that only spends mobile data.
 
-**First-open genres + "For you".** `NovelaGenre` is a fixed, curated list, *not* a union of the
-installed sources' vocabularies: a Lua/Legado source only exposes what its own `getFilterList`
-happens to define, so a list built from them would reshuffle on every install and ask about
-taxonomies most sources cannot answer. Chosen slugs land in `AppPreferences.FOR_YOU_GENRES`
-(new `StringSet`), guarded by `FOR_YOU_GENRES_PICKED`, which is what `MainActivity` checks in
-`onCreate` — `IS_FIRST_LAUNCH_DONE` is written inside `App.onCreate`, before any activity can
-observe it, so it is useless as a "did we ask yet" flag. `ForYouRepository` fans the chosen
-genre words out as `getCatalogSearch` per installed source (`getCatalogList(0)` when nothing was
-picked), merges round-robin so one chatty source cannot fill the rail, dedupes by
-`normalizeBookUrl`, and tags each row `inLibrary` from the shelf. `MAX_SOURCES = 6`: the rail is
-a preview, the Finder is where the full fan-out belongs. A card opens
-`navigationRoutes.chapters(...)`.
+**First-open genres.** `NovelaGenre` (in `:core`, shared by the sheet and the tab) is a fixed,
+curated list, *not* a union of the installed sources' vocabularies: a Lua/Legado source only
+exposes what its own `getFilterList` happens to define, so a list built from them would
+reshuffle on every install and ask about taxonomies most sources cannot answer. Chosen slugs
+land in `AppPreferences.FOR_YOU_GENRES` (a `StringSet`), guarded by `FOR_YOU_GENRES_PICKED`,
+which is what `MainActivity` checks in `onCreate` — `IS_FIRST_LAUNCH_DONE` is written inside
+`App.onCreate`, before any activity can observe it, so it is useless as a "did we ask yet" flag.
+
+**For You is a tab, not a rail.** Six pages in `MainActivity`: Library, For you, Feeds, Finder,
+History, Settings. The content-type chips (Novel / Manga / Video) are not decoration —
+`ForYouEngine.resolve` filters installed sources with the *same* rule the Finder uses
+(`SourceInterface.Catalog.contentType`, empty meaning "novel"), so a Manga tab with no manga
+source says so instead of showing novels. One source is read at a time: `FOR_YOU_SOURCE_ID`
+binds it, empty means "auto", and auto prefers a source whose name mentions WebNovel and
+otherwise fans out over `MAX_FANOUT = 8` sources merged round-robin. `ForYouSourceProvisioner`
+makes one attempt per install to actually obtain that default — from the cached Lua index
+(`EXTENSIONS_AVAILABLE_CACHE` → `LuaSourceLoader.downloadAndCacheScript`) or, failing that, a
+subscribed third-party repository — and the header reports the outcome, so "not found" is a
+visible state rather than an empty grid. Paging is per (source, lane): a
+lane is one picked genre (or the source's front page, `ForYouLane.Catalog`), each with its own
+`ForYouCursor` — page, then the next word of that genre, exhausted only after the last one — so
+one pass answers every genre at once instead of retiring the source after the first. That per-lane
+cursor is what makes the sideways rails possible without lying: a rail is the answer list of its
+own query, not a shuffled slice of one pool. A source that fails to answer is retired for the
+pass instead of being promised forever. The tab fetches when it is first looked
+at (`activate()`), re-runs when the installed-source flow re-emits (installing an extension
+used to leave the tab empty until restart), and keeps library/history re-tagging off the
+network. `decorate()` normalizes through `mapToBookMetadata()` (so keys match the shelf's
+normalized URLs), dedupes by url, and marks `inLibrary`; books already on the shelf go last
+rather than being hidden.
+
+The header is a greeting plus one line about what the tab does, and the
+source status is a pill on its own row with **Change** beside it — the tab is
+named by the navigation pill, so the header does not have to repeat it. Under
+the reading card sits the rails themselves (`ForYouRailBlock`): one per picked genre, in the
+order the genres were picked, each a sideways `LazyRow` of `railCardWidth` covers with the
+genre's initial in a tinted chip, the count it holds, and an expand button that fills the
+screen with the same books (`ForYouExpandedRail`, `DialogProperties(usePlatformDefaultWidth =
+false)`) — a rail that shows five covers has to have somewhere to show all of them. A genre
+whose query returned fewer than three books gets no rail (`railsFor(minItems = 3)`), and a
+"Highest rated" pseudo-rail is appended when the pass has at least two scores worth calling
+high: the same pool ordered by the `rating` string each source returns (`parseRatingScore`
+accepts "4.5", "4.8/5", "9.2/10"; a "#12" or "RANK 216" is an ordering, not a score, and is
+dropped). Rails and pool share ONE `LazyVerticalGrid`, rails as `GridItemSpan(maxLineSpan)`
+items: two nested vertical scrollers fight over the fling, and that fight is most of what
+"not smooth" meant. The pool below is what the rails did not claim (`ForYouUiState.pool`), so
+nothing prints twice, and the last row gets `navBarClearance + lg` of bottom padding because the
+navigation pill floats over it. `NovelaBookCard` presses on a spring
+(`dampingRatio = 0.6f, stiffness = 500f`) rather than a fixed tween, and pool cells carry
+`animateItem()`, so "Load more" grows the grid instead of snapping it.
+
+No percentage-match badge and no "because you like this" score: nothing in this codebase can
+compute one honestly. The one claim the tab does make — "shares a word with <your book>" — is a
+literal keyword overlap between a returned title and a title in `ReadingHistory`.
+
+**Third-party repositories: a screen, not a dialog.** `CompatRepositoriesActivity`
+(`:features:extensions`) hosts `NovelaCompatRepositoriesScreen`; the Extensions list starts it
+directly instead of opening an `AlertDialog` capped at 520 dp. A Legado or Mihon index carries
+hundreds of rows — name, format, version, state, action — and through a dialog keyhole that is
+unreadable, especially since a Legado `bookSourceName` is usually CJK and was clipped to one
+12sp line. The names themselves were wrong twice over: GitHub's tree API percent-encodes
+non-ASCII paths, so entries inherited `%E7%AC%94%E9%98%81%E5%AD%97` as a display name
+(`CompatRepoParsers.decodeName` fixes listing and file-name fallbacks), and an installed record
+was named after the file rather than the source, which made the installed list disagree with the
+Finder (`buildRecord` now reads `bookSourceName`/`bookSourceUrl`/`bookSourceType` out of a
+single-source payload — `legadoPayloadMeta`). Collections are deliberately left alone: naming a
+many-source file after its first source would be a guess. Labels in that screen are string
+resources (`compat_*`) with Russian translations, as everywhere else in the redesigned surface.
+
+**Layout is a Settings group, and it is the same preference object the tabs read.**
+`SettingsGroup.Layout` (in `sections/SettingsLayout.kt`, written through `LayoutPreferences`,
+which is built exactly like `ReadingPreferences`: `appPreferences.X.state(scope)`, never a copy)
+offers Display Mode for For You and for browse/search, Grid Columns for For You (Auto = the
+screen decides, i.e. `GridCells.Adaptive(112.dp)`; otherwise 2..6) and for library/browse/search
+(`BOOKS_GRID_COLUMNS`, which the library's own sort sheet also writes — one value, two doors),
+and "Fade chapters you have read". The For You tab re-lays out while the settings screen is
+open, because `ForYouViewModel` collects `FOR_YOU_LIST_LAYOUT_MODE.flow()` and
+`FOR_YOU_GRID_COLUMNS.flow()`; the library and catalog already collected `BOOKS_GRID_COLUMNS`,
+and `DatabaseSearchScreenState` now carries it too, which is what Search was missing. List mode
+is a real rendering, not a smaller grid: `ForYouListRow` is cover-left text-right. What is
+deliberately *not* offered is the reference's "UI Density": `NovelaSpacing` is a compile-time
+object, so a density row would be a slider that moves nothing until every consumer in the app is
+threaded through a scale — a toy, which is the one thing this screen was criticized for.
+
+**Read chapters fade; watched episodes fade the same way.** `GREY_OUT_READ_CHAPTERS`
+(default on) drives `ChaptersScreenState.greyOutReadChapters`, and `ChaptersScreenChapterItem`
+animates the title to `onSurfaceVariant` at 55% alpha over 200 ms. It rides the existing
+`Chapter.read` flag — the reader sets it when a chapter is opened (`ReaderRepository:105`), the
+manga pager at `MangaReaderViewModel:294`, and `VideoPlayerActivity:954` sets it for an episode
+past 95% — so there is one definition of "has been read" and no second flag to fall out of sync.
+The switch exists because for some sources `read` arrives with the download, and a grey list
+would then be a lie.
+
+**Feeds is a tab, and it is the shelf's own unread counts.** `FeedsViewModel` combines
+`LibraryDao.getBooksInLibraryWithContextFlow()` (the aggregate the library already uses) with
+`WorkersInteractions.isManualUpdateRunning()`: one row per shelf title, `chaptersCount -
+chaptersReadCount` unread, sorted unread-first then by when the book was last checked, with the
+source's own `lastUpdateDate` text verbatim. "All / Books / Movies" segments filter on
+`Book.contentType`. The check button calls `checkForLibraryUpdates(LibraryCategory.DEFAULT)` —
+the library update worker, which is the only path in this app that asks sources for new chapters,
+and the row that says it is checking is the worker's own state. What it is *not*: a push feed.
+The app has no channel that receives anything unprompted, so no row claims an arrival time
+beyond what the database carries.
+
+**Reading stats live in Settings, split by kind.** `SettingsGroup.Stats` renders
+`sections/SettingsStats.kt` over `ReadingStats`, which `SettingsViewModel` fills from
+`LibraryDao.booksInLibraryFlow()` and `ReadingHistoryDao.getAllFlow()`: shelf size, chapters
+read, finished, day streak (`readingStreakDays`) and days with reading (`activeDays`) on the
+Books side; titles in library, episodes watched (`ChapterDao.countWatchedEpisodes`) and watch
+time (`ChapterDao.sumWatchedMs`, each episode's stored position capped at its own reported
+length) on the Movies side. A chapter and an episode are different units, so they are never
+added together, and `-1` in any field still renders as an ellipsis while the first read is in
+flight. There is no "minutes read": the app has never timed a page, so the one duration it can
+show is the video player's own.
+
+**Where the reference is `Novery`.** The app these screens are modeled on is
+[`1Finn2me/Novery`](https://github.com/1Finn2me/Novery) (GPL-3.0), whose source was read for
+this work — `RecommendationTab`/`RecommendationSection` for the rail anatomy (tinted chip, title,
+subtitle, see-all button, sideways row of wide cover cards, 28 dp between sections),
+`RecommendationCard` for the spring press-scale, and `SettingsScreen.kt` for how Layout is grouped
+(UI density, per-screen display mode, per-screen column count). No code was taken from it: the
+data path here is this repo's Lua/Legado sources, cursors and Room tables, and two things in the
+reference are deliberately not copied — its "% match" badge (nothing here can compute an affinity
+score honestly) and its UI-density scale (our spacing tokens are compile-time constants, so a
+density row would move nothing).
 
 Still not claimed: no per-book genre ranking (sources expose genres per *book* only, one request
 each — the rail shows what the sources returned for the searched words, in source order), and no

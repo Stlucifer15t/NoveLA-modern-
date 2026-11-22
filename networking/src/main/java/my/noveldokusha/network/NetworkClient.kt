@@ -32,6 +32,9 @@ import javax.inject.Singleton
 
 interface NetworkClient {
     val cookieJar: okhttp3.CookieJar
+    // Резолвер для клиентов, которым нужен тот же DoH-фолбэк, что у скрапера
+    // (медиаплеер: провайдер режет системный DNS — раньше видео не грузилось).
+    val dns: okhttp3.Dns get() = okhttp3.Dns.SYSTEM
     suspend fun call(request: Request.Builder, followRedirects: Boolean = true): Response
 
     /**
@@ -103,6 +106,7 @@ class ScraperNetworkClient @Inject constructor(
             Dns.SYSTEM.lookup(hostname)
         }
     }
+    override val dns: Dns get() = fallbackDns
 
     // Единый OkHttp-клиент для ВСЕГО (скрапер, переводчики, картинки).
     // Без per-host пулов и без форса HTTP/1.1 — они ломали evictAll CF-интерцептора

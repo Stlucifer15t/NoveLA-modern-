@@ -1,6 +1,7 @@
 package my.noveldokusha.settings
 
 import androidx.compose.runtime.getValue
+import my.noveldokusha.feature.local_database.DAOs.ChapterDao
 import my.noveldokusha.feature.local_database.DAOs.LibraryDao
 import my.noveldokusha.feature.local_database.DAOs.ReadingHistoryDao
 import android.content.Context
@@ -50,6 +51,7 @@ internal class SettingsViewModel @Inject constructor(
     private val offlineVideoCleaner: OfflineVideoCleaner,
     private val libraryDao: LibraryDao,
     private val readingHistoryDao: ReadingHistoryDao,
+    private val chapterDao: ChapterDao,
 ) : ViewModel() {
 
     /**
@@ -58,7 +60,27 @@ internal class SettingsViewModel @Inject constructor(
      */
     val reading = ReadingPreferences(appPreferences, viewModelScope)
 
-    private val _stats = mutableStateOf(ReadingStats(libraryBooks = -1, chaptersRead = -1, streakDays = -1))
+    /**
+     * The Layout screen's handle on the same preferences the tabs read. Built here, not in the
+     * composable, so the For You tab and the library pick the values up while the screen that
+     * edits them is still open.
+     */
+    val layout = LayoutPreferences(appPreferences, viewModelScope)
+
+    // -1 in every field means "not read yet"; the stats screen renders those as an ellipsis
+    // rather than a confident zero while the first query is in flight.
+    private val _stats = mutableStateOf(
+        ReadingStats(
+            libraryBooks = -1,
+            chaptersRead = -1,
+            streakDays = -1,
+            booksFinished = -1,
+            daysActive = -1,
+            moviesInLibrary = -1,
+            episodesWatched = -1,
+            watchSeconds = -1,
+        )
+    )
 
     var onRestartApp: (() -> Unit)? = null
 
@@ -165,14 +187,26 @@ internal class SettingsViewModel @Inject constructor(
         // correct after a finished chapter or a download without any refresh hook.
         viewModelScope.launch {
             libraryDao.booksInLibraryFlow().collect { books ->
-                _stats.value = _stats.value.copy(libraryBooks = books.size)
+                _stats.value = _stats.value.copy(
+                    libraryBooks = books.size,
+                    booksFinished = books.count { it.completed },
+                    moviesInLibrary = books.count {
+                        it.contentType.equals("video", ignoreCase = true)
+                    },
+                )
             }
         }
         viewModelScope.launch {
             readingHistoryDao.getAllFlow().collect { rows ->
+                // The video half rides along on the same read: the app has no playback timer,
+                // so an episode counts when the player stored a position for it, and its share
+                // of the watch time is that position capped at the episode's own length.
                 _stats.value = _stats.value.copy(
                     chaptersRead = rows.sumOf { it.readChapters },
                     streakDays = readingStreakDays(rows.map { it.lastReadEpochTimeMilli }),
+                    daysActive = activeDays(rows.map { it.lastReadEpochTimeMilli }),
+                    episodesWatched = chapterDao.countWatchedEpisodes(),
+                    watchSeconds = chapterDao.sumWatchedMs()?.div(1000L) ?: 0L,
                 )
             }
         }

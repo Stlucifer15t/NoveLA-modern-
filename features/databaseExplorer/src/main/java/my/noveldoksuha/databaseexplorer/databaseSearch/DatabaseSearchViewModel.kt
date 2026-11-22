@@ -73,6 +73,7 @@ class DatabaseSearchViewModel @Inject constructor(
         searchTextInput = stateHandle.asMutableStateOf("searchTextInput") { "" },
         genresList = stateHandle.asMutableListStateOf("genresList") { mutableStateListOf() },
         listLayoutMode = appPreferences.BOOKS_LIST_LAYOUT_MODE.state(viewModelScope),
+        gridColumns = appPreferences.BOOKS_GRID_COLUMNS.state(viewModelScope),
         fetchIterator = createPageLoaderState()
     )
 

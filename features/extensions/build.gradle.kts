@@ -32,6 +32,10 @@ dependencies {
     implementation(libs.okhttp)
 
     // AndroidX
+    // BaseActivity lives in :coreui but extends AppCompatActivity; Hilt's processor has to
+    // walk that supertype chain for @AndroidEntryPoint, so appcompat must be visible here —
+    // the same line every other module with an activity declares.
+    implementation(libs.androidx.appcompat)
     implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.fragment.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)

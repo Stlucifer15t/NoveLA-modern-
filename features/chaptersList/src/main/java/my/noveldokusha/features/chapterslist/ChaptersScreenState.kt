@@ -31,6 +31,9 @@ internal data class ChaptersScreenState(
     // Видео-книга (media3): «X» отмены в строке главы имеет смысл только у неё —
     // у текста/манги отмена снимает всю задачу книги, а не одну главу.
     val isVideoBook: State<Boolean>,
+    // Прочитанные главы/серии гасятся в списке. Значение то же, что пишет экран
+    // «Настройки → Раскладка», так что второго источника правды нет.
+    val greyOutReadChapters: State<Boolean>,
     // Статусы загрузок глав (видео media3 + текст/манга): chapterUrl → бейдж.
     val chapterDownloads: MutableState<Map<String, ChapterDownloadUi>>,
 ) {

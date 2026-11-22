@@ -47,7 +47,7 @@ import my.noveldokusha.coreui.theme.NovelaSpacing
 import my.noveldokusha.coreui.theme.NovelaType
 import my.noveldokusha.coreui.theme.Theme
 import my.noveldokusha.coreui.theme.colorAccent
-import my.noveldokusha.settings.foryou.NovelaGenre
+import my.noveldokusha.core.foryou.NovelaGenre
 
 /**
  * The first-open genre sheet. One screen, one question, and both exits are valid: "Skip" is

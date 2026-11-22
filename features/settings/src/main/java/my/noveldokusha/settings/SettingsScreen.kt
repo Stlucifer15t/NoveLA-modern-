@@ -103,6 +103,7 @@ fun SettingsScreen(
                 onAutoBackupIncludePluginsChange = viewModel::onAutoBackupIncludePluginsChange,
                 onDeleteNovelPrompt = viewModel::onDeleteNovelPrompt,
                 reading = viewModel.reading,
+                layout = viewModel.layout,
                 onOpenGroup = { group ->
                     context.startActivity(navigationRoutes.settingsGroup(context, group.name))
                 },

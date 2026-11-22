@@ -13,7 +13,9 @@ import my.noveldokusha.coreui.components.NovelaStatCard
 import my.noveldokusha.coreui.components.NovelaStreakPill
 import my.noveldokusha.coreui.components.NovelaTileIconButton
 import my.noveldokusha.coreui.components.novelaGreeting
+import my.noveldokusha.settings.sections.SettingsLayout
 import my.noveldokusha.settings.sections.SettingsReading
+import my.noveldokusha.settings.sections.SettingsStats
 import my.noveldokusha.settings.ui.hint
 import my.noveldokusha.settings.ui.label
 import androidx.compose.material.icons.outlined.FavoriteBorder
@@ -21,7 +23,9 @@ import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.SettingsBackupRestore
 import androidx.compose.material.icons.outlined.Storage
+import androidx.compose.material.icons.outlined.Insights
 import androidx.compose.material.icons.outlined.Translate
+import androidx.compose.material.icons.outlined.ViewModule
 import androidx.compose.material.icons.outlined.Update
 import androidx.compose.material.icons.outlined.Public
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -137,6 +141,7 @@ internal fun SettingsScreenBody(
     onAutoBackupIncludePluginsChange: (Boolean) -> Unit,
     onExportLogs: () -> Unit = {},
     reading: ReadingPreferences? = null,
+    layout: LayoutPreferences? = null,
     groups: Set<SettingsGroup>? = null,
     onOpenGroup: (SettingsGroup) -> Unit = {},
 ) {
@@ -215,6 +220,33 @@ internal fun SettingsScreenBody(
                 // Same preference states the reader panel writes — this screen is another
                 // door into them, not a second copy.
                 reading?.let { SettingsReading(it) }
+            },
+        ),
+        SettingsGroupSpec(
+            group = SettingsGroup.Layout,
+            title = SettingsGroup.Layout.label(),
+            summary = SettingsGroup.Layout.hint(),
+            icon = Icons.Outlined.ViewModule,
+            keywords = listOf(
+                "layout", "grid", "list", "columns", "for you", "library",
+                "read chapters", "grey",
+            ),
+            accent = palette.primary,
+            content = {
+                // The tabs read these while the screen is open, so tapping "3" has already
+                // changed the tab — there is nothing left to apply.
+                layout?.let { SettingsLayout(it) }
+            },
+        ),
+        SettingsGroupSpec(
+            group = SettingsGroup.Stats,
+            title = SettingsGroup.Stats.label(),
+            summary = SettingsGroup.Stats.hint(),
+            icon = Icons.Outlined.Insights,
+            keywords = listOf("stats", "statistics", "streak", "chapters", "episodes", "reading"),
+            accent = palette.tertiary,
+            content = {
+                SettingsStats(stats = state.stats.value)
             },
         ),
         SettingsGroupSpec(
