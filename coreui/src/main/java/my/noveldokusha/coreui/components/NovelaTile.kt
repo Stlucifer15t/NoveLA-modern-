@@ -1,5 +1,11 @@
 package my.noveldokusha.coreui.components
 
+import androidx.compose.material.icons.Icons
+import my.noveldokusha.coreui.R
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.rounded.LocalFireDepartment
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -14,6 +20,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -391,4 +398,210 @@ fun NovelaCardGroupDivider(modifier: Modifier = Modifier) {
         thickness = 0.5.dp,
         color = NovelaTheme.colors.hairline,
     )
+}
+
+/**
+ * The greeting the "More" screen opens with. Deliberately computed from the wall clock
+ * rather than stored: it is a one-line pleasantry, and a stale greeting on a screen that
+ * is re-opened all day reads as a bug.
+ */
+@Composable
+fun novelaGreeting(): String {
+    val hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
+    return stringResource(
+        when (hour) {
+            in 5..11 -> R.string.greeting_morning
+            in 12..16 -> R.string.greeting_afternoon
+            in 17..21 -> R.string.greeting_evening
+            else -> R.string.greeting_night
+        }
+    )
+}
+
+/**
+ * Header of the "More" screen: a soft wash of the accent behind a greeting and a one-line
+ * status, with room for a trailing badge. No app bar — the greeting is the title.
+ */
+@Composable
+fun NovelaGreetingHeader(
+    greeting: String,
+    subtitle: String?,
+    accent: Color,
+    modifier: Modifier = Modifier,
+    trailing: @Composable (() -> Unit)? = null,
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        accent.copy(alpha = 0.14f),
+                        accent.copy(alpha = 0.05f),
+                        Color.Transparent,
+                    ),
+                )
+            )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = NovelaSpacing.screenH)
+                .padding(top = NovelaSpacing.lg, bottom = NovelaSpacing.xl),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.md),
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = greeting,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                if (!subtitle.isNullOrBlank()) {
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        text = subtitle,
+                        style = NovelaType.bookMeta,
+                        color = accent,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+            trailing?.invoke()
+        }
+    }
+}
+
+/** The streak badge: only ever shown for a number this app can actually compute. */
+@Composable
+fun NovelaStreakPill(
+    days: Int,
+    accent: Color,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier,
+        shape = NovelaRadius.chipShape,
+        color = accent.copy(alpha = 0.14f),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = NovelaSpacing.md, vertical = NovelaSpacing.xs),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.xxs),
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.LocalFireDepartment,
+                contentDescription = null,
+                modifier = Modifier.size(16.dp),
+                tint = accent,
+            )
+            Text(
+                text = days.toString(),
+                style = MaterialTheme.typography.titleSmall,
+                color = accent,
+            )
+        }
+    }
+}
+
+/** Label above a block of [NovelaMenuCard]s. */
+@Composable
+fun NovelaMenuSectionLabel(
+    text: String,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        text = text,
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = NovelaSpacing.screenH)
+            .padding(top = NovelaSpacing.md, bottom = NovelaSpacing.xs),
+        style = MaterialTheme.typography.titleMedium,
+        color = MaterialTheme.colorScheme.onBackground,
+    )
+}
+
+/**
+ * One entry in the "More" menu: circular tinted icon, title, one-line status, optional
+ * badge, chevron. Each entry is its own card on purpose — a group of rows in one surface
+ * reads as a list of settings, and this screen is navigation, not settings.
+ */
+@Composable
+fun NovelaMenuCard(
+    icon: ImageVector,
+    title: String,
+    subtitle: String?,
+    accent: Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    badge: String? = null,
+) {
+    Surface(
+        onClick = onClick,
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = NovelaSpacing.screenH, vertical = NovelaSpacing.xxs),
+        shape = NovelaRadius.cardShape,
+        color = NovelaTheme.colors.elevatedSurface,
+        border = androidx.compose.foundation.BorderStroke(1.dp, NovelaTheme.colors.hairline),
+    ) {
+        Row(
+            modifier = Modifier.padding(NovelaSpacing.md),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.md),
+        ) {
+            NovelaCircleIcon(accent = accent) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(22.dp),
+                    tint = accent,
+                )
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.xs),
+                ) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    if (!badge.isNullOrBlank()) {
+                        Text(
+                            text = badge,
+                            modifier = Modifier
+                                .clip(NovelaRadius.badgeShape)
+                                .background(accent)
+                                .padding(horizontal = 6.dp, vertical = 1.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = androidx.compose.ui.graphics.Color.White,
+                        )
+                    }
+                }
+                if (!subtitle.isNullOrBlank()) {
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        text = subtitle,
+                        style = NovelaType.bookMeta,
+                        color = NovelaTheme.colors.textMuted,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp),
+                tint = NovelaTheme.colors.textMuted.copy(alpha = 0.7f),
+            )
+        }
+    }
 }

@@ -30,4 +30,6 @@ dependencies {
 
     implementation(libs.androidx.appcompat)
     implementation(libs.timber)
+
+    testImplementation(libs.test.junit)
 }

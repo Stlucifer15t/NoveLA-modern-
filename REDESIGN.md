@@ -244,3 +244,48 @@ Known gaps carried forward honestly: the references' "For You" tab, the "More" t
 reading-stat chips, the level/streak pills, and the "57 genres" figure do not exist in this
 codebase — there is no per-source genre count, reading-time or streak data to render. Nothing
 was faked for them; the counters that *are* shown are real counts of what is listed below them.
+
+### 8d. The "More" composition, the Reading group, and first-open genres (fourth round)
+
+The reference app's More tab replaced the flat box list. `SettingsScreenBody` now has two
+renderings from one `specs` list, so a group screen and the hub can never disagree about what
+exists:
+
+- **Hub** (Settings tab): `NovelaGreetingHeader` (hour-based greeting, gradient wash of the
+  accent, no app bar) → three weighted stat surfaces → "Menu" label and one
+  `NovelaMenuCard` per group (circle icon, title, one-line summary, chevron) → "About" group
+  alone at the bottom. The search field sits behind a header icon instead of always showing.
+- **Group screen**: unchanged — the same `specs`, one entry, expanded.
+
+**What the counters are.** `libraryBooks` and `chaptersRead` come from
+`LibraryDao.booksInLibraryFlow()` and `ReadingHistoryDao.getAllFlow()`; the cache figure is the
+size scan the screen already ran. `streakDays` is `readingStreakDays()` over
+`ReadingHistory.lastReadEpochTimeMilli` — consecutive *local* days, allowed to end yesterday,
+unit-tested in `ReadingStreakTest`. A `−1` means "database hasn't answered yet" and renders as
+an ellipsis, never as a confident zero. No level, no hours-read: the app does not measure time,
+and a number nobody measured is the one thing this screen must not show.
+
+**Reading group.** A ninth `SettingsGroup` (`Reading`) whose controls write the reader's own
+preference objects — `ReadingPreferences` holds the very same `Preference.state(...)` instances
+`ReaderActivity` writes, so the reader panel and this screen are two doors into one value and
+cannot drift. Ranges, formats and labels are copied from `StyleSettingDialog` (text size 8–32,
+line height 1.0–2.5, paragraph spacing 0–40 dp, margins 0–100 dp). Margins are one control here
+(the reader keeps left/right apart; this writes both and shows the wider). Prefetch is a stepper
+over `0,1,2,3,5,8` — a slider invites a number that only spends mobile data.
+
+**First-open genres + "For you".** `NovelaGenre` is a fixed, curated list, *not* a union of the
+installed sources' vocabularies: a Lua/Legado source only exposes what its own `getFilterList`
+happens to define, so a list built from them would reshuffle on every install and ask about
+taxonomies most sources cannot answer. Chosen slugs land in `AppPreferences.FOR_YOU_GENRES`
+(new `StringSet`), guarded by `FOR_YOU_GENRES_PICKED`, which is what `MainActivity` checks in
+`onCreate` — `IS_FIRST_LAUNCH_DONE` is written inside `App.onCreate`, before any activity can
+observe it, so it is useless as a "did we ask yet" flag. `ForYouRepository` fans the chosen
+genre words out as `getCatalogSearch` per installed source (`getCatalogList(0)` when nothing was
+picked), merges round-robin so one chatty source cannot fill the rail, dedupes by
+`normalizeBookUrl`, and tags each row `inLibrary` from the shelf. `MAX_SOURCES = 6`: the rail is
+a preview, the Finder is where the full fan-out belongs. A card opens
+`navigationRoutes.chapters(...)`.
+
+Still not claimed: no per-book genre ranking (sources expose genres per *book* only, one request
+each — the rail shows what the sources returned for the searched words, in source order), and no
+similarity scoring of any kind.

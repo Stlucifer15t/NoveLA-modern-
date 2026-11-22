@@ -1,18 +1,23 @@
 package my.noveldokusha.settings
 
+import my.noveldokusha.core.appPreferences.AppLanguage
+import my.noveldokusha.core.appPreferences.AppLanguageProvider
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import my.noveldokusha.core.domain.RemoteAppVersion
 import my.noveldokusha.coreui.theme.AppTheme
 import my.noveldokusha.coreui.theme.DarkMode
-import my.noveldokusha.core.appPreferences.AppLanguage
-import my.noveldokusha.core.appPreferences.AppLanguageProvider
 import my.noveldokusha.core.appPreferences.NovelPromptData
 
 enum class CleanConfirmationType { DATABASE, IMAGES_FOLDER, NOVEL_CACHE, MANGA_CACHE, OFFLINE_VIDEO }
 
 data class SettingsScreenState(
+    // The "More" hub's counters. -1 means "still reading the database", which the UI
+    // renders as an ellipsis rather than a confident zero.
+    val stats: MutableState<ReadingStats> = mutableStateOf(
+        ReadingStats(libraryBooks = -1, chaptersRead = -1, streakDays = -1)
+    ),
     val databaseSize: MutableState<String>,
     val imageFolderSize: MutableState<String>,
     val isCleaningDatabase: State<Boolean>,

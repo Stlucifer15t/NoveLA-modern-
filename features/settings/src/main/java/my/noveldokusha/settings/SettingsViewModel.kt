@@ -1,11 +1,13 @@
 package my.noveldokusha.settings
 
+import androidx.compose.runtime.getValue
+import my.noveldokusha.feature.local_database.DAOs.LibraryDao
+import my.noveldokusha.feature.local_database.DAOs.ReadingHistoryDao
 import android.content.Context
 import android.content.Intent
 import android.text.format.Formatter
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.viewModelScope
 import androidx.core.content.FileProvider
@@ -46,7 +48,17 @@ internal class SettingsViewModel @Inject constructor(
     private val toasty: Toasty,
     private val appWorkersInteractions: AppWorkersInteractions,
     private val offlineVideoCleaner: OfflineVideoCleaner,
+    private val libraryDao: LibraryDao,
+    private val readingHistoryDao: ReadingHistoryDao,
 ) : ViewModel() {
+
+    /**
+     * Reader defaults. These are the reader panel's own preference states, not a mirror —
+     * the two screens cannot disagree because there is only one value behind both.
+     */
+    val reading = ReadingPreferences(appPreferences, viewModelScope)
+
+    private val _stats = mutableStateOf(ReadingStats(libraryBooks = -1, chaptersRead = -1, streakDays = -1))
 
     var onRestartApp: (() -> Unit)? = null
 
@@ -133,6 +145,7 @@ internal class SettingsViewModel @Inject constructor(
         isCleaningOfflineVideo = isCleaningOfflineVideo,
         cleanConfirmationType = mutableStateOf(null),
         appVersion = appRemoteRepository.getDisplayVersion(),
+        stats = _stats,
     )
 
     init {
@@ -145,6 +158,22 @@ internal class SettingsViewModel @Inject constructor(
             appRepository.eventDataRestored.collect {
                 updateDatabaseSize()
                 updateImagesFolderSize()
+            }
+        }
+
+        // The hub's counters come from the tables the app already writes, so they stay
+        // correct after a finished chapter or a download without any refresh hook.
+        viewModelScope.launch {
+            libraryDao.booksInLibraryFlow().collect { books ->
+                _stats.value = _stats.value.copy(libraryBooks = books.size)
+            }
+        }
+        viewModelScope.launch {
+            readingHistoryDao.getAllFlow().collect { rows ->
+                _stats.value = _stats.value.copy(
+                    chaptersRead = rows.sumOf { it.readChapters },
+                    streakDays = readingStreakDays(rows.map { it.lastReadEpochTimeMilli }),
+                )
             }
         }
 
