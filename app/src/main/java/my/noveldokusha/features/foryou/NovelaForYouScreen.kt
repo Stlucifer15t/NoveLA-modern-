@@ -238,7 +238,10 @@ fun NovelaForYouScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = NovelaSpacing.sm),
-                    contentPadding = PaddingValues(horizontal = NovelaSpacing.screenH),
+                    contentPadding = PaddingValues(
+                        start = NovelaSpacing.screenH,
+                        end = NovelaSpacing.screenH,
+                    ),
                     horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.md),
                 ) {
                     items(items = topRated, key = { "rated_" + it.key }) { book ->
@@ -558,7 +561,11 @@ private fun ForYouPlaceholders() {
         modifier = Modifier
             .fillMaxWidth()
             .height(480.dp),
-        contentPadding = PaddingValues(horizontal = NovelaSpacing.screenH, top = NovelaSpacing.sm),
+        contentPadding = PaddingValues(
+            start = NovelaSpacing.screenH,
+            end = NovelaSpacing.screenH,
+            top = NovelaSpacing.sm,
+        ),
         horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.md),
         verticalArrangement = Arrangement.spacedBy(NovelaSpacing.lg),
         userScrollEnabled = false,
