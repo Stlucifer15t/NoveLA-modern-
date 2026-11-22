@@ -161,9 +161,14 @@ internal fun ReaderScreen(
     onManualHighlightStart: () -> Unit = {},
     manualHighlightInitialPosition: Pair<Float, Float>? = null,
     onManualHighlightPositionChange: (Float, Float) -> Unit = { _, _ -> },
+    /** Оглавление новеллы: главы книги по порядку. По умолчанию пусто (превью). */
+    tableOfContents: () -> List<TocEntry> = { emptyList() },
+    /** Переход к главе, выбранной в оглавлении. */
+    onJumpToChapter: (String) -> Unit = {},
     readerContent: @Composable (paddingValues: PaddingValues) -> Unit,
 ) {
     val showReaderInfo by state.showReaderInfo
+    var showTableOfContents by remember { mutableStateOf(false) }
     val selectedSetting by state.settings.selectedSetting
     val fullScreen by state.settings.fullScreen
     val manualHighlightEnabled by state.settings.manualHighlightEnabled
@@ -489,6 +494,14 @@ internal fun ReaderScreen(
                                             tint = if (isSingleTapToOpenSettings) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                     }
+                                    IconButton(onClick = { showTableOfContents = true }, modifier = Modifier.size(36.dp)) {
+                                        Icon(
+                                            Icons.Filled.List,
+                                            stringResource(R.string.table_of_contents_title),
+                                            modifier = Modifier.size(20.dp),
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
                                 }
                                 Text(
                                     text = stringResource(
@@ -506,6 +519,20 @@ internal fun ReaderScreen(
                                     style = MaterialTheme.typography.labelMedium,
                                 )
                             }
+                        }
+
+                        if (showTableOfContents) {
+                            val entries = remember { tableOfContents() }
+                            val currentChapterUrl by state.readerInfo.chapterUrl
+                            TableOfContentsSheet(
+                                entries = entries,
+                                currentIndex = entries.indexOfFirst { it.url == currentChapterUrl }.coerceAtLeast(0),
+                                onSelect = { url ->
+                                    showTableOfContents = false
+                                    onJumpToChapter(url)
+                                },
+                                onDismiss = { showTableOfContents = false },
+                            )
                         }
 
                         // Уведомление-пилюля висит НАД тулбаром (не перекрывает кнопки); Box не клипает детей, поэтому сдвиг вверх виден

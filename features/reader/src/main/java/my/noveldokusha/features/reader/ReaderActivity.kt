@@ -83,6 +83,7 @@ import my.noveldokusha.features.reader.ui.ReaderScreen
 import my.noveldokusha.features.reader.ui.ReaderScreenState
 import my.noveldokusha.features.reader.ui.ReaderViewHandlersActions
 import my.noveldokusha.navigation.NavigationRoutes
+import my.noveldokusha.features.reader.ui.TocEntry
 import my.noveldokusha.reader.R
 import my.noveldokusha.reader.databinding.ActivityReaderBinding
 import my.noveldokusha.text_to_speech.Utterance
@@ -698,6 +699,10 @@ class ReaderActivity : BaseActivity() {
                         viewModel.onCloseManually()
                         finish()
                     },
+                    tableOfContents = {
+                        viewModel.tableOfContents().map { TocEntry(url = it.url, title = it.title) }
+                    },
+                    onJumpToChapter = { viewModel.jumpToChapter(it) },
                     onOpenChapterInWeb = {
                         // Текущая глава из VM (обновляется при листании); если по какой-то
                         // причине пуста — фолбэк на главу, с которой открыт ридер.
