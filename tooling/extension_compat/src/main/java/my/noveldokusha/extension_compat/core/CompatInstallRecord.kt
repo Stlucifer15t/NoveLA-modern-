@@ -38,6 +38,14 @@ data class CompatInstallRecord(
     val extra: JsonObject? = null,
     /** Момент установки (unix millis). */
     val installedAt: Long = 0,
+    /** Id репозитория, из которого установили; "" — файл импортирован вручную. */
+    val repositoryId: String = "",
+    /** Ключ записи в индексе репозитория: по нему сверяем версии при обновлении. */
+    val entryKey: String = "",
+    /** 18+ помечен на уровне репозитория (Mihon nsfw/contentWarning, Legado группа). */
+    val nsfw: Boolean = false,
+    /** SHA-256 payload'а: проверка целостности при обновлении и диагностика. */
+    val sha256: String = "",
 )
 
 /**

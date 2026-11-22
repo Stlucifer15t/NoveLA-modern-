@@ -13,6 +13,7 @@ import my.noveldokusha.extension_compat.core.CompatLoaders
 import my.noveldokusha.extension_compat.core.CompatSourceProviderImpl
 import my.noveldokusha.extension_compat.core.CompatStorage
 import my.noveldokusha.extension_compat.legado.LegadoExtensionLoader
+import my.noveldokusha.extension_compat.tachiyomi.TachiyomiExtensionLoader
 import my.noveldokusha.scraper.CompatSourceProvider
 import java.io.File
 import javax.inject.Singleton
@@ -30,6 +31,18 @@ abstract class CompatModule {
     @CompatLoaders
     @IntoSet
     abstract fun bindLegadoLoader(impl: LegadoExtensionLoader): CompatExtensionLoader
+
+    /**
+     * Mihon/Tachiyomi/Aniyomi (keiyoushi) — APK-расширения. Загрузчик проверяет
+     * манифест и dex, но сами источники этой экосистемы в сборку не входят
+     * (нужен shim API-пакета eu.kanade.tachiyomi.source): binding держим, чтобы
+     * установленный пакет был виден с объяснением, а не как «нет загрузчика».
+     */
+    @Binds
+    @Singleton
+    @CompatLoaders
+    @IntoSet
+    abstract fun bindTachiyomiLoader(impl: TachiyomiExtensionLoader): CompatExtensionLoader
 
     companion object {
         @Provides

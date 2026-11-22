@@ -336,3 +336,63 @@ cloudstream = { module = "com.lagradost:cloudstream3", version.ref = "cloudstrea
 4. **Install flow** - APK picker / JSON import / JS file import / repo browse
 5. **Diagnostics screen** - View load errors, capability matrix per extension
 6. **Settings** - Per-extension preferences (already supported via `Configurable`)
+---
+
+## Repository layer — status as of this pass (JSON indexes)
+
+Multi-repository subscription layer over third-party **index JSON** files. It is a
+separate concern from the per-ecosystem runtimes below: adding a repository never
+requires a new parser in NoveLA, only a new file in `core/`.
+
+### Implemented
+
+| File | Role |
+|------|------|
+| `core/CompatRepository.kt` | `CompatRepository` (subscription), `CompatRepoEntry` (one source in an index), `RepoKind` (INDEX / TREE), `CompatPayloadKind`, `CompatRepoResult` |
+| `core/CompatRepoParsers.kt` | format sniffing + one parser per ecosystem, raw-slice extraction for Legado payloads |
+| `core/RepoUrlResolver.kt` | pasted URL → `File` / `Git` / `Probe` / `Invalid` plan; GitHub/GitLab/raw/jsDelivr/release assets |
+| `core/CompatRepositoryManager.kt` | add / refresh / remove, index cache, install / update / uninstall, install state |
+| `core/CompatStorage.kt` | `repos.json` + `indexes/<repoId>.{index,entries}.json` cache next to `registry.json` |
+| `core/CompatRuntime.kt` | per-ecosystem capability report shown in UI instead of a silent failure |
+| `tachiyomi/TachiyomiExtensionLoader.kt` | APK validation (manifest metadata + `DexClassLoader` probe); refuses to pretend the source API is present |
+| `features/extensions/CompatExtensionsViewModel.kt` + `CompatExtensionsScreen.kt` | repository manager dialog, opened from the Extensions screen |
+
+### What each ecosystem gets from an index
+
+| Ecosystem | Indexes understood | Browse | Install | Runs in Finder |
+|-----------|--------------------|:------:|:-------:|:--------------:|
+| Legado | `bookSource.json` object/array/wrapped, one-JSON-per-file repos, `.txt`/array URL subscription lists | ✅ | ✅ | ✅ via `LegadoRuleEngine` |
+| Mihon / Tachiyomi / keiyoushi | `repo.json` pointer → `index.json` (v2 `extensionList.extensions`), legacy `index.min.json` array | ✅ | ✅ (APK stored) | ❌ no bundled source API |
+| LNReader | `.dist/plugins.min.json` (+ branch `plugins/v3.0.0`) | ✅ | payload stored | ❌ no `PluginBase` runtime |
+| Mangayomi | `repo.json`, `index.json`, `novel_index.json` (JS *and* Dart payloads) | ✅ | payload stored | ❌ no `MProvider` runtime |
+| CloudStream | `repo.json` → `pluginLists[].url` → nested `index.min.json` (`.cs3`) | ✅ | payload stored | ❌ no `MainAPI` runtime |
+
+Index-priority rules learned from the live repositories (see `CompatRepoParsersTest`):
+
+- keiyoushi migrated to a v2 format: `repo.json` names the real index, and
+  `index.min.json` is a 765-byte "update your app" stub — parser reads the pointer
+  first and drops `Outdated App` rows, so a stale URL still yields the full catalog.
+- APK URLs are release assets (`releases/download/<tag>/…`), so plain HTTP download works.
+- LNReader's usable index is not on `main` — hence `KNOWN_REWRITES` in the resolver.
+- Repos with no index file at all (typical Legado collections) fall back to `TREE`
+  mode: every `*.json`/`*.js`/`*.dart` in the tree becomes an entry.
+
+### Deliberate limits
+
+- Mihon/CloudStream/etc. entries are **stored**, not executed: `CompatRuntime` says
+  why (no bundled runtime), and `install()` returns `runnable = false`. No fake
+  "1 source installed" success message.
+- Legado payload extraction keeps the **raw JSON slice** — unknown Legado fields
+  (`customOrder`, `lastUpdateTime`, …) survive into `LegadoExtensionLoader`, which
+  is what applies Legado's own rule defaults.
+- `updateAll()` compares `versionCode` then `version` only; signature verification of
+  Mihon `apkSignBlockBytes` is not performed (fingerprint is recorded for display).
+
+### Follow-ups, in order of usefulness
+
+1. Legado subscription-list import UX from Finder (share-sheet target) — the parser
+   already accepts URL lists.
+2. Mihon runtime: vendored `KeiSource` stubs + `TachiyomiSourceAdapter` (the loader
+   already isolates a `DexClassLoader`; the adapter is the missing half).
+3. `AppPreferences.EXTENSIONS_REPOSITORY_URL` (single Lua YAML string) can be
+   migrated into `repos.json` so the Lua repo appears in the same list.

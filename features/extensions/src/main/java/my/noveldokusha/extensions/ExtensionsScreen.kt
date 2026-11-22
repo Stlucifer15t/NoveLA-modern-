@@ -116,6 +116,7 @@ private fun UnifiedExtensionsScreen(
     @Suppress("UNUSED_PARAMETER") onRefresh: (() -> Unit)? = null,
     onImportLua: () -> Unit = {}
 ) {
+    var showCompatRepos by rememberSaveable { mutableStateOf(false) }
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -134,6 +135,16 @@ private fun UnifiedExtensionsScreen(
                 }
             }
             else -> {
+                // Compat-репозитории (Legado JSON, Mihon/keiyoushi, LNReader, Mangayomi):
+                // второй источник списка источников, живёт рядом с Lua-плагинами.
+                val compatViewModel: CompatExtensionsViewModel = hiltViewModel()
+                val compatState by compatViewModel.state.collectAsStateWithLifecycle()
+                CompatReposSummaryRow(
+                    repos = compatState.repositories.size,
+                    installed = compatState.installed.size,
+                    refreshable = compatState.isRefreshing,
+                    onClick = { showCompatRepos = true },
+                )
                 if (state.error != null) {
                     OutlinedCard(
                         modifier = Modifier
@@ -374,6 +385,11 @@ private fun UnifiedExtensionsScreen(
             state = state,
             viewModel = viewModel
         )
+    }
+
+    // Сторонние репозитории расширений (JSON/JS/APK-индексы)
+    if (showCompatRepos) {
+        CompatExtensionsDialog(onDismiss = { showCompatRepos = false })
     }
 
     if (state.showLuaEditor) {

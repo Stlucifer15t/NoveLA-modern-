@@ -208,6 +208,15 @@ class CompatSourceProviderImpl @Inject constructor(
 
     fun setEnabled(id: String, enabled: Boolean) = storage.setEnabled(id, enabled)
 
+    /**
+     * Запись установки по ключу из индекса репозитория — по ней UI решает,
+     * «Установлено / Обновить / Не установлено» ([CompatRepositoryManager.installState]).
+     */
+    fun findRecord(ecosystem: CompatEcosystem, entryKey: String): CompatInstallRecord? =
+        storage.records.value.firstOrNull {
+            it.ecosystem == ecosystem && (it.entryKey == entryKey || it.id == "${ecosystem.id}:$entryKey")
+        }
+
     fun updatePayload(id: String, payload: ByteArray, version: String, versionCode: Long) {
         val record = storage.getRecord(id) ?: return
         storage.writePayload(record.ecosystem, record.payloadPath, payload)

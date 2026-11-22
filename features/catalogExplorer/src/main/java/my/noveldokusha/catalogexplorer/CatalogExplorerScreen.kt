@@ -293,7 +293,13 @@ fun CatalogExplorerScreen(
                     // Browse tab content
                     val filteredSources = remember(uiState.sourcesList, uiState.selectedLanguages, uiState.selectedContentType) {
                         uiState.sourcesList.filter { item ->
-                            val langOk = uiState.selectedLanguages.isEmpty() || item.catalog.isLocalSource || item.catalog.languageTag in uiState.selectedLanguages
+                            // languageTag == null — язык источника неизвестен (у Legado
+                            // bookSource нет поля языка). Такой источник не прячем:
+                            // фильтр по языку не должен превращаться в «источник пропал».
+                            val langOk = uiState.selectedLanguages.isEmpty() ||
+                                item.catalog.isLocalSource ||
+                                item.catalog.languageTag == null ||
+                                item.catalog.languageTag in uiState.selectedLanguages
                             val typeOk = uiState.selectedContentType.isEmpty() || item.catalog.contentType == uiState.selectedContentType || (uiState.selectedContentType == "novel" && item.catalog.contentType.isEmpty())
                             langOk && typeOk
                         }
