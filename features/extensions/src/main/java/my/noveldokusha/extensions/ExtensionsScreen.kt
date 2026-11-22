@@ -604,7 +604,7 @@ private fun ExtensionTile(
         when {
             extension.isInstalling -> NovelaTileActionButton(
                 label = stringResource(my.noveldokusha.strings.R.string.installing),
-                icon = { CircularProgressIndicator(size = 12.dp, strokeWidth = 2.dp) },
+                icon = { CircularProgressIndicator(modifier = Modifier.size(12.dp), strokeWidth = 2.dp) },
                 enabled = false,
                 onClick = {},
             )

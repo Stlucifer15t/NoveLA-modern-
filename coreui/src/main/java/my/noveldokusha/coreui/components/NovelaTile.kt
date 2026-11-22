@@ -1,5 +1,6 @@
 package my.noveldokusha.coreui.components
 
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -7,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -248,4 +250,64 @@ fun NovelaHeroPill(
 object NovelaTile {
     /** The icon chip: a squircle between a badge and a card corner. */
     val chipShape = RoundedCornerShape(NovelaRadius.md)
+}
+
+/**
+ * The action row of a tile: a filled pill button whose tint comes from the tile's own
+ * accent. Used where a card needs a verb ("Install", "Update") instead of a chevron.
+ */
+@Composable
+fun NovelaTileActionButton(
+    label: String,
+    onClick: () -> Unit,
+    accent: Color,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    icon: @Composable () -> Unit = {},
+) {
+    Surface(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = modifier,
+        shape = NovelaRadius.chipShape,
+        color = accent.copy(alpha = if (enabled) 0.16f else 0.08f),
+        contentColor = if (enabled) accent else NovelaTheme.colors.textMuted,
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = NovelaSpacing.sm, vertical = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.xxs),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            icon()
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelLarge,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
+}
+
+/** The compact round sibling of [NovelaTileActionButton], for icon-only verbs. */
+@Composable
+fun NovelaTileIconButton(
+    contentDescription: String?,
+    onClick: () -> Unit,
+    accent: Color,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    Surface(
+        onClick = onClick,
+        modifier = modifier.size(32.dp),
+        shape = CircleShape,
+        color = accent.copy(alpha = 0.12f),
+        contentColor = accent,
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
+        ) { content() }
+    }
 }
