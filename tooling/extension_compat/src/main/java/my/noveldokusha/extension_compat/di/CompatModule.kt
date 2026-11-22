@@ -7,8 +7,6 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import dagger.multibindings.IntoSet
-import dagger.multibindings.Multibinds
 import my.noveldokusha.extension_compat.core.CompatExtensionLoader
 import my.noveldokusha.extension_compat.core.CompatSourceProviderImpl
 import my.noveldokusha.extension_compat.core.CompatStorage
@@ -18,6 +16,16 @@ import my.noveldokusha.scraper.CompatSourceProvider
 import java.io.File
 import javax.inject.Singleton
 
+/**
+ * Wires the compat layer into the application graph.
+ *
+ * The loader set is *provided* rather than multibound. Injecting `Set<T>` through
+ * `@Multibinds`/`@Binds @IntoSet` kept failing in `:app:hiltJavaCompileDebug` with
+ * `MissingBinding: java.util.Set<? extends CompatExtensionLoader>` across several CI
+ * runs, while the same module's `@Provides` for [CompatStorage] was picked up
+ * immediately — so the app graph is handed a concrete set and no wildcard has to match.
+ * A new ecosystem is registered in [provideLoaders], which keeps the registry greppable.
+ */
 @InstallIn(SingletonComponent::class)
 @Module
 abstract class CompatModule {
@@ -26,31 +34,27 @@ abstract class CompatModule {
     @Singleton
     abstract fun bindCompatSourceProvider(impl: CompatSourceProviderImpl): CompatSourceProvider
 
-    @Binds
-    @Singleton
-    @IntoSet
-    abstract fun bindLegadoLoader(impl: LegadoExtensionLoader): CompatExtensionLoader
-
-    /**
-     * Multibinding, not a qualified set: Dagger builds the `Set<CompatExtensionLoader>`
-     * unqualified, so `@CompatLoaders` on the elements left the injection point
-     * unsatisfied (Dagger/MissingBinding at :app:hiltJavaCompileDebug). This matches how
-     * `tooling/local_source` binds its LocalSource set.
-     *
-     * Mihon/Tachiyomi/Aniyomi (keiyoushi) ship APK extensions. The loader validates
-     * the manifest and dex, but this ecosystem's source API is not part of the build
-     * (it needs an eu.kanade.tachiyomi.source shim): the binding stays so an installed
-     * package is reported with an explanation instead of "no loader".
-     */
-    @Binds
-    @Singleton
-    @IntoSet
-    abstract fun bindTachiyomiLoader(impl: TachiyomiExtensionLoader): CompatExtensionLoader
-
+    @Module
     companion object {
         @Provides
         @Singleton
         fun provideCompatStorage(@ApplicationContext context: Context): CompatStorage =
             CompatStorage(File(context.filesDir, CompatStorage.DIR_NAME))
+
+        /**
+         * Every ecosystem the app can load.
+         *
+         * Tachiyomi/Mihon/Aniyomi (keiyoushi) ship extensions as APKs with dex written
+         * against host APIs (`eu.kanade.tachiyomi.source.model.*`, Injekt, RxJava). That
+         * source API is not part of this build, so the loader only validates the manifest
+         * and dex and then explains itself: registering it is what turns "installed but
+         * unusable here" into a message instead of "no loader for this ecosystem".
+         */
+        @Provides
+        @Singleton
+        fun provideLoaders(
+            legado: LegadoExtensionLoader,
+            tachiyomi: TachiyomiExtensionLoader,
+        ): Set<CompatExtensionLoader> = setOf(legado, tachiyomi)
     }
 }
