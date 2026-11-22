@@ -85,6 +85,17 @@ jobs:
             :features:settings:testDebugUnitTest \
             --stacktrace --console=plain --continue 2>&1 | tee -a "$RUNNER_TEMP/build-output.log"
 
+      - name: Unit tests (Lua source reviews and book status)
+        # Runs real Lua scripts through LuaSourceAdapter: optional getBookReviews /
+        # getBookStatus contracts, item mapping, clamping and errors. Filtered on purpose:
+        # the rest of the scraper suite is not part of this gate.
+        run: |
+          set -o pipefail
+          ./gradlew :scraper:testDebugUnitTest \
+            --tests 'my.noveldokusha.scraper.LuaSourceAdapterReviewsTest' \
+            --tests 'my.noveldokusha.scraper.LuaSourceAdapterBookStatusTest' \
+            --stacktrace --console=plain 2>&1 | tee -a "$RUNNER_TEMP/build-output.log"
+
       - name: Assemble debug APK
         run: |
           set -o pipefail
