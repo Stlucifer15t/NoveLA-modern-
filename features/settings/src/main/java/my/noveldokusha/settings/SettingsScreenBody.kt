@@ -1,5 +1,7 @@
 package my.noveldokusha.settings
 
+import my.noveldokusha.settings.ui.hint
+import my.noveldokusha.settings.ui.label
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.Search

@@ -538,7 +538,6 @@ private fun RepositoryUrlDialog(
     )
 }
 
-@Composable
 
 /**
  * One extension as a tile: icon chip, name, two fact badges, and the install/update
@@ -702,5 +701,3 @@ private fun ExtensionTile(
         }
     }
 }
-
-@Composable

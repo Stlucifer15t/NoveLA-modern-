@@ -1,5 +1,7 @@
 package my.noveldokusha.settings
 
+import my.noveldokusha.settings.ui.hint
+import my.noveldokusha.settings.ui.label
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
