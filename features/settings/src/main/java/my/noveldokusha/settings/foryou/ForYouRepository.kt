@@ -2,6 +2,7 @@ package my.noveldokusha.settings.foryou
 
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -87,6 +88,8 @@ class ForYouRepository @Inject constructor(
             .first()
             .map { it.catalog }
             .filter { !it.isLocalSource }
+    } catch (e: CancellationException) {
+        throw e
     } catch (e: Exception) {
         emptyList()
     }
@@ -106,10 +109,13 @@ class ForYouRepository @Inject constructor(
             val page: PagedList<BookResult>? = try {
                 if (term == null) source.getCatalogList(0).getOrNull()
                 else source.getCatalogSearch(0, term).getOrNull()
+            } catch (e: CancellationException) {
+                // Never swallow a cancel: a swallowed one keeps the loop issuing requests
+                // for a pass nobody is waiting for anymore.
+                throw e
             } catch (e: Exception) {
-                null
-            } catch (e: Throwable) {
-                // A plugin can die with anything, including non-Exception errors.
+                // A plugin can die with anything, and one broken source must not blank the
+                // whole rail — it just contributes nothing to this pass.
                 null
             }
             page?.list?.let { out += it }

@@ -1,5 +1,7 @@
 package my.noveldokusha.features.main
 
+import my.noveldokusha.coreui.theme.NovelaSpacing
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -200,9 +202,11 @@ open class MainActivity : BaseActivity() {
                                         startActivity(navigationRoutes.chapters(this@MainActivity, meta))
                                     },
                                     onChangeGenres = {
-                                        startActivity(NovelaOnboardingActivity.createIntent(this))
+                                        startActivity(NovelaOnboardingActivity.createIntent(this@MainActivity))
                                     },
-                                    modifier = Modifier.padding(top = 6.dp),
+                                    modifier = Modifier
+                                        .statusBarsPadding()
+                                        .padding(top = NovelaSpacing.sm),
                                 )
                                 Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
                                     LibraryScreen()

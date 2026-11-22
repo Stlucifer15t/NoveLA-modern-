@@ -28,6 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
@@ -54,6 +55,7 @@ fun NovelaForYouStrip(
     onChangeGenres: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     Column(modifier = modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
@@ -70,7 +72,9 @@ fun NovelaForYouStrip(
             if (genres.isNotEmpty()) {
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = genres.joinToString(" · ") { stringResource(it.labelRes) },
+                    // getString rather than stringResource: joinToString's transform is not a
+                    // composable lambda, so the resource call has to be the plain one.
+                    text = genres.joinToString(" · ") { context.getString(it.labelRes) },
                     style = NovelaType.bookMeta,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,

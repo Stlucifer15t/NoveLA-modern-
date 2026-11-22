@@ -62,11 +62,6 @@ class ForYouViewModel @Inject constructor(
         refresh()
     }
 
-    fun saveGenres(slugs: List<String>) {
-        appPreferences.FOR_YOU_GENRES.value = slugs.toSet()
-        appPreferences.FOR_YOU_GENRES_PICKED.value = true
-    }
-
     /** One pass. Reruns when the genre set changes, never on mere recomposition. */
     fun refresh() {
         fetchJob?.cancel()

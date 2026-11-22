@@ -20,7 +20,7 @@
     <string name="for_you_change">Change</string>
     <string name="for_you_in_library">In library</string>
     <string name="for_you_no_sources">Nothing to suggest yet — install a source in Extensions and this rail fills itself.</string>
-    <string name="for_you_no_answers">Your sources didn't answer this time. The rail tries again when you reopen the app or change genres.</string>
+    <string name="for_you_no_answers">Your sources did not answer this time. The rail tries again when the app reopens or the genres change.</string>
     <string name="onboarding_title">Your genres</string>
     <string name="onboarding_headline">What do you like to read?</string>
     <string name="onboarding_subtitle">Pick a few genres. The For you rail then searches the sources you installed for them; skip it and it shows their front pages instead.</string>
