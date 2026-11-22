@@ -202,19 +202,45 @@ alone, and search that filters whole groups once a page grows past ~30 destinati
 Behaviour was deliberately not touched: every section composable keeps its own
 view-model wiring, and the compat entry point still opens the same dialog.
 
-### 8b. Two-level settings + the tile board (third round)
+### 8b. Two-level settings, the tile board, and the row groups (third round)
 
 Requested shape: Settings as "clickable boxes with the respective settings inside", and
-Browse/Extensions as cards rather than a stock source list.
+Browse/Extensions as cards rather than a stock source list. The two references describe
+two *different* structures, and they were applied to different screens on purpose: Browse
+is a board of tiles (you pick a thing), the secondary screen is a header with counters and
+labelled groups of rows (you act on things).
 
 | Change | Notes |
 |---|---|
 | `SettingsGroupSpec` + one list, two renderings | `SettingsScreenBody` builds seven specs (title, icon, accent, keywords, sections-lambda) and renders them header-only on the Settings tab or expanded inside `SettingsGroupActivity`. Sections exist once, so a setting cannot be present on one level and missing on the other |
-| `SettingsGroupActivity` | opened through `NavigationRoutes.settingsGroup(groupKey)`, the same intent-style route as `regexRules`; an unknown key finishes instead of rendering an empty page |
-| `coreui/components/NovelaTile.kt` | `novelaTileAccent(seed)` (four *scheme* colours, cycled by a stable hash), `NovelaTileCard`, `NovelaIconChip`, `NovelaTileBadge`, `NovelaHeroHeader`, `NovelaHeroPill` |
-| Browse | 2-column `LazyVerticalGrid` with a hero header + count pill, database tiles, source tiles; pinned sources sort first; config/translate/pin live in the tile's corner, and the text reserves that corner |
-| Extensions | same grid; sections with ≤2 items span both columns so a lone tile does not sit beside an empty half-row; `ExtensionTile` replaced `ExtensionListItem` outright (no dead copy to drift) |
+| `SettingsGroupActivity` | opened through `NavigationRoutes.settingsGroup(groupKey)`, the same intent-style route as `regexRules`; an unknown key finishes instead of rendering an empty page. Group title + summary come from `settings_group_*` (+ seven new `*_hint` lines) so both levels label a group identically |
+| `coreui/components/NovelaTile.kt` | `novelaTileAccent(seed)` (four *scheme* colours, cycled by a stable hash — never literals, so themes repaint), `NovelaTileCard`, `NovelaIconChip` (square, "a thing you open"), `NovelaCircleIcon` (round, "a row you act on"), `NovelaTileBadge`, `NovelaTileActionButton`, `NovelaTileIconButton`, `NovelaStatCard`, `NovelaCardGroup` + `NovelaCardGroupDivider`, `NovelaHeroHeader`, `NovelaHeroPill` |
+| Browse | 2-column `LazyVerticalGrid`: hero header with the source count, database tiles, then source tiles. Pinned sources sort first. Config / translate / pin live in the tile's corner, and the text reserves that corner instead of competing with a trailing button column |
+| Extensions | hero header + a strip of three counters (installed / available / updates, computed from the same filtered lists the groups render) + "Installed"/"Available" groups as single cards with hairline rows. `ExtensionRow` keeps the old row's state machine exactly — installing / update / edit+reset+uninstall / install — and adds no fake actions: `ExtensionInfo` has no pin, so there is no pin button here |
 
-Known gaps carried forward honestly: the mockups' "For You" tab, the "More" tab with
-reading-stat chips, and the "57 genres" figure do not exist in this codebase — there is
-no per-source genre count or reading-time stat to render. Nothing was faked for them.
+### 8c. Debug vs release, measured
+
+The complaint was lag on the debug install. `app/build.gradle.kts` explains part of it:
+debug has no R8, no resource shrinking and runs debuggable, unoptimised bytecode.
+
+`.github/workflows/release.yml` assembles the **release** variant from the same commit and
+asserts the certificate is the bundled key. It exists next to `buildRelease.yml` /
+`nightly.yml` rather than replacing them: those two are dispatch-only or default-branch
+and pass `-PlocalPropertiesFilePath=custom.properties`, which no clone of this repository
+has, so neither produced an APK for a branch build. First run of `release.yml`, commit
+`ceb2032`:
+
+| Artifact | Size |
+|---|---|
+| `NoveLA-ci-debug-…` | 40 278 101 B |
+| `NoveLA-release-…` | 8 290 817 B |
+
+So the release APK is 4.9× smaller than the debug one and is the build to judge smoothness
+with. What this does *not* prove: that R8 keeps the runtime-loaded extension paths intact —
+`assembleRelease` compiling and signing is not the same as an installed run, and the release
+APK still needs a pass on the device (install a source, open a chapter).
+
+Known gaps carried forward honestly: the references' "For You" tab, the "More" tab with
+reading-stat chips, the level/streak pills, and the "57 genres" figure do not exist in this
+codebase — there is no per-source genre count, reading-time or streak data to render. Nothing
+was faked for them; the counters that *are* shown are real counts of what is listed below them.

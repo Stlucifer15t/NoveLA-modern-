@@ -51,8 +51,8 @@ class App : Application(), SingletonImageLoader.Factory, WorkConfiguration.Provi
     @Inject
     lateinit var networkClient: NetworkClient
 
-    // Eager singleton: форсирует создание DownloadManager при старте приложения,
-    // чтобы restoreTasksFromDatabase() запустился сразу, а не при первом открытии книги.
+    // Eager singleton: forces DownloadManager to be created at app start, so
+    // restoreTasksFromDatabase() runs immediately instead of on the first book open.
     @Inject
     lateinit var downloadManager: DownloadManager
 
@@ -83,8 +83,8 @@ class App : Application(), SingletonImageLoader.Factory, WorkConfiguration.Provi
         val logFile = File(filesDir, "logs/app.log")
         Timber.plant(FileTree(logFile))
 
-        // Заголовок сессии: к какому билду относится лог.
-        // Пишем напрямую в файл — Timber.i вырезается R8 из релизного dex.
+        // Session header: which build this log belongs to.
+        // Written straight to the file — R8 strips Timber.i from the release dex.
         runCatching {
             val buildType = if (BuildConfig.DEBUG) "debug" else "release"
             logFile.appendText(
@@ -94,13 +94,13 @@ class App : Application(), SingletonImageLoader.Factory, WorkConfiguration.Provi
             )
         }
 
-        // Ловим незахваченные исключения: пишем краш в app.log перед смертью процесса
+        // Catch uncaught exceptions: write the crash to app.log before the process dies
         val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
             try {
                 Timber.e(throwable, "FATAL uncaught on ${thread.name}")
             } catch (_: Exception) {
-                // логирование не должно помешать дефолтному обработчику
+                // logging must not get in the way of the default handler
             }
             defaultHandler?.uncaughtException(thread, throwable)
         }
@@ -113,7 +113,7 @@ class App : Application(), SingletonImageLoader.Factory, WorkConfiguration.Provi
             .build()
 
         val memoryCache = coil3.memory.MemoryCache.Builder()
-            .maxSizePercent(context, AppCacheConfig.IMAGE_MEMORY_CACHE_PERCENT) // ponytail: 25% — стандарт для сетевых грид-приложений (Mihon=20%, Coil Sample=25%)
+            .maxSizePercent(context, AppCacheConfig.IMAGE_MEMORY_CACHE_PERCENT) // 25% is the norm for networked grid UIs (Mihon=20%, the Coil sample=25%)
             .build()
 
         val animatorDurationScale = Settings.System.getFloat(
@@ -131,7 +131,7 @@ class App : Application(), SingletonImageLoader.Factory, WorkConfiguration.Provi
             .diskCachePolicy(coil3.request.CachePolicy.ENABLED)
             .crossfade((AppCacheConfig.IMAGE_CROSSFADE_MS * animatorDurationScale).toInt())
             .allowHardware(AppCacheConfig.IMAGE_HARDWARE_BITMAPS)
-            .allowRgb565(AppCacheConfig.IMAGE_RGB565) // RGB_565: 2 байта/пиксель вместо 4 — вдвое больше обложек в кеше
+            .allowRgb565(AppCacheConfig.IMAGE_RGB565) // RGB_565: 2 bytes per pixel instead of 4 — twice as many covers in the cache
 
         return when (val networkClient = networkClient) {
             is ScraperNetworkClient -> sharedBuilder
@@ -185,19 +185,19 @@ class App : Application(), SingletonImageLoader.Factory, WorkConfiguration.Provi
     }
 }
 
-// Стратегия дискового кэша Coil: не отдаём из кэша ошибки и не кэшируем их.
-// Дефолтная стратегия кэширует 404 по RFC и всегда читает кэш без проверки
-// свежести — «отравленная» запись живёт до LRU-эвикции, ретрай бесполезен.
-// Пригодность кода задаёт AppCacheConfig.isCacheableStatus (там же и правило).
-// Проверено на устройстве: 404 от 30.09 в image_cache для aniliberty.png.
+// Coil's disk-cache policy: never serve an error from the cache, never cache one.
+// The default policy caches 404 because the RFC allows it, and always reads
+// the cache without a freshness check — a poisoned entry lives until LRU evicts
+// it, so a retry is pointless. AppCacheConfig.isCacheableStatus decides
+// what is cacheable. Verified on a device: a 404 from 30.09 in image_cache.
 @OptIn(ExperimentalCoilApi::class)
 private object RevalidatingCacheStrategy : CacheStrategy {
 
-    // Тело, которое не декодируется как картинка и потому отравляет кэш:
-    // 1) text/* — заглушка CDN/блокировка (text/html, text/plain и прочие);
-    // 2) image/avif — CDN отдаёт AVIF только по Accept с image/avif, а на устройстве
-    //    HeifDecoderImpl его не декодирует ("videoFrame is a nullptr"), ретрай читает
-    //    ту же immutable-запись и вечно падает.
+    // A body that cannot be decoded as an image and therefore poisons the cache:
+    // 1) text/* — a CDN or blocking-page placeholder (text/html, text/plain, …);
+    // 2) image/avif — the CDN only serves AVIF when Accept asks for it, and on device
+    //    HeifDecoderImpl cannot decode it ("videoFrame is a nullptr"); a retry reads
+    //    back the same immutable entry and fails forever.
     private fun NetworkResponse.isUnusableBody(): Boolean {
         val contentType = headers["content-type"]?.substringBefore(';')?.trim() ?: return false
         return contentType.startsWith("text/", ignoreCase = true) ||
@@ -209,8 +209,8 @@ private object RevalidatingCacheStrategy : CacheStrategy {
         networkRequest: NetworkRequest,
         options: Options,
     ): CacheStrategy.ReadResult {
-        // Пригодный для кэша ответ отдаём как есть, ошибку и непригодное тело —
-        // всегда в сеть (лечит уже отравленные записи при ретрае).
+        // A cacheable response is served as is; an error or an unusable body always
+        // goes to the network (which also heals entries poisoned before this fix).
         return if (
             AppCacheConfig.isCacheableStatus(cacheResponse.code) && !cacheResponse.isUnusableBody()
         ) {
@@ -226,18 +226,18 @@ private object RevalidatingCacheStrategy : CacheStrategy {
         networkResponse: NetworkResponse,
         options: Options,
     ): CacheStrategy.WriteResult {
-        // Кэшируем только пригодные коды и пригодное тело: «404: Not Found»,
-        // текстовые заглушки и AVIF не декодируются и только отравляют кэш.
+        // Cache only cacheable status codes and a usable body: "404: Not Found",
+        // text placeholders and AVIF do not decode, they only poison the cache.
         if (
             AppCacheConfig.isCacheableStatus(networkResponse.code) &&
             !networkResponse.isUnusableBody()
         ) {
             return CacheStrategy.WriteResult(networkResponse)
         }
-        // DISABLED при открытом снапшоте (cacheResponse != null) утекают FD:
-        // NetworkFetcher не закрывает снапшот при response == null. Запись без тела
-        // проходит через closeAndOpenEditor (снапшот закрыт, тело в кэш не попадёт);
-        // старая запись и так непригодна — её бы всё равно перечитали из сети.
+        // DISABLED on an open snapshot (cacheResponse != null) leaks file descriptors:
+        // NetworkFetcher does not close the snapshot when response == null. An entry with
+        // no body goes through closeAndOpenEditor instead (snapshot closed, nothing
+        // written); the old entry is unusable and would be refetched anyway.
         return if (cacheResponse != null) {
             CacheStrategy.WriteResult(networkResponse.copy(body = null))
         } else {
