@@ -1,5 +1,23 @@
 package my.noveldokusha.settings
 
+import my.noveldokusha.settings.ui.hint
+import my.noveldokusha.settings.ui.label
+import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.SettingsBackupRestore
+import androidx.compose.material.icons.outlined.Storage
+import androidx.compose.material.icons.outlined.Translate
+import androidx.compose.material.icons.outlined.Update
+import androidx.compose.material.icons.outlined.Public
+import androidx.compose.runtime.saveable.rememberSaveable
+import my.noveldokusha.coreui.components.NovelaEmptyState
+import my.noveldokusha.coreui.theme.NovelaSpacing
+import my.noveldokusha.coreui.theme.NovelaTheme
+import my.noveldokusha.settings.ui.SettingsGroup
+import my.noveldokusha.settings.ui.SettingsGroupCard
+import my.noveldokusha.settings.ui.SettingsGroupSpec
+import my.noveldokusha.settings.ui.SettingsSearchField
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -106,7 +124,13 @@ internal fun SettingsScreenBody(
     onAutoBackupIncludeSettingsChange: (Boolean) -> Unit,
     onAutoBackupIncludePluginsChange: (Boolean) -> Unit,
     onExportLogs: () -> Unit = {},
+    groups: Set<SettingsGroup>? = null,
+    onOpenGroup: (SettingsGroup) -> Unit = {},
 ) {
+    // null [groups] = the Settings screen itself, which lists every group as a
+    // tappable box; a non-null set = one group screen, which expands that group only.
+    val expanded = groups != null
+
     // Refresh size displays every time the user navigates to this screen
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
@@ -122,138 +146,260 @@ internal fun SettingsScreenBody(
     }
 
     val showNovelPromptsDialog = remember { mutableStateOf(false) }
+    val searchQuery = rememberSaveable { mutableStateOf("") }
+
+    val palette = MaterialTheme.colorScheme
+    val currentLanguageObj = remember(state.currentLanguage.value) {
+        AppLanguageProvider.fromCode(state.currentLanguage.value)
+            ?: AppLanguageProvider.supportedLanguages.first()
+    }
+
+    // One list, two renderings: the Settings screen shows these as boxes (expanded =
+    // false, tap opens a group), a group screen shows the one requested entry with its
+    // sections inside. Keeping the sections in this file means the two levels can never
+    // drift apart. Keywords are written once, so the search filter and the empty state
+    // cannot disagree — filtering happens per box, never inside a section.
+    fun matches(spec: SettingsGroupSpec): Boolean {
+        val q = searchQuery.value.trim().lowercase()
+        if (expanded || q.isEmpty()) return true
+        return spec.title.lowercase().contains(q) ||
+            spec.keywords.any { it.contains(q) || q.contains(it) }
+    }
+
+    val specs = listOf(
+        SettingsGroupSpec(
+            group = SettingsGroup.Appearance,
+            title = SettingsGroup.Appearance.label(),
+            summary = SettingsGroup.Appearance.hint(),
+            icon = Icons.Outlined.Palette,
+            keywords = listOf("theme", "dark", "amoled", "language", "color", "font"),
+            accent = palette.primary,
+            content = {
+                SettingsTheme(
+                    currentAppTheme = state.currentAppTheme.value,
+                    currentDarkMode = state.currentDarkMode.value,
+                    onAppThemeChange = onAppThemeSelected,
+                    onDarkModeChange = onDarkModeSelected,
+                )
+                HorizontalDivider(color = NovelaTheme.colors.hairline)
+                SettingsLanguage(
+                    currentLanguage = currentLanguageObj,
+                    onLanguageChange = onLanguageChange,
+                )
+            },
+        ),
+        SettingsGroupSpec(
+            group = SettingsGroup.Library,
+            title = SettingsGroup.Library.label(),
+            summary = SettingsGroup.Library.hint(),
+            icon = Icons.Outlined.Update,
+            keywords = listOf("library", "auto update", "update", "version", "nightly"),
+            accent = palette.tertiary,
+            content = {
+                LibraryAutoUpdate(state = state.libraryAutoUpdate)
+                HorizontalDivider(color = NovelaTheme.colors.hairline)
+                AppUpdates(
+                    state = state.updateAppSetting,
+                    onCheckForUpdatesManual = onCheckForUpdatesManual,
+                )
+            },
+        ),
+        SettingsGroupSpec(
+            group = SettingsGroup.Storage,
+            title = SettingsGroup.Storage.label(),
+            summary = SettingsGroup.Storage.hint(),
+            icon = Icons.Outlined.Storage,
+            keywords = listOf("storage", "cache", "database", "clean", "size", "images", "video", "manga"),
+            accent = palette.secondary,
+            content = {
+                SettingsData(
+                    databaseSize = state.databaseSize.value,
+                    imagesFolderSize = state.imageFolderSize.value,
+                    novelCacheSize = state.novelCacheSize.value,
+                    mangaCacheSize = state.mangaCacheSize.value,
+                    offlineVideoSize = state.offlineVideoSize.value,
+                    isCleaningDatabase = state.isCleaningDatabase.value,
+                    isCleaningImages = state.isCleaningImages.value,
+                    isCleaningNovelCache = state.isCleaningNovelCache.value,
+                    isCleaningMangaCache = state.isCleaningMangaCache.value,
+                    isCleaningOfflineVideo = state.isCleaningOfflineVideo.value,
+                    onRequestCleanDatabase = onRequestCleanDatabase,
+                    onRequestCleanImageFolder = onRequestCleanImageFolder,
+                    onRequestCleanNovelCache = onRequestCleanNovelCache,
+                    onRequestCleanMangaCache = onRequestCleanMangaCache,
+                    onRequestCleanOfflineVideo = onRequestCleanOfflineVideo,
+                )
+            },
+        ),
+        SettingsGroupSpec(
+            group = SettingsGroup.Backup,
+            title = SettingsGroup.Backup.label(),
+            summary = SettingsGroup.Backup.hint(),
+            icon = Icons.Outlined.SettingsBackupRestore,
+            keywords = listOf("backup", "restore", "export", "import", "logs", "directory"),
+            accent = palette.error,
+            content = {
+                SettingsBackup(
+                    onBackupData = onBackupData,
+                    onRestoreData = onRestoreData,
+                    autoBackupEnabled = state.autoBackupEnabled.value,
+                    onAutoBackupEnabledChange = onAutoBackupEnabledChange,
+                    autoBackupDirectoryUri = state.autoBackupDirectoryUri.value,
+                    autoBackupDirectoryDisplayName = state.autoBackupDirectoryDisplayName.value,
+                    onAutoBackupSelectDirectory = onAutoBackupSelectDirectory,
+                    autoBackupMaxCount = state.autoBackupMaxCount.value,
+                    onAutoBackupMaxCountChange = onAutoBackupMaxCountChange,
+                    autoBackupIntervalMinutes = state.autoBackupIntervalMinutes.value,
+                    onAutoBackupIntervalMinutesChange = onAutoBackupIntervalMinutesChange,
+                    autoBackupIncludeImages = state.autoBackupIncludeImages.value,
+                    onAutoBackupIncludeImagesChange = onAutoBackupIncludeImagesChange,
+                    autoBackupIncludeSettings = state.autoBackupIncludeSettings.value,
+                    onAutoBackupIncludeSettingsChange = onAutoBackupIncludeSettingsChange,
+                    autoBackupIncludePlugins = state.autoBackupIncludePlugins.value,
+                    onAutoBackupIncludePluginsChange = onAutoBackupIncludePluginsChange,
+                    autoBackupLastTimestamp = state.autoBackupLastTimestamp.value,
+                )
+            },
+        ),
+        SettingsGroupSpec(
+            group = SettingsGroup.Translation,
+            title = SettingsGroup.Translation.label(),
+            summary = SettingsGroup.Translation.hint(),
+            icon = Icons.Outlined.Translate,
+            keywords = listOf(
+                "translate", "translation", "gemini", "openai", "prompt", "api key",
+                "model", "regex", "cleanup", "batch",
+            ),
+            accent = palette.primary,
+            content = {
+                SettingsGeminiTranslation(
+                    translationProvider = state.translationProvider.value,
+                    onTranslationProviderChange = onTranslationProviderChange,
+                    translationGlobalMode = state.translationGlobalMode.value,
+                    onTranslationGlobalModeChange = onTranslationGlobalModeChange,
+                    hasGlobalPair = state.hasGlobalPair.value,
+                    geminiApiKey = state.geminiApiKey.value,
+                    geminiModel = state.geminiModel.value,
+                    googlePaApiKeys = state.googlePaApiKeys.value,
+                    openAiBaseUrl = state.openAiBaseUrl.value,
+                    openAiApiKeys = state.openAiApiKeys.value,
+                    openAiModel = state.openAiModel.value,
+                    activeSystemPrompt = state.activeSystemPrompt.value,
+                    promptPresets = state.promptPresets.value,
+                    promptUseEnglishLocale = state.promptUseEnglishLocale.value,
+                    onGeminiApiKeyChange = onGeminiApiKeyChange,
+                    onGeminiModelChange = onGeminiModelChange,
+                    onGooglePaApiKeysChange = onGooglePaApiKeysChange,
+                    onOpenAiBaseUrlChange = onOpenAiBaseUrlChange,
+                    onOpenAiApiKeysChange = onOpenAiApiKeysChange,
+                    onOpenAiModelChange = onOpenAiModelChange,
+                    onActiveSystemPromptChange = onActiveSystemPromptChange,
+                    onPromptUseEnglishLocaleChange = onPromptUseEnglishLocaleChange,
+                    onSavePreset = onSavePreset,
+                    onDeletePreset = onDeletePreset,
+                    llmBatchSize = state.llmBatchSize.value,
+                    llmMaxOutputTokens = state.llmMaxOutputTokens.value,
+                    onLlmBatchSizeChange = onLlmBatchSizeChange,
+                    onLlmMaxOutputTokensChange = onLlmMaxOutputTokensChange,
+                    novelPromptCount = state.translationNovelPrompts.value.size,
+                    onNovelPromptsClick = { showNovelPromptsDialog.value = true },
+                )
+                HorizontalDivider(color = NovelaTheme.colors.hairline)
+                SettingsRegexCleanup(onNavigateToRegexCleanup = onNavigateToRegexCleanup)
+            },
+        ),
+        SettingsGroupSpec(
+            group = SettingsGroup.Network,
+            title = SettingsGroup.Network.label(),
+            summary = SettingsGroup.Network.hint(),
+            icon = Icons.Outlined.Public,
+            keywords = listOf("network", "user agent", "cloudflare", "timeout", "delay", "mass add"),
+            accent = palette.tertiary,
+            content = {
+                val context = LocalContext.current
+                SettingsNetwork(
+                    context = context,
+                    scraperUserAgent = state.scraperUserAgent,
+                    cloudflareBypassEnabled = state.cloudflareBypassEnabled,
+                    cloudflareChallengeTimeoutSeconds = state.cloudflareChallengeTimeoutSeconds,
+                    massAddDelayMs = state.massAddDelayMs,
+                    onMassAddDelayChange = onMassAddDelayChange,
+                    downloadDelayMs = state.downloadDelayMs,
+                    onDownloadDelayChange = onDownloadDelayChange,
+                )
+            },
+        ),
+        SettingsGroupSpec(
+            group = SettingsGroup.Support,
+            title = SettingsGroup.Support.label(),
+            summary = SettingsGroup.Support.hint(),
+            icon = Icons.Outlined.FavoriteBorder,
+            keywords = listOf("support", "about", "donate", "telegram", "github", "credits", "version", "logs"),
+            accent = palette.error,
+            content = {
+                SettingsSupport(onExportLogs = onExportLogs)
+                HorizontalDivider(color = NovelaTheme.colors.hairline)
+                SettingsAbout(appVersion = state.appVersion)
+            },
+        ),
+    )
+
+    val visibleSpecs = remember(specs, searchQuery.value, expanded) {
+        specs.filter { (groups == null || it.group in groups) && matches(it) }
+    }
 
     Column(
-        modifier = modifier.verticalScroll(rememberScrollState()),
+        modifier = modifier
+            .fillMaxWidth()
+            .verticalScroll(rememberScrollState())
+            .padding(top = NovelaSpacing.sm),
+        verticalArrangement = Arrangement.spacedBy(NovelaSpacing.xs),
     ) {
-        val currentLanguageObj = remember(state.currentLanguage.value) {
-            AppLanguageProvider.fromCode(state.currentLanguage.value)
-                ?: AppLanguageProvider.supportedLanguages.first()
-        }
-        SettingsLanguage(
-            currentLanguage = currentLanguageObj,
-            onLanguageChange = onLanguageChange,
-        )
-        HorizontalDivider()
-        SettingsTheme(
-            currentAppTheme = state.currentAppTheme.value,
-            currentDarkMode = state.currentDarkMode.value,
-            onAppThemeChange = onAppThemeSelected,
-            onDarkModeChange = onDarkModeSelected,
-        )
-        HorizontalDivider()
-        SettingsData(
-            databaseSize = state.databaseSize.value,
-            imagesFolderSize = state.imageFolderSize.value,
-            novelCacheSize = state.novelCacheSize.value,
-            mangaCacheSize = state.mangaCacheSize.value,
-            offlineVideoSize = state.offlineVideoSize.value,
-            isCleaningDatabase = state.isCleaningDatabase.value,
-            isCleaningImages = state.isCleaningImages.value,
-            isCleaningNovelCache = state.isCleaningNovelCache.value,
-            isCleaningMangaCache = state.isCleaningMangaCache.value,
-            isCleaningOfflineVideo = state.isCleaningOfflineVideo.value,
-            onRequestCleanDatabase = onRequestCleanDatabase,
-            onRequestCleanImageFolder = onRequestCleanImageFolder,
-            onRequestCleanNovelCache = onRequestCleanNovelCache,
-            onRequestCleanMangaCache = onRequestCleanMangaCache,
-            onRequestCleanOfflineVideo = onRequestCleanOfflineVideo,
-        )
-        HorizontalDivider()
-        val context = LocalContext.current
-        SettingsNetwork(
-            context = context,
-            scraperUserAgent = state.scraperUserAgent,
-            cloudflareBypassEnabled = state.cloudflareBypassEnabled,
-            cloudflareChallengeTimeoutSeconds = state.cloudflareChallengeTimeoutSeconds,
-            massAddDelayMs = state.massAddDelayMs,
-            onMassAddDelayChange = onMassAddDelayChange,
-            downloadDelayMs = state.downloadDelayMs,
-            onDownloadDelayChange = onDownloadDelayChange
-        )
-        HorizontalDivider()
-        SettingsBackup(
-            onBackupData = onBackupData,
-            onRestoreData = onRestoreData,
-            autoBackupEnabled = state.autoBackupEnabled.value,
-            onAutoBackupEnabledChange = onAutoBackupEnabledChange,
-            autoBackupDirectoryUri = state.autoBackupDirectoryUri.value,
-            autoBackupDirectoryDisplayName = state.autoBackupDirectoryDisplayName.value,
-            onAutoBackupSelectDirectory = onAutoBackupSelectDirectory,
-            autoBackupMaxCount = state.autoBackupMaxCount.value,
-            onAutoBackupMaxCountChange = onAutoBackupMaxCountChange,
-            autoBackupIntervalMinutes = state.autoBackupIntervalMinutes.value,
-            onAutoBackupIntervalMinutesChange = onAutoBackupIntervalMinutesChange,
-            autoBackupIncludeImages = state.autoBackupIncludeImages.value,
-            onAutoBackupIncludeImagesChange = onAutoBackupIncludeImagesChange,
-            autoBackupIncludeSettings = state.autoBackupIncludeSettings.value,
-            onAutoBackupIncludeSettingsChange = onAutoBackupIncludeSettingsChange,
-            autoBackupIncludePlugins = state.autoBackupIncludePlugins.value,
-            onAutoBackupIncludePluginsChange = onAutoBackupIncludePluginsChange,
-            autoBackupLastTimestamp = state.autoBackupLastTimestamp.value,
-        )
-        SettingsGeminiTranslation(
-                translationProvider            = state.translationProvider.value,
-                onTranslationProviderChange    = onTranslationProviderChange,
-                translationGlobalMode          = state.translationGlobalMode.value,
-                onTranslationGlobalModeChange  = onTranslationGlobalModeChange,
-                hasGlobalPair                  = state.hasGlobalPair.value,
-                geminiApiKey                   = state.geminiApiKey.value,
-                geminiModel                    = state.geminiModel.value,
-                googlePaApiKeys                = state.googlePaApiKeys.value,
-                openAiBaseUrl                  = state.openAiBaseUrl.value,
-                openAiApiKeys                  = state.openAiApiKeys.value,
-                openAiModel                    = state.openAiModel.value,
-                activeSystemPrompt             = state.activeSystemPrompt.value,
-                promptPresets                  = state.promptPresets.value,
-                promptUseEnglishLocale         = state.promptUseEnglishLocale.value,
-                onGeminiApiKeyChange           = onGeminiApiKeyChange,
-                onGeminiModelChange            = onGeminiModelChange,
-                onGooglePaApiKeysChange        = onGooglePaApiKeysChange,
-                onOpenAiBaseUrlChange          = onOpenAiBaseUrlChange,
-                onOpenAiApiKeysChange          = onOpenAiApiKeysChange,
-                onOpenAiModelChange            = onOpenAiModelChange,
-                onActiveSystemPromptChange     = onActiveSystemPromptChange,
-                onPromptUseEnglishLocaleChange = onPromptUseEnglishLocaleChange,
-                onSavePreset                   = onSavePreset,
-                onDeletePreset                 = onDeletePreset,
-                llmBatchSize                   = state.llmBatchSize.value,
-                llmMaxOutputTokens             = state.llmMaxOutputTokens.value,
-                onLlmBatchSizeChange           = onLlmBatchSizeChange,
-                onLlmMaxOutputTokensChange     = onLlmMaxOutputTokensChange,
-                novelPromptCount               = state.translationNovelPrompts.value.size,
-                onNovelPromptsClick            = { showNovelPromptsDialog.value = true },
+        if (!expanded) {
+            SettingsSearchField(
+                query = searchQuery.value,
+                onQueryChange = { searchQuery.value = it },
+                onClear = { searchQuery.value = "" },
+                suggestions = listOf("Theme", "Translation", "Backup", "Cloudflare"),
+                modifier = Modifier.padding(bottom = NovelaSpacing.sm),
             )
-        SettingsRegexCleanup(
-            onNavigateToRegexCleanup = onNavigateToRegexCleanup
-        )
-        HorizontalDivider()
-        LibraryAutoUpdate(state = state.libraryAutoUpdate)
-        HorizontalDivider()
-        AppUpdates(
-            state = state.updateAppSetting,
-            onCheckForUpdatesManual = onCheckForUpdatesManual
-        )
-        HorizontalDivider()
-        SettingsSupport(
-            onExportLogs = onExportLogs,
-        )
-        HorizontalDivider()
-        SettingsAbout(
-            appVersion = state.appVersion,
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = "(°.°)",
-            modifier = Modifier
-                .padding(20.dp)
-                .fillMaxWidth(),
-            fontFamily = FontFamily.Monospace,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
-            textAlign = TextAlign.Center
-        )
-        Spacer(modifier = Modifier.height(120.dp))
+        }
+        visibleSpecs.forEach { spec ->
+            SettingsGroupCard(
+                title = spec.title,
+                icon = spec.icon,
+                accent = spec.accent,
+                summary = if (expanded) null else spec.summary,
+                expanded = expanded,
+                onClick = if (expanded) null else {
+                    { onOpenGroup(spec.group) }
+                },
+            ) {
+                spec.content()
+            }
+        }
+        if (!expanded && visibleSpecs.isEmpty()) {
+            NovelaEmptyState(
+                icon = Icons.Outlined.Search,
+                title = "Nothing matches that",
+                message = "Nothing here matches that. Try one of: theme, backup, translation, cache.",
+                modifier = Modifier.padding(top = NovelaSpacing.xl),
+            )
+        }
+        if (!expanded) {
+            // The mascot stays, as a quiet closer under the boxes.
+            Text(
+                text = "(°.°)",
+                modifier = Modifier
+                    .padding(top = NovelaSpacing.lg)
+                    .fillMaxWidth(),
+                fontFamily = FontFamily.Monospace,
+                fontWeight = FontWeight.Bold,
+                color = palette.primary.copy(alpha = 0.8f),
+                textAlign = TextAlign.Center,
+            )
+        }
+        Spacer(modifier = Modifier.height(NovelaSpacing.navBarClearance))
     }
 
     if (showNovelPromptsDialog.value) {
@@ -319,7 +465,6 @@ internal fun SettingsScreenBody(
         )
     }
 }
-
 
 @PreviewThemes
 @Composable

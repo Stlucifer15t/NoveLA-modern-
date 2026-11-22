@@ -14,7 +14,6 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -39,6 +38,7 @@ import my.noveldokusha.coreui.theme.colorAccent
 import my.noveldokusha.coreui.theme.textPadding
 import my.noveldokusha.network.interceptors.UAPresets
 import my.noveldokusha.settings.R
+import my.noveldokusha.settings.ui.ExpressiveSwitch
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -179,16 +179,12 @@ internal fun SettingsNetwork(
                 Icon(Icons.Outlined.Security, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
             },
             trailingContent = {
-                androidx.compose.material3.Switch(
+                ExpressiveSwitch(
                     checked = cloudflareBypassEnabled.value,
                     onCheckedChange = {
                         cloudflareBypassEnabled.value = it
                         // Note: Requires app restart to take effect
-                    },
-                    colors = androidx.compose.material3.SwitchDefaults.colors(
-                        checkedThumbColor = colorAccent(),
-                        checkedTrackColor = colorAccent().copy(alpha = 0.4f),
-                    )
+                    }
                 )
             }
         )
@@ -291,13 +287,13 @@ internal fun SettingsNetwork(
             },
             onClick = {
                 if (isIgnoringBatteryOptimizations.value) {
-                    // Оптимизация уже отключена — открываем настройки приложения
+                    // Battery optimisation is already off — open the app settings screen
                     val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
                         data = Uri.parse("package:${context.packageName}")
                     }
                     context.startActivity(intent)
                 } else {
-                    // Оптимизация включена — запрашиваем отключение
+                    // Battery optimisation is on — ask the system to disable it
                     val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
                         data = Uri.parse("package:${context.packageName}")
                     }

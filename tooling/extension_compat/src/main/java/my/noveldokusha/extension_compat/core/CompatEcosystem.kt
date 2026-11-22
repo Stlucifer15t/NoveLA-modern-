@@ -1,16 +1,16 @@
 package my.noveldokusha.extension_compat.core
 
 /**
- * Экосистемы расширений, поддерживаемые compat-слоем.
- * Каждая экосистема имеет свой формат хранения, рантайм и набор API,
- * который адаптер переводит в [my.noveldokusha.scraper.SourceInterface].
+ * Extension ecosystems supported by the compat layer.
+ * Every ecosystem has its own storage format, runtime and API surface,
+ * which an adapter translates into [my.noveldokusha.scraper.SourceInterface].
  */
 enum class CompatEcosystem(
-    /** Стабильный идентификатор для storage/DI/UI. */
+    /** Stable identifier for storage/DI/UI. */
     val id: String,
-    /** Человекочитаемое имя для UI и диагностики. */
+    /** Human-readable name for UI and diagnostics. */
     val displayName: String,
-    /** MIME/расширения файлов, характерные для этой экосистемы. */
+    /** File extensions typical for this ecosystem. */
     val fileExtensions: List<String>,
 ) {
     TACHIYOMI(
@@ -51,29 +51,29 @@ enum class CompatEcosystem(
 }
 
 /**
- * Явные возможности источника. Источник объявляет только то, что реально умеает —
- * manga-источник не обязан реализовывать видео-API и наоборот
- * (см. SourceInterface.getVideoList: null = «не видео-источник»).
+ * Explicit source capabilities. A source declares only what it really supports —
+ * a manga source is not obliged to implement the video API and vice versa
+ * (see SourceInterface.getVideoList: null = "not a video source").
  */
 enum class CompatCapability {
-    /** Каталог «популярное». */
+    /** "Popular" catalog. */
     POPULAR,
-    /** Каталог «последнее». */
+    /** "Latest" catalog. */
     LATEST,
-    /** Поиск. */
+    /** Search. */
     SEARCH,
-    /** Фильтры каталога. */
+    /** Catalog filters. */
     FILTERS,
-    /** Детали книги/манги. */
+    /** Book/manga details. */
     DETAILS,
-    /** Список глав. */
+    /** Chapter list. */
     CHAPTERS,
-    /** Текст главы (новелла). */
+    /** Chapter text (novel). */
     CHAPTER_TEXT,
-    /** Список страниц (манга). */
+    /** Page list (manga). */
     PAGES,
-    /** Видеопотоки (эпизоды). */
+    /** Video streams (episodes). */
     VIDEO,
-    /** Пользовательские настройки источника. */
+    /** User-facing source preferences. */
     PREFERENCES,
 }

@@ -10,8 +10,6 @@ import androidx.compose.material.icons.outlined.DoubleArrow
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -24,6 +22,7 @@ import my.noveldokusha.coreui.theme.textPadding
 import my.noveldokusha.settings.R
 import my.noveldokusha.settings.SettingsScreenState
 import my.noveldokusha.settings.views.NewAppUpdateDialog
+import my.noveldokusha.settings.ui.ExpressiveSwitch
 
 @Composable
 internal fun AppUpdates(
@@ -52,15 +51,11 @@ internal fun AppUpdates(
                 )
             },
             trailingContent = {
-                Switch(
+                ExpressiveSwitch(
                     checked = state.appUpdateCheckerEnabled.value,
                     onCheckedChange = {
                         state.appUpdateCheckerEnabled.value = !state.appUpdateCheckerEnabled.value
-                    },
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = colorAccent(),
-                        checkedTrackColor = colorAccent().copy(alpha = 0.4f),
-                    )
+                    }
                 )
             }
         )

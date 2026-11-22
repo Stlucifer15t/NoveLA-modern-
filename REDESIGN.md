@@ -155,6 +155,9 @@ Presentation only — no business logic:
    `features/reader/.../settingDialogs/StyleSettingDialog.kt`. Adding one theme
    requires editing three files. This is why the extended palette in
    `NovelaColors.kt` derives everything from `MaterialTheme.colorScheme` instead.
+   The settings screen no longer contributes to it: seven switches that each spelled
+   out `SwitchDefaults.colors(checkedThumbColor = colorAccent(), …)` now go through
+   `ExpressiveSwitch` in `features/settings/ui/SettingsKit.kt`.
 2. **Dead components:** `Section`, `RoundedContentLayout`, `SingleChoiceToggle` have
    no call sites outside their own previews.
 3. **Reader theme plumbing is inert.** `ReaderTheme.kt` and the eight reader colors on
@@ -179,3 +182,65 @@ Presentation only — no business logic:
 
 All additive. Existing components keep their public signatures so untouched screens
 continue to compile and behave identically.
+
+---
+
+## 8. Settings & Extensions pass (second rebrand round)
+
+Research input: current Android 16 / Material 3 Expressive settings guidance — grouped
+cards with a labelled icon chip instead of a flat divider list, larger round touch
+targets, state shown by shape (check/cross in the switch thumb) and not by colour
+alone, and search that filters whole groups once a page grows past ~30 destinations.
+
+| File | Contents |
+|---|---|
+| `features/settings/ui/SettingsKit.kt` | `SettingsGroupCard` (tinted icon chip, title, optional summary, animated `visible`), `SettingsSearchField` (pill field + suggestion chips), `ExpressiveSwitch`, `SettingsCaret`, `SettingsInnerLabel`, `SettingsRowPadding` |
+| `features/settings/SettingsScreenBody.kt` | 11 sections in 7 labelled cards; one search field filters at card granularity, visibility computed once so cards and the empty state cannot disagree |
+| `features/extensions/ExtensionsScreen.kt` | `NovelaSectionHeader` with live counts and the "Update all" action in the header row, `NovelaFilterChip`, `NovelaTopProgress`; language/type/search filters are `remember`ed instead of recomputed per keystroke; two dead `.filter { true }` placeholders removed |
+| `features/extensions/CompatExtensionsScreen.kt` | The repository dialog body is one `LazyColumn`: a Mihon index with a thousand sources no longer composes every row at once |
+
+Behaviour was deliberately not touched: every section composable keeps its own
+view-model wiring, and the compat entry point still opens the same dialog.
+
+### 8b. Two-level settings, the tile board, and the row groups (third round)
+
+Requested shape: Settings as "clickable boxes with the respective settings inside", and
+Browse/Extensions as cards rather than a stock source list. The two references describe
+two *different* structures, and they were applied to different screens on purpose: Browse
+is a board of tiles (you pick a thing), the secondary screen is a header with counters and
+labelled groups of rows (you act on things).
+
+| Change | Notes |
+|---|---|
+| `SettingsGroupSpec` + one list, two renderings | `SettingsScreenBody` builds seven specs (title, icon, accent, keywords, sections-lambda) and renders them header-only on the Settings tab or expanded inside `SettingsGroupActivity`. Sections exist once, so a setting cannot be present on one level and missing on the other |
+| `SettingsGroupActivity` | opened through `NavigationRoutes.settingsGroup(groupKey)`, the same intent-style route as `regexRules`; an unknown key finishes instead of rendering an empty page. Group title + summary come from `settings_group_*` (+ seven new `*_hint` lines) so both levels label a group identically |
+| `coreui/components/NovelaTile.kt` | `novelaTileAccent(seed)` (four *scheme* colours, cycled by a stable hash — never literals, so themes repaint), `NovelaTileCard`, `NovelaIconChip` (square, "a thing you open"), `NovelaCircleIcon` (round, "a row you act on"), `NovelaTileBadge`, `NovelaTileActionButton`, `NovelaTileIconButton`, `NovelaStatCard`, `NovelaCardGroup` + `NovelaCardGroupDivider`, `NovelaHeroHeader`, `NovelaHeroPill` |
+| Browse | 2-column `LazyVerticalGrid`: hero header with the source count, database tiles, then source tiles. Pinned sources sort first. Config / translate / pin live in the tile's corner, and the text reserves that corner instead of competing with a trailing button column |
+| Extensions | hero header + a strip of three counters (installed / available / updates, computed from the same filtered lists the groups render) + "Installed"/"Available" groups as single cards with hairline rows. `ExtensionRow` keeps the old row's state machine exactly — installing / update / edit+reset+uninstall / install — and adds no fake actions: `ExtensionInfo` has no pin, so there is no pin button here |
+
+### 8c. Debug vs release, measured
+
+The complaint was lag on the debug install. `app/build.gradle.kts` explains part of it:
+debug has no R8, no resource shrinking and runs debuggable, unoptimised bytecode.
+
+`.github/workflows/release.yml` assembles the **release** variant from the same commit and
+asserts the certificate is the bundled key. It exists next to `buildRelease.yml` /
+`nightly.yml` rather than replacing them: those two are dispatch-only or default-branch
+and pass `-PlocalPropertiesFilePath=custom.properties`, which no clone of this repository
+has, so neither produced an APK for a branch build. First run of `release.yml`, commit
+`ceb2032`:
+
+| Artifact | Size |
+|---|---|
+| `NoveLA-ci-debug-…` | 40 278 101 B |
+| `NoveLA-release-…` | 8 290 817 B |
+
+So the release APK is 4.9× smaller than the debug one and is the build to judge smoothness
+with. What this does *not* prove: that R8 keeps the runtime-loaded extension paths intact —
+`assembleRelease` compiling and signing is not the same as an installed run, and the release
+APK still needs a pass on the device (install a source, open a chapter).
+
+Known gaps carried forward honestly: the references' "For You" tab, the "More" tab with
+reading-stat chips, the level/streak pills, and the "57 genres" figure do not exist in this
+codebase — there is no per-source genre count, reading-time or streak data to render. Nothing
+was faked for them; the counters that *are* shown are real counts of what is listed below them.

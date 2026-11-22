@@ -18,6 +18,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonObject
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.jsoup.Jsoup
@@ -28,10 +29,10 @@ import java.nio.charset.Charset
 import java.net.URLEncoder
 
 /**
- * Адаптер bookSource из экосистемы Legado под [SourceInterface.Catalog] NoveLA.
+ * Adapts a Legado bookSource to NoveLA's [SourceInterface.Catalog].
  *
- * Сетевые запросы идут через [NetworkClient] — Cloudflare-интерцепторы и
- * cookie-jar применяются так же, как для собственных Lua-источников.
+ * Requests go through [NetworkClient] — Cloudflare interceptors and the
+ * cookie jar apply just like for first-party Lua sources.
  */
 class LegadoSourceAdapter(
     private val bookSource: LegadoBookSource,
@@ -59,7 +60,7 @@ class LegadoSourceAdapter(
     override val language: LanguageCode? = null
     override val iconUrl: String? = null
 
-    // ── Каталог / поиск ──────────────────────────────────────────────────────
+    // ── Catalog / search ───────────────────────────────────────────────────────
 
     override suspend fun getCatalogList(index: Int): Response<PagedList<BookResult>> =
         withContext(Dispatchers.IO) {
@@ -105,7 +106,7 @@ class LegadoSourceAdapter(
             }
         }
 
-    // ── ОГЛ / главы / содержимое ────────────────────────────────────────────
+    // ── Table of contents / chapters / content ────────────────────────────────
 
     override suspend fun getChapterList(bookUrl: String): Response<List<ChapterResult>> =
         withContext(Dispatchers.IO) {
@@ -263,7 +264,7 @@ class LegadoSourceAdapter(
         }
     }
 
-    // ── Вспомогательное ──────────────────────────────────────────────────────
+    // ── Helpers ────────────────────────────────────────────────────────────────
 
     private data class SearchRequest(
         val url: String,

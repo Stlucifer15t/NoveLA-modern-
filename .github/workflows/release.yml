@@ -1,0 +1,108 @@
+name: Release APK
+
+# A debug build answers "does the UI feel slow?" with "probably, but not necessarily" —
+# it is not minified, not resource-shrunk and runs debuggable bytecode, so the release
+# variant is the only honest measurement. This workflow produces that APK from the same
+# commit CI just compiled, signed with the key bundled in the repository.
+#
+# Separate workflow on purpose: a release failure (R8, lint, a shrinker rule the compat
+# layer needs) must not turn the branch's CI gate red, and CI's gate must not be the only
+# way to get an installable build.
+
+on:
+  push:
+    branches:
+      - '**'
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Branch, tag or SHA to build'
+        required: false
+        default: ''
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release:
+    name: Assemble release APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+
+      - name: Set up JDK environment
+        uses: actions/setup-java@v6
+        with:
+          distribution: 'temurin'
+          java-version: 21
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6.3.0
+
+      # A developer's org.gradle.java.home does not exist on the runner.
+      - name: Remove local Java home from gradle.properties
+        run: sed -i '/org\.gradle\.java\.home/d' gradle.properties
+
+      - name: Assemble release APK
+        id: assemble
+        run: |
+          set -o pipefail
+          ./gradlew :app:assembleRelease --stacktrace --console=plain 2>&1 | tee /tmp/release-output.log
+
+      - name: Verify the certificate is the bundled one
+        # The whole point of keystore/novela-release.p12 is that a build from any machine
+        # can update an existing install. A silent fallback to the debug certificate would
+        # make the artifact uninstallable-over-every-other, so this is checked, not assumed.
+        if: steps.assemble.outcome == 'success'
+        run: |
+          APK=$(find app/build/outputs/apk/release -name '*.apk' | head -n1)
+          [ -n "$APK" ] || { echo "no release APK produced"; exit 1; }
+          echo "APK=$APK" >> "$GITHUB_ENV"
+          BUILD_TOOLS=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -n1)
+          OUT=$("$BUILD_TOOLS/apksigner" verify --print-certs "$APK")
+          echo "$OUT" | head -20
+          WANT=$(openssl pkcs12 -in keystore/novela-release.p12 -passin pass: -nokeys \
+            | openssl x509 -noout -fingerprint -sha256 | cut -d= -f2 | tr -d ':')
+          GOT=$(echo "$OUT" | sed -n 's/^V3.0 (APK Signature Scheme v3) Signer #1 certificate SHA-256 digest: //p')
+          echo "bundled key: $WANT"
+          echo "apk signer : $GOT"
+          if [ -n "$GOT" ] && [ "$GOT" != "$WANT" ]; then
+            echo "::error file=keystore/novela-release.p12::release APK is signed with a different certificate than the bundled key"
+            exit 1
+          fi
+
+      - name: Publish errors as annotations
+        # Same trick as CI: the raw gradle report is not reachable from every tool, so
+        # the failing lines are attached to the run itself.
+        if: failure()
+        run: |
+          LOG=/tmp/release-output.log
+          [ -f "$LOG" ] || exit 0
+          grep -E "^e: |^> Task .*FAILED|FAILURE:|Execution failed" "$LOG" | awk 'NR<=25' | while IFS= read -r line; do
+            echo "::error::${line}"
+          done
+
+      - name: Upload the release log
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: release-build-log-${{ github.sha }}
+          path: /tmp/release-output.log
+          if-no-files-found: ignore
+
+      - name: Upload the release APK
+        if: steps.assemble.outcome == 'success'
+        uses: actions/upload-artifact@v6
+        with:
+          name: NoveLA-release-${{ github.sha }}
+          path: ${{ env.APK }}
+          if-no-files-found: warn

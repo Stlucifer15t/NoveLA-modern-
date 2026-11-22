@@ -8,8 +8,8 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Диагностика compat-загрузки и вызовов: ошибки изоляциии per-source,
- * таймауты, отчёт о совместимости для UI (экран Расширения → диагностика).
+ * Diagnostics for compat loading and calls: per-source error isolation,
+ * timeouts and a compatibility report for the UI (Extensions → diagnostics).
  */
 @Singleton
 class CompatDiagnostics @Inject constructor() {
@@ -45,7 +45,7 @@ class CompatDiagnostics @Inject constructor() {
             timedOut = timedOut,
         )
         val current = _errors.value
-        // Ограничиваем историю, держим последние 100
+        // Keep the history bounded: last 100 entries
         _errors.value = (current + entry).takeLast(100)
     }
 
@@ -54,7 +54,7 @@ class CompatDiagnostics @Inject constructor() {
         else _errors.value.filterNot { it.sourceId == sourceId }
     }
 
-    /** Обновить строку отчёта для экосистемы (например « Legado: 12 sources, 2 errors»). */
+    /** Update the report line of an ecosystem (e.g. "Legado: 12 sources, 2 errors"). */
     fun setReportLine(ecosystem: CompatEcosystem, line: String) {
         _compatReport.value = _compatReport.value + (ecosystem.id to line)
     }
@@ -65,12 +65,12 @@ class CompatDiagnostics @Inject constructor() {
 }
 
 /**
- * Ошибки compat-слоя, отделённые от обычных сетевых ошибок источника.
+ * Compat-layer errors, kept apart from ordinary per-source network errors.
  */
 open class CompatException(
     message: String,
     cause: Throwable? = null,
-    /** Операция: "load", "search", "details", "chapters", "pages", "video"... */
+    /** Operation: "load", "search", "details", "chapters", "pages", "video"... */
     val operation: String = "load",
 ) : Exception(message, cause)
 
@@ -78,10 +78,10 @@ class CompatTimeoutException(operation: String, timeoutMs: Long) :
     CompatException("Compat operation '$operation' timed out after ${timeoutMs}ms", operation = operation)
 
 object CompatTimeouts {
-    /** Загрузка/инициализация источника (dex/JS engine). */
+    /** Source load/initialization (dex/JS engine). */
     const val LOAD_MS = 30_000L
-    /** Одна сетевая операция источника (search/details/...). */
+    /** One network operation of a source (search/details/...). */
     const val OPERATION_MS = 30_000L
-    /** Извлечение видео (может быть тяжёлым: несколько хостеров). */
+    /** Video extraction (can be heavy: several hosts). */
     const val VIDEO_MS = 45_000L
 }

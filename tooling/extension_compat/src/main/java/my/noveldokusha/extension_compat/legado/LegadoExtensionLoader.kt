@@ -14,8 +14,8 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Загрузчик Legado bookSource: payload — JSON одного bookSource или массива.
- * Один record может содержать массив — создаётся по одному источнику на bookSource.
+ * Legado bookSource loader: the payload is one bookSource JSON or an array.
+ * One record may hold an array — each bookSource becomes its own source.
  */
 @Singleton
 class LegadoExtensionLoader @Inject constructor(

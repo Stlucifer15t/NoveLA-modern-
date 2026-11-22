@@ -1,6 +1,11 @@
 plugins {
     alias(libs.plugins.noveldokusha.android.library)
     alias(libs.plugins.kotlin.serialization)
+    // CompatModule (Hilt @InstallIn + @IntoSet bindings) needs the annotation
+    // processor in THIS module: without it the generated factories never exist,
+    // :app sees no bindings and dies with Dagger/MissingBinding at hiltJavaCompileDebug.
+    alias(libs.plugins.hilt)
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -28,6 +33,8 @@ dependencies {
     implementation(libs.jsoup)
     implementation(libs.gson)
     implementation(libs.timber)
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
 
     // Legado rule engine: XPath/JSONPath/@js evaluation
     implementation(libs.rhino)

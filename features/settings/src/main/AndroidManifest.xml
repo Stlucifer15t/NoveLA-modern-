@@ -5,6 +5,9 @@
 		<activity
 			android:name="my.noveldokusha.settings.RegexRulesActivity"
 			android:exported="false" />
+		<activity
+			android:name="my.noveldokusha.settings.SettingsGroupActivity"
+			android:exported="false" />
 	</application>
 
 </manifest>

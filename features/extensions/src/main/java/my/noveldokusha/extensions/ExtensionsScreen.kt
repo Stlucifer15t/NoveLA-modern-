@@ -1,5 +1,31 @@
 package my.noveldokusha.extensions
 
+import my.noveldokusha.coreui.components.NovelaStatCard
+import my.noveldokusha.coreui.components.NovelaCardGroupDivider
+import my.noveldokusha.coreui.components.NovelaCardGroup
+import my.noveldokusha.coreui.components.NovelaCircleIcon
+import androidx.compose.foundation.shape.CircleShape
+import my.noveldokusha.coreui.components.NovelaTileActionButton
+import my.noveldokusha.coreui.components.NovelaTileIconButton
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.material.icons.outlined.Extension
+import my.noveldokusha.coreui.components.NovelaHeroHeader
+import my.noveldokusha.coreui.components.NovelaHeroPill
+import androidx.compose.material3.HorizontalDivider
+import my.noveldokusha.coreui.components.NovelaIconChip
+import my.noveldokusha.coreui.components.NovelaTileBadge
+import my.noveldokusha.coreui.components.NovelaTileCard
+import my.noveldokusha.coreui.components.novelaTileAccent
+import my.noveldokusha.coreui.theme.NovelaSpacing
+import my.noveldokusha.coreui.theme.NovelaTheme
+import my.noveldokusha.coreui.theme.NovelaType
+import my.noveldokusha.coreui.components.NovelaFilterChip
+import my.noveldokusha.coreui.components.NovelaSectionHeader
+import my.noveldokusha.coreui.components.NovelaTopProgress
+import my.noveldokusha.coreui.theme.NovelaRadius
 import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -47,7 +73,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.OutlinedTextField
-import my.noveldokusha.coreui.theme.colorAccent
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -79,7 +104,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import my.noveldokusha.coreui.R
 import my.noveldokusha.strings.R as StringsR
-
 
 @Composable
 fun ExtensionsScreen(
@@ -116,6 +140,7 @@ private fun UnifiedExtensionsScreen(
     @Suppress("UNUSED_PARAMETER") onRefresh: (() -> Unit)? = null,
     onImportLua: () -> Unit = {}
 ) {
+    var showCompatRepos by rememberSaveable { mutableStateOf(false) }
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -134,6 +159,16 @@ private fun UnifiedExtensionsScreen(
                 }
             }
             else -> {
+// Compat repositories (Legado JSON, Mihon/keiyoushi, LNReader, Mangayomi):
+// a second supplier of the source list, next to the Lua plugins.
+                val compatViewModel: CompatExtensionsViewModel = hiltViewModel()
+                val compatState by compatViewModel.state.collectAsStateWithLifecycle()
+                CompatReposSummaryRow(
+                    repos = compatState.repositories.size,
+                    installed = compatState.installed.size,
+                    refreshable = compatState.isRefreshing,
+                    onClick = { showCompatRepos = true },
+                )
                 if (state.error != null) {
                     OutlinedCard(
                         modifier = Modifier
@@ -160,10 +195,19 @@ private fun UnifiedExtensionsScreen(
                 }
                 val localExtensionDesc = stringResource(my.noveldokusha.strings.R.string.local_extension_description)
                 val localExtensionAuthor = stringResource(my.noveldokusha.strings.R.string.extension_author_local)
-                val filteredExtensions = state.availableExtensions
-                    .filter { state.selectedLanguages.isEmpty() || it.language in state.selectedLanguages }
-                    .filter { state.selectedContentType.isEmpty() || it.contentType == state.selectedContentType || (state.selectedContentType == "novel" && it.contentType.isEmpty()) }
-                    .filter { true } // Ecosystem filter removed - no compat layer yet
+                val filteredExtensions = remember(
+                    state.availableExtensions,
+                    state.selectedLanguages,
+                    state.selectedContentType,
+                ) {
+                    state.availableExtensions
+                        .filter { state.selectedLanguages.isEmpty() || it.language in state.selectedLanguages }
+                        .filter {
+                            state.selectedContentType.isEmpty() ||
+                                it.contentType == state.selectedContentType ||
+                                (state.selectedContentType == "novel" && it.contentType.isEmpty())
+                        }
+                }
 
                 val localInstalledExtensions = remember(state.extensions, state.availableExtensions, state.selectedLanguages, state.selectedContentType) {
                     val ids = filteredExtensions.map { it.id }.toSet()
@@ -171,7 +215,6 @@ private fun UnifiedExtensionsScreen(
                         .filter { it.id !in ids }
                         .filter { state.selectedLanguages.isEmpty() || it.language in state.selectedLanguages }
                         .filter { state.selectedContentType.isEmpty() || it.contentType == state.selectedContentType || (state.selectedContentType == "novel" && it.contentType.isEmpty()) }
-                        .filter { true } // Ecosystem filter removed - no compat layer yet
                         .map { installed ->
                             ExtensionInfo(
                                 id = installed.id,
@@ -248,10 +291,9 @@ private fun UnifiedExtensionsScreen(
                                 }
                             }
                         },
-                        singleLine = true
+                        singleLine = true,
+                        shape = RoundedCornerShape(NovelaRadius.lg),
                     )
-
-                    // Ecosystem filter chips removed - no compat layer yet
 
                     // Content type filter chips
                     Row(
@@ -267,29 +309,35 @@ private fun UnifiedExtensionsScreen(
                             "video" to stringResource(StringsR.string.content_type_video),
                         )
                         contentTypeOptions.forEach { (value, label) ->
-                            FilterChip(
+                            NovelaFilterChip(
+                                label = label,
                                 selected = state.selectedContentType == value,
-                                onClick = { viewModel.onEvent(ExtensionsScreenEvent.OnContentTypeFilterToggle(value)) },
-                                label = { Text(label) },
+                                onClick = {
+                                    viewModel.onEvent(ExtensionsScreenEvent.OnContentTypeFilterToggle(value))
+                                },
                             )
                         }
                     }
 
-                    val searchFilteredExtensions = if (searchQuery.isBlank()) {
-                        filteredExtensions
-                    } else {
-                        filteredExtensions.filter {
-                            it.name.contains(searchQuery, ignoreCase = true) ||
-                            it.description.contains(searchQuery, ignoreCase = true)
+                    val searchFilteredExtensions = remember(filteredExtensions, searchQuery) {
+                        if (searchQuery.isBlank()) {
+                            filteredExtensions
+                        } else {
+                            filteredExtensions.filter {
+                                it.name.contains(searchQuery, ignoreCase = true) ||
+                                    it.description.contains(searchQuery, ignoreCase = true)
+                            }
                         }
                     }
 
-                    val searchLocalInstalled = if (searchQuery.isBlank()) {
-                        localInstalledExtensions
-                    } else {
-                        localInstalledExtensions.filter {
-                            it.name.contains(searchQuery, ignoreCase = true) ||
-                            it.description.contains(searchQuery, ignoreCase = true)
+                    val searchLocalInstalled = remember(localInstalledExtensions, searchQuery) {
+                        if (searchQuery.isBlank()) {
+                            localInstalledExtensions
+                        } else {
+                            localInstalledExtensions.filter {
+                                it.name.contains(searchQuery, ignoreCase = true) ||
+                                    it.description.contains(searchQuery, ignoreCase = true)
+                            }
                         }
                     }
 
@@ -303,63 +351,106 @@ private fun UnifiedExtensionsScreen(
                     }
 
                     LazyColumn(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        contentPadding = PaddingValues(bottom = 300.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                        contentPadding = PaddingValues(
+                            top = NovelaSpacing.xs,
+                            bottom = 240.dp,
+                        ),
                     ) {
+                        // The second mockup's structure: a greeting-style header, a row of
+                        // counters, then labelled groups whose rows carry a circular tinted
+                        // icon and a trailing action. Counters come from the same filtered
+                        // lists the groups render, so they cannot disagree with what is shown.
+                        item(contentType = "hero") {
+                            val accent = MaterialTheme.colorScheme.primary
+                            NovelaHeroHeader(
+                                title = stringResource(my.noveldokusha.strings.R.string.title_extensions),
+                                subtitle = stringResource(StringsR.string.extensions_hero_subtitle),
+                                accent = accent,
+                                icon = {
+                                    Icon(
+                                        Icons.Outlined.Extension,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(22.dp),
+                                        tint = accent,
+                                    )
+                                },
+                            )
+                        }
+
+                        item(contentType = "stats") {
+                            val scheme = MaterialTheme.colorScheme
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = NovelaSpacing.screenH),
+                                horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.sm),
+                            ) {
+                                NovelaStatCard(
+                                    value = searchInstalledExtensions.size.toString(),
+                                    label = stringResource(my.noveldokusha.strings.R.string.installed),
+                                    accent = scheme.primary,
+                                    modifier = Modifier.weight(1f),
+                                )
+                                NovelaStatCard(
+                                    value = searchAvailableExtensions.size.toString(),
+                                    label = stringResource(my.noveldokusha.strings.R.string.available),
+                                    accent = scheme.tertiary,
+                                    modifier = Modifier.weight(1f),
+                                )
+                                NovelaStatCard(
+                                    value = searchInstalledExtensions.count { it.isUpdateAvailable }.toString(),
+                                    label = stringResource(my.noveldokusha.strings.R.string.update),
+                                    accent = scheme.secondary,
+                                    modifier = Modifier.weight(1f),
+                                )
+                            }
+                        }
+
                         if (searchInstalledExtensions.isNotEmpty()) {
                             item(contentType = "header") {
-                                val hasUpdates = searchInstalledExtensions.any { it.isUpdateAvailable }
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 16.dp)
-                                        .padding(top = 8.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = stringResource(my.noveldokusha.strings.R.string.installed),
-                                        style = MaterialTheme.typography.titleMedium,
-                                        color = MaterialTheme.colorScheme.primary,
-                                    )
-                                    if (hasUpdates) {
-                                        TextButton(
-                                            onClick = { viewModel.onEvent(ExtensionsScreenEvent.OnUpdateAll) }
-                                        ) {
-                                            Text(stringResource(StringsR.string.update_all))
-}
-
-
+                                NovelaSectionHeader(
+                                    title = stringResource(my.noveldokusha.strings.R.string.installed),
+                                    actionLabel = stringResource(StringsR.string.update_all)
+                                        .takeIf { searchInstalledExtensions.any { it.isUpdateAvailable } },
+                                    onActionClick = {
+                                        viewModel.onEvent(ExtensionsScreenEvent.OnUpdateAll)
+                                    },
+                                )
+                            }
+                            item(contentType = "group_installed") {
+                                NovelaCardGroup {
+                                    searchInstalledExtensions.forEachIndexed { index, extension ->
+                                        if (index > 0) {
+                                            NovelaCardGroupDivider()
+                                        }
+                                        ExtensionRow(
+                                            extension = extension,
+                                            viewModel = viewModel,
+                                        )
                                     }
                                 }
-                            }
-
-                            items(searchInstalledExtensions, key = { extension -> "installed_${extension.id}" }, contentType = { "extension" }) { extension ->
-                                ExtensionListItem(
-                                    extension = extension,
-                                    viewModel = viewModel
-                                )
                             }
                         }
 
                         if (searchAvailableExtensions.isNotEmpty()) {
                             item(contentType = "header") {
-                                Text(
-                                    text = stringResource(my.noveldokusha.strings.R.string.available),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier
-                                        .padding(horizontal = 16.dp)
-                                        .padding(top = 8.dp),
+                                NovelaSectionHeader(
+                                    title = stringResource(my.noveldokusha.strings.R.string.available),
                                 )
                             }
-
-                            items(searchAvailableExtensions, key = { extension -> "available_${extension.id}" }, contentType = { "extension" }) { extension ->
-                                ExtensionListItem(
-                                    extension = extension,
-                                    viewModel = viewModel
-                                )
+                            item(contentType = "group_available") {
+                                NovelaCardGroup {
+                                    searchAvailableExtensions.forEachIndexed { index, extension ->
+                                        if (index > 0) {
+                                            NovelaCardGroupDivider()
+                                        }
+                                        ExtensionRow(
+                                            extension = extension,
+                                            viewModel = viewModel,
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
@@ -374,6 +465,11 @@ private fun UnifiedExtensionsScreen(
             state = state,
             viewModel = viewModel
         )
+    }
+
+// Third-party extension repositories (JSON/JS/APK indexes)
+    if (showCompatRepos) {
+        CompatExtensionsDialog(onDismiss = { showCompatRepos = false })
     }
 
     if (state.showLuaEditor) {
@@ -466,207 +562,115 @@ private fun RepositoryUrlDialog(
 }
 
 
+/**
+ * One extension as a tile: icon chip, name, two fact badges, and the install/update
+ * actions on their own row. The card shape replaces the old two-line row; the events
+ * it fires are the same install / update / edit / reset / uninstall set, so nothing was
+ * dropped on the way (and no second copy of those handlers exists to drift).
+ */
 @Composable
-private fun ContentTypeBadge(contentType: String) {
-    // ponytail: empty contentType = novel (same convention as library covers)
-    val (textRes, color) = when (contentType) {
-        "manga" -> StringsR.string.content_type_manga to MaterialTheme.colorScheme.primary
-        "video" -> StringsR.string.content_type_video to MaterialTheme.colorScheme.secondary
-        else -> StringsR.string.content_type_novel to MaterialTheme.colorScheme.tertiary
-    }
-    Text(
-        text = stringResource(textRes),
-        style = MaterialTheme.typography.labelSmall,
-        color = color,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-        modifier = Modifier
-            .padding(start = 6.dp)
-            .background(color.copy(alpha = 0.12f), RoundedCornerShape(4.dp))
-            .padding(horizontal = 6.dp, vertical = 2.dp)
-    )
-}
-
-
-
-@Composable
-private fun ExtensionListItem(
+private fun ExtensionRow(
     extension: ExtensionInfo,
-    viewModel: ExtensionsManagerViewModel
+    viewModel: ExtensionsManagerViewModel,
 ) {
-    SlimListItem(
-        modifier = Modifier.fillMaxWidth(),
-        headlineContent = {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = extension.name,
-                    style = MaterialTheme.typography.titleSmall,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f, fill = false)
-                )
-                ContentTypeBadge(contentType = extension.contentType)
-                Row {
-                    if (extension.isUpdateAvailable) {
-                        Text(
-                            text = " ",
-                            style = MaterialTheme.typography.titleSmall,
-                            color = MaterialTheme.colorScheme.tertiary,
-                            modifier = Modifier.padding(start = 4.dp)
-                        )
-                    }
-                    if (extension.isInstalled) {
-                        Text(
-                            text = " ",
-                            style = MaterialTheme.typography.titleSmall,
-                            color = if (extension.isUpdateAvailable)
-                                MaterialTheme.colorScheme.tertiary
-                            else
-                                MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(start = 4.dp)
-                        )
-                    }
-                }
-            }
-        },
-        supportingContent = {
-            Column {
-                Text(
-                    text = "Language: ${getLanguageDisplayName(extension.language)}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                val versionText = if (extension.isUpdateAvailable) {
-                    "v${extension.version} < v${extension.remoteVersion}"
-                } else {
-                    "v${extension.version}"
-                }
-                Text(
-                    text = versionText,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (extension.isUpdateAvailable)
-                        MaterialTheme.colorScheme.tertiary
-                    else
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        },
-        leadingContent = {
-            Box(
+    val accent = novelaTileAccent(extension.id)
+    val updateAvailable = extension.isUpdateAvailable
+
+    // A row inside a group, not a floating card: the group already carries the surface.
+    // The icon is circular because the row is where you *act*, while the squares on the
+    // Browse board mark things you *open*.
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = NovelaSpacing.md, vertical = NovelaSpacing.sm),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.md),
+    ) {
+        NovelaCircleIcon(accent = accent) {
+            ImageView(
+                imageModel = extension.iconUrl,
                 modifier = Modifier
-                    .size(28.dp)
-                    .clip(RoundedCornerShape(4.dp))
-            ) {
-                if (extension.iconUrl.isNotBlank()) {
-                    val iconUrlWithCacheBuster = Uri.parse(extension.iconUrl)
-                        .buildUpon()
-                        .appendQueryParameter("v", extension.version)
-                        .build()
-                        .toString()
-                    ImageView(
-                        imageModel = iconUrlWithCacheBuster,
-                        modifier = Modifier.fillMaxSize(),
-                        error = R.drawable.default_icon,
-                        placeholder = R.drawable.default_icon
+                    .fillMaxSize()
+                    .clip(CircleShape),
+                error = my.noveldokusha.coreui.R.drawable.default_icon,
+            )
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = extension.name,
+                style = MaterialTheme.typography.titleSmall,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = extension.description.ifBlank { extension.author },
+                style = NovelaType.bookMeta,
+                color = NovelaTheme.colors.textMuted,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Spacer(Modifier.height(NovelaSpacing.xxs))
+            Row(horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.xs)) {
+                NovelaTileBadge(text = extension.language.uppercase(), accent = accent)
+                if (extension.isLocal) {
+                    NovelaTileBadge(
+                        text = stringResource(my.noveldokusha.strings.R.string.local),
+                        accent = accent,
                     )
-                } else {
-                    Icon(
-                        imageVector = Icons.Default.Settings,
-                        contentDescription = null,
-                        modifier = Modifier
-                            .size(16.dp)
-                            .align(Alignment.Center),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                }
+                if (updateAvailable) {
+                    NovelaTileBadge(
+                        text = stringResource(my.noveldokusha.strings.R.string.update),
+                        accent = MaterialTheme.colorScheme.tertiary,
                     )
-                }
-            }
-        },
-        trailingContent = {
-            when {
-                extension.isInstalling -> {
-                    FilledTonalButton(
-                        onClick = {},
-                        enabled = false,
-                        modifier = Modifier.height(40.dp)
-                    ) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(18.dp),
-                            strokeWidth = 2.dp,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Spacer(modifier = Modifier.size(6.dp))
-                        Text(stringResource(my.noveldokusha.strings.R.string.installing))
-                    }
-                }
-                extension.isUpdateAvailable -> {
-                    FilledTonalButton(
-                        onClick = {
-                            viewModel.onEvent(ExtensionsScreenEvent.OnExtensionInstall(extension.id))
-                        },
-                        modifier = Modifier.height(40.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Refresh,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.size(6.dp))
-                        Text(stringResource(my.noveldokusha.strings.R.string.update))
-                    }
-                }
-                extension.isInstalled -> {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        FilledTonalIconButton(
-                            onClick = { viewModel.onEvent(ExtensionsScreenEvent.OnEditLuaClick(extension.id)) }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.Edit,
-                                contentDescription = stringResource(my.noveldokusha.strings.R.string.edit_lua),
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-                        if (!extension.isLocal) {
-                            FilledTonalIconButton(
-                                onClick = { viewModel.onEvent(ExtensionsScreenEvent.OnResetLuaClick(extension.id)) }
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Filled.Refresh,
-                                    contentDescription = stringResource(my.noveldokusha.strings.R.string.reset),
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
-                        }
-                        FilledTonalIconButton(
-                            onClick = { viewModel.onEvent(ExtensionsScreenEvent.OnExtensionUninstallById(extension.id)) }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.Delete,
-                                contentDescription = stringResource(my.noveldokusha.strings.R.string.uninstall),
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-                    }
-                }
-                else -> {
-                    FilledTonalButton(
-                        onClick = {
-                            viewModel.onEvent(ExtensionsScreenEvent.OnExtensionInstall(extension.id))
-                        },
-                        modifier = Modifier.height(40.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Add,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.size(6.dp))
-                        Text(stringResource(my.noveldokusha.strings.R.string.install))
-                    }
                 }
             }
         }
-    )
+        // The state machine the old row used, unchanged: installing / update / installed /
+        // available. Only its shape moved from a trailing column to the row's end.
+        when {
+            extension.isInstalling -> NovelaTileActionButton(
+                label = stringResource(my.noveldokusha.strings.R.string.installing),
+                icon = { CircularProgressIndicator(modifier = Modifier.size(12.dp), strokeWidth = 2.dp) },
+                accent = accent,
+                enabled = false,
+                onClick = {},
+            )
+
+            updateAvailable -> NovelaTileActionButton(
+                label = stringResource(my.noveldokusha.strings.R.string.update),
+                icon = { Icon(Icons.Filled.Refresh, null, modifier = Modifier.size(14.dp)) },
+                accent = MaterialTheme.colorScheme.tertiary,
+                onClick = { viewModel.onEvent(ExtensionsScreenEvent.OnExtensionInstall(extension.id)) },
+            )
+
+            extension.isInstalled -> Row(horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.xs)) {
+                NovelaTileIconButton(
+                    accent = accent,
+                    contentDescription = stringResource(my.noveldokusha.strings.R.string.edit_lua),
+                    onClick = { viewModel.onEvent(ExtensionsScreenEvent.OnEditLuaClick(extension.id)) },
+                ) { Icon(Icons.Filled.Edit, null, modifier = Modifier.size(16.dp)) }
+                if (!extension.isLocal) {
+                    NovelaTileIconButton(
+                        accent = accent,
+                        contentDescription = stringResource(my.noveldokusha.strings.R.string.reset),
+                        onClick = { viewModel.onEvent(ExtensionsScreenEvent.OnResetLuaClick(extension.id)) },
+                    ) { Icon(Icons.Filled.Refresh, null, modifier = Modifier.size(16.dp)) }
+                }
+                NovelaTileIconButton(
+                    accent = MaterialTheme.colorScheme.error,
+                    contentDescription = stringResource(my.noveldokusha.strings.R.string.uninstall),
+                    onClick = { viewModel.onEvent(ExtensionsScreenEvent.OnExtensionUninstallById(extension.id)) },
+                ) { Icon(Icons.Filled.Delete, null, modifier = Modifier.size(16.dp)) }
+            }
+
+            else -> NovelaTileActionButton(
+                label = stringResource(my.noveldokusha.strings.R.string.install),
+                icon = { Icon(Icons.Filled.Add, null, modifier = Modifier.size(14.dp)) },
+                accent = accent,
+                onClick = { viewModel.onEvent(ExtensionsScreenEvent.OnExtensionInstall(extension.id)) },
+            )
+        }
+    }
 }

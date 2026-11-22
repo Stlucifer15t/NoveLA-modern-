@@ -17,18 +17,18 @@ import javax.xml.xpath.XPathConstants
 import javax.xml.xpath.XPathFactory
 
 /**
- * Движок правил Legado.
+ * The Legado rule engine.
  *
- * Поддерживает:
- *  - CSS-цепочки с end-правилами (`@text`, `@href`, `@html`, ...)
- *  - индексные суффиксы (`.0`, `.-1`, `.!0`, `[0,2]`, `.0:5`)
- *  - regex-операции (`##pattern`, `##pattern##replacement`, `###`, `####`)
- *  - альтернативы `||`, конкатенацию `&&`, zip `%%`
- *  - legacy-селекторы (`id.x`, `class.x`, `tag.x`)
+ * Supports:
+ *  - CSS chains with end rules (`@text`, `@href`, `@html`, ...)
+ *  - index suffixes (`.0`, `.-1`, `.!0`, `[0,2]`, `.0:5`)
+ *  - regex operations (`##pattern`, `##pattern##replacement`, `###`, `####`)
+ *  - alternatives `||`, concatenation `&&`, zip `%%`
+ *  - legacy selectors (`id.x`, `class.x`, `tag.x`)
  *  - XPath (`//...`, `@xpath:`)
  *  - JSONPath (`$.`, `$[`, `@json:`)
- *  - JavaScript (`@js:`) с таймаутом и ClassShutter
- *  - шаблоны `@get:{key}` и `{{var}}`
+ *  - JavaScript (`@js:`) with a timeout and a ClassShutter
+ *  - `@get:{key}` and `{{var}}` templates
  */
 class LegadoRuleEngine(
     private val jsTimeoutMs: Long = 8_000,
@@ -36,7 +36,7 @@ class LegadoRuleEngine(
     private val compiledCache = ConcurrentHashMap<String, CompiledRule>()
     private val json = Json { ignoreUnknownKeys = true; isLenient = true }
 
-    // ── Публичный API ────────────────────────────────────────────────────────
+    // ── Public API ──────────────────────────────────────────────────────────────
 
     fun getString(content: Any?, rule: String, vars: MutableMap<String, String> = mutableMapOf()): String =
         getStrings(content, rule, vars).filter { it.isNotBlank() }.joinToString("\n")
@@ -66,7 +66,7 @@ class LegadoRuleEngine(
 
     fun compile(rule: String): CompiledRule = compiledCache.getOrPut(rule) { parseRule(rule) }
 
-    // ── Компиляция ───────────────────────────────────────────────────────────
+    // ── Compilation ────────────────────────────────────────────────────────────
 
     private fun parseRule(rule: String): CompiledRule {
         if (rule.isBlank()) return CompiledRule(emptyList())
@@ -111,7 +111,7 @@ class LegadoRuleEngine(
         }
     }
 
-    // ── Выполнение ───────────────────────────────────────────────────────────
+    // ── Execution ───────────────────────────────────────────────────────────────
 
     private fun evalAlternative(input: Any?, alt: Alternative, vars: MutableMap<String, String>): Any? {
         val results = alt.chains.map { chain -> evalChain(input, chain, vars) }
@@ -268,10 +268,12 @@ class LegadoRuleEngine(
             is Document -> content
             is Element -> Jsoup.parse(content.outerHtml())
             is String -> Jsoup.parse(content)
-            is List<*> -> content.filterIsInstance<Element>().firstOrNull()?.let { Jsoup.parse(it.outerHtml()) }
-            else -> return emptyList<Any>()
-        }
-        val w3c = W3CDom().fromJsoup(doc)
+            is List<*> -> content.filterIsInstance<Element>().firstOrNull()
+                ?.let { Jsoup.parse(it.outerHtml()) }
+
+            else -> null
+        } ?: return emptyList<Any>()
+        val w3c = stripXhtmlNamespace(W3CDom().fromJsoup(doc))
         val xpath = XPathFactory.newInstance().newXPath()
         val nodes = try {
             xpath.evaluate(expression, w3c, XPathConstants.NODESET) as? org.w3c.dom.NodeList
@@ -279,16 +281,40 @@ class LegadoRuleEngine(
             Timber.d("Legado XPath failed: $expression — ${e.message}")
             return emptyList<Any>()
         } ?: return emptyList<Any>()
-        val out = mutableListOf<Any>()
+        val out = ArrayList<Any>(nodes.length)
         for (i in 0 until nodes.length) {
             val node = nodes.item(i)
             when (node) {
-                is org.w3c.dom.Element -> w3cToJsoup(node)?.let { out += it }
-                is org.w3c.dom.Attr -> out += node.value
-                else -> out += node.textContent ?: ""
+                is org.w3c.dom.Element -> w3cToJsoup(node)?.let { out.add(it) }
+                is org.w3c.dom.Attr -> out.add(node.value)
+                else -> out.add(node.textContent ?: "")
             }
         }
         return out
+    }
+
+    /**
+     * `W3CDom.fromJsoup` puts every element in the XHTML namespace: the root gets
+     * `xmlns="http://www.w3.org/1999/xhtml"` and the rest inherit it. XPath 1.0 matches
+     * an unqualified step only against the empty namespace, so `//ul/li` finds nothing in
+     * such a document — and that is the shape of most `//…` rules in the wild.
+     *
+     * Renaming every element into the null namespace is what makes them work. Probing
+     * jsoup 1.23.1 showed the alternatives are worse: `renameNode` on a prefixed name is
+     * a no-op here (names carry no prefix, the namespace is inherited), and re-parsing
+     * with `Parser.xmlParser()` breaks on void elements such as `<img>` without a slash.
+     */
+    private fun stripXhtmlNamespace(doc: org.w3c.dom.Document): org.w3c.dom.Document {
+        fun rename(node: org.w3c.dom.Node?) {
+            if (node !is org.w3c.dom.Element) return
+            val ns = node.namespaceURI ?: return
+            runCatching { doc.renameNode(node, null, node.localName ?: node.nodeName) }
+                .onFailure { Timber.d("Legado XPath: cannot drop namespace on <%s> — %s", node.nodeName, it.message) }
+        }
+        rename(doc.documentElement)
+        val nodes = doc.getElementsByTagName("*")
+        for (i in 0 until nodes.length) rename(nodes.item(i))
+        return doc
     }
 
     private fun w3cToJsoup(node: org.w3c.dom.Element): Element? = try {
@@ -339,7 +365,7 @@ class LegadoRuleEngine(
         }
     }
 
-    // ── End-правила ──────────────────────────────────────────────────────────
+    // ── End rules ───────────────────────────────────────────────────────────────
 
     private fun extractEnd(content: Any?, name: String): Any? {
         val elements = normalizeElements(content)
@@ -490,7 +516,7 @@ class LegadoRuleEngine(
         }
     }
 
-    // ── Шаблоны ──────────────────────────────────────────────────────────────
+    // ── Templates ───────────────────────────────────────────────────────────────
 
     private fun expandTemplate(raw: String, vars: MutableMap<String, String>): String {
         var out = raw
@@ -554,7 +580,7 @@ class LegadoRuleEngine(
         else -> listOf(content)
     }
 
-    // ── Нормализация ─────────────────────────────────────────────────────────
+    // ── Normalization ───────────────────────────────────────────────────────────
 
     fun normalizeStrings(content: Any?): List<String> = when (content) {
         null -> emptyList()
@@ -590,7 +616,7 @@ class LegadoRuleEngine(
         else -> Document("")
     }
 
-    // ── Разбор верхнего уровня ───────────────────────────────────────────────
+    // ── Top-level parsing ───────────────────────────────────────────────────────
 
     private fun splitTopLevel(input: String, separator: String): List<String> {
         if (separator !in input) return listOf(input)
@@ -740,7 +766,7 @@ class LegadoRuleEngine(
         return -1
     }
 
-    // ── Модели ───────────────────────────────────────────────────────────────
+    // ── Models ──────────────────────────────────────────────────────────────────
 
     data class CompiledRule(val alternatives: List<Alternative>)
 

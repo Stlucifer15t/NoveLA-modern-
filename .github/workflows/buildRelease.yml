@@ -33,18 +33,36 @@ jobs:
         uses: gradle/actions/setup-gradle@v6.3.0
 
       - name: Setup APK signing
+        # Values go through `env`, never interpolated into the script body: a password
+        # containing a quote would otherwise change the command, and an unset secret
+        # decoded to a 0-byte keystore that only failed later, inside signing.
+        env:
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+          KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
+          ALIAS: ${{ secrets.ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          echo -n ${{ secrets.SIGNING_KEY }} | base64 -d > app/storeFile.jks
-          echo storeFile=storeFile.jks          > custom.properties
-          echo storePassword=${{ secrets.KEY_STORE_PASSWORD }} >> custom.properties
-          echo keyAlias=${{ secrets.ALIAS }}    >> custom.properties
-          echo keyPassword=${{ secrets.KEY_PASSWORD }} >> custom.properties
+          if [ -z "$SIGNING_KEY" ]; then
+            echo "SIGNING=bundled" >> "$GITHUB_ENV"
+          else
+            echo -n "$SIGNING_KEY" | base64 -d > app/storeFile.jks
+            echo storeFile=storeFile.jks          > custom.properties
+            echo storePassword="$KEY_STORE_PASSWORD" >> custom.properties
+            echo keyAlias="$ALIAS"    >> custom.properties
+            echo keyPassword="$KEY_PASSWORD" >> custom.properties
+            echo "SIGNING=custom" >> "$GITHUB_ENV"
+          fi
 
       - name: Remove local Java home from gradle.properties
         run: sed -i '/org\.gradle\.java\.home/d' gradle.properties
 
       - name: Build release APK
-        run: ./gradlew assembleRelease -PlocalPropertiesFilePath=custom.properties
+        run: |
+          if [ "$SIGNING" = "custom" ]; then
+            ./gradlew assembleRelease -PlocalPropertiesFilePath=custom.properties
+          else
+            ./gradlew assembleRelease
+          fi
 
       - name: Set app version
         run: |

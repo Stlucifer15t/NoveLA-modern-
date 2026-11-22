@@ -18,40 +18,51 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Загрузчик одной экосистемы: из установленного record'а создаёт источники.
- * Реализации — в пакетах экосистем (legado/lnreader/...).
+ * Loader of one ecosystem: turns an installed record into sources.
+ * Implementations live in the ecosystem packages (legado/lnreader/...).
  * DI: multibinding `@IntoSet CompatExtensionLoader`.
  */
 interface CompatExtensionLoader {
     val ecosystem: CompatEcosystem
 
     /**
-     * Создать источники из payload'а record'а.
-     * @throws CompatException при фатальной ошибке загрузки (диагностика).
+     * Build sources from the record's payload.
+     * @throws CompatException on a fatal load error (surfaced in diagnostics).
      */
     suspend fun load(record: CompatInstallRecord, payload: ByteArray): List<SourceInterface>
 
-    /** Очистить кэш рантайма (dex cache, JS bytecode...). */
+    /** Clear the runtime cache (dex cache, JS bytecode...). */
     fun clearCache() {}
 }
 
 /**
- * Реализация [CompatSourceProvider] для compat-экосистем.
+ * The loader registry, injected as its own type.
  *
- * Жизненный цикл:
- *  1. init → читает registry из [CompatStorage], запускает reload()
- *  2. reload(): для каждой включённой записи вызывает loader её экосистемы
- *     под таймаутом [CompatTimeouts.LOAD_MS]; ошибки изолируются —
- *     упавший источник не роняет остальные, попадает в [CompatDiagnostics]
- *  3. sourcesFlow — все успешно загруженные источники (+ заглушки для UI? нет:
- *     UI список установок берётся из storage.records, а flow — только реальные)
- *  4. awaitLoaded() — первый reload завершён
+ * A bare `Set<CompatExtensionLoader>` injection point could not be satisfied by this
+ * module — neither through `@Binds @IntoSet` nor through `@Multibinds` +
+ * `@Provides @IntoSet`: `:app:hiltJavaCompileDebug` kept reporting
+ * `MissingBinding: java.util.Set<? extends CompatExtensionLoader>`. Wrapping the list in
+ * a class gives Dagger a plain type, and it is also what unit tests construct directly.
+ */
+class CompatLoaders(val loaders: List<CompatExtensionLoader>)
+
+/**
+ * [CompatSourceProvider] implementation for compat ecosystems.
+ *
+ * Lifecycle:
+ *  1. init → reads the registry from [CompatStorage] and runs reload()
+ *  2. reload(): every enabled record is handed to its ecosystem's loader
+ *     under [CompatTimeouts.LOAD_MS]; failures are isolated —
+ *     a failing source does not take the others down, it goes to [CompatDiagnostics]
+ *  3. sourcesFlow — every successfully loaded source (no UI placeholders:
+ *     the install list comes from storage.records, the flow holds real sources)
+ *  4. awaitLoaded() — the first reload has finished
  */
 @Singleton
 class CompatSourceProviderImpl @Inject constructor(
     private val storage: CompatStorage,
     private val diagnostics: CompatDiagnostics,
-    @CompatLoaders private val loaders: Set<CompatExtensionLoader>,
+    private val loaderSet: CompatLoaders,
 ) : CompatSourceProvider {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -63,19 +74,19 @@ class CompatSourceProviderImpl @Inject constructor(
     override val loadedSourcesFlow: StateFlow<List<SourceInterface>> = _loadedSourcesFlow.asStateFlow()
 
     private val _infos = MutableStateFlow<List<CompatSourceInfo>>(emptyList())
-    /** UI-описание установленных расширений (включая ошибки загрузки). */
+    /** UI description of installed extensions (including load errors). */
     val infos: StateFlow<List<CompatSourceInfo>> = _infos.asStateFlow()
 
     private val loadedSignal = CompletableDeferred<Unit>()
     private val reloadMutex = Mutex()
 
     private val loadersByEcosystem: Map<CompatEcosystem, CompatExtensionLoader> =
-        loaders.associateBy { it.ecosystem }
+        loaderSet.loaders.associateBy { it.ecosystem }
 
     init {
         scope.launch {
             reloadInternal()
-            // Автоперезагрузка при изменении registry (install/uninstall/toggle)
+            // Reload whenever the registry changes (install/uninstall/toggle)
             storage.records.collect {
                 reloadInternal()
             }
@@ -91,7 +102,7 @@ class CompatSourceProviderImpl @Inject constructor(
     }
 
     override fun clearCache() {
-        loaders.forEach { runCatching { it.clearCache() } }
+        loaderSet.loaders.forEach { runCatching { it.clearCache() } }
     }
 
     private suspend fun reloadInternal() {
@@ -167,7 +178,7 @@ class CompatSourceProviderImpl @Inject constructor(
         _infos.value = infos
         val okCount = infos.count { it.loadError == null }
         diagnostics.setReportLine(
-            CompatEcosystem.TACHIYOMI, // ключ отчёта — агрегированная строка всех экосистем
+            CompatEcosystem.TACHIYOMI, // report key — an aggregated line across all ecosystems
             "loaded ${loaded.size} sources from ${records.size} records ($okCount ok, ${records.size - okCount} failed)",
         )
         if (!loadedSignal.isCompleted) loadedSignal.complete(Unit)
@@ -187,13 +198,13 @@ class CompatSourceProviderImpl @Inject constructor(
                     else -> caps += CompatCapability.CHAPTER_TEXT
                 }
             }
-            // getVideoList возвращает null по умолчанию — источник без видео-поддержки
-            // просто не переопределяет метод; capability VIDEO ставится по contentType.
+            // getVideoList returns null by default — a source without video support
+            // simply does not override it; the VIDEO capability follows contentType.
         }
         return caps
     }
 
-    // ── Управление установками (вызывается из UI/ViewModel) ──────────────────
+    // ── Install management (called from the UI/ViewModel) ──────────────────────
 
     fun install(record: CompatInstallRecord, payload: ByteArray) {
         storage.writePayload(record.ecosystem, record.payloadPath, payload)
@@ -207,6 +218,15 @@ class CompatSourceProviderImpl @Inject constructor(
     }
 
     fun setEnabled(id: String, enabled: Boolean) = storage.setEnabled(id, enabled)
+
+    /**
+     * Installed record looked up by its repository index key — the UI uses it to decide
+     * between "Installed / Update / Not installed" ([CompatRepositoryManager.installState]).
+     */
+    fun findRecord(ecosystem: CompatEcosystem, entryKey: String): CompatInstallRecord? =
+        storage.records.value.firstOrNull {
+            it.ecosystem == ecosystem && (it.entryKey == entryKey || it.id == "${ecosystem.id}:$entryKey")
+        }
 
     fun updatePayload(id: String, payload: ByteArray, version: String, versionCode: Long) {
         val record = storage.getRecord(id) ?: return

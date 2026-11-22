@@ -1,48 +1,48 @@
 package my.noveldokusha.extension_compat.core
 
 /**
- * Определение экосистемы расширения по URL репозитория/файла и, если нужно,
- * по содержимому. Детекция работает ДО скачивания: по индексам и расширению;
- * содержимое используется для одиночных файлов (bookSource JSON, JS-плагин).
+ * Detects an extension's ecosystem from the repository/file URL and, if needed,
+ * from the content. Detection runs BEFORE download: indexes by URL and extension;
+ * content is used for single files (bookSource JSON, a JS plugin).
  *
- * Правила (порядок важен — от более специфичных к общим):
+ * Rules (order matters — most specific first):
  *
- * 1. Индексы репозиториев:
- *    - URL содержит `index.min.json` + `apk`/`sources` в ожидаемом формате
- *      → TACHIYOMI (keiyoushi) или ANIYOMI (aniyomi, пакет `...animeextension...`)
- *    - `plugins.min.json` (массив {id,name,site,lang,version,url,iconUrl})
+ * 1. Repository indexes:
+ *    - URL contains `index.min.json` + `apk`/`sources` in the expected shape
+ *      → TACHIYOMI (keiyoushi) or ANIYOMI (package `...animeextension...`)
+ *    - `plugins.min.json` (array of {id,name,site,lang,version,url,iconUrl})
  *      → LNREADER
- *    - `index.json`/`novel_index.json` с полями baseUrl/typeSource/itemType
+ *    - `index.json`/`novel_index.json` with baseUrl/typeSource/itemType fields
  *      → MANGAYOMI
- *    - `repo.json` с {name, pluginLists[]} или `plugins.json` с plugins[]
+ *    - `repo.json` with {name, pluginLists[]} or `plugins.json` with plugins[]
  *      → CLOUDSTREAM
- * 2. Одиночные файлы по содержимому:
- *    - JSON с bookSourceName/ruleSearch/ruleBookInfo → LEGADO
- *    - JS с `mangayomiSources` / `extends MProvider` → MANGAYOMI
- *    - JS с `popularNovels`/`parseNovel`/`exports.default` → LNREADER
+ * 2. Single files, by content:
+ *    - JSON with bookSourceName/ruleSearch/ruleBookInfo → LEGADO
+ *    - JS with `mangayomiSources` / `extends MProvider` → MANGAYOMI
+ *    - JS with `popularNovels`/`parseNovel`/`exports.default` → LNREADER
  *    - .cs3 (zip: classes.dex + manifest.json) → CLOUDSTREAM
- *    - .apk с meta tachiyomi.extension → TACHIYOMI/ANIYOMI (по имени пакета)
- * 3. YAML → существующий Lua-путь (НЕ compat; сюда не попадает).
+ *    - .apk with tachiyomi.extension metadata → TACHIYOMI/ANIYOMI (by package name)
+ * 3. YAML → the existing Lua path (NOT compat; never reaches this detector).
  */
 object FormatDetector {
 
     sealed interface Detection {
         data class Detected(val ecosystem: CompatEcosystem) : Detection
         data object Unknown : Detection
-        /** Формат требует уточнения у пользователя (например, .apk без метаданных). */
+        /** The format needs the user to clarify (e.g. a .apk without metadata). */
         data class Ambiguous(val candidates: List<CompatEcosystem>) : Detection
     }
 
-    /** Детекция по URL (индекс репозитория или прямая ссылка на файл). */
+    /** Detection by URL (a repository index or a direct file link). */
     fun detectFromUrl(url: String): Detection {
         val lower = url.lowercase()
         val path = lower.substringBefore('?').substringBefore('#')
 
-        // ── Индексы репозиториев ────────────────────────────────────────────
+        // ── Repository indexes ─────────────────────────────────────────────────────
         if (path.endsWith("index.min.json")) {
-            // Aniyomi index содержит пакеты eu.kanade.tachiyomi.animeextension.*;
-            // без контента не отличим от keiyoushi — обе индекс-формы совместимы,
-            // окончательный выбор по содержимому при загрузке.
+            // An Aniyomi index contains eu.kanade.tachiyomi.animeextension.* packages;
+            // without the content it is indistinguishable from keiyoushi — both index
+            // shapes are compatible, the final call happens on load, by content.
             return Detection.Detected(CompatEcosystem.TACHIYOMI)
         }
         if (path.endsWith("plugins.min.json") || path.endsWith("plugins.json") && path.contains("lnreader")) {
@@ -55,15 +55,15 @@ object FormatDetector {
             return Detection.Detected(CompatEcosystem.CLOUDSTREAM)
         }
 
-        // ── Одиночные файлы по расширению ───────────────────────────────────
+        // ── Single files, by extension ──────────────────────────────────────────────
         when {
             path.endsWith(".cs3") -> return Detection.Detected(CompatEcosystem.CLOUDSTREAM)
             path.endsWith(".apk") -> return Detection.Ambiguous(
                 listOf(CompatEcosystem.TACHIYOMI, CompatEcosystem.ANIYOMI)
             )
-            path.endsWith(".lua") -> return Detection.Unknown // Lua — вне compat-слоя
+            path.endsWith(".lua") -> return Detection.Unknown // Lua is outside the compat layer
             path.endsWith(".json") -> {
-                // bookSource или index — уточняется по содержимому
+                // bookSource or an index — decided by content
                 return Detection.Ambiguous(
                     listOf(CompatEcosystem.LEGADO, CompatEcosystem.MANGAYOMI)
                 )
@@ -78,18 +78,18 @@ object FormatDetector {
     }
 
     /**
-     * Детекция по содержимому файла (первые байты/строки).
-     * @param fileName исходное имя файла (может быть null при вставке текста).
-     * @param head первые ~4 КБ содержимого.
+     * Detection by file content (the first bytes/lines).
+     * @param fileName original file name (may be null when text is pasted in).
+     * @param head the first ~4 KB of content.
      */
     fun detectFromContent(fileName: String?, head: String): Detection {
         val name = fileName?.lowercase() ?: ""
         val content = head.trimStart('\uFEFF', ' ', '\n', '\r', '\t')
 
-        // .cs3 — zip, бинарный; по имени
+        // .cs3 is a zip, binary — match by name
         if (name.endsWith(".cs3")) return Detection.Detected(CompatEcosystem.CLOUDSTREAM)
 
-        // JSON-контент
+        // JSON content
         if (content.startsWith("{") || content.startsWith("[")) {
             // Legado bookSource
             if (content.contains("\"bookSourceName\"") || content.contains("\"ruleSearch\"") ||
@@ -97,11 +97,11 @@ object FormatDetector {
             ) {
                 return Detection.Detected(CompatEcosystem.LEGADO)
             }
-            // Массив bookSource'ов тоже Legado
+            // An array of bookSources is Legado too
             if (content.contains("\"bookSourceUrl\"")) {
                 return Detection.Detected(CompatEcosystem.LEGADO)
             }
-            // LNReader index: массив объектов с id/site/lang/version/url
+            // LNReader index: an array of objects with id/site/lang/version/url
             if (name.endsWith("plugins.min.json") ||
                 (content.contains("\"site\"") && content.contains("\"iconUrl\"") && content.contains("\"lang\""))
             ) {
@@ -121,14 +121,14 @@ object FormatDetector {
             if (content.contains("\"apk\"") && content.contains("\"sources\"")) {
                 return Detection.Detected(CompatEcosystem.TACHIYOMI)
             }
-            // Короткий bookSource без типовых ключей выше — пробуем Legado по структуре
+            // A short bookSource without the keys above — try Legado by structure
             if (content.contains("\"bookSourceUrl\"") || content.contains("\"bookSourceType\"")) {
                 return Detection.Detected(CompatEcosystem.LEGADO)
             }
             return Detection.Unknown
         }
 
-        // JS-контент
+        // JS content
         if (content.startsWith("const mangayomiSources") || content.startsWith("var mangayomiSources") ||
             content.startsWith("let mangayomiSources") || content.contains("mangayomiSources =") ||
             content.contains("extends MProvider")
@@ -140,8 +140,8 @@ object FormatDetector {
         ) {
             return Detection.Detected(CompatEcosystem.LNREADER)
         }
-        // exports.default — общий для обоих, но LNReader-плагины чаще всего
-        // объявляют class ... extends и экспортируют instance
+        // exports.default is shared by both, but LNReader plugins usually
+        // declare a class ... extends and export an instance
         if (content.contains("exports.default") || content.contains("module.exports")) {
             return Detection.Ambiguous(listOf(CompatEcosystem.LNREADER, CompatEcosystem.MANGAYOMI))
         }
@@ -150,8 +150,8 @@ object FormatDetector {
     }
 
     /**
-     * Уточнение TACHIYOMI vs ANIYOMI по индексу (пакет расширения).
-     * @param packageName например `eu.kanade.tachiyomi.animeextension.en.foo`.
+     * Narrows TACHIYOMI vs ANIYOMI using the index (extension package name).
+     * @param packageName e.g. `eu.kanade.tachiyomi.animeextension.en.foo`.
      */
     fun refineByPackageName(ecosystem: CompatEcosystem, packageName: String): CompatEcosystem {
         if (ecosystem != CompatEcosystem.TACHIYOMI) return ecosystem

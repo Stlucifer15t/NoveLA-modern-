@@ -33,7 +33,7 @@ class RegexCleanupSettingsViewModel @Inject constructor(
     stateHandler: SavedStateHandle,
 ) : ViewModel() {
 
-    // null — глобальные правила; иначе — персональные правила новеллы (bookUrl)
+    // null — global rules; otherwise the per-novel rules of this bookUrl
     var bookUrl: String? by StateExtra_StringNullable(stateHandler)
 
     val isGlobal: Boolean get() = bookUrl == null
@@ -67,7 +67,7 @@ class RegexCleanupSettingsViewModel @Inject constructor(
         }
     }
 
-    // ── Целевое хранилище: глобальный список или персональный набор новеллы ──
+    // ── Target store: the global list or the per-novel set ─────────────────────
 
     private var targetRules: List<RegexRule>
         get() = if (isGlobal) appPreferences.USER_REGEX_CLEANUP_RULES.value
@@ -76,7 +76,7 @@ class RegexCleanupSettingsViewModel @Inject constructor(
             if (isGlobal) {
                 appPreferences.USER_REGEX_CLEANUP_RULES.value = value
             } else {
-                val url = checkNotNull(bookUrl) { "bookUrl обязателен в персональном режиме" }
+                val url = checkNotNull(bookUrl) { "bookUrl is required in per-novel mode" }
                 val map = appPreferences.USER_REGEX_CLEANUP_RULES_PER_NOVEL.value.toMutableMap()
                 map[url] = value
                 appPreferences.USER_REGEX_CLEANUP_RULES_PER_NOVEL.value = map
@@ -139,7 +139,7 @@ class RegexCleanupSettingsViewModel @Inject constructor(
             return
         }
 
-        // Проверка на дублирование pattern
+        // Reject a pattern that is already in the list
         val trimmedPattern = pattern.trim()
         val currentRules = targetRules
         val isDuplicate = currentRules.any { it.pattern == trimmedPattern &&
@@ -219,15 +219,15 @@ class RegexCleanupSettingsViewModel @Inject constructor(
         }
     }
 
-    // ── Персональные правила: перенос в глобальные / удаление набора ──────
+    // ── Per-novel rules: promote to global / drop the whole set ─────────────────
 
     fun onMoveRulesToGlobal() {
         val url = bookUrl ?: return
         viewModelScope.launch {
             val novelRules = appPreferences.USER_REGEX_CLEANUP_RULES_PER_NOVEL.value[url]
                 ?: return@launch
-            // Персональное правило свежее глобального с тем же pattern — оно побеждает,
-            // дубли не создаются, порядок глобальных сохраняется.
+            // A per-novel rule wins over a global rule with the same pattern, so no
+            // duplicate is created and the global order is preserved.
             val merged = appPreferences.USER_REGEX_CLEANUP_RULES.value.toMutableList()
             novelRules.forEach { rule ->
                 val idx = merged.indexOfFirst { it.pattern == rule.pattern }

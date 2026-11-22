@@ -4,51 +4,59 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 
 /**
- * Запись об установленном compat-расширении. Хранится в registry.json
- * в filesDir/compat/. Описывает ОДИН установленный артефакт (файл/пакет),
- * который может порождать один или несколько источников.
+ * A record of one installed compat extension. Stored in registry.json
+ * under filesDir/compat/. It describes ONE installed artifact (file/package)
+ * that can back one or several sources.
  */
 @Serializable
 data class CompatInstallRecord(
-    /** Уникальный id: "<ecosystem>:<источник id или имя файла>". */
+    /** Unique id: "<ecosystem>:<source id or file name>". */
     val id: String,
     val ecosystem: CompatEcosystem,
-    /** Отображаемое имя (из манифеста/индекса/JSON). */
+    /** Display name (from the manifest/index/JSON). */
     val name: String,
     val version: String = "",
-    /** ISO 639-1 код языка или特殊ные значения ("zh", "en", "MULTILANGUAGE"...). */
+    /** ISO 639-1 language code, or a special value ("zh", "en", "MULTILANGUAGE"...). */
     val language: String = "",
-    /** Базовый URL источника, если известен (для matching'а URL книг). */
+    /** Source base URL when known (used to match book URLs). */
     val baseUrl: String = "",
-    /** Тип контента: "" (новелла), "manga", "video". */
+    /** Content type: "" (novel), "manga", "video". */
     val contentType: String = "",
-    /** Относительный путь файла внутри compat storage. */
+    /** Relative path of the file inside compat storage. */
     val payloadPath: String,
-    /** URL, с которого установлен (для обновлений). */
+    /** URL it was installed from (used for updates). */
     val sourceUrl: String = "",
-    /** Иконка URL, если есть. */
+    /** Icon URL, if any. */
     val iconUrl: String = "",
-    /** Включён ли источник. */
+    /** Whether the source is enabled. */
     val enabled: Boolean = true,
-    /** SHA-256 подписи APK (Tachiyomi/Aniyomi) — пиннинг при обновлении. */
+    /** SHA-256 of the APK signature (Tachiyomi/Aniyomi) — pinned on update. */
     val signerSha256: String? = null,
-    /** Версия code/number для проверки обновлений и downgrade. */
+    /** Version code/name, used for update and downgrade checks. */
     val versionCode: Long = 0,
-    /** Метаданные репозитория (nsfw, группы, pkg name...) как есть. */
+    /** Repository metadata (nsfw, groups, package name...) as provided. */
     val extra: JsonObject? = null,
-    /** Момент установки (unix millis). */
+    /** Install timestamp (unix millis). */
     val installedAt: Long = 0,
+    /** Repository the source came from; "" means the file was imported by hand. */
+    val repositoryId: String = "",
+    /** Key of this row in the repository index: versions are compared through it. */
+    val entryKey: String = "",
+    /** Marked 18+ by the repository (Mihon nsfw/contentWarning, Legado group). */
+    val nsfw: Boolean = false,
+    /** SHA-256 of the payload: integrity check on update and for diagnostics. */
+    val sha256: String = "",
 )
 
 /**
- * Описание загруженного источника для UI (список в ExtensionsScreen).
+ * Description of a loaded source for the UI (the list in ExtensionsScreen).
  */
 data class CompatSourceInfo(
     val record: CompatInstallRecord,
-    /** Количество источников, созданных из record (Tachiyomi SourceFactory может давать несколько). */
+    /** How many sources this record produced (a SourceFactory may yield several). */
     val loadedSources: Int,
-    /** Ошибка загрузки, если источник не поднялся. */
+    /** Load error, when the source failed to come up. */
     val loadError: String? = null,
-    /** Объявленные возможности. */
+    /** Declared capabilities. */
     val capabilities: Set<CompatCapability> = emptySet(),
 )

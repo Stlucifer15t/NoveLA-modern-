@@ -1,41 +1,60 @@
 package my.noveldokusha.catalogexplorer
 
+import my.noveldokusha.coreui.components.NovelaHeroPill
+import my.noveldokusha.coreui.components.NovelaHeroHeader
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Explore
+import androidx.compose.material3.Icon
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import my.noveldokusha.core.getLanguageDisplayName
 import my.noveldokusha.coreui.components.AnimatedTransition
 import my.noveldokusha.coreui.components.ImageView
-import my.noveldokusha.coreui.components.SlimListItem
+import my.noveldokusha.coreui.components.NovelaIconChip
+import my.noveldokusha.coreui.components.NovelaTileBadge
+import my.noveldokusha.coreui.components.NovelaTileCard
+import my.noveldokusha.coreui.components.NovelaTileSectionHeader
+import my.noveldokusha.coreui.components.novelaTileAccent
 import my.noveldokusha.coreui.theme.InternalTheme
+import my.noveldokusha.coreui.theme.NovelaRadius
+import my.noveldokusha.coreui.theme.NovelaSpacing
+import my.noveldokusha.coreui.theme.NovelaTheme
+import my.noveldokusha.coreui.theme.NovelaType
 import my.noveldokusha.coreui.theme.PreviewThemes
 import my.noveldokusha.data.CatalogItem
 import my.noveldokusha.scraper.DatabaseInterface
@@ -43,13 +62,6 @@ import my.noveldokusha.scraper.SourceInterface
 import my.noveldokusha.scraper.displayName
 import my.noveldokusha.scraper.fixtures.fixturesCatalogList
 import my.noveldokusha.scraper.fixtures.fixturesDatabaseList
-import my.noveldokusha.core.getLanguageDisplayName
-import androidx.compose.ui.draw.clip
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.ui.Alignment
-import my.noveldokusha.coreui.theme.colorAccent
 import my.noveldokusha.strings.R as StringsR
 
 @OptIn(ExperimentalAnimationApi::class, ExperimentalFoundationApi::class)
@@ -65,195 +77,242 @@ internal fun CatalogList(
     onTranslationSettingsClick: (String) -> Unit = {}, // extensionId
     pluginEnabledMap: Map<String, Boolean> = emptyMap(),
 ) {
-    LazyColumn(
-        contentPadding = PaddingValues(bottom = 300.dp),
-        modifier = Modifier.padding(paddingValues = innerPadding)
+    // Pinned first, then the incoming order (which is already alphabetical): the grid is
+    // two columns wide, so the pinned row is where a thumb reaches it.
+    val ordered = remember(sourcesList) {
+        sourcesList.sortedByDescending { it.pinned }
+    }
+
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(2),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues = innerPadding),
+        horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.sm),
+        verticalArrangement = Arrangement.spacedBy(NovelaSpacing.sm),
+        contentPadding = PaddingValues(
+            start = NovelaSpacing.screenH,
+            end = NovelaSpacing.screenH,
+            bottom = 200.dp,
+        ),
     ) {
-        item {
-            Text(
-                text = stringResource(id = R.string.database),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier
-                    .padding(horizontal = 16.dp)
-                    .padding(top = 8.dp),
+        // The screen-opening block from the mockup: icon chip, title, one-line purpose,
+        // and a count pill. It scrolls with the grid instead of being pinned, so the first
+        // tiles are one flick away rather than below a fixed header.
+        item(span = { GridItemSpan(maxLineSpan) }, contentType = "hero") {
+            val accent = MaterialTheme.colorScheme.primary
+            NovelaHeroHeader(
+                title = stringResource(R.string.title_browse),
+                subtitle = stringResource(R.string.browse_hero_subtitle),
+                accent = accent,
+                icon = {
+                    Icon(
+                        Icons.Outlined.Explore,
+                        contentDescription = null,
+                        modifier = Modifier.size(22.dp),
+                        tint = accent,
+                    )
+                },
+                pill = {
+                    NovelaHeroPill(
+                        value = sourcesList.size.toString(),
+                        label = stringResource(R.string.sources),
+                        accent = accent,
+                    )
+                },
             )
         }
 
-        items(
-            items = databasesList,
-            key = { it.baseUrl }
-        ) {
-            SlimListItem(
-                onClick = { onDatabaseClick(it) },
-                headlineContent = {
+        if (databasesList.isNotEmpty()) {
+            item(span = { GridItemSpan(maxLineSpan) }, contentType = "header") {
+                NovelaTileSectionHeader(
+                    title = stringResource(id = R.string.database),
+                    count = databasesList.size,
+                )
+            }
+            itemsIndexed(
+                items = databasesList,
+                key = { _, it -> "db_" + it.baseUrl },
+                contentType = { _, _ -> "database" },
+            ) { _, database ->
+                val accent = novelaTileAccent(database.baseUrl)
+                NovelaTileCard(
+                    accent = accent,
+                    onClick = { onDatabaseClick(database) },
+                ) {
+                    NovelaIconChip(accent = accent) {
+                        ImageView(
+                            imageModel = database.iconUrl,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(NovelaRadius.coverShape),
+                            error = R.drawable.default_icon,
+                        )
+                    }
+                    Spacer(Modifier.height(NovelaSpacing.xxs))
                     Text(
-                        text = stringResource(id = it.nameStrId),
+                        text = stringResource(id = database.nameStrId),
                         style = MaterialTheme.typography.titleSmall,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
-                },
-                supportingContent = {
                     Text(
                         text = stringResource(R.string.english),
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                },
-                leadingContent = {
-                    ImageView(
-                        imageModel = it.iconUrl,
-                        modifier = Modifier
-                            .size(28.dp)
-                            .clip(RoundedCornerShape(4.dp)),
-                        error = R.drawable.default_icon
+                        style = NovelaType.bookMeta,
+                        color = NovelaTheme.colors.textMuted,
                     )
                 }
+            }
+        }
+
+        item(span = { GridItemSpan(maxLineSpan) }, contentType = "header") {
+            NovelaTileSectionHeader(
+                title = stringResource(id = R.string.sources),
+                count = ordered.size,
             )
         }
 
-        item {
-            Text(
-                text = stringResource(id = R.string.sources),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier
-                    .padding(horizontal = 16.dp)
-                    .padding(top = 8.dp),
+        itemsIndexed(
+            items = ordered,
+            key = { _, it -> it.catalog.id },
+            contentType = { _, _ -> "source" },
+        ) { _, item ->
+            SourceTile(
+                item = item,
+                onOpen = { onSourceClick(item.catalog) },
+                onTogglePin = { onSourceSetPinned(item.catalog.id, !item.pinned) },
+                translationExtensionId = translationSettingsExtensionIds[item.catalog.id],
+                translationEnabled = translationSettingsExtensionIds[item.catalog.id]
+                    ?.let { pluginEnabledMap[it] == true } ?: false,
+                onTranslationSettingsClick = onTranslationSettingsClick,
             )
         }
+    }
+}
 
-        items(
-            items = sourcesList,
-            key = { it.catalog.id }
+@OptIn(ExperimentalAnimationApi::class)
+@Composable
+private fun SourceTile(
+    item: CatalogItem,
+    onOpen: () -> Unit,
+    onTogglePin: () -> Unit,
+    translationExtensionId: String?,
+    translationEnabled: Boolean,
+    onTranslationSettingsClick: (String) -> Unit,
+) {
+    val catalog = item.catalog
+    val accent = novelaTileAccent(catalog.id)
+    val contentType = catalog.contentType
+    val labelRes = when (contentType) {
+        "manga" -> StringsR.string.content_type_manga
+        "video" -> StringsR.string.content_type_video
+        else -> StringsR.string.content_type_novel
+    }
+
+    NovelaTileCard(
+        accent = accent,
+        onClick = onOpen,
+        // The actions live in the tile's top-right corner instead of a trailing column:
+        // in a two-column grid there is no horizontal room for them, and a corner button
+        // is a bigger target than a 16dp icon squeezed next to a name.
+        overlay = {
+            if (catalog is SourceInterface.Configurable) {
+                var openConfig by rememberSaveable { mutableStateOf(false) }
+                IconButton(onClick = { openConfig = !openConfig }, modifier = Modifier.size(30.dp)) {
+                    Icon(
+                        imageVector = Icons.Filled.Settings,
+                        contentDescription = stringResource(R.string.configuration),
+                        modifier = Modifier.size(16.dp),
+                    )
+                }
+                if (openConfig) {
+                    AlertDialog(
+                        onDismissRequest = { openConfig = false },
+                        confirmButton = {
+                            FilledTonalButton(
+                                onClick = { openConfig = false },
+                                shape = NovelaRadius.buttonShape,
+                                modifier = Modifier.fillMaxWidth(),
+                            ) {
+                                Text(stringResource(R.string.close))
+                            }
+                        },
+                        text = { catalog.ScreenConfig() },
+                        icon = {
+                            Icon(
+                                Icons.Filled.Settings,
+                                stringResource(id = R.string.configuration),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        },
+                    )
+                }
+            }
+            if (translationExtensionId != null && contentType !in setOf("manga", "video")) {
+                // Settings open under catalog.id (the cascade lookup key): for a Lua plugin
+                // that equals metadata.id ("lua_<ext.id>" or a custom id). Manga and anime
+                // have no text to translate, so the icon is not offered for them.
+                IconButton(
+                    onClick = { onTranslationSettingsClick(catalog.id) },
+                    modifier = Modifier.size(30.dp),
+                ) {
+                    Icon(
+                        Icons.Filled.Translate,
+                        contentDescription = stringResource(StringsR.string.extension_translation_settings),
+                        modifier = Modifier.size(16.dp),
+                        tint = if (translationEnabled) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                    )
+                }
+            }
+            IconButton(onClick = onTogglePin, modifier = Modifier.size(30.dp)) {
+                AnimatedTransition(targetState = item.pinned) { pinned ->
+                    Icon(
+                        imageVector = if (pinned) Icons.Filled.PushPin else Icons.Outlined.PushPin,
+                        contentDescription = stringResource(R.string.pin_or_unpin_source),
+                        modifier = Modifier.size(16.dp),
+                        tint = if (pinned) accent else MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        },
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            NovelaIconChip(accent = accent) {
+                val iconResId = catalog.iconResId
+                ImageView(
+                    imageModel = iconResId ?: catalog.iconUrl,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(NovelaRadius.coverShape),
+                    error = R.drawable.default_icon,
+                )
+            }
+            // Reserve the corner the overlay buttons sit in, so a long name never
+            // slides under them.
+            Spacer(Modifier.width(if (catalog is SourceInterface.Configurable) 36.dp else 8.dp))
+        }
+        Text(
+            text = catalog.displayName(),
+            style = MaterialTheme.typography.titleSmall,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.xs),
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(top = NovelaSpacing.xxs),
         ) {
-            SlimListItem(
-                onClick = { onSourceClick(it.catalog) },
-                modifier = Modifier.animateItem(),
-                headlineContent = {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text = it.catalog.displayName(),
-                            style = MaterialTheme.typography.titleSmall,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f, fill = false),
-                        )
-                        val contentType = it.catalog.contentType
-                        val labelRes = when (contentType) {
-                            "manga" -> StringsR.string.content_type_manga
-                            "video" -> StringsR.string.content_type_video
-                            else -> StringsR.string.content_type_novel
-                        }
-                        val bgColor = when (contentType) {
-                            "manga" -> colorAccent().copy(alpha = 0.12f)
-                            "video" -> MaterialTheme.colorScheme.secondary.copy(alpha = 0.12f)
-                            else -> MaterialTheme.colorScheme.tertiary.copy(alpha = 0.12f)
-                        }
-                        val fgColor = when (contentType) {
-                            "manga" -> colorAccent()
-                            "video" -> MaterialTheme.colorScheme.secondary
-                            else -> MaterialTheme.colorScheme.tertiary
-                        }
-                        Text(
-                            text = stringResource(labelRes),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = fgColor,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier
-                                .background(bgColor, RoundedCornerShape(4.dp))
-                                .padding(horizontal = 4.dp, vertical = 1.dp),
-                        )
-                    }
-                },
-                supportingContent = {
-                    val languageCode = it.catalog.languageTag
-                    if (languageCode != null) Text(
-                        text = getLanguageDisplayName(languageCode),
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                },
-                leadingContent = {
-                    val iconResId = it.catalog.iconResId
-                    ImageView(
-                        imageModel = iconResId ?: it.catalog.iconUrl,
-                        modifier = Modifier
-                            .size(28.dp)
-                            .clip(RoundedCornerShape(4.dp)),
-                        error = R.drawable.default_icon
-                    )
-                },
-                trailingContent = {
-                    Row {
-                        val catalog = it.catalog
-                        if (catalog is SourceInterface.Configurable) {
-                            var openConfig by rememberSaveable { mutableStateOf(false) }
-                            IconButton(onClick = { openConfig = !openConfig }) {
-                                Icon(
-                                    imageVector = Icons.Filled.Settings,
-                                    contentDescription = stringResource(R.string.configuration),
-                                )
-                            }
-                            if (openConfig) {
-                                AlertDialog(
-                                    onDismissRequest = { openConfig = false },
-                                    confirmButton = {
-                                        FilledTonalButton(
-                                            onClick = { openConfig = false },
-                                            shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
-                                            colors = ButtonDefaults.filledTonalButtonColors(
-                                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                                            ),
-                                            modifier = Modifier.fillMaxWidth()
-                                        ) {
-                                            Text(
-                                                text = stringResource(R.string.close),
-                                                fontSize = 12.sp,
-                                                textAlign = TextAlign.Center
-                                            )
-                                        }
-                                    },
-                                    text = { catalog.ScreenConfig() },
-                                    icon = {
-                                        Icon(
-                                            Icons.Filled.Settings,
-                                            stringResource(id = R.string.configuration),
-                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
-                                )
-                            }
-                        }
-                        val extensionId = translationSettingsExtensionIds[it.catalog.id]
-                        if (extensionId != null && it.catalog.contentType !in setOf("manga", "video")) {
-                            // Открываем настройки под catalog.id (ключ чтения каскада) — для
-                            // Lua-плагинов он равен metadata.id ("lua_<ext.id>" или кастомному id).
-                            // Для манга-источников переводить нечего (контент — картинки), для
-                            // аниме (video) — тоже, поэтому иконка переводчика скрывается.
-                            IconButton(onClick = { onTranslationSettingsClick(it.catalog.id) }) {
-                                Icon(
-                                    Icons.Filled.Translate,
-                                    contentDescription = stringResource(my.noveldokusha.strings.R.string.extension_translation_settings),
-                                    tint = if (extensionId != null && pluginEnabledMap[extensionId] == true) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
-                        }
-                        IconButton(
-                            onClick = { onSourceSetPinned(it.catalog.id, !it.pinned) },
-                        ) {
-                            AnimatedTransition(targetState = it.pinned) { pinned ->
-                                Icon(
-                                    imageVector = if (pinned) Icons.Filled.PushPin else Icons.Outlined.PushPin,
-                                    contentDescription = stringResource(R.string.pin_or_unpin_source),
-                                )
-                            }
-                        }
-                    }
-                }
-            )
+            NovelaTileBadge(text = stringResource(labelRes), accent = accent)
+            catalog.languageTag?.let { tag ->
+                NovelaTileBadge(
+                    text = getLanguageDisplayName(tag),
+                    accent = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
 }

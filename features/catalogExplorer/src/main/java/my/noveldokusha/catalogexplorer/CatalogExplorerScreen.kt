@@ -88,8 +88,8 @@ fun CatalogExplorerScreen(
     val extensionsState by extensionsViewModel.state.collectAsStateWithLifecycle()
     val pluginEnabledMap by extensionsViewModel.pluginEnabledMap.collectAsStateWithLifecycle()
 
-    // Карта catalog.id → extensionId для установленных плагинов: каталог Lua-источника
-    // имеет metadata.id = extension.id либо "lua_${extension.id}".
+// Map of catalog.id → extensionId for installed plugins: a Lua source's catalog
+// carries metadata.id = extension.id or "lua_${extension.id}".
     val translationSettingsExtensionIds = remember(extensionsState.extensions) {
         extensionsState.extensions
             .filter { it.installed }
@@ -111,8 +111,8 @@ fun CatalogExplorerScreen(
         }
     }
 
-    // Стабильная лямбда: содержит только переадресацию события в VM, без захвата
-    // рекомпозируемого состояния. Позволяет CatalogList оставаться skippable (P2).
+// Stable lambda: it only forwards the event to the VM, without capturing
+// recomposing state, which keeps CatalogList skippable (P2).
     val onTranslationSettingsClick: (String) -> Unit = remember {
         { extensionId: String ->
             extensionsViewModel.onEvent(ExtensionsScreenEvent.OnExtensionConfigure(extensionId))
@@ -293,7 +293,13 @@ fun CatalogExplorerScreen(
                     // Browse tab content
                     val filteredSources = remember(uiState.sourcesList, uiState.selectedLanguages, uiState.selectedContentType) {
                         uiState.sourcesList.filter { item ->
-                            val langOk = uiState.selectedLanguages.isEmpty() || item.catalog.isLocalSource || item.catalog.languageTag in uiState.selectedLanguages
+// languageTag == null means the source language is unknown (a Legado
+// bookSource has no language field). Do not hide such a source:
+// a language filter must not turn into "the source disappeared".
+                            val langOk = uiState.selectedLanguages.isEmpty() ||
+                                item.catalog.isLocalSource ||
+                                item.catalog.languageTag == null ||
+                                item.catalog.languageTag in uiState.selectedLanguages
                             val typeOk = uiState.selectedContentType.isEmpty() || item.catalog.contentType == uiState.selectedContentType || (uiState.selectedContentType == "novel" && item.catalog.contentType.isEmpty())
                             langOk && typeOk
                         }
@@ -339,7 +345,7 @@ fun CatalogExplorerScreen(
         }
     )
 
-    // Диалог настроек перевода плагина — рендерится на уровне экрана, вне вкладок.
+// Plugin translation settings dialog — rendered at screen level, outside tabs.
     extensionsState.translationSettingsExtensionId?.let { extensionId ->
         PluginTranslationSettingsDialog(
             extensionId = extensionId,

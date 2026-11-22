@@ -48,11 +48,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import my.noveldokusha.text_translator.domain.TranslationModelState
 
 /**
- * Диалог настроек перевода для конкретного плагина (источника).
+* Translation settings dialog for one plugin (source).
  *
- * ViewModel-геттеры не реактивны (read одним заходом поверх AppPreferences),
- * поэтому значениями управляют локальные Compose-State: мутации пишут в VM и
- * тут же обновляют State, чтобы диалог реагировал мгновенно (P1).
+* ViewModel getters are not reactive (one read through AppPreferences), so the
+* values are held in local Compose state: mutations write to the VM and update
+* the state at once, so the dialog reacts immediately (P1).
  */
 @Composable
 fun PluginTranslationSettingsDialog(
@@ -71,14 +71,14 @@ fun PluginTranslationSettingsDialog(
     val scope = remember(extensionId) { mutableStateOf(viewModel.translationScope(extensionId)) }
     val prompt = remember(extensionId) { mutableStateOf(viewModel.translationPrompt(extensionId).orEmpty()) }
 
-    // Hide toggles — локальные Compose-State (записывают в VM + мутуют себя для мгновенной реакции UI)
+// Hide toggles — local Compose state (write to the VM + mutate for instant UI feedback)
     val hideLibrary = remember(extensionId) { mutableStateOf(viewModel.translationHideLibrary(extensionId)) }
     val hideHistory = remember(extensionId) { mutableStateOf(viewModel.translationHideHistory(extensionId)) }
     val hideCatalog = remember(extensionId) { mutableStateOf(viewModel.translationHideCatalog(extensionId)) }
     val hideSearch = remember(extensionId) { mutableStateOf(viewModel.translationHideSearch(extensionId)) }
 
-    // Реактивные списки избранного и последних пар: clear+addAll после мутации
-    // триггерят рекомпозицию диалога (по образцу ReaderLiveTranslation).
+// Reactive favorite and recent-pair lists: clear+addAll after a mutation so the
+// dialog recomposes (same pattern as ReaderLiveTranslation).
     val favoriteLanguages = remember {
         mutableStateListOf<String>().apply { addAll(viewModel.favoriteLanguages()) }
     }
@@ -98,7 +98,7 @@ fun PluginTranslationSettingsDialog(
         }
     }
 
-    // Провайдер из префов может быть неизвестным — безопасно откатываемся на GOOGLE_PA.
+// The provider from prefs may be unknown — fall back to GOOGLE_PA safely.
     val safeProvider = if (PROVIDERS.any { it.first == provider.value }) provider.value else "GOOGLE_PA"
 
     var showPromptEditor by remember { mutableStateOf(false) }
@@ -118,7 +118,7 @@ fun PluginTranslationSettingsDialog(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                // ── Включение перевода плагина ──
+// ── Enabling plugin translation ──
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth(),
@@ -141,7 +141,7 @@ fun PluginTranslationSettingsDialog(
                     )
                 }
 
-                // ── Провайдер ──
+// ── Provider ──
                 PROVIDERS.forEach { (key, labelRes) ->
                     val selected = safeProvider == key
                     Row(
@@ -168,7 +168,7 @@ fun PluginTranslationSettingsDialog(
 
                 HorizontalDivider()
 
-                // ── Пара языков (source → target) ──
+// ── Language pair (source → target) ──
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth(),
@@ -290,7 +290,7 @@ fun PluginTranslationSettingsDialog(
                     }
                 }
 
-                // ── Fallback-превью: глобальная пара, когда у плагина пусто ──
+// ── Fallback preview: the global pair when the plugin has none ──
                 if (!pair.value.isComplete) {
                     val globalSource = viewModel.globalTranslationSource
                     val globalTarget = viewModel.globalTranslationTarget
@@ -305,7 +305,7 @@ fun PluginTranslationSettingsDialog(
 
                 HorizontalDivider()
 
-                // ── Область перевода (STANDARD / FULL) ──
+// ── Translation scope (STANDARD / FULL) ──
                 Text(
                     text = stringResource(my.noveldokusha.strings.R.string.plugin_translation_scope_standard),
                     style = MaterialTheme.typography.titleSmall,
@@ -323,7 +323,7 @@ fun PluginTranslationSettingsDialog(
                     onClick = { scope.value = my.noveldokusha.core.appPreferences.AppPreferences.TRANSLATION_SCOPE_FULL; viewModel.setTranslationScope(extensionId, my.noveldokusha.core.appPreferences.AppPreferences.TRANSLATION_SCOPE_FULL) },
                 )
 
-                // ── Скрытие переведённых названий (только при scope=FULL) ──
+// ── Hiding translated titles (only with scope=FULL) ──
                 if (scope.value == my.noveldokusha.core.appPreferences.AppPreferences.TRANSLATION_SCOPE_FULL) {
                     HorizontalDivider()
                     Text(
@@ -369,7 +369,7 @@ fun PluginTranslationSettingsDialog(
                     }
                 }
 
-                // ── Промпт (только Gemini/OpenAI) ──
+// ── Prompt (Gemini/OpenAI only) ──
                 if (safeProvider == "GEMINI" || safeProvider == "OPENAI") {
                     HorizontalDivider()
                     Row(
@@ -437,7 +437,7 @@ fun PluginTranslationSettingsDialog(
     )
 }
 
-/** Провайдеры перевода: ключ → строковый ресурс метки. */
+/** Translation providers: key → label string resource. */
 private val PROVIDERS = listOf(
     "GOOGLE_PA" to my.noveldokusha.strings.R.string.provider_google_pa,
     "GOOGLE_FREE" to my.noveldokusha.strings.R.string.provider_google_free,
