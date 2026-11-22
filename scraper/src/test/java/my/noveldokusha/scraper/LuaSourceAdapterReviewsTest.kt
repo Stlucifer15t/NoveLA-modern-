@@ -88,7 +88,7 @@ class LuaSourceAdapterReviewsTest {
     }
 
     @Test
-    fun `reviews without text are dropped and ratings are clamped to 0..5`() = runBlocking {
+    fun `reviews without text are dropped and ratings are clamped to 0 to 5`() = runBlocking {
         val a = adapter(
             """
             function getBookReviews(url, index)
