@@ -273,18 +273,50 @@ line height 1.0–2.5, paragraph spacing 0–40 dp, margins 0–100 dp). Margins
 (the reader keeps left/right apart; this writes both and shows the wider). Prefetch is a stepper
 over `0,1,2,3,5,8` — a slider invites a number that only spends mobile data.
 
-**First-open genres + "For you".** `NovelaGenre` is a fixed, curated list, *not* a union of the
-installed sources' vocabularies: a Lua/Legado source only exposes what its own `getFilterList`
-happens to define, so a list built from them would reshuffle on every install and ask about
-taxonomies most sources cannot answer. Chosen slugs land in `AppPreferences.FOR_YOU_GENRES`
-(new `StringSet`), guarded by `FOR_YOU_GENRES_PICKED`, which is what `MainActivity` checks in
-`onCreate` — `IS_FIRST_LAUNCH_DONE` is written inside `App.onCreate`, before any activity can
-observe it, so it is useless as a "did we ask yet" flag. `ForYouRepository` fans the chosen
-genre words out as `getCatalogSearch` per installed source (`getCatalogList(0)` when nothing was
-picked), merges round-robin so one chatty source cannot fill the rail, dedupes by
-`normalizeBookUrl`, and tags each row `inLibrary` from the shelf. `MAX_SOURCES = 6`: the rail is
-a preview, the Finder is where the full fan-out belongs. A card opens
-`navigationRoutes.chapters(...)`.
+**First-open genres.** `NovelaGenre` (in `:core`, shared by the sheet and the tab) is a fixed,
+curated list, *not* a union of the installed sources' vocabularies: a Lua/Legado source only
+exposes what its own `getFilterList` happens to define, so a list built from them would
+reshuffle on every install and ask about taxonomies most sources cannot answer. Chosen slugs
+land in `AppPreferences.FOR_YOU_GENRES` (a `StringSet`), guarded by `FOR_YOU_GENRES_PICKED`,
+which is what `MainActivity` checks in `onCreate` — `IS_FIRST_LAUNCH_DONE` is written inside
+`App.onCreate`, before any activity can observe it, so it is useless as a "did we ask yet" flag.
+
+**For You is a tab, not a rail.** Five pages in `MainActivity`: Library, For you, Finder,
+History, Settings. The content-type chips (Novel / Manga / Video) are not decoration —
+`ForYouEngine.resolve` filters installed sources with the *same* rule the Finder uses
+(`SourceInterface.Catalog.contentType`, empty meaning "novel"), so a Manga tab with no manga
+source says so instead of showing novels. One source is read at a time: `FOR_YOU_SOURCE_ID`
+binds it, empty means "auto", and auto prefers a source whose name mentions WebNovel and
+otherwise fans out over `MAX_FANOUT = 8` sources merged round-robin. `ForYouSourceProvisioner`
+makes one attempt per install to actually obtain that default — from the cached Lua index
+(`EXTENSIONS_AVAILABLE_CACHE` → `LuaSourceLoader.downloadAndCacheScript`) or, failing that, a
+subscribed third-party repository — and the header reports the outcome, so "not found" is a
+visible state rather than an empty grid. Paging is per source (`ForYouCursor`: page, then the
+next genre word, exhausted only after the last term), and a source that fails to answer is
+retired for the pass instead of being promised forever. The tab fetches when it is first looked
+at (`activate()`), re-runs when the installed-source flow re-emits (installing an extension
+used to leave the tab empty until restart), and keeps library/history re-tagging off the
+network. `decorate()` normalizes through `mapToBookMetadata()` (so keys match the shelf's
+normalized URLs), dedupes by url, and marks `inLibrary`; books already on the shelf go last
+rather than being hidden.
+
+No percentage-match badge and no "because you like this" score: nothing in this codebase can
+compute one honestly. The one claim the tab does make — "shares a word with <your book>" — is a
+literal keyword overlap between a returned title and a title in `ReadingHistory`.
+
+**Third-party repositories: a screen, not a dialog.** `CompatRepositoriesActivity`
+(`:features:extensions`) hosts `NovelaCompatRepositoriesScreen`; the Extensions list starts it
+directly instead of opening an `AlertDialog` capped at 520 dp. A Legado or Mihon index carries
+hundreds of rows — name, format, version, state, action — and through a dialog keyhole that is
+unreadable, especially since a Legado `bookSourceName` is usually CJK and was clipped to one
+12sp line. The names themselves were wrong twice over: GitHub's tree API percent-encodes
+non-ASCII paths, so entries inherited `%E7%AC%94%E9%98%81%E5%AD%97` as a display name
+(`CompatRepoParsers.decodeName` fixes listing and file-name fallbacks), and an installed record
+was named after the file rather than the source, which made the installed list disagree with the
+Finder (`buildRecord` now reads `bookSourceName`/`bookSourceUrl`/`bookSourceType` out of a
+single-source payload — `legadoPayloadMeta`). Collections are deliberately left alone: naming a
+many-source file after its first source would be a guess. Labels in that screen are string
+resources (`compat_*`) with Russian translations, as everywhere else in the redesigned surface.
 
 Still not claimed: no per-book genre ranking (sources expose genres per *book* only, one request
 each — the rail shows what the sources returned for the searched words, in source order), and no

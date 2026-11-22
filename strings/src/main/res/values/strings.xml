@@ -30,8 +30,8 @@
     <string name="for_you_change_source">Which source to read</string>
     <string name="for_you_change_source_hint">The tab reads one source at a time so the list stays consistent. Pick another installed %1$s source, or leave it on Auto to ask all of them.</string>
     <string name="for_you_in_library">In library</string>
-    <string name="for_you_because_you_read">Because you're reading</string>
-    <string name="for_you_because_you_read_short">Shares a word with "%1$s"</string>
+    <string name="for_you_because_you_read">Because you\'re reading</string>
+    <string name="for_you_because_you_read_short">Shares a word with “%1$s”</string>
     <string name="for_you_percent_read">%1$d%% read · %2$d of %3$d chapters</string>
     <string name="for_you_not_started">No progress saved yet</string>
     <string name="for_you_first_run_card">Read anything and this card picks up where you left off. Everything below comes from the sources you installed.</string>
@@ -48,8 +48,8 @@
     <string name="for_you_genres_hint">Chosen genres are used as search words against the source you read. Clear them all and the tab shows its front page instead.</string>
     <string name="for_you_genres_save">Save</string>
     <string name="for_you_provision_working">Installing the default source…</string>
-    <string name="for_you_provision_not_found">The default source isn't in your cached index or any repository, so this tab reads whatever you have installed.</string>
-    <string name="for_you_provision_failed">Couldn't install the default source: %1$s</string>
+    <string name="for_you_provision_not_found">The default source isn\'t in your cached index or any repository, so this tab reads whatever you have installed.</string>
+    <string name="for_you_provision_failed">Couldn\'t install the default source: %1$s</string>
     <string name="onboarding_title">Your genres</string>
     <string name="onboarding_headline">What do you like to read?</string>
     <string name="onboarding_subtitle">Pick a few genres. The For you rail then searches the sources you installed for them; skip it and it shows their front pages instead.</string>
@@ -619,7 +619,7 @@
 
     <string name="llm_prompt_section_title">LLM Prompt</string>
     <string name="llm_prompt_use_system_locale">Use system language in prompt</string>
-    <string name="llm_prompt_use_system_locale_description">E.g. "переведи на японский" instead of "translate to Japanese"</string>
+    <string name="llm_prompt_use_system_locale_description">E.g. \"переведи на японский\" instead of \"translate to Japanese\"</string>
     <string name="llm_prompt_label">System prompt</string>
     <string name="llm_prompt_placeholders_hint">Available placeholders: {source_language}, {target_language}</string>
     <string name="llm_save_preset">Save as preset</string>
@@ -645,7 +645,7 @@
 
     <!-- ── Unified LLM Prompt Manager (new keys only, existing llm_* above) ── -->
     <string name="llm_prompt_use_english_locale">English language names in prompt</string>
-    <string name="llm_prompt_use_english_locale_tip">{source_language} → "Chinese", {target_language} → "Russian" instead of localised names</string>
+    <string name="llm_prompt_use_english_locale_tip">{source_language} → \"Chinese\", {target_language} → \"Russian\" instead of localised names</string>
 
     <!-- ── LLM batch / token settings ──────────────────────────────────────── -->
     <string name="llm_batch_size">Batch size</string>
@@ -1055,4 +1055,37 @@
     <string name="settings_group_translation_hint">LLM provider, prompts and regex cleanup rules</string>
     <string name="settings_group_network_hint">User agent, Cloudflare bypass and request delays</string>
     <string name="settings_group_about_hint">Help, credits and the version you are running</string>
+    <string name="compat_repos_title">Third-party extension repositories</string>
+    <string name="compat_repos_subtitle">%1$d subscriptions · %2$d installed</string>
+    <string name="compat_repos_section">Repositories · %1$d</string>
+    <string name="compat_installed_section">Installed sources · %1$d</string>
+    <string name="compat_add_repo">Add repository</string>
+    <string name="compat_detect_add">Detect and add</string>
+    <string name="compat_cancel">Cancel</string>
+    <string name="compat_yes">Yes</string>
+    <string name="compat_no">No</string>
+    <string name="compat_unknown_format">unknown format</string>
+    <string name="compat_sources_stat">%1$d sources</string>
+    <string name="compat_sources_installed_stat">%1$d sources · %2$d installed</string>
+    <string name="compat_file_list">file list</string>
+    <string name="compat_refresh">Refresh</string>
+    <string name="compat_remove">Remove</string>
+    <string name="compat_remove_confirm">Remove the sources installed from it too?</string>
+    <string name="compat_show_catalog">Show catalog</string>
+    <string name="compat_showing_catalog">Catalog open</string>
+    <string name="compat_install_all">Install all</string>
+    <string name="compat_check_updates">Check updates</string>
+    <string name="compat_filter_hint">Filter by name or domain</string>
+    <string name="compat_filter_all">All</string>
+    <string name="compat_catalog_truncated">%1$d of %2$d sources — narrow the filter to see more</string>
+    <string name="compat_install">Install</string>
+    <string name="compat_update">Update</string>
+    <string name="compat_state_installed">installed</string>
+    <string name="compat_state_stored">stored</string>
+    <string name="compat_uninstall">Remove</string>
+    <string name="compat_empty_title">No repositories yet</string>
+    <string name="compat_empty_message">Paste a repository URL, or pick a Legado-style bookSource.json file — the format is detected from the content.</string>
+    <string name="compat_summary_empty">Legado JSON, Mihon/keiyoushi, LNReader, Mangayomi — add a repository URL</string>
+    <string name="compat_summary_counts">%1$d repositories · %2$d sources installed</string>
+    <string name="compat_subtitle">Paste a repository URL — the format is detected from the content.</string>
 </resources>

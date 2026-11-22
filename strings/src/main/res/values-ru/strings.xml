@@ -823,7 +823,7 @@
 
     <string name="llm_prompt_use_english_locale">Английские названия языков в промпте</string>
 
-    <string name="llm_prompt_use_english_locale_tip">{source_language} → "Chinese", {target_language} → "Russian" вместо локализованных названий</string>
+    <string name="llm_prompt_use_english_locale_tip">{source_language} → \"Chinese\", {target_language} → \"Russian\" вместо локализованных названий</string>
 
     <!-- ── Настройки batch / токенов LLM ───────────────────────────────────── -->
 
@@ -1419,5 +1419,38 @@
     <string name="genre_sci_fi">Фантастика</string>
     <string name="genre_slice_of_life">Повседневность</string>
     <string name="genre_tragedy">Трагедия</string>
+    <string name="compat_repos_title">Сторонние репозитории расширений</string>
+    <string name="compat_repos_subtitle">подписки: %1$d · установлено: %2$d</string>
+    <string name="compat_repos_section">Репозитории · %1$d</string>
+    <string name="compat_installed_section">Установленные источники · %1$d</string>
+    <string name="compat_add_repo">Добавить репозиторий</string>
+    <string name="compat_detect_add">Определить и добавить</string>
+    <string name="compat_cancel">Отмена</string>
+    <string name="compat_yes">Да</string>
+    <string name="compat_no">Нет</string>
+    <string name="compat_unknown_format">формат не определён</string>
+    <string name="compat_sources_stat">источники: %1$d</string>
+    <string name="compat_sources_installed_stat">источники: %1$d · установлено: %2$d</string>
+    <string name="compat_file_list">список файлов</string>
+    <string name="compat_refresh">Обновить</string>
+    <string name="compat_remove">Удалить</string>
+    <string name="compat_remove_confirm">Удалить и источники, установленные из него?</string>
+    <string name="compat_show_catalog">Открыть каталог</string>
+    <string name="compat_showing_catalog">Каталог открыт</string>
+    <string name="compat_install_all">Установить все</string>
+    <string name="compat_check_updates">Проверить обновления</string>
+    <string name="compat_filter_hint">Фильтр по названию или домену</string>
+    <string name="compat_filter_all">Все</string>
+    <string name="compat_catalog_truncated">%1$d из %2$d источников — уточните фильтр, чтобы увидеть больше</string>
+    <string name="compat_install">Установить</string>
+    <string name="compat_update">Обновить</string>
+    <string name="compat_state_installed">установлен</string>
+    <string name="compat_state_stored">сохранён</string>
+    <string name="compat_uninstall">Удалить</string>
+    <string name="compat_empty_title">Репозиториев пока нет</string>
+    <string name="compat_empty_message">Вставьте URL репозитория или выберите файл bookSource.json для Legado — формат определяется по содержимому.</string>
+    <string name="compat_summary_empty">Legado JSON, Mihon/keiyoushi, LNReader, Mangayomi — добавьте URL репозитория</string>
+    <string name="compat_summary_counts">репозитории: %1$d · установлено источников: %2$d</string>
+    <string name="compat_subtitle">Вставьте URL репозитория — формат определяется по содержимому.</string>
 </resources>
 

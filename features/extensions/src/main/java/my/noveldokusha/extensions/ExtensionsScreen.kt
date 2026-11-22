@@ -75,6 +75,7 @@ import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -140,7 +141,6 @@ private fun UnifiedExtensionsScreen(
     @Suppress("UNUSED_PARAMETER") onRefresh: (() -> Unit)? = null,
     onImportLua: () -> Unit = {}
 ) {
-    var showCompatRepos by rememberSaveable { mutableStateOf(false) }
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -163,11 +163,18 @@ private fun UnifiedExtensionsScreen(
 // a second supplier of the source list, next to the Lua plugins.
                 val compatViewModel: CompatExtensionsViewModel = hiltViewModel()
                 val compatState by compatViewModel.state.collectAsStateWithLifecycle()
+                val compatContext = LocalContext.current
                 CompatReposSummaryRow(
                     repos = compatState.repositories.size,
                     installed = compatState.installed.size,
                     refreshable = compatState.isRefreshing,
-                    onClick = { showCompatRepos = true },
+                    // Its own screen, not a dialog: a Mihon or Legado index carries hundreds
+                    // of rows and needs the whole window to be readable.
+                    onClick = {
+                        compatContext.startActivity(
+                            CompatRepositoriesActivity.createIntent(compatContext)
+                        )
+                    },
                 )
                 if (state.error != null) {
                     OutlinedCard(
@@ -465,11 +472,6 @@ private fun UnifiedExtensionsScreen(
             state = state,
             viewModel = viewModel
         )
-    }
-
-// Third-party extension repositories (JSON/JS/APK indexes)
-    if (showCompatRepos) {
-        CompatExtensionsDialog(onDismiss = { showCompatRepos = false })
     }
 
     if (state.showLuaEditor) {

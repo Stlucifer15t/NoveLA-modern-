@@ -526,10 +526,25 @@ class CompatRepositoryManager @Inject constructor(
     private fun buildRecord(entry: CompatRepoEntry, payload: ByteArray): CompatInstallRecord {
         val repo = storage.repositories.value.firstOrNull { it.id == entry.repoId }
         val fileName = "${storage.safeFileName(entry.key)}.${entry.payloadKind.fileExtension}"
+        // A Legado source carries its real name inside its own JSON: a repository that keeps
+        // one source per file only offers a filename in its listing, so the record would go on
+        // saying "bilinovel" in the installed list while the Finder showed 筆趣閣. The payload
+        // is in hand at install time, so the record is named the way the source names itself —
+        // and its content type comes from it too, which is what the content-type filters and
+        // the For You tab key on.
+        val legadoMeta = if (entry.ecosystem == CompatEcosystem.LEGADO &&
+            entry.payloadKind == CompatPayloadKind.JSON
+        ) {
+            runCatching {
+                CompatRepoParsers.legadoPayloadMeta(payload.decodeToString())
+            }.getOrNull()
+        } else {
+            null
+        }
         return CompatInstallRecord(
             id = CompatInstallIds.recordId(entry.ecosystem, entry.key),
             ecosystem = entry.ecosystem,
-            name = entry.name,
+            name = legadoMeta?.name?.takeIf { it.isNotBlank() } ?: entry.name,
             version = entry.version,
             language = entry.language,
             baseUrl = entry.baseUrl,

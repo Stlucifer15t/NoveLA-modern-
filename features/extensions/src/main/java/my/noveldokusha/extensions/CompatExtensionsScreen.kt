@@ -17,6 +17,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.ui.res.stringResource
+import my.noveldokusha.coreui.theme.NovelaSpacing
+import my.noveldokusha.coreui.theme.NovelaType
+import my.noveldokusha.strings.R as StringsR
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -74,103 +81,142 @@ import my.noveldokusha.extension_compat.core.CompatRuntimeState
 import my.noveldokusha.coreui.R as CoreUiR
 
 /**
-* Manager of third-party repositories: subscriptions (Legado JSON, Mihon/keiyoushi,
-* LNReader, Mangayomi, CloudStream), the catalog of the selected subscription, installs.
+ * Third-party repository manager — a screen of its own, not a dialog.
  *
-* A dialog rather than a route: the Extensions screen already lists Lua plugins,
-* and the compat layer is the second supplier of the same Finder source list.
+ * Manager of third-party repositories: subscriptions (Legado JSON, Mihon/keiyoushi,
+ * LNReader, Mangayomi, CloudStream), the catalog of the selected subscription, installs.
+ *
+ * Full screen on purpose. A Mihon index carries a thousand sources and a Legado one carries
+ * a few hundred, each row needing a name, a format, a state and an action; in a dialog that
+ * fits about five rows at a time and scrolls inside a second scroller, so the list is read
+ * through a keyhole. As a screen it gets the whole window, a real app bar, and one list.
  */
 @Composable
-fun CompatExtensionsDialog(
-    onDismiss: () -> Unit,
+fun NovelaCompatRepositoriesScreen(
+    onBack: () -> Unit,
     viewModel: CompatExtensionsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Column {
-                Text("Third-party extension repos", fontSize = 16.sp)
+    val palette = MaterialTheme.colorScheme
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(palette.surface)
+            .statusBarsPadding(),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 4.dp, end = NovelaSpacing.lg, top = NovelaSpacing.sm, bottom = NovelaSpacing.sm),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.sm),
+        ) {
+            IconButton(onClick = onBack) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(StringsR.action_back))
+            }
+            Column(Modifier.weight(1f)) {
                 Text(
-                    text = "Paste a repository URL — the format is detected (Legado bookSource JSON, " +
-                        "Mihon/keiyoushi index, LNReader, Mangayomi, CloudStream).",
-                    fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    text = stringResource(StringsR.compat_repos_title),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = palette.onSurface,
                 )
-            }
-        },
-        text = {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(max = 520.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-                contentPadding = PaddingValues(top = 2.dp, bottom = 6.dp),
-            ) {
-                item { AddRepoBlock(state = state, viewModel = viewModel) }
-
-                if (state.repositories.isNotEmpty()) {
-                    item { SectionLabel("Repositories · ${state.repositories.size}") }
-                    items(items = state.repositories, key = { "repo_" + it.id }) { repo ->
-                        RepositoryRow(
-                            repo = repo,
-                            selected = repo.id == state.selectedRepoId,
-                            busy = repo.id in state.busyRepos,
-                            installedHere = state.installed.count { it.repositoryId == repo.id },
-                            viewModel = viewModel,
-                        )
-                    }
-                    item { HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp)) }
-                    // Catalog rows are items of THIS list on purpose: a Mihon index can
-                    // hold a thousand sources, and composing them all inside one block is
-                    // what makes a dialog feel like it hangs.
-                    item { CatalogToolbar(state = state, viewModel = viewModel) }
-                    items(
-                        items = state.entries,
-                        key = { "entry_${it.repoId}_${it.key}" },
-                        contentType = { "catalog-row" },
-                    ) { entry ->
-                        CatalogRow(
-                            entry = entry,
-                            installState = state.installStates[entry.key]
-                                ?: CompatRepositoryManager.InstallState.NOT_INSTALLED,
-                            busy = state.isRefreshing,
-                            viewModel = viewModel,
-                        )
-                    }
-                }
-
-                if (state.installed.isNotEmpty()) {
-                    item { SectionLabel("Installed compat sources · ${state.installed.size}") }
-                    items(items = state.installed, key = { "installed_" + it.id }) { record ->
-                        InstalledRow(
-                            record = record,
-                            loadError = state.loadInfos.firstOrNull { it.record.id == record.id }?.loadError,
-                            viewModel = viewModel,
-                        )
-                    }
-                }
-
+                // Before anything is subscribed the header explains what to do; after that
+                // the same line reports what is there.
                 if (state.repositories.isEmpty() && state.installed.isEmpty()) {
-                    item {
-                        NovelaEmptyState(
-                            icon = Icons.Outlined.Extension,
-                            title = "No repositories yet",
-                            message = "Add a repository URL, or pick a Legado-style bookSource.json " +
-                                "file — the format is detected from the content.",
-                            actionLabel = "Add repository",
-                            onAction = { viewModel.onEvent(CompatExtensionsEvent.OnShowAddRepo) },
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                    }
+                    Text(
+                        text = stringResource(StringsR.compat_subtitle),
+                        style = NovelaType.bookMeta,
+                        color = palette.onSurfaceVariant,
+                    )
+                } else {
+                    Text(
+                        text = stringResource(
+                            StringsR.compat_repos_subtitle,
+                            state.repositories.size,
+                            state.installed.size,
+                        ),
+                        style = NovelaType.bookMeta,
+                        color = palette.onSurfaceVariant,
+                    )
                 }
             }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) { Text("Close") }
-        },
-    )
+        }
+        HorizontalDivider()
+        LazyColumn(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .navigationBarsPadding(),
+            verticalArrangement = Arrangement.spacedBy(NovelaSpacing.sm),
+            contentPadding = PaddingValues(
+                start = NovelaSpacing.lg,
+                end = NovelaSpacing.lg,
+                top = NovelaSpacing.md,
+                bottom = NovelaSpacing.huge,
+            ),
+        ) {
+            item(key = "compat_add") { AddRepoBlock(state = state, viewModel = viewModel) }
+
+            if (state.repositories.isNotEmpty()) {
+                item(key = "compat_repos_label") {
+                    SectionLabel(stringResource(StringsR.compat_repos_section, state.repositories.size))
+                }
+                items(items = state.repositories, key = { "repo_" + it.id }) { repo ->
+                    RepositoryRow(
+                        repo = repo,
+                        selected = repo.id == state.selectedRepoId,
+                        busy = repo.id in state.busyRepos,
+                        installedHere = state.installed.count { it.repositoryId == repo.id },
+                        viewModel = viewModel,
+                    )
+                }
+                item(key = "compat_divider") { HorizontalDivider(modifier = Modifier.padding(vertical = NovelaSpacing.xs)) }
+                // Catalog rows are items of THIS list on purpose: a Mihon index can hold a
+                // thousand sources, and composing them all inside one block is what makes a
+                // scrolling list feel like it hangs.
+                item(key = "compat_toolbar") { CatalogToolbar(state = state, viewModel = viewModel) }
+                items(
+                    items = state.entries,
+                    key = { "entry_" + it.repoId + "_" + it.key },
+                    contentType = { "catalog-row" },
+                ) { entry ->
+                    CatalogRow(
+                        entry = entry,
+                        installState = state.installStates[entry.key]
+                            ?: CompatRepositoryManager.InstallState.NOT_INSTALLED,
+                        busy = state.isRefreshing,
+                        viewModel = viewModel,
+                    )
+                }
+            }
+
+            if (state.installed.isNotEmpty()) {
+                item(key = "compat_installed_label") {
+                    SectionLabel(stringResource(StringsR.compat_installed_section, state.installed.size))
+                }
+                items(items = state.installed, key = { "installed_" + it.id }) { record ->
+                    InstalledRow(
+                        record = record,
+                        loadError = state.loadInfos.firstOrNull { it.record.id == record.id }?.loadError,
+                        viewModel = viewModel,
+                    )
+                }
+            }
+
+            if (state.repositories.isEmpty() && state.installed.isEmpty()) {
+                item(key = "compat_empty") {
+                    NovelaEmptyState(
+                        icon = Icons.Outlined.Extension,
+                        title = stringResource(StringsR.compat_empty_title),
+                        message = stringResource(StringsR.compat_empty_message),
+                        actionLabel = stringResource(StringsR.compat_add_repo),
+                        onAction = { viewModel.onEvent(CompatExtensionsEvent.OnShowAddRepo) },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            }
+        }
+    }
 }
 
 @Composable
@@ -186,7 +232,7 @@ private fun AddRepoBlock(
         ) {
             Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(Modifier.size(8.dp))
-            Text("Add repository", fontSize = 13.sp)
+            Text(stringResource(StringsR.compat_add_repo), fontSize = 13.sp)
         }
         state.feedback?.let { FeedbackLine(it) }
         return
@@ -216,13 +262,13 @@ private fun AddRepoBlock(
                     Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp))
                 }
                 Spacer(Modifier.size(6.dp))
-                Text("Detect & add", fontSize = 12.sp)
+                Text(stringResource(StringsR.compat_detect_add), fontSize = 12.sp)
             }
             OutlinedButton(
                 onClick = { viewModel.onEvent(CompatExtensionsEvent.OnHideAddRepo) },
                 shape = RoundedCornerShape(8.dp),
             ) {
-                Text("Cancel", fontSize = 12.sp)
+                Text(stringResource(StringsR.compat_cancel), fontSize = 12.sp)
             }
         }
         state.feedback?.let { FeedbackLine(it) }
@@ -275,26 +321,26 @@ private fun RepositoryRow(
             Column(Modifier.weight(1f)) {
                 Text(
                     text = repo.name.ifBlank { repo.url },
-                    fontSize = 13.sp,
-                    maxLines = 1,
+                    style = MaterialTheme.typography.titleSmall,
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
+                val unknownFormat = stringResource(StringsR.compat_unknown_format)
+                val sourcesStat = if (installedHere > 0) {
+                    stringResource(StringsR.compat_sources_installed_stat, repo.entryCount, installedHere)
+                } else {
+                    stringResource(StringsR.compat_sources_stat, repo.entryCount)
+                }
+                val treeNote = if (repo.kind.name == "TREE") {
+                    " · " + stringResource(StringsR.compat_file_list)
+                } else {
+                    ""
+                }
                 Text(
-                    text = buildString {
-                        append(repo.ecosystem?.displayName ?: "unknown format")
-                        append(" · ")
-                        append(repo.entryCount)
-                        append(" sources")
-                        if (installedHere > 0) {
-                            append(" · ")
-                            append(installedHere)
-                            append(" installed")
-                        }
-                        if (repo.kind.name == "TREE") append(" · file list")
-                    },
-                    fontSize = 11.sp,
+                    text = (repo.ecosystem?.displayName ?: unknownFormat) + " · " + sourcesStat + treeNote,
+                    style = NovelaType.bookMeta,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
             }
@@ -302,7 +348,7 @@ private fun RepositoryRow(
                 CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
             } else {
                 IconButton(onClick = { viewModel.onEvent(CompatExtensionsEvent.OnRefreshRepo(repo.id)) }) {
-                    Icon(Icons.Default.Refresh, contentDescription = "Refresh", modifier = Modifier.size(18.dp))
+                    Icon(Icons.Default.Refresh, contentDescription = stringResource(StringsR.compat_refresh), modifier = Modifier.size(18.dp))
                 }
             }
             Switch(
@@ -312,7 +358,7 @@ private fun RepositoryRow(
             IconButton(onClick = { confirmDelete = true }) {
                 Icon(
                     Icons.Default.Delete,
-                    contentDescription = "Remove",
+                    contentDescription = stringResource(StringsR.compat_remove),
                     modifier = Modifier.size(18.dp),
                     tint = MaterialTheme.colorScheme.error,
                 )
@@ -333,19 +379,19 @@ private fun RepositoryRow(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("Remove sources too?", fontSize = 11.sp, modifier = Modifier.weight(1f))
+                Text(stringResource(StringsR.compat_remove_confirm), fontSize = 11.sp, modifier = Modifier.weight(1f))
                 TextButton(
                     onClick = {
                         viewModel.onEvent(CompatExtensionsEvent.OnRemoveRepo(repo.id, true))
                         confirmDelete = false
                     },
-                ) { Text("Yes", fontSize = 11.sp) }
+                ) { Text(stringResource(StringsR.compat_yes), fontSize = 11.sp) }
                 TextButton(
                     onClick = {
                         viewModel.onEvent(CompatExtensionsEvent.OnRemoveRepo(repo.id, false))
                         confirmDelete = false
                     },
-                ) { Text("No", fontSize = 11.sp) }
+                ) { Text(stringResource(StringsR.compat_no), fontSize = 11.sp) }
                 TextButton(onClick = { confirmDelete = false }) { Text("Cancel", fontSize = 11.sp) }
             }
         } else {
@@ -358,7 +404,8 @@ private fun RepositoryRow(
                     ),
                 ) {
                     Text(
-                        text = if (selected) "Showing catalog" else "Show catalog",
+                        text = if (selected) stringResource(StringsR.compat_showing_catalog)
+                        else stringResource(StringsR.compat_show_catalog),
                         fontSize = 11.sp,
                         color = if (selected) colorAccent() else MaterialTheme.colorScheme.primary,
                     )
@@ -366,10 +413,10 @@ private fun RepositoryRow(
                 TextButton(
                     onClick = { viewModel.onEvent(CompatExtensionsEvent.OnInstallAll(repo.id)) },
                     enabled = repo.entryCount > 0,
-                ) { Text("Install all", fontSize = 11.sp) }
+                ) { Text(stringResource(StringsR.compat_install_all), fontSize = 11.sp) }
                 TextButton(
                     onClick = { viewModel.onEvent(CompatExtensionsEvent.OnUpdateAll(repo.id)) },
-                ) { Text("Check updates", fontSize = 11.sp) }
+                ) { Text(stringResource(StringsR.compat_check_updates), fontSize = 11.sp) }
             }
         }
     }
@@ -391,7 +438,7 @@ private fun CatalogToolbar(
                 onValueChange = { viewModel.onEvent(CompatExtensionsEvent.OnSearchQuery(it)) },
                 modifier = Modifier.weight(1f),
                 singleLine = true,
-                placeholder = { Text("Filter by name or domain", fontSize = 11.sp) },
+                placeholder = { Text(stringResource(StringsR.compat_filter_hint), fontSize = 11.sp) },
                 trailingIcon = {
                     if (state.searchQuery.isNotEmpty()) {
                         IconButton(onClick = { viewModel.onEvent(CompatExtensionsEvent.OnSearchQuery("")) }) {
@@ -407,7 +454,7 @@ private fun CatalogToolbar(
             FilterChip(
                 selected = state.filterEcosystem == null,
                 onClick = { viewModel.onEvent(CompatExtensionsEvent.OnFilterEcosystem(null)) },
-                label = { Text("All", fontSize = 11.sp) },
+                label = { Text(stringResource(StringsR.compat_filter_all), fontSize = 11.sp) },
             )
             CompatEcosystem.entries.forEach { ecosystem ->
                 FilterChip(
@@ -424,17 +471,12 @@ private fun CatalogToolbar(
             }
         }
         Text(
-            text = buildString {
-                append(state.entries.size)
-                if (state.truncated) {
-                    append(" of ")
-                    append(state.totalCount)
-                    append(" sources — narrow the filter to see more")
-                } else {
-                    append(" sources")
-                }
+            text = if (state.truncated) {
+                stringResource(StringsR.compat_catalog_truncated, state.entries.size, state.totalCount)
+            } else {
+                stringResource(StringsR.compat_sources_stat, state.entries.size)
             },
-            fontSize = 10.sp,
+            style = NovelaType.bookMeta,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
@@ -493,8 +535,8 @@ private fun CatalogRow(
         Column(Modifier.weight(1f)) {
             Text(
                 text = entry.name,
-                fontSize = 12.sp,
-                maxLines = 1,
+                style = MaterialTheme.typography.bodyLarge,
+                maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
             Text(
@@ -522,12 +564,12 @@ private fun CatalogRow(
         }
         when (installState) {
             CompatRepositoryManager.InstallState.NOT_INSTALLED ->
-                SmallAction("Install", enabled = !busy) {
+                SmallAction(stringResource(StringsR.compat_install), enabled = !busy) {
                     viewModel.onEvent(CompatExtensionsEvent.OnInstall(entry))
                 }
 
             CompatRepositoryManager.InstallState.UPDATE_AVAILABLE ->
-                SmallAction("Update", enabled = !busy) {
+                SmallAction(stringResource(StringsR.compat_update), enabled = !busy) {
                     viewModel.onEvent(CompatExtensionsEvent.OnInstall(entry))
                 }
 
@@ -535,14 +577,14 @@ private fun CatalogRow(
             else -> {
                 if (runtime.state == CompatRuntimeState.READY) {
                     Text(
-                        text = "installed",
-                        fontSize = 10.sp,
+                        text = stringResource(StringsR.compat_state_installed),
+                        style = NovelaType.bookMeta,
                         color = MaterialTheme.colorScheme.primary,
                     )
                 } else {
                     Text(
-                        text = "stored",
-                        fontSize = 10.sp,
+                        text = stringResource(StringsR.compat_state_stored),
+                        style = NovelaType.bookMeta,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
@@ -558,7 +600,7 @@ private fun CatalogRow(
                 ) {
                     Icon(
                         Icons.Default.Delete,
-                        contentDescription = "Uninstall",
+                        contentDescription = stringResource(StringsR.compat_uninstall),
                         modifier = Modifier.size(16.dp),
                         tint = MaterialTheme.colorScheme.error,
                     )
@@ -596,8 +638,8 @@ private fun InstalledRow(
             Column(Modifier.weight(1f)) {
                 Text(
                     text = record.name,
-                    fontSize = 12.sp,
-                    maxLines = 1,
+                    style = MaterialTheme.typography.bodyLarge,
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
@@ -630,7 +672,7 @@ private fun InstalledRow(
             ) {
                 Icon(
                     Icons.Default.Delete,
-                    contentDescription = "Uninstall",
+                    contentDescription = stringResource(StringsR.compat_uninstall),
                     modifier = Modifier.size(16.dp),
                     tint = MaterialTheme.colorScheme.error,
                 )
@@ -692,24 +734,16 @@ fun CompatReposSummaryRow(
             }
             Column(Modifier.weight(1f)) {
                 Text(
-                    text = "Third-party extension repos",
+                    text = stringResource(StringsR.compat_repos_title),
                     fontSize = 13.sp,
                 )
                 Text(
                     text = if (repos == 0 && installed == 0) {
-                        "Legado JSON, Mihon/keiyoushi, LNReader, Mangayomi — add a repo URL"
+                        stringResource(StringsR.compat_summary_empty)
                     } else {
-                        buildString {
-                            append(repos)
-                            append(if (repos == 1) " repository" else " repositories")
-                            append(" · ")
-                            append(installed)
-                            append(" source")
-                            if (installed != 1) append("s")
-                            append(" installed")
-                        }
+                        stringResource(StringsR.compat_summary_counts, repos, installed)
                     },
-                    fontSize = 10.sp,
+                    style = NovelaType.bookMeta,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,

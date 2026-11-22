@@ -169,37 +169,37 @@ fun NovelaForYouScreen(
         // Which source this tab reads. Kept out of the header so the header stays about
         // status, and hidden entirely when there is nothing installed to bind.
         if (state.sourcesOfThisType > 0) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = NovelaSpacing.screenH)
-                .padding(bottom = NovelaSpacing.sm),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            val boundName = state.boundSourceName
-            Text(
-                text = if (boundName != null) {
-                    stringResource(R.string.for_you_bound_to, boundName)
-                } else {
-                    stringResource(R.string.for_you_reading_all)
-                },
-                style = NovelaType.bookMeta,
-                color = palette.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
+            Row(
                 modifier = Modifier
-                    .weight(1f)
-                    .clip(RoundedCornerShape(NovelaRadius.sm))
-                    .clickable { showSourcePicker = true }
-                    .padding(vertical = NovelaSpacing.xxs),
-            )
-            TextButton(onClick = { showSourcePicker = true }) {
+                    .fillMaxWidth()
+                    .padding(horizontal = NovelaSpacing.screenH)
+                    .padding(bottom = NovelaSpacing.sm),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                val boundName = state.boundSourceName
                 Text(
-                    text = stringResource(R.string.for_you_change),
-                    style = MaterialTheme.typography.labelLarge,
+                    text = if (boundName != null) {
+                        stringResource(R.string.for_you_bound_to, boundName)
+                    } else {
+                        stringResource(R.string.for_you_reading_all)
+                    },
+                    style = NovelaType.bookMeta,
+                    color = palette.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(NovelaRadius.sm))
+                        .clickable { showSourcePicker = true }
+                        .padding(vertical = NovelaSpacing.xxs),
                 )
+                TextButton(onClick = { showSourcePicker = true }) {
+                    Text(
+                        text = stringResource(R.string.for_you_change),
+                        style = MaterialTheme.typography.labelLarge,
+                    )
+                }
             }
-        }
         }
 
         ForYouReadingCard(

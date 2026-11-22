@@ -292,7 +292,7 @@ object CompatRepoParsers {
     fun parseLegado(repoId: String, indexUrl: String, text: String): ParsedIndex {
         val trimmed = text.trim()
         if (trimmed.isEmpty()) return ParsedIndex(CompatEcosystem.LEGADO)
-        val repoName = indexUrl.substringAfterLast('/').ifBlank { hostOf(indexUrl) }
+        val repoName = decodeName(indexUrl.substringAfterLast('/')).ifBlank { hostOf(indexUrl) }
 
         // a) line-per-URL list
         if (!trimmed.startsWith("[") && !trimmed.startsWith("{")) {
@@ -374,7 +374,7 @@ object CompatRepoParsers {
         return CompatRepoEntry(
             key = url,
             repoId = repoId,
-            name = url.substringAfterLast('/').substringBeforeLast('.').ifBlank { host },
+            name = decodeName(url.substringAfterLast('/').substringBeforeLast('.')).ifBlank { host },
             ecosystem = CompatEcosystem.LEGADO,
             baseUrl = "https://$host",
             payloadUrl = url,
@@ -661,11 +661,12 @@ object CompatRepoParsers {
                 CompatRepoEntry(
                     key = file.path,
                     repoId = repoId,
-                    name = file.path.substringAfterLast('/')
-                        .substringBeforeLast('.')
-                        .replace('-', ' ')
-                        .replace('_', ' ')
-                        .ifBlank { file.path },
+                    name = decodeName(
+                    file.path.substringAfterLast('/').substringBeforeLast('.')
+                )
+                    .replace('-', ' ')
+                    .replace('_', ' ')
+                    .ifBlank { file.path },
                     ecosystem = eco,
                     payloadUrl = "$base/${file.path.trimStart('/')}",
                     payloadKind = kind,
@@ -704,6 +705,46 @@ object CompatRepoParsers {
         }
     }
 
+    /** What a downloaded bookSource payload says about itself. */
+    data class LegadoPayloadMeta(
+        val name: String,
+        val baseUrl: String,
+        val contentType: String,
+    )
+
+    /**
+     * The self-description of a Legado payload, used to name an installed record.
+     *
+     * A repository that keeps one source per file has no source name in its listing at all —
+     * `bilinovel.json` is a filename, and the real name is the `bookSourceName` inside the
+     * file. Only a payload holding exactly one bookSource is described this way: a collection
+     * gets its sources' own names when they load, and inventing one name for the record would
+     * be a guess about a set of sources.
+     */
+    fun legadoPayloadMeta(text: String): LegadoPayloadMeta? {
+        val trimmed = text.trim()
+        if (trimmed.isEmpty() || trimmed.length > MAX_TREE_FILE_BYTES) return null
+        val objects = when {
+            trimmed.startsWith("[") -> trimmed.parseArray().orEmpty().filterIsInstance<JsonObject>()
+            trimmed.startsWith("{") -> inlineSources(trimmed)
+            else -> return null
+        }
+        if (objects.size != 1) return null
+        val obj = objects.single()
+        val name = obj.stringOr("bookSourceName").trim()
+        if (name.isBlank()) return null
+        return LegadoPayloadMeta(
+            name = name,
+            baseUrl = obj.stringOr("bookSourceUrl").trim().substringBefore("{{").trimEnd('/'),
+            contentType = when (obj.longOf("bookSourceType")) {
+                2L -> "manga"
+                4L -> "video"
+                1L -> "audio"
+                else -> ""
+            },
+        )
+    }
+
     private fun List<JsonObject>.sourceNames(): String =
         mapNotNull { it.stringOr("name", "language", "lang").ifBlank { null } }
             .distinct()
@@ -712,6 +753,20 @@ object CompatRepoParsers {
 
     private fun hostOf(url: String): String =
         url.removePrefix("https://").removePrefix("http://").substringBefore('/')
+
+    /**
+     * A name taken out of a repository listing. GitHub's tree API percent-encodes non-ASCII
+     * paths, so a Chinese bookSource file arrives as `%E7%AC%94%E9%98%81%E5%AD%97.json` and
+     * the UI shows escape sequences where a name belongs. Best-effort: a malformed escape
+     * keeps the raw text instead of dropping the entry with it.
+     */
+    internal fun decodeName(raw: String): String {
+        val trimmed = raw.trim()
+        if (!trimmed.contains('%')) return trimmed
+        return runCatching {
+            java.net.URLDecoder.decode(trimmed.replace("+", "%2B"), "UTF-8")
+        }.getOrDefault(trimmed)
+    }
 
     private fun String.parseObject(): JsonObject? =
         runCatching { json.parseToJsonElement(this) as? JsonObject }.getOrNull()
