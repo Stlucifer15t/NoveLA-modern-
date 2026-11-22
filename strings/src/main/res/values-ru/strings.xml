@@ -1569,4 +1569,21 @@
     <string name="greeting_afternoon">Добрый день</string>
     <string name="greeting_evening">Добрый вечер</string>
     <string name="greeting_night">Доброй ночи</string>
+    <string name="book_tab_chapters">Главы</string>
+    <string name="book_tab_related">Похожие</string>
+    <string name="book_tab_reviews">Отзывы</string>
+    <string name="book_stat_chapters">Глав</string>
+    <string name="book_stat_read">Прочитано</string>
+    <string name="book_stat_saved">Сохранено</string>
+    <string name="book_stat_rating">Рейтинг</string>
+    <string name="book_synopsis">Описание</string>
+    <string name="book_action_start">Читать</string>
+    <string name="book_action_continue">Продолжить</string>
+    <string name="book_related_query">Поиск «%1$s» на %2$s</string>
+    <string name="book_related_no_genre">У этой книги нет жанра, по которому можно искать.</string>
+    <string name="book_related_failed">Источник не ответил. Попробуйте позже.</string>
+    <string name="book_related_empty">По этому запросу в источнике пока ничего больше нет.</string>
+    <string name="book_reviews_title">Отзывов здесь нет</string>
+    <string name="book_reviews_message">Источники, с которыми работает NoveLA, не публикуют отзывы, поэтому на этой вкладке нечего настоящего показать.</string>
+    <string name="book_related_retry">Повторить</string>
 </resources>

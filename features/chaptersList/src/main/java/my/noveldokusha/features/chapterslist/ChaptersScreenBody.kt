@@ -37,6 +37,7 @@ import kotlinx.coroutines.launch
 import my.noveldokusha.coreui.components.ErrorView
 import my.noveldokusha.chapterslist.R
 import my.noveldokusha.feature.local_database.ChapterWithContext
+import my.noveldokusha.feature.local_database.BookMetadata
 import my.noveldokusha.scraper.Scraper
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -64,6 +65,12 @@ internal fun ChaptersScreenBody(
     categories: () -> List<String>,
     onCategoryClick: () -> Unit,
     scraper: Scraper,
+    tab: ChaptersTab,
+    canDownload: Boolean,
+    onResumeReading: () -> Unit,
+    onDownloadNext100: () -> Unit,
+    onLoadRelatedBooks: () -> Unit,
+    onRelatedBookClick: (BookMetadata) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var isRefreshingDelayed by remember { mutableStateOf(state.isRefreshing.value) }
@@ -104,6 +111,10 @@ internal fun ChaptersScreenBody(
     }
 
     val readChapters by remember { derivedStateOf { state.chapters.count { it.chapter.read } } }
+
+    val savedChapters by remember {
+        derivedStateOf { state.chapterSizes.value.count { it.value.sizeBytes != null } }
+    }
 
     val onScrollToLastRead: (() -> Unit)? = lastReadChapterIndex?.let { index ->
         {
@@ -167,6 +178,8 @@ internal fun ChaptersScreenBody(
                     },
                     numberOfChapters = state.chapters.size,
                     readChapters = readChapters,
+                    // Сохранено = глава с локально записанным телом или загрузкой (есть размер).
+                    savedChapters = savedChapters,
                     paddingValues = innerPadding,
                     modifier = Modifier,
                     translatedTitle = translatedTitle,
@@ -177,15 +190,17 @@ internal fun ChaptersScreenBody(
                     onClearTranslationClick = onClearTranslationClick,
                     onCoverLongClick = onCoverLongClick,
                     onGlobalSearchClick = onGlobalSearchClick,
+                    onResumeReading = onResumeReading,
                     onScrollToLastRead = onScrollToLastRead,
                     onScrollToChapter = { showGoToChapterDialog = true },
+                    canDownload = canDownload,
+                    onDownloadNext100 = onDownloadNext100,
                     bookCategory = bookCategory,
-                    categories = categories,
                     onCategoryClick = onCategoryClick,
                 )
             }
 
-            chapterListItems.forEach { entry ->
+            if (tab == ChaptersTab.Chapters) chapterListItems.forEach { entry ->
                 when (entry) {
                     // Заголовок сезона/тома: прилипает к верху при скролле группы.
                     is ChapterListItem.VolumeHeader -> stickyHeader(key = entry.key) {
@@ -215,6 +230,26 @@ internal fun ChaptersScreenBody(
                         )
                     }
                 }
+            }
+
+            if (tab == ChaptersTab.Related) item(
+                key = "related",
+                contentType = { 3 }
+            ) {
+                ChaptersRelatedContent(
+                    state = state.relatedBooks.value,
+                    scraper = scraper,
+                    onRetry = onLoadRelatedBooks,
+                    onLoad = onLoadRelatedBooks,
+                    onBookClick = onRelatedBookClick,
+                )
+            }
+
+            if (tab == ChaptersTab.Reviews) item(
+                key = "reviews",
+                contentType = { 4 }
+            ) {
+                ChaptersReviewsContent()
             }
 
             if (state.error.value.isNotBlank()) item(

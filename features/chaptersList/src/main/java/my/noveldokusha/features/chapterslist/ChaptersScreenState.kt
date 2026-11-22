@@ -38,6 +38,8 @@ internal data class ChaptersScreenState(
     val notifyNewChapters: State<Boolean>,
     // Статусы загрузок глав (видео media3 + текст/манга): chapterUrl → бейдж.
     val chapterDownloads: MutableState<Map<String, ChapterDownloadUi>>,
+    // Вкладка «Похожие»: результат поиска в том же источнике, загружается лениво.
+    val relatedBooks: MutableState<RelatedBooksState>,
 ) {
 
     val isInSelectionMode = derivedStateOf { selectedChaptersUrl.size != 0 }
@@ -67,6 +69,28 @@ internal data class ChaptersScreenState(
             contentType = book.contentType,
         )
     }
+}
+
+/** Вкладки страницы книги (нижняя панель). */
+enum class ChaptersTab { Chapters, Related, Reviews }
+
+/** Состояние вкладки «Похожие». Данные только из реального поиска источника. */
+sealed interface RelatedBooksState {
+    data object Idle : RelatedBooksState
+    data object Loading : RelatedBooksState
+
+    /** У книги нет жанра, по которому можно искать. */
+    data object NoGenre : RelatedBooksState
+
+    /** Источник не ответил или ошибка. */
+    data object Failed : RelatedBooksState
+
+    /** [query] — поисковый запрос (жанр), [sourceName] — имя источника. */
+    data class Loaded(
+        val query: String,
+        val sourceName: String,
+        val books: List<my.noveldokusha.feature.local_database.BookMetadata>,
+    ) : RelatedBooksState
 }
 
 /** Пара языков перевода, доступная для экспорта, с числом переведённых глав. */

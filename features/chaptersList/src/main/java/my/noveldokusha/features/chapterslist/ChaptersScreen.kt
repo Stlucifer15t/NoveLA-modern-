@@ -100,6 +100,8 @@ internal fun ChaptersScreen(
     onLibraryToggle: () -> Unit,
     onSearchBookInDatabase: () -> Unit,
     onResumeReading: () -> Unit,
+    onLoadRelatedBooks: () -> Unit,
+    onRelatedBookClick: (BookMetadata) -> Unit,
     onPressBack: () -> Unit,
     onSelectedDeleteDownloads: () -> Unit,
     onSelectedDownload: () -> Unit,
@@ -151,6 +153,7 @@ internal fun ChaptersScreen(
     var showDropDown by rememberSaveable { mutableStateOf(false) }
     var showBottomSheet by rememberSaveable { mutableStateOf(false) }
     var showCategoryPicker by rememberSaveable { mutableStateOf(false) }
+    var selectedTab by rememberSaveable { mutableStateOf(ChaptersTab.Chapters) }
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val lazyListState = rememberLazyListState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -201,6 +204,11 @@ internal fun ChaptersScreen(
 
     if (state.isInSelectionMode.value) BackHandler {
         onCloseSelectionBar()
+    }
+
+    // Назад с вкладки «Похожие»/«Отзывы» возвращает к главам, а не закрывает книгу.
+    if (selectedTab != ChaptersTab.Chapters && !state.isInSelectionMode.value) BackHandler {
+        selectedTab = ChaptersTab.Chapters
     }
 
     Scaffold(
@@ -364,15 +372,21 @@ internal fun ChaptersScreen(
                 onCoverLongClick = onCoverLongClick,
                 onGlobalSearchClick = onGlobalSearchClick,
                 bookCategory = state.book.value.category,
-                categories = categories,
                 onCategoryClick = { showCategoryPicker = true },
                 scraper = scraper,
+                tab = selectedTab,
+                canDownload = !state.isLocalSource.value,
+                onResumeReading = onResumeReading,
+                onDownloadNext100 = onDownloadNext100Chapters,
+                onLoadRelatedBooks = onLoadRelatedBooks,
+                onRelatedBookClick = onRelatedBookClick,
             )
             Box(Modifier.padding(innerPadding)) {
                 InternalLazyColumnScrollbar(state = lazyListState)
             }
         },
         bottomBar = {
+            Column {
             AnimatedVisibility(
                 visible = state.isInSelectionMode.value,
                 enter = expandVertically(initialHeight = { it / 8 }) + fadeIn(animationSpec = tween(120)),
@@ -450,9 +464,15 @@ internal fun ChaptersScreen(
                     }
                 }
             }
+            if (!state.isInSelectionMode.value) ChaptersTabBar(
+                selected = selectedTab,
+                chapterCount = state.chapters.size,
+                onSelect = { selectedTab = it },
+            )
+            }
         },
         floatingActionButton = {
-            FloatingActionButton(
+            if (selectedTab == ChaptersTab.Chapters) FloatingActionButton(
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
                 onClick = onResumeReading

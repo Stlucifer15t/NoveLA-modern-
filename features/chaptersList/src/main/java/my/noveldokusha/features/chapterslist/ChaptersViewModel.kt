@@ -166,7 +166,51 @@ internal class ChaptersViewModel @Inject constructor(
             derivedStateOf { book.value.url !in muted.value }
         },
         chapterDownloads = mutableStateOf(emptyMap()),
+        relatedBooks = mutableStateOf(RelatedBooksState.Idle),
     )
+
+    /**
+     * Вкладка «Похожие»: поиск в том же источнике по первому жанру книги.
+     * Текущая книга из результатов убирается. Повторно не грузим, если уже есть результат.
+     */
+    fun loadRelatedBooks() {
+        val current = state.relatedBooks.value
+        if (current is RelatedBooksState.Loading || current is RelatedBooksState.Loaded) return
+        val bookUrl = state.book.value.url
+        val genre = state.genres.value.firstOrNull()?.trim().orEmpty()
+        if (genre.isEmpty()) {
+            state.relatedBooks.value = RelatedBooksState.NoGenre
+            return
+        }
+        // Поиск есть только у каталожных источников (SourceInterface.Catalog).
+        val source = scraper.getCompatibleSourceCatalog(bookUrl)
+        if (source == null) {
+            state.relatedBooks.value = RelatedBooksState.Failed
+            return
+        }
+        state.relatedBooks.value = RelatedBooksState.Loading
+        viewModelScope.launch {
+            state.relatedBooks.value = when (val result = source.getCatalogSearch(0, genre)) {
+                is Response.Success -> RelatedBooksState.Loaded(
+                    query = genre,
+                    sourceName = source.name ?: source.baseUrl,
+                    books = result.data.list
+                        .filter { it.url != bookUrl }
+                        .map {
+                            my.noveldokusha.feature.local_database.BookMetadata(
+                                title = it.title,
+                                url = it.url,
+                                coverImageUrl = it.coverImageUrl,
+                                description = it.description,
+                                rating = it.rating.orEmpty(),
+                                contentType = it.contentType,
+                            )
+                        },
+                )
+                is Response.Error -> RelatedBooksState.Failed
+            }
+        }
+    }
 
     // ─── Экспорт книги ───────────────────────────────────────────────────────
 

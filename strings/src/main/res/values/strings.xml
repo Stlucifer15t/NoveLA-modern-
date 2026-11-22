@@ -1180,4 +1180,21 @@
     <string name="settings_nothing_matches_title">Nothing matches that</string>
     <string name="settings_nothing_matches_message">Try a section name such as Appearance, Reading or Backup.</string>
     <string name="settings_library_updates">Library updates</string>
+    <string name="book_tab_chapters">Chapters</string>
+    <string name="book_tab_related">Related</string>
+    <string name="book_tab_reviews">Reviews</string>
+    <string name="book_stat_chapters">Chapters</string>
+    <string name="book_stat_read">Read</string>
+    <string name="book_stat_saved">Saved</string>
+    <string name="book_stat_rating">Rating</string>
+    <string name="book_synopsis">Synopsis</string>
+    <string name="book_action_start">Start reading</string>
+    <string name="book_action_continue">Continue reading</string>
+    <string name="book_related_query">Search for “%1$s” on %2$s</string>
+    <string name="book_related_no_genre">This book has no genre to search by.</string>
+    <string name="book_related_failed">The source did not answer. Try again later.</string>
+    <string name="book_related_empty">The source has nothing else for this search yet.</string>
+    <string name="book_reviews_title">No reviews here</string>
+    <string name="book_reviews_message">The sources NoveLA reads do not publish reviews, so this tab has nothing real to show.</string>
+    <string name="book_related_retry">Try again</string>
 </resources>
