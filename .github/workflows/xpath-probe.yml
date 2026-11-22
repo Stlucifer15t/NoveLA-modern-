@@ -1,0 +1,116 @@
+name: XPath probe
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    name: Jsoup XPath behaviour
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Run the probe
+        run: |
+          set -e
+          curl -sSfL -o /tmp/jsoup.jar https://repo1.maven.org/maven2/org/jsoup/jsoup/1.18.3/jsoup-1.18.3.jar
+          mkdir -p /tmp/probe
+          cat > /tmp/probe/p.jsh <<'JSH'
+          import org.jsoup.Jsoup;
+          import org.jsoup.nodes.Element;
+          import org.jsoup.parser.Parser;
+          import org.w3c.dom.NodeList;
+          import org.w3c.dom.Document;
+          import org.w3c.dom.Node;
+          import javax.xml.xpath.*;
+          import javax.xml.transform.dom.DOMSource;
+          import javax.xml.transform.TransformerFactory;
+          import javax.xml.transform.stream.StreamResult;
+          import java.io.StringWriter;
+          java.util.stream.IntStream;
+
+          String html = "<html><body><ul id=\"chapter-list\"><li><a href=\"/c/1\">Chapter 1</a></li><li>x</li><li>y</li></ul></body></html>";
+          String xp = "//ul[@id='chapter-list']/li";
+
+          Document convert(org.jsoup.nodes.Document d) {
+            org.jsoup.parser.Parser xmlParser = new org.jsoup.parser.Parser();
+            xmlParser.setSuppressClosingTag("ul");
+            return new org.jsoup.parser.W3CDom().fromJsoup(d);
+          }
+
+          void report(String label, Document w3c, String expr) {
+            try {
+              NodeList nl = (NodeList) XPathFactory.newInstance().newXPath().evaluate(expr, w3c, XPathConstants.NODESET);
+              StringBuilder sb = new StringBuilder(label + ": count=" + nl.getLength() + " names=[");
+              for (int i = 0; i < Math.min(nl.getLength(), 6); i++) sb.append(nl.item(i).getNodeName()).append(" ");
+              sb.append("]");
+              System.out.println(sb);
+              System.out.println(label + ": root child names=" + IntStream.range(0, w3c.getDocumentElement().getChildNodes().getLength())
+                  .mapToObj(i -> w3c.getDocumentElement().getChildNodes().item(i).getNodeName()).reduce("", (a,b)->a+" "+b));
+              StringWriter sw = new StringWriter();
+              TransformerFactory.newInstance().newTransformer().transform(new DOMSource(w3c), new StreamResult(sw));
+              String dump = sw.toString().replaceAll("\\s+", " ");
+              System.out.println(label + ": xml=" + dump.substring(0, Math.min(dump.length(), 420)));
+            } catch (Exception e) {
+              System.out.println(label + ": EXCEPTION " + e);
+            }
+          }
+
+          // 1) default (html) parser
+          Document d1 = convert(Jsoup.parse(html));
+          report("html-parser", d1, xp);
+
+          // 2) xml parser, suppressClosingTag
+          org.jsoup.parser.Parser xmlp = org.jsoup.parser.Parser.xmlParser();
+          xmlp.setSuppressClosingTag("ul");
+          Document d2 = new org.jsoup.parser.W3CDom().fromJsoup(Jsoup.parse(html, "", xmlp));
+          report("xml-parser", d2, xp);
+
+          // 3) html parser + rename nodes to strip the namespace
+          Document d3 = convert(Jsoup.parse(html));
+          NodeList all = d3.getElementsByTagName("*");
+          StringBuilder names = new StringBuilder();
+          for (int i = 0; i < all.getLength(); i++) names.append(all.item(i).getNodeName()).append(" ");
+          System.out.println("before-rename: " + names);
+          for (int i = 0; i < all.getLength(); i++) {
+            Node n = all.item(i);
+            String nm = n.getNodeName();
+            int c = nm.indexOf(':');
+            if (c > 0) d3.renameNode(n, null, nm.substring(c + 1));
+          }
+          NodeList all2 = d3.getElementsByTagName("*");
+          StringBuilder names2 = new StringBuilder();
+          for (int i = 0; i < all2.getLength(); i++) names2.append(all2.item(i).getNodeName()).append(" ");
+          System.out.println("after-rename: " + names2);
+          report("html-parser+rename", d3, xp);
+
+          // 4) html parser + a fresh non-namespace-aware import
+          Document src = convert(Jsoup.parse(html));
+          try {
+            Document clean = javax.xml.parsers.DocumentBuilderFactory.newInstance()
+                .newDocumentBuilder().newDocument();
+            clean.adoptNode(src.getDocumentElement());
+            clean.appendChild(src.getDocumentElement());
+            report("adopted", clean, xp);
+          } catch (Exception e) { System.out.println("adopted: EXCEPTION " + e); }
+          /exit
+          JSH
+          jshell --class-path /tmp/jsoup.jar -q /tmp/probe/p.jsh > /tmp/probe/out.txt 2>&1 || true
+          cat /tmp/probe/out.txt
+      - name: Publish the probe result
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p /tmp/logpub && cd /tmp/logpub
+          git init -q -b ci-log
+          git config user.name probe && git config user.email probe@users.noreply.github.com
+          { echo "# XPath probe"; echo '```'; cat /tmp/probe/out.txt; echo '```'; } > ci-build.log
+          git add -A && git commit -qm "xpath probe [skip ci]"
+          git push -f "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:refs/heads/ci-log
