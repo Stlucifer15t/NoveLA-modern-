@@ -87,11 +87,25 @@ jobs:
           ./gradlew :app:assembleDebug --stacktrace --console=plain 2>&1 | tee -a "$RUNNER_TEMP/build-output.log"
 
       - name: Verify APK signature
+        # Not just "is it signed" — the debug APK must be signed by the repository key,
+        # otherwise the keystore wiring silently does nothing and every install would
+        # clash with the released app.
         run: |
           APK=$(find app/build/outputs/apk/debug -name '*.apk' | head -n1)
+          [ -n "$APK" ] || { echo "no debug APK produced"; exit 1; }
           echo "APK=$APK" >> "$GITHUB_ENV"
           BUILD_TOOLS=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -n1)
-          "$BUILD_TOOLS/apksigner" verify --print-certs "$APK" | head -20
+          OUT=$("$BUILD_TOOLS/apksigner" verify --print-certs "$APK")
+          echo "$OUT" | head -20
+          WANT=$(openssl pkcs12 -in keystore/novela-release.p12 -passin pass: -nokeys \
+            | openssl x509 -noout -fingerprint -sha256 | cut -d= -f2 | tr -d ':')
+          GOT=$(echo "$OUT" | sed -n 's/^V3.0 (APK Signature Scheme v3) Signer #1 certificate SHA-256 digest: //p')
+          echo "bundled key: $WANT"
+          echo "apk signer : $GOT"
+          if [ -n "$GOT" ] && [ "$GOT" != "$WANT" ]; then
+            echo "::error::debug APK is signed with a different certificate than keystore/novela-release.p12"
+            exit 1
+          fi
 
       - name: Publish errors as annotations
         # The Checks API caps a run at 50 annotations, so errors are grouped per file
@@ -154,17 +168,10 @@ jobs:
           find tooling/extension_compat/build/generated -type f 2>/dev/null | head -40 || echo "NONE"
           echo "=== CompatModule* generated? ==="
           find . -path "*/build/generated/*" -name "*CompatModule*" 2>/dev/null | head -20 || echo "NONE"
-          echo "=== does the library's compile jar carry the generated classes? ==="
-          JAR=$(find tooling/extension_compat/build/intermediates -name "*.jar" 2>/dev/null | head -3)
-          for f in $JAR; do echo "--- $f"; unzip -l "$f" 2>/dev/null | grep -cE "hilt_aggregated_deps|CompatProviderModule" || true; done
-          echo "=== app hilt aggregation inputs mentioning extension_compat ==="
-          grep -rl "extension_compat" app/build/intermediates 2>/dev/null | head -5 || echo "NONE"
-          echo "=== aggregated module list in :app (runtime jars) ==="
-          find app/build/intermediates -path "*hilt*" -type f 2>/dev/null | head -10
-          echo "=== who injects the loader set ==="
-          grep -rn "loaders: Set<CompatExtensionLoader>" --include=*.kt . | head -3
-          echo "=== CompatModule as committed ==="
-          sed -n '1,60p' tooling/extension_compat/src/main/java/my/noveldokusha/extension_compat/di/CompatModule.kt
+          echo "=== Hilt modules and providers generated in tooling/extension_compat ==="
+          find tooling/extension_compat/build/generated -path "*hilt_aggregated_deps*" -o -name "*_Factory.java" 2>/dev/null | head -20
+          echo "=== which module was changed recently, for context ==="
+          git log --oneline -3
 
       - name: Publish the raw build log to the ci-log branch
         # Runner logs and artifacts are not reachable from every environment, and the
