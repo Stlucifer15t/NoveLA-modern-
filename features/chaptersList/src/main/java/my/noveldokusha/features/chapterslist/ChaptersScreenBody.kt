@@ -62,7 +62,6 @@ internal fun ChaptersScreenBody(
     onCoverLongClick: () -> Unit,
     onGlobalSearchClick: (input: String, contentType: String) -> Unit,
     bookCategory: String,
-    categories: () -> List<String>,
     onCategoryClick: () -> Unit,
     scraper: Scraper,
     tab: ChaptersTab,
