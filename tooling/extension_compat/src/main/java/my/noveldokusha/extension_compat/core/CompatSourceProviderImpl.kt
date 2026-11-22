@@ -36,6 +36,17 @@ interface CompatExtensionLoader {
 }
 
 /**
+ * The loader registry, injected as its own type.
+ *
+ * A bare `Set<CompatExtensionLoader>` injection point could not be satisfied by this
+ * module — neither through `@Binds @IntoSet` nor through `@Multibinds` +
+ * `@Provides @IntoSet`: `:app:hiltJavaCompileDebug` kept reporting
+ * `MissingBinding: java.util.Set<? extends CompatExtensionLoader>`. Wrapping the list in
+ * a class gives Dagger a plain type, and it is also what unit tests construct directly.
+ */
+class CompatLoaders(val loaders: List<CompatExtensionLoader>)
+
+/**
  * [CompatSourceProvider] implementation for compat ecosystems.
  *
  * Lifecycle:
@@ -51,7 +62,7 @@ interface CompatExtensionLoader {
 class CompatSourceProviderImpl @Inject constructor(
     private val storage: CompatStorage,
     private val diagnostics: CompatDiagnostics,
-    private val loaders: Set<CompatExtensionLoader>,
+    private val loaderSet: CompatLoaders,
 ) : CompatSourceProvider {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -70,7 +81,7 @@ class CompatSourceProviderImpl @Inject constructor(
     private val reloadMutex = Mutex()
 
     private val loadersByEcosystem: Map<CompatEcosystem, CompatExtensionLoader> =
-        loaders.associateBy { it.ecosystem }
+        loaderSet.loaders.associateBy { it.ecosystem }
 
     init {
         scope.launch {
@@ -91,7 +102,7 @@ class CompatSourceProviderImpl @Inject constructor(
     }
 
     override fun clearCache() {
-        loaders.forEach { runCatching { it.clearCache() } }
+        loaderSet.loaders.forEach { runCatching { it.clearCache() } }
     }
 
     private suspend fun reloadInternal() {

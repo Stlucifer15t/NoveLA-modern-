@@ -155,6 +155,9 @@ Presentation only — no business logic:
    `features/reader/.../settingDialogs/StyleSettingDialog.kt`. Adding one theme
    requires editing three files. This is why the extended palette in
    `NovelaColors.kt` derives everything from `MaterialTheme.colorScheme` instead.
+   The settings screen no longer contributes to it: seven switches that each spelled
+   out `SwitchDefaults.colors(checkedThumbColor = colorAccent(), …)` now go through
+   `ExpressiveSwitch` in `features/settings/ui/SettingsKit.kt`.
 2. **Dead components:** `Section`, `RoundedContentLayout`, `SingleChoiceToggle` have
    no call sites outside their own previews.
 3. **Reader theme plumbing is inert.** `ReaderTheme.kt` and the eight reader colors on
@@ -179,3 +182,22 @@ Presentation only — no business logic:
 
 All additive. Existing components keep their public signatures so untouched screens
 continue to compile and behave identically.
+
+---
+
+## 8. Settings & Extensions pass (second rebrand round)
+
+Research input: current Android 16 / Material 3 Expressive settings guidance — grouped
+cards with a labelled icon chip instead of a flat divider list, larger round touch
+targets, state shown by shape (check/cross in the switch thumb) and not by colour
+alone, and search that filters whole groups once a page grows past ~30 destinations.
+
+| File | Contents |
+|---|---|
+| `features/settings/ui/SettingsKit.kt` | `SettingsGroupCard` (tinted icon chip, title, optional summary, animated `visible`), `SettingsSearchField` (pill field + suggestion chips), `ExpressiveSwitch`, `SettingsCaret`, `SettingsInnerLabel`, `SettingsRowPadding` |
+| `features/settings/SettingsScreenBody.kt` | 11 sections in 7 labelled cards; one search field filters at card granularity, visibility computed once so cards and the empty state cannot disagree |
+| `features/extensions/ExtensionsScreen.kt` | `NovelaSectionHeader` with live counts and the "Update all" action in the header row, `NovelaFilterChip`, `NovelaTopProgress`; language/type/search filters are `remember`ed instead of recomputed per keystroke; two dead `.filter { true }` placeholders removed |
+| `features/extensions/CompatExtensionsScreen.kt` | The repository dialog body is one `LazyColumn`: a Mihon index with a thousand sources no longer composes every row at once |
+
+Behaviour was deliberately not touched: every section composable keeps its own
+view-model wiring, and the compat entry point still opens the same dialog.

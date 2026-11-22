@@ -154,8 +154,13 @@ jobs:
           find tooling/extension_compat/build/generated -type f 2>/dev/null | head -40 || echo "NONE"
           echo "=== CompatModule* generated? ==="
           find . -path "*/build/generated/*" -name "*CompatModule*" 2>/dev/null | head -20 || echo "NONE"
-          echo "=== :app aggregated deps classpath contains extension_compat? ==="
-          find app/build/intermediates -path "*hiltAgg*" -name "*.txt" 2>/dev/null | head -3 | xargs -r grep -l extension_compat 2>/dev/null || echo "NOT LISTED"
+          echo "=== does the library's compile jar carry the generated classes? ==="
+          JAR=$(find tooling/extension_compat/build/intermediates -name "*.jar" 2>/dev/null | head -3)
+          for f in $JAR; do echo "--- $f"; unzip -l "$f" 2>/dev/null | grep -cE "hilt_aggregated_deps|CompatProviderModule" || true; done
+          echo "=== app hilt aggregation inputs mentioning extension_compat ==="
+          grep -rl "extension_compat" app/build/intermediates 2>/dev/null | head -5 || echo "NONE"
+          echo "=== aggregated module list in :app (runtime jars) ==="
+          find app/build/intermediates -path "*hilt*" -type f 2>/dev/null | head -10
           echo "=== who injects the loader set ==="
           grep -rn "loaders: Set<CompatExtensionLoader>" --include=*.kt . | head -3
           echo "=== CompatModule as committed ==="

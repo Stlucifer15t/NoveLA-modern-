@@ -8,6 +8,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import my.noveldokusha.extension_compat.core.CompatExtensionLoader
+import my.noveldokusha.extension_compat.core.CompatLoaders
 import my.noveldokusha.extension_compat.core.CompatSourceProviderImpl
 import my.noveldokusha.extension_compat.core.CompatStorage
 import my.noveldokusha.extension_compat.legado.LegadoExtensionLoader
@@ -33,11 +34,13 @@ abstract class CompatModule {
 /**
  * Hand-written providers for the compat layer.
  *
- * The loader set is *provided*, not multibound: injecting `Set<T>` through
- * `@Binds @IntoSet` / `@Multibinds` left `:app:hiltJavaCompileDebug` with
- * `MissingBinding: java.util.Set<? extends CompatExtensionLoader>` on every attempt,
- * while a concrete set from a `@Provides` needs no wildcard match. A new ecosystem is
- * registered in [provideLoaders] — one place to grep.
+ * Loaders are handed over as a [CompatLoaders] registry rather than an injected `Set`:
+ * `@Binds @IntoSet`, `@Multibinds` + `@Provides @IntoSet` and finally a plain
+ * `@Provides Set<CompatExtensionLoader>` were each rejected by
+ * `:app:hiltJavaCompileDebug` with `MissingBinding:
+ * java.util.Set<? extends CompatExtensionLoader>` — Dagger always reads an injected
+ * set as a wildcard and never matched any of them. A dedicated type has nothing to
+ * mismatch. A new ecosystem is registered in [provideLoaders], one place to grep.
  */
 @InstallIn(SingletonComponent::class)
 @Module
@@ -62,5 +65,5 @@ object CompatProviderModule {
     fun provideLoaders(
         legado: LegadoExtensionLoader,
         tachiyomi: TachiyomiExtensionLoader,
-    ): Set<CompatExtensionLoader> = setOf(legado, tachiyomi)
+    ): CompatLoaders = CompatLoaders(listOf(legado, tachiyomi))
 }
