@@ -31,6 +31,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -164,18 +165,19 @@ fun NovelaFeedsScreen(
             }
         }
 
-        val shelfEmpty = state.libraryEmpty
         if (rows.isEmpty()) {
-            // Two different nothings: an empty shelf, and a shelf with nothing of the kind the
-            // segment asks for. Only the first one has somewhere to send the reader.
+            // Two different nothings: no releases at all (the feed is simply quiet, and an empty
+            // shelf can be filled), and releases that exist but not of the kind the segment asks
+            // for. Only the first one has somewhere useful to send the reader.
+            val nothingAtAll = state.rows.isEmpty()
             NovelaEmptyState(
                 icon = Icons.Outlined.LibraryBooks,
                 title = stringResource(
-                    if (shelfEmpty) R.string.feeds_empty_title else R.string.feeds_empty_filter_title
+                    if (nothingAtAll) R.string.feeds_empty_title else R.string.feeds_empty_filter_title
                 ),
                 message = stringResource(R.string.feeds_empty_message),
-                actionLabel = if (shelfEmpty) stringResource(R.string.feeds_open_library) else null,
-                onAction = if (shelfEmpty) onOpenLibrary else null,
+                actionLabel = if (state.shelfCount == 0) stringResource(R.string.feeds_open_library) else null,
+                onAction = if (state.shelfCount == 0) onOpenLibrary else null,
                 modifier = Modifier.padding(horizontal = NovelaSpacing.screenH),
             )
             return@Column
@@ -229,13 +231,17 @@ private fun FeedsRow(
 ) {
     val palette = MaterialTheme.colorScheme
     val cover = rememberResolvedBookImagePath(bookUrl = row.bookUrl, imagePath = row.coverUrl)
-    val hasNews = row.unread > 0
-    // The count is the thing the reader came for, so it is the only part that changes color.
-    val countColor by animateColorAsState(
-        targetValue = if (hasNews) palette.primary else palette.onSurfaceVariant.copy(alpha = 0.7f),
-        animationSpec = tween(NovelaMotion.STANDARD),
-        label = "feedCountColor",
-    )
+    val latest = row.latest
+    val foundAgo = remember(latest?.foundAtMillis) {
+        latest?.let {
+            android.text.format.DateUtils.getRelativeTimeSpanString(
+                it.foundAtMillis,
+                System.currentTimeMillis(),
+                android.text.format.DateUtils.MINUTE_IN_MILLIS,
+                android.text.format.DateUtils.FORMAT_ABBREV_RELATIVE,
+            ).toString()
+        }
+    }
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -266,9 +272,8 @@ private fun FeedsRow(
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
-                text = when {
-                    !hasNews -> stringResource(R.string.feeds_all_read)
-                    row.unread == 1 -> stringResource(
+                text = when (row.unread) {
+                    1 -> stringResource(
                         if (row.isVideo) R.string.feeds_new_episode else R.string.feeds_new_chapter
                     )
                     else -> stringResource(
@@ -277,17 +282,25 @@ private fun FeedsRow(
                     )
                 },
                 style = NovelaType.bookMeta,
-                color = countColor,
+                color = palette.primary,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            if (row.sourceUpdateDate.isNotBlank()) {
+            latest?.chapterTitle?.takeIf { it.isNotBlank() }?.let { title ->
                 Text(
-                    text = row.sourceUpdateDate,
+                    text = title,
+                    style = NovelaType.bookMeta,
+                    color = palette.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            foundAgo?.let {
+                Text(
+                    text = it,
                     style = NovelaType.badge,
                     color = palette.onSurfaceVariant.copy(alpha = 0.8f),
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
                 )
             }
         }
@@ -295,7 +308,7 @@ private fun FeedsRow(
             Icons.AutoMirrored.Outlined.ArrowForward,
             null,
             modifier = Modifier.size(18.dp),
-            tint = if (hasNews) palette.primary else palette.onSurfaceVariant.copy(alpha = 0.5f),
+            tint = palette.primary,
         )
     }
 }

@@ -2,39 +2,44 @@ package my.noveldokusha.features.feeds
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.flow.MutableStateFlow
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import my.noveldokusha.core.domain.LibraryCategory
-import my.noveldokusha.feature.local_database.BookWithContext
+import my.noveldokusha.core.feeds.NewRelease
+import my.noveldokusha.core.feeds.NewReleaseLog
 import my.noveldokusha.feature.local_database.DAOs.LibraryDao
 import my.noveldokusha.interactor.WorkersInteractions
 import javax.inject.Inject
 
-/** One shelf title, as the feed shows it. Every field is a column this device already has. */
+/**
+ * One title with releases the update check found and the reader has not opened yet.
+ * [releases] is newest first.
+ */
 data class FeedRow(
     val bookUrl: String,
     val title: String,
     val coverUrl: String,
-    val unread: Int,
-    val chaptersTotal: Int,
-    /** The source's own "last updated" text, verbatim — blank when it does not state one. */
-    val sourceUpdateDate: String,
-    val lastCheckedMillis: Long,
     val isVideo: Boolean,
-)
+    val releases: List<NewRelease>,
+) {
+    val unread: Int get() = releases.size
+    val latest: NewRelease? get() = releases.firstOrNull()
+}
 
 /** What feeds are in the shelf, so the segmented control can say a real number. */
 enum class FeedFilter { All, Books, Episodes }
 
 data class FeedsState(
     val rows: List<FeedRow> = emptyList(),
+    /** How many books are on the shelf at all. Tells an empty shelf from an empty feed. */
+    val shelfCount: Int = 0,
     val checking: Boolean = false,
     val filter: FeedFilter = FeedFilter.All,
 ) {
-    val libraryEmpty: Boolean get() = rows.isEmpty() && !checking
+    val libraryEmpty: Boolean get() = shelfCount == 0 && !checking
 
     fun visible(): List<FeedRow> = when (filter) {
         FeedFilter.All -> rows
@@ -44,18 +49,20 @@ data class FeedsState(
 }
 
 /**
- * The feeds tab: what the shelf has that this device has not opened.
+ * The feeds tab: new releases the library update check found, one row per title.
  *
- * There is no push channel here and none is pretended at. The count comes from the same
- * aggregate the library uses (`chaptersCount - chaptersReadCount` per book), and "Check for
- * updates" starts the library update worker — the one path in this app that asks the sources for
- * new chapters. A real notification path would be the worker posting into the notification
- * drawer, which is a separate piece of work; this screen reads the state it leaves behind.
+ * A row exists only for a release the check recorded (see [NewReleaseLog]). Unread chapters
+ * that were already on the device are not listed here, so the feed never claims a release it
+ * cannot date. A title leaves the feed when the reader opens it.
+ *
+ * "Check for updates" starts the library update worker, the one path in this app that asks the
+ * sources for new chapters.
  */
 @HiltViewModel
 class FeedsViewModel @Inject constructor(
     private val libraryDao: LibraryDao,
     private val workersInteractions: WorkersInteractions,
+    private val newReleaseLog: NewReleaseLog,
 ) : ViewModel() {
 
     private var filter = FeedFilter.All
@@ -70,17 +77,24 @@ class FeedsViewModel @Inject constructor(
     val state = combine(
         libraryDao.getBooksInLibraryWithContextFlow(),
         workersInteractions.isManualUpdateRunning(),
+        newReleaseLog.flow(),
         _tick,
-    ) { books, running, _ ->
+    ) { books, running, releases, _ ->
+        val byUrl = books.associateBy { it.book.url }
+        val rows = releases.mapNotNull { (bookUrl, found) ->
+            val entry = byUrl[bookUrl] ?: return@mapNotNull null
+            if (found.isEmpty()) return@mapNotNull null
+            FeedRow(
+                bookUrl = bookUrl,
+                title = entry.book.title,
+                coverUrl = entry.book.coverImageUrl,
+                isVideo = entry.book.contentType.equals("video", ignoreCase = true),
+                releases = found.sortedByDescending { it.foundAtMillis },
+            )
+        }.sortedByDescending { it.latest?.foundAtMillis ?: 0L }
         FeedsState(
-            rows = books.asSequence()
-                .map { it.toRow() }
-                .sortedWith(
-                    compareByDescending<FeedRow> { it.unread }
-                        .thenByDescending { it.lastCheckedMillis }
-                        .thenBy { it.title.lowercase() }
-                )
-                .toList(),
+            rows = rows,
+            shelfCount = books.size,
             checking = running,
             filter = filter,
         )
@@ -104,25 +118,16 @@ class FeedsViewModel @Inject constructor(
         _tick.value++
     }
 
+    /** The reader opened this title, so its releases are no longer new. */
+    fun markSeen(bookUrl: String) {
+        newReleaseLog.markSeen(bookUrl)
+    }
+
     fun checkForUpdates() {
         workersInteractions.checkForLibraryUpdates(LibraryCategory.DEFAULT)
     }
 
     fun cancelUpdate() {
         workersInteractions.cancelLibraryUpdates()
-    }
-
-    private fun BookWithContext.toRow(): FeedRow {
-        val read = chaptersReadCount.coerceIn(0, chaptersCount)
-        return FeedRow(
-            bookUrl = book.url,
-            title = book.title,
-            coverUrl = book.coverImageUrl,
-            unread = (chaptersCount - read).coerceAtLeast(0),
-            chaptersTotal = chaptersCount,
-            sourceUpdateDate = book.lastUpdateDate,
-            lastCheckedMillis = book.lastUpdateEpochTimeMilli,
-            isVideo = book.contentType.equals("video", ignoreCase = true),
-        )
     }
 }

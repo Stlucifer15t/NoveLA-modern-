@@ -1624,6 +1624,19 @@ class AppPreferences @Inject constructor(
             )
         }
 
+    // Новые главы, найденные проверкой обновлений (лента). Пишется только при проверке
+    // этой версии; книга уходит из ленты, когда её открывают.
+    val NEW_RELEASE_LOG =
+        object : Preference<Map<String, List<my.noveldokusha.core.feeds.NewRelease>>>("NEW_RELEASE_LOG") {
+            override var value by SharedPreference_Serializable<Map<String, List<my.noveldokusha.core.feeds.NewRelease>>>(
+                name = name,
+                sharedPreferences = preferences,
+                defaultValue = emptyMap(),
+                encode = { Json.encodeToString(it) },
+                decode = { Json.decodeFromString(it) }
+            )
+        }
+
     // Книги, по которым НЕ присылать уведомления о новых главах. Главы обновляются
     // как обычно — гасится только уведомление, поэтому полка остаётся честной.
     val NOTIFY_MUTED_BOOK_URLS =

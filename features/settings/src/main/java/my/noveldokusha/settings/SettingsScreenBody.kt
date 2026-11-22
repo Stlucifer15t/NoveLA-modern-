@@ -420,6 +420,12 @@ internal fun SettingsScreenBody(
             verticalArrangement = Arrangement.spacedBy(NovelaSpacing.xs),
         ) {
             visibleSpecs.forEach { spec ->
+                SettingsGroupHero(
+                    icon = spec.icon,
+                    title = spec.title,
+                    summary = spec.summary,
+                    accent = spec.accent,
+                )
                 SettingsGroupCard(
                     title = spec.title,
                     icon = spec.icon,
@@ -449,7 +455,8 @@ internal fun SettingsScreenBody(
         val stats = state.stats.value
         NovelaGreetingHeader(
             greeting = novelaGreeting(),
-            subtitle = state.appVersion.takeIf { it.isNotBlank() }?.let { "NoveLA $it" },
+            // The version lives in About, not under the greeting.
+            subtitle = null,
             accent = palette.primary,
             trailing = {
                 Row(

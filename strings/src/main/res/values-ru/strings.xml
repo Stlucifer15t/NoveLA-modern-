@@ -1490,7 +1490,7 @@
     <string name="stats_days_active">Дней с чтением</string>
     <string name="title_feeds">Лента</string>
     <string name="feeds_title">Лента</string>
-    <string name="feeds_subtitle">Новые главы источников из вашей библиотеки.</string>
+    <string name="feeds_subtitle">Новые главы, которые нашла проверка обновлений на ваших источниках.</string>
     <string name="feeds_check">Проверить обновления</string>
     <string name="feeds_empty_title">Пока ничего нового</string>
     <string name="feeds_empty_message">Библиотеку сверяют с источниками, когда запускается обновление. Нажмите «Проверить», чтобы спросить прямо сейчас.</string>
@@ -1499,7 +1499,7 @@
     <string name="feeds_filter_all">Все</string>
     <string name="feeds_checking_now">Спрашиваем у источников новые главы…</string>
     <string name="feeds_open_library">Открыть библиотеку</string>
-    <string name="feeds_note">В строке — главы, которые есть на полке и которые на этом устройстве не открывали. «Проверить» запускает обновление библиотеки прямо сейчас. Приложение проверяет само с интервалом из Настройки → Библиотека (от 6 часов до 2 суток) и присылает уведомление, когда появляется новая глава.</string>
+    <string name="feeds_note">Здесь только главы, которые нашла проверка обновлений. Тайтл уходит из ленты, когда вы его открываете. «Проверить» запускает обновление библиотеки сейчас. Приложение проверяет само с интервалом из Настройки → Библиотека (от 6 часов до 2 суток) и присылает уведомление, когда появляется новая глава.</string>
     <string name="feeds_new_chapter">1 новая глава</string>
     <string name="feeds_new_chapters">%1$d новых глав</string>
     <string name="feeds_new_episode">1 новая серия</string>
@@ -1565,4 +1565,8 @@
     <string name="action_search_settings">Поиск в настройках</string>
     <string name="menu_section_menu">Меню</string>
     <string name="menu_section_about">О приложении</string>
+    <string name="greeting_morning">Доброе утро</string>
+    <string name="greeting_afternoon">Добрый день</string>
+    <string name="greeting_evening">Добрый вечер</string>
+    <string name="greeting_night">Доброй ночи</string>
 </resources>

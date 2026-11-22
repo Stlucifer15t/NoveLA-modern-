@@ -281,6 +281,7 @@ open class MainActivity : BaseActivity() {
                             NovelaFeedsScreen(
                                 state = feedsState,
                                 onOpenBook = { meta ->
+                                    feedsViewModel.markSeen(meta.url)
                                     startActivity(navigationRoutes.chapters(this@MainActivity, meta))
                                 },
                                 onCheckForUpdates = feedsViewModel::checkForUpdates,

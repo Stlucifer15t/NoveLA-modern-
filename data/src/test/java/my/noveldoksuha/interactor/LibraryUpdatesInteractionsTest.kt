@@ -39,6 +39,7 @@ class LibraryUpdatesInteractionsTest {
     private val appFileResolver = mock<AppFileResolver>()
     private val scraper = mock<Scraper>()
     private val context = mock<Context>()
+    private val newReleaseLog = mock<my.noveldokusha.core.feeds.NewReleaseLog>()
 
     private val interactions = LibraryUpdatesInteractions(
         appRepository = appRepository,
@@ -47,6 +48,7 @@ class LibraryUpdatesInteractionsTest {
         coverRepository = coverRepository,
         appFileResolver = appFileResolver,
         scraper = scraper,
+        newReleaseLog = newReleaseLog,
         context = context,
     )
 

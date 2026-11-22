@@ -130,18 +130,7 @@ private fun Screen(
                             tint = MaterialTheme.colorScheme.onSurface,
                         )
                     }
-                    Column(modifier = Modifier.fillMaxWidth()) {
-                        Text(
-                            text = group.label(),
-                            style = MaterialTheme.typography.titleLarge,
-                            color = MaterialTheme.colorScheme.onBackground,
-                        )
-                        Text(
-                            text = group.hint(),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
+                    // The name and the hint are on the hero below; the bar only needs a way back.
                 }
             }
         },

@@ -24,6 +24,8 @@ import my.noveldokusha.data.DownloaderRepository
 import my.noveldokusha.data.backfillCovers
 import my.noveldokusha.core.AppFileResolver
 import my.noveldokusha.core.domain.ChapterPagination
+import my.noveldokusha.core.feeds.NewRelease
+import my.noveldokusha.core.feeds.NewReleaseLog
 import my.noveldokusha.core.isHttpsUrl
 import my.noveldokusha.core.utils.normalizeBookUrl
 import my.noveldokusha.core.isLocalUri
@@ -50,6 +52,7 @@ class LibraryUpdatesInteractions @Inject constructor(
     private val coverRepository: CoverRepository,
     private val appFileResolver: AppFileResolver,
     private val scraper: Scraper,
+    private val newReleaseLog: NewReleaseLog,
     @ApplicationContext private val context: Context,
 ) {
     companion object {
@@ -438,6 +441,13 @@ class LibraryUpdatesInteractions @Inject constructor(
         if (newChapters.isNotEmpty()) {
             Timber.d("[merge] \"${book.title}\" — NEW chapters added: ${newChapters.size}")
             appRepository.libraryBooks.updateLastUpdateEpochTimeMilli(bookUrl = book.url)
+            val foundAt = System.currentTimeMillis()
+            newReleaseLog.record(
+                bookUrl = book.url,
+                releases = newChapters.map {
+                    NewRelease(chapterUrl = it.url, chapterTitle = it.title, foundAtMillis = foundAt)
+                },
+            )
             newUpdates.update { it + NewUpdate(book = book, newChapters = newChapters) }
         } else {
             Timber.d("[merge] \"${book.title}\" — no new chapters (merged ${chapters.size} existing)")

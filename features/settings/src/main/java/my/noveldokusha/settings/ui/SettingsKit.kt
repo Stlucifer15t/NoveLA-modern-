@@ -40,6 +40,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
@@ -199,6 +200,73 @@ fun SettingsGroupCard(
                     if (!showHeader) Spacer(Modifier.height(NovelaSpacing.xs))
                     content()
                     Spacer(Modifier.height(NovelaSpacing.sm))
+                }
+            }
+        }
+    }
+}
+
+/**
+ * The top of a settings group screen: a soft accent wash, a large icon tile, the group's name
+ * and what is inside. The app bar above it carries only the back arrow, so the name is said once.
+ */
+@Composable
+fun SettingsGroupHero(
+    icon: ImageVector,
+    title: String,
+    summary: String?,
+    accent: Color,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        accent.copy(alpha = if (NovelaTheme.colors.isLight) 0.16f else 0.22f),
+                        Color.Transparent,
+                    ),
+                ),
+            )
+            .padding(horizontal = NovelaSpacing.screenH)
+            .padding(top = NovelaSpacing.xs, bottom = NovelaSpacing.lg),
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.md),
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(56.dp)
+                    .clip(RoundedCornerShape(NovelaRadius.lg))
+                    .background(accent.copy(alpha = 0.18f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = accent,
+                    modifier = Modifier.size(28.dp),
+                )
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                if (!summary.isNullOrBlank()) {
+                    Spacer(Modifier.height(NovelaSpacing.xxs))
+                    Text(
+                        text = summary,
+                        style = NovelaType.bookMeta,
+                        color = NovelaTheme.colors.textMuted,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
                 }
             }
         }
