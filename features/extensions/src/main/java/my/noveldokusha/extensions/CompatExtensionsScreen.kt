@@ -112,11 +112,11 @@ fun NovelaCompatRepositoriesScreen(
             horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.sm),
         ) {
             IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(StringsR.action_back))
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(StringsR.string.action_back))
             }
             Column(Modifier.weight(1f)) {
                 Text(
-                    text = stringResource(StringsR.compat_repos_title),
+                    text = stringResource(StringsR.string.compat_repos_title),
                     style = MaterialTheme.typography.titleLarge,
                     color = palette.onSurface,
                 )
@@ -124,14 +124,14 @@ fun NovelaCompatRepositoriesScreen(
                 // the same line reports what is there.
                 if (state.repositories.isEmpty() && state.installed.isEmpty()) {
                     Text(
-                        text = stringResource(StringsR.compat_subtitle),
+                        text = stringResource(StringsR.string.compat_subtitle),
                         style = NovelaType.bookMeta,
                         color = palette.onSurfaceVariant,
                     )
                 } else {
                     Text(
                         text = stringResource(
-                            StringsR.compat_repos_subtitle,
+                            StringsR.string.compat_repos_subtitle,
                             state.repositories.size,
                             state.installed.size,
                         ),
@@ -159,7 +159,7 @@ fun NovelaCompatRepositoriesScreen(
 
             if (state.repositories.isNotEmpty()) {
                 item(key = "compat_repos_label") {
-                    SectionLabel(stringResource(StringsR.compat_repos_section, state.repositories.size))
+                    SectionLabel(stringResource(StringsR.string.compat_repos_section, state.repositories.size))
                 }
                 items(items = state.repositories, key = { "repo_" + it.id }) { repo ->
                     RepositoryRow(
@@ -192,7 +192,7 @@ fun NovelaCompatRepositoriesScreen(
 
             if (state.installed.isNotEmpty()) {
                 item(key = "compat_installed_label") {
-                    SectionLabel(stringResource(StringsR.compat_installed_section, state.installed.size))
+                    SectionLabel(stringResource(StringsR.string.compat_installed_section, state.installed.size))
                 }
                 items(items = state.installed, key = { "installed_" + it.id }) { record ->
                     InstalledRow(
@@ -207,9 +207,9 @@ fun NovelaCompatRepositoriesScreen(
                 item(key = "compat_empty") {
                     NovelaEmptyState(
                         icon = Icons.Outlined.Extension,
-                        title = stringResource(StringsR.compat_empty_title),
-                        message = stringResource(StringsR.compat_empty_message),
-                        actionLabel = stringResource(StringsR.compat_add_repo),
+                        title = stringResource(StringsR.string.compat_empty_title),
+                        message = stringResource(StringsR.string.compat_empty_message),
+                        actionLabel = stringResource(StringsR.string.compat_add_repo),
                         onAction = { viewModel.onEvent(CompatExtensionsEvent.OnShowAddRepo) },
                         modifier = Modifier.fillMaxWidth(),
                     )
@@ -232,7 +232,7 @@ private fun AddRepoBlock(
         ) {
             Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(Modifier.size(8.dp))
-            Text(stringResource(StringsR.compat_add_repo), fontSize = 13.sp)
+            Text(stringResource(StringsR.string.compat_add_repo), fontSize = 13.sp)
         }
         state.feedback?.let { FeedbackLine(it) }
         return
@@ -262,13 +262,13 @@ private fun AddRepoBlock(
                     Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp))
                 }
                 Spacer(Modifier.size(6.dp))
-                Text(stringResource(StringsR.compat_detect_add), fontSize = 12.sp)
+                Text(stringResource(StringsR.string.compat_detect_add), fontSize = 12.sp)
             }
             OutlinedButton(
                 onClick = { viewModel.onEvent(CompatExtensionsEvent.OnHideAddRepo) },
                 shape = RoundedCornerShape(8.dp),
             ) {
-                Text(stringResource(StringsR.compat_cancel), fontSize = 12.sp)
+                Text(stringResource(StringsR.string.compat_cancel), fontSize = 12.sp)
             }
         }
         state.feedback?.let { FeedbackLine(it) }
@@ -325,14 +325,14 @@ private fun RepositoryRow(
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
-                val unknownFormat = stringResource(StringsR.compat_unknown_format)
+                val unknownFormat = stringResource(StringsR.string.compat_unknown_format)
                 val sourcesStat = if (installedHere > 0) {
-                    stringResource(StringsR.compat_sources_installed_stat, repo.entryCount, installedHere)
+                    stringResource(StringsR.string.compat_sources_installed_stat, repo.entryCount, installedHere)
                 } else {
-                    stringResource(StringsR.compat_sources_stat, repo.entryCount)
+                    stringResource(StringsR.string.compat_sources_stat, repo.entryCount)
                 }
                 val treeNote = if (repo.kind.name == "TREE") {
-                    " · " + stringResource(StringsR.compat_file_list)
+                    " · " + stringResource(StringsR.string.compat_file_list)
                 } else {
                     ""
                 }
@@ -348,7 +348,7 @@ private fun RepositoryRow(
                 CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
             } else {
                 IconButton(onClick = { viewModel.onEvent(CompatExtensionsEvent.OnRefreshRepo(repo.id)) }) {
-                    Icon(Icons.Default.Refresh, contentDescription = stringResource(StringsR.compat_refresh), modifier = Modifier.size(18.dp))
+                    Icon(Icons.Default.Refresh, contentDescription = stringResource(StringsR.string.compat_refresh), modifier = Modifier.size(18.dp))
                 }
             }
             Switch(
@@ -358,7 +358,7 @@ private fun RepositoryRow(
             IconButton(onClick = { confirmDelete = true }) {
                 Icon(
                     Icons.Default.Delete,
-                    contentDescription = stringResource(StringsR.compat_remove),
+                    contentDescription = stringResource(StringsR.string.compat_remove),
                     modifier = Modifier.size(18.dp),
                     tint = MaterialTheme.colorScheme.error,
                 )
@@ -379,19 +379,19 @@ private fun RepositoryRow(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(stringResource(StringsR.compat_remove_confirm), fontSize = 11.sp, modifier = Modifier.weight(1f))
+                Text(stringResource(StringsR.string.compat_remove_confirm), fontSize = 11.sp, modifier = Modifier.weight(1f))
                 TextButton(
                     onClick = {
                         viewModel.onEvent(CompatExtensionsEvent.OnRemoveRepo(repo.id, true))
                         confirmDelete = false
                     },
-                ) { Text(stringResource(StringsR.compat_yes), fontSize = 11.sp) }
+                ) { Text(stringResource(StringsR.string.compat_yes), fontSize = 11.sp) }
                 TextButton(
                     onClick = {
                         viewModel.onEvent(CompatExtensionsEvent.OnRemoveRepo(repo.id, false))
                         confirmDelete = false
                     },
-                ) { Text(stringResource(StringsR.compat_no), fontSize = 11.sp) }
+                ) { Text(stringResource(StringsR.string.compat_no), fontSize = 11.sp) }
                 TextButton(onClick = { confirmDelete = false }) { Text("Cancel", fontSize = 11.sp) }
             }
         } else {
@@ -404,8 +404,8 @@ private fun RepositoryRow(
                     ),
                 ) {
                     Text(
-                        text = if (selected) stringResource(StringsR.compat_showing_catalog)
-                        else stringResource(StringsR.compat_show_catalog),
+                        text = if (selected) stringResource(StringsR.string.compat_showing_catalog)
+                        else stringResource(StringsR.string.compat_show_catalog),
                         fontSize = 11.sp,
                         color = if (selected) colorAccent() else MaterialTheme.colorScheme.primary,
                     )
@@ -413,10 +413,10 @@ private fun RepositoryRow(
                 TextButton(
                     onClick = { viewModel.onEvent(CompatExtensionsEvent.OnInstallAll(repo.id)) },
                     enabled = repo.entryCount > 0,
-                ) { Text(stringResource(StringsR.compat_install_all), fontSize = 11.sp) }
+                ) { Text(stringResource(StringsR.string.compat_install_all), fontSize = 11.sp) }
                 TextButton(
                     onClick = { viewModel.onEvent(CompatExtensionsEvent.OnUpdateAll(repo.id)) },
-                ) { Text(stringResource(StringsR.compat_check_updates), fontSize = 11.sp) }
+                ) { Text(stringResource(StringsR.string.compat_check_updates), fontSize = 11.sp) }
             }
         }
     }
@@ -438,7 +438,7 @@ private fun CatalogToolbar(
                 onValueChange = { viewModel.onEvent(CompatExtensionsEvent.OnSearchQuery(it)) },
                 modifier = Modifier.weight(1f),
                 singleLine = true,
-                placeholder = { Text(stringResource(StringsR.compat_filter_hint), fontSize = 11.sp) },
+                placeholder = { Text(stringResource(StringsR.string.compat_filter_hint), fontSize = 11.sp) },
                 trailingIcon = {
                     if (state.searchQuery.isNotEmpty()) {
                         IconButton(onClick = { viewModel.onEvent(CompatExtensionsEvent.OnSearchQuery("")) }) {
@@ -454,7 +454,7 @@ private fun CatalogToolbar(
             FilterChip(
                 selected = state.filterEcosystem == null,
                 onClick = { viewModel.onEvent(CompatExtensionsEvent.OnFilterEcosystem(null)) },
-                label = { Text(stringResource(StringsR.compat_filter_all), fontSize = 11.sp) },
+                label = { Text(stringResource(StringsR.string.compat_filter_all), fontSize = 11.sp) },
             )
             CompatEcosystem.entries.forEach { ecosystem ->
                 FilterChip(
@@ -472,9 +472,9 @@ private fun CatalogToolbar(
         }
         Text(
             text = if (state.truncated) {
-                stringResource(StringsR.compat_catalog_truncated, state.entries.size, state.totalCount)
+                stringResource(StringsR.string.compat_catalog_truncated, state.entries.size, state.totalCount)
             } else {
-                stringResource(StringsR.compat_sources_stat, state.entries.size)
+                stringResource(StringsR.string.compat_sources_stat, state.entries.size)
             },
             style = NovelaType.bookMeta,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -564,12 +564,12 @@ private fun CatalogRow(
         }
         when (installState) {
             CompatRepositoryManager.InstallState.NOT_INSTALLED ->
-                SmallAction(stringResource(StringsR.compat_install), enabled = !busy) {
+                SmallAction(stringResource(StringsR.string.compat_install), enabled = !busy) {
                     viewModel.onEvent(CompatExtensionsEvent.OnInstall(entry))
                 }
 
             CompatRepositoryManager.InstallState.UPDATE_AVAILABLE ->
-                SmallAction(stringResource(StringsR.compat_update), enabled = !busy) {
+                SmallAction(stringResource(StringsR.string.compat_update), enabled = !busy) {
                     viewModel.onEvent(CompatExtensionsEvent.OnInstall(entry))
                 }
 
@@ -577,13 +577,13 @@ private fun CatalogRow(
             else -> {
                 if (runtime.state == CompatRuntimeState.READY) {
                     Text(
-                        text = stringResource(StringsR.compat_state_installed),
+                        text = stringResource(StringsR.string.compat_state_installed),
                         style = NovelaType.bookMeta,
                         color = MaterialTheme.colorScheme.primary,
                     )
                 } else {
                     Text(
-                        text = stringResource(StringsR.compat_state_stored),
+                        text = stringResource(StringsR.string.compat_state_stored),
                         style = NovelaType.bookMeta,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -600,7 +600,7 @@ private fun CatalogRow(
                 ) {
                     Icon(
                         Icons.Default.Delete,
-                        contentDescription = stringResource(StringsR.compat_uninstall),
+                        contentDescription = stringResource(StringsR.string.compat_uninstall),
                         modifier = Modifier.size(16.dp),
                         tint = MaterialTheme.colorScheme.error,
                     )
@@ -672,7 +672,7 @@ private fun InstalledRow(
             ) {
                 Icon(
                     Icons.Default.Delete,
-                    contentDescription = stringResource(StringsR.compat_uninstall),
+                    contentDescription = stringResource(StringsR.string.compat_uninstall),
                     modifier = Modifier.size(16.dp),
                     tint = MaterialTheme.colorScheme.error,
                 )
@@ -734,14 +734,14 @@ fun CompatReposSummaryRow(
             }
             Column(Modifier.weight(1f)) {
                 Text(
-                    text = stringResource(StringsR.compat_repos_title),
+                    text = stringResource(StringsR.string.compat_repos_title),
                     fontSize = 13.sp,
                 )
                 Text(
                     text = if (repos == 0 && installed == 0) {
-                        stringResource(StringsR.compat_summary_empty)
+                        stringResource(StringsR.string.compat_summary_empty)
                     } else {
-                        stringResource(StringsR.compat_summary_counts, repos, installed)
+                        stringResource(StringsR.string.compat_summary_counts, repos, installed)
                     },
                     style = NovelaType.bookMeta,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
