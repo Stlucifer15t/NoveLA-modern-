@@ -44,8 +44,8 @@ import my.noveldokusha.text_translator.BUILT_IN_PROMPTS
 import my.noveldokusha.settings.ui.ExpressiveSwitch
 
 /**
- * Единый менеджер промптов для LLM-провайдеров (Gemini и OpenAI-compatible).
- * Показывается внутри блока настроек провайдера, когда выбран Gemini или OpenAI.
+ * One prompt manager shared by the LLM providers (Gemini and OpenAI-compatible).
+ * Rendered inside the provider's settings block when Gemini or OpenAI is selected.
  */
 @Composable
 internal fun SettingsPromptManager(
@@ -69,7 +69,7 @@ internal fun SettingsPromptManager(
     var showSavePresetDialog by rememberSaveable { mutableStateOf(false) }
     var presetNameInput by rememberSaveable { mutableStateOf("") }
 
-    // Заголовок секции в едином стиле с остальными секциями настроек
+    // Section header, in the same style as the other settings sections
     Text(
         text     = stringResource(R.string.llm_prompt_section_title),
         style    = MaterialTheme.typography.titleMedium,
@@ -80,7 +80,7 @@ internal fun SettingsPromptManager(
     // ── System Prompt field ───────────────────────────────────────────────────
     SlimListItem(
         headlineContent = {
-            // Отступ сверху чтобы label OutlinedTextField не обрезался анимацией
+            // Top padding so the OutlinedTextField label is not clipped by the animation
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -134,12 +134,12 @@ internal fun SettingsPromptManager(
                         val isBuiltIn  = presetName in builtInNames
                         val isSelected = promptText == presetPrompt
 
-                        // Для пользовательских чипов: при нажатии на уже выбранный
-                        // показываем DropdownMenu с опциями «Применить» / «Удалить»
+                        // For user presets: tapping the selected chip
+                        // opens a DropdownMenu with Apply / Delete
                         var showChipMenu by remember { mutableStateOf(false) }
 
                         if (isBuiltIn) {
-                            // Встроенный пресет — простой клик без меню
+                            // Built-in preset — a plain click, no menu
                             FilterChip(
                                 selected = isSelected,
                                 onClick  = {
@@ -149,8 +149,8 @@ internal fun SettingsPromptManager(
                                 label    = { Text(presetName) },
                             )
                         } else {
-                            // Пользовательский пресет — клик открывает меню
-                            // (и применить, и удалить — без конфликта касания)
+                            // User preset — the click opens the menu
+                            // (both apply and delete, without a touch conflict)
                             Column {
                                 FilterChip(
                                     selected = isSelected,

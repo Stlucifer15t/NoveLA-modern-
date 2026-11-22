@@ -344,8 +344,8 @@ internal class SettingsViewModel @Inject constructor(
     }
 
     fun onTranslationGlobalModeChange(global: Boolean) {
-        // FIX-C: блокируем включение глобального режима, пока не задана глобальная
-        // пара языков (source/target). Выключение разрешено всегда.
+        // FIX-C: turning global mode on is blocked until the global
+        // language pair (source/target) is set. Turning it off is always allowed.
         if (global && !state.hasGlobalPair.value) return
         appPreferences.TRANSLATION_GLOBAL_MODE.value = global
     }
@@ -386,7 +386,7 @@ internal class SettingsViewModel @Inject constructor(
     }
 
     private suspend fun updateOfflineVideoSizeAndWait() {
-        // Папка видео-загрузок (filesDir/video_downloads) считается рекурсивно
+        // The video download folder (filesDir/video_downloads) is measured recursively
         val size = withContext(Dispatchers.IO) {
             File(context.filesDir, "video_downloads")
                 .walk()
@@ -461,9 +461,9 @@ internal class SettingsViewModel @Inject constructor(
             isCleaningOfflineVideo.value = true
             toasty.show(R.string.cleaning_offline_video)
 
-            // media3 удаляет асинхронно и сериализованно (один remove-task за
-            // раз), поэтому не подтверждаем «удалено» и не ждём по таймеру —
-            // тост выше сообщает о запуске, размер обновится на ON_RESUME.
+            // media3 deletes asynchronously and serialised (one remove task at a
+            // time), so we neither confirm "deleted" nor wait on a timer —
+            // the toast above only reports the start, and the size refreshes on ON_RESUME.
             offlineVideoCleaner.removeAll()
         } catch (e: Exception) {
             toasty.show(R.string.offline_video_clean_failed)

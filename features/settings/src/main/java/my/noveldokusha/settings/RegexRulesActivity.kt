@@ -11,9 +11,9 @@ import my.noveldokusha.coreui.BaseActivity
 import my.noveldokusha.coreui.theme.Theme
 
 /**
- * Редактор регэксп-правил.
- * Без [IntentData.bookUrl] — глобальные правила;
- * с bookUrl — персональные правила конкретной новеллы.
+ * Regex cleanup rule editor.
+ * Without [IntentData.bookUrl] the global rules are edited;
+ * with a bookUrl, that novel's own rules.
  */
 @AndroidEntryPoint
 class RegexRulesActivity : BaseActivity() {

@@ -138,7 +138,7 @@ fun RegexCleanupSettingsScreen(
             }
         }
 
-        // ── Novel Header & Actions (персональный режим) ───────────────────
+        // ── Novel header & actions (per-novel mode) ───────────────────────
         if (!viewModel.isGlobal) {
             Text(
                 text = stringResource(

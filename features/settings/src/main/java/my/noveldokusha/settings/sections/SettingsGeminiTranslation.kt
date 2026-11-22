@@ -117,7 +117,7 @@ internal fun SettingsGeminiTranslation(
         color    = colorAccent()
         )
 
-        // ── Режим перевода: персональный / глобальный ───────────────────────
+        // ── Translation mode: per-novel / global ──────────────────────────
         SlimListItem(
             headlineContent = {
                 Row(
@@ -140,8 +140,8 @@ internal fun SettingsGeminiTranslation(
                     ExpressiveSwitch(
                         checked = translationGlobalMode,
                         onCheckedChange = onTranslationGlobalModeChange,
-                        // FIX-C: переключатель недоступен, пока не задана глобальная
-                        // пара языков — визуальная индикация + барьер на уровне ViewModel
+                        // FIX-C: the switch is unavailable until the global language
+                        // pair is set — visual hint plus a barrier in the view model
                         enabled = hasGlobalPair,
                     )
                 }
@@ -340,7 +340,7 @@ internal fun SettingsGeminiTranslation(
                     }
                 )
 
-                // Prompt manager для Gemini
+                // Prompt manager for Gemini
                 SettingsPromptManager(
                     activeSystemPrompt             = activeSystemPrompt,
                     promptPresets                  = promptPresets,

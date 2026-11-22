@@ -287,13 +287,13 @@ internal fun SettingsNetwork(
             },
             onClick = {
                 if (isIgnoringBatteryOptimizations.value) {
-                    // Оптимизация уже отключена — открываем настройки приложения
+                    // Battery optimisation is already off — open the app settings screen
                     val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
                         data = Uri.parse("package:${context.packageName}")
                     }
                     context.startActivity(intent)
                 } else {
-                    // Оптимизация включена — запрашиваем отключение
+                    // Battery optimisation is on — ask the system to disable it
                     val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
                         data = Uri.parse("package:${context.packageName}")
                     }
