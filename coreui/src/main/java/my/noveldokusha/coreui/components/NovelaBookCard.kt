@@ -1,6 +1,7 @@
 package my.noveldokusha.coreui.components
 
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -74,9 +75,12 @@ fun NovelaBookCard(
 ) {
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
+    // A spring, not a tween: a pressed card that stops dead at 0.97 and snaps back on a
+    // fixed curve is what makes a shelf feel like a list of buttons. The overshoot on release
+    // is the difference between "tapped" and "handled".
     val scale by animateFloatAsState(
-        targetValue = if (pressed) 0.97f else 1f,
-        animationSpec = tween(NovelaMotion.INSTANT),
+        targetValue = if (pressed) 0.96f else 1f,
+        animationSpec = spring(dampingRatio = 0.6f, stiffness = 500f),
         label = "cardPress",
     )
 

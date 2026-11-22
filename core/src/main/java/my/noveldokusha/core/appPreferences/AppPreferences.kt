@@ -741,7 +741,7 @@ class AppPreferences @Inject constructor(
     // значком. Отключается, потому что у кого-то «прочитано» означает «скачано», и тогда
     // серый список врёт.
     val GREY_OUT_READ_CHAPTERS = object : Preference<Boolean>("GREY_OUT_READ_CHAPTERS") {
-        override var value by SharedPreference_Bool(name, preferences, true)
+        override var value by SharedPreference_Boolean(name, preferences, true)
     }
     // Позиция полосы источника на карточке книги в библиотеке:
     // кромка обложки (OnCover) или плашка под обложкой (BelowCover — дефолт).

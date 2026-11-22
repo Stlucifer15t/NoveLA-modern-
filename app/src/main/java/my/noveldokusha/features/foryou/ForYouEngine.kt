@@ -80,7 +80,7 @@ data class ForYouLane(
         /** The pass that asks for nothing — the source's own front page. */
         val Catalog = ForYouLane(slug = "", terms = emptyList())
 
-        fun for(genres: List<NovelaGenre>): List<ForYouLane> =
+        fun forGenres(genres: List<NovelaGenre>): List<ForYouLane> =
             genres.map { ForYouLane(it.slug, it.terms) }
     }
 }

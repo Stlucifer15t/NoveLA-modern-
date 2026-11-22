@@ -239,7 +239,7 @@ class ForYouViewModel @Inject constructor(
     private suspend fun applyStep(resolved: ForYouSources, replace: Boolean) {
         // One lane per picked genre, plus the source's own front page. The words are the
         // genre's, not the slug: "slice of life" searches, "slice-of-life" does not.
-        val lanes = ForYouLane.for(_state.value.genres) + ForYouLane.Catalog
+        val lanes = ForYouLane.forGenres(_state.value.genres) + ForYouLane.Catalog
         val step = try {
             engine.step(resolved.active, cursors, lanes)
         } catch (e: CancellationException) {

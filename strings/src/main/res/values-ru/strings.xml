@@ -1492,14 +1492,18 @@
     <string name="feeds_title">Лента</string>
     <string name="feeds_subtitle">Новые главы источников из вашей библиотеки.</string>
     <string name="feeds_check">Проверить обновления</string>
-    <string name="feeds_checking">Проверка %1$d из %2$d</string>
-    <string name="feeds_new_chapters">%1$d новых глав</string>
-    <string name="feeds_new_chapter">1 новая глава</string>
     <string name="feeds_empty_title">Пока ничего нового</string>
     <string name="feeds_empty_message">Библиотеку сверяют с источниками, когда запускается обновление. Нажмите «Проверить», чтобы спросить прямо сейчас.</string>
-    <string name="feeds_unread">Не прочитано: %1$d</string>
-    <string name="feeds_all_read">Прочитано всё</string>
-    <string name="feeds_no_last_read">Откройте книгу — и новые главы станет видно.</string>
     <string name="layout_browse_search">Каталог и поиск</string>
     <string name="layout_library_shared">Библиотека, каталог и поиск</string>
+    <string name="feeds_filter_all">Все</string>
+    <string name="feeds_checking_now">Спрашиваем у источников новые главы…</string>
+    <string name="feeds_open_library">Открыть библиотеку</string>
+    <string name="feeds_note">В строке — главы, которые есть на полке и которые на этом устройстве не открывали. «Проверить» запускает обновление библиотеки: источники спрашивает именно оно, push-канала у приложения нет, само ничего не приходит.</string>
+    <string name="feeds_new_chapter">1 новая глава</string>
+    <string name="feeds_new_chapters">%1$d новых глав</string>
+    <string name="feeds_new_episode">1 новая серия</string>
+    <string name="feeds_new_episodes">%1$d новых серий</string>
+    <string name="feeds_all_read">Непрочитанного нет</string>
+    <string name="feeds_empty_filter_title">Такого на полке пока нет</string>
 </resources>

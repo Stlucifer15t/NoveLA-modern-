@@ -519,7 +519,7 @@ private fun ForYouRailCell(
         title = book.metadata.title,
         coverModel = cover,
         subtitle = subtitle,
-        modifier = Modifier.width(NovelaSize.carouselCoverWidth),
+        modifier = Modifier.width(NovelaSize.railCardWidth),
         onClick = { onOpenBook(book.metadata) },
     )
 }

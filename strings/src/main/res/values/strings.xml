@@ -1127,14 +1127,18 @@
     <string name="feeds_title">Feeds</string>
     <string name="feeds_subtitle">New chapters from the sources in your library.</string>
     <string name="feeds_check">Check for updates</string>
-    <string name="feeds_checking">Checking %1$d of %2$d</string>
-    <string name="feeds_new_chapters">%1$d new chapters</string>
-    <string name="feeds_new_chapter">1 new chapter</string>
     <string name="feeds_empty_title">Nothing new yet</string>
     <string name="feeds_empty_message">Your library is checked against its sources when the update worker runs. Check now to ask them on the spot.</string>
-    <string name="feeds_unread">%1$d unread</string>
-    <string name="feeds_all_read">All read</string>
-    <string name="feeds_no_last_read">Open it once and new chapters can be counted.</string>
     <string name="layout_browse_search">Browse and search</string>
     <string name="layout_library_shared">Library, browse and search</string>
+    <string name="feeds_filter_all">All</string>
+    <string name="feeds_checking_now">Asking the sources for new chapters…</string>
+    <string name="feeds_open_library">Open the library</string>
+    <string name="feeds_note">A row counts the chapters the shelf has that this device has not opened. “Check” runs the library update worker, which is what actually asks the sources; the app has no push channel, so nothing arrives on its own.</string>
+    <string name="feeds_new_chapter">1 new chapter</string>
+    <string name="feeds_new_chapters">%1$d new chapters</string>
+    <string name="feeds_new_episode">1 new episode</string>
+    <string name="feeds_new_episodes">%1$d new episodes</string>
+    <string name="feeds_all_read">Nothing unread</string>
+    <string name="feeds_empty_filter_title">Nothing of this kind on the shelf</string>
 </resources>

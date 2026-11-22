@@ -4,7 +4,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import my.noveldokusha.coreui.theme.AppTheme
 import my.noveldokusha.coreui.theme.DarkMode
@@ -67,6 +69,9 @@ import my.noveldokusha.core.appPreferences.AppPreferences
 import my.noveldokusha.settings.NovelaOnboardingActivity
 import my.noveldokusha.features.foryou.ForYouViewModel
 import my.noveldokusha.features.foryou.NovelaForYouScreen
+import my.noveldokusha.features.feeds.FeedsState
+import my.noveldokusha.features.feeds.FeedsViewModel
+import my.noveldokusha.features.feeds.NovelaFeedsScreen
 import my.noveldokusha.coreui.BaseActivity
 import my.noveldokusha.tooling.application_workers.setup.PeriodicWorkersInitializer
 import my.noveldokusha.coreui.theme.Theme
@@ -92,6 +97,7 @@ private data class Page(
 private val pages = listOf(
     Page(iconRes = R.drawable.ic_baseline_home_24, stringRes = R.string.title_library),
     Page(iconRes = R.drawable.ic_for_you_24, stringRes = R.string.for_you_title),
+    Page(iconRes = R.drawable.new_chapters_icon_notification, stringRes = R.string.title_feeds),
     Page(iconRes = R.drawable.ic_baseline_menu_book_24, stringRes = R.string.title_finder),
     Page(iconRes = R.drawable.ic_baseline_history_24, stringRes = R.string.title_history),
     Page(iconRes = R.drawable.ic_twotone_settings_24, stringRes = R.string.title_settings),
@@ -119,6 +125,12 @@ open class MainActivity : BaseActivity() {
      * isn't refetched every time the reader comes back to the first page.
      */
     private val forYouViewModel: ForYouViewModel by viewModels()
+
+    /**
+     * The feeds tab. Its own view model for the same reason For You has one: the shelf read
+     * stays alive across tab switches instead of restarting on every visit.
+     */
+    private val feedsViewModel: FeedsViewModel by viewModels()
 
     private val requestNotificationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission(),
@@ -169,18 +181,23 @@ open class MainActivity : BaseActivity() {
                         animationSpec = tween(150), label = "forYouAlpha"
                     )
 
-                    val finderAlpha by animateFloatAsState(
+                    val feedsAlpha by animateFloatAsState(
                         targetValue = if (activePageIndex == 2) 1f else 0f,
+                        animationSpec = tween(150), label = "feedsAlpha"
+                    )
+
+                    val finderAlpha by animateFloatAsState(
+                        targetValue = if (activePageIndex == 3) 1f else 0f,
                         animationSpec = tween(150), label = "finderAlpha"
                     )
 
                     val historyAlpha by animateFloatAsState(
-                        targetValue = if (activePageIndex == 3) 1f else 0f,
+                        targetValue = if (activePageIndex == 4) 1f else 0f,
                         animationSpec = tween(150), label = "historyAlpha"
                     )
 
                     val settingsAlpha by animateFloatAsState(
-                        targetValue = if (activePageIndex == 4) 1f else 0f,
+                        targetValue = if (activePageIndex == 5) 1f else 0f,
                         animationSpec = tween(150), label = "settingsAlpha"
                     )
 
@@ -228,11 +245,46 @@ open class MainActivity : BaseActivity() {
                                 onOpenBook = { meta ->
                                     startActivity(navigationRoutes.chapters(this@MainActivity, meta))
                                 },
-                                onOpenExtensions = { activePageIndex = 2 },
+                                onOpenExtensions = { activePageIndex = 3 },
                                 onSetType = forYouViewModel::setType,
                                 onSetBoundSource = forYouViewModel::setBoundSource,
                                 onRefresh = forYouViewModel::refresh,
                                 onLoadMore = forYouViewModel::loadMore,
+                            )
+                        }
+
+                        // The feed is a local aggregation over the whole shelf (a join with
+                        // Chapter, grouped per book), and every tab here stays in composition.
+                        // So the subscription starts on the first visit to this page and stays
+                        // on from there — an empty Box costs nothing while nobody looks, and the
+                        // cross-fade still has something to fade in to.
+                        var feedsVisited by rememberSaveable { mutableStateOf(false) }
+                        LaunchedEffect(activePageIndex) {
+                            if (activePageIndex == 2) feedsVisited = true
+                        }
+                        val feedsState =
+                            if (feedsVisited) feedsViewModel.state.collectAsState().value
+                            else FeedsState()
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .graphicsLayer { alpha = feedsAlpha }
+                                .zIndex(if (activePageIndex == 2) 1f else 0f)
+                                .then(
+                                    if (activePageIndex != 2) Modifier.pointerInput(Unit) {
+                                        awaitPointerEventScope { while (true) { awaitPointerEvent() } }
+                                    } else Modifier
+                                )
+                        ) {
+                            NovelaFeedsScreen(
+                                state = feedsState,
+                                onOpenBook = { meta ->
+                                    startActivity(navigationRoutes.chapters(this@MainActivity, meta))
+                                },
+                                onCheckForUpdates = feedsViewModel::checkForUpdates,
+                                onCancelUpdate = feedsViewModel::cancelUpdate,
+                                onOpenLibrary = { activePageIndex = 0 },
+                                onSetFilter = feedsViewModel::setFilter,
                             )
                         }
 
@@ -241,9 +293,9 @@ open class MainActivity : BaseActivity() {
                                 .fillMaxSize()
                                 .graphicsLayer { alpha = finderAlpha }
                                 
-                        .zIndex(if (activePageIndex == 2) 1f else 0f)
+                        .zIndex(if (activePageIndex == 3) 1f else 0f)
                                 .then(
-                                    if (activePageIndex != 2) Modifier.pointerInput(Unit) {
+                                    if (activePageIndex != 3) Modifier.pointerInput(Unit) {
                                         awaitPointerEventScope { while (true) { awaitPointerEvent() } }
                                     } else Modifier
                                 )
@@ -256,9 +308,9 @@ open class MainActivity : BaseActivity() {
                                 .fillMaxSize()
                                 .graphicsLayer { alpha = historyAlpha }
                                 
-                        .zIndex(if (activePageIndex == 3) 1f else 0f)
+                        .zIndex(if (activePageIndex == 4) 1f else 0f)
                                 .then(
-                                    if (activePageIndex != 3) Modifier.pointerInput(Unit) {
+                                    if (activePageIndex != 4) Modifier.pointerInput(Unit) {
                                         awaitPointerEventScope { while (true) { awaitPointerEvent() } }
                                     } else Modifier
                                 )
@@ -271,9 +323,9 @@ open class MainActivity : BaseActivity() {
                                 .fillMaxSize()
                                 .graphicsLayer { alpha = settingsAlpha }
                                 
-                        .zIndex(if (activePageIndex == 4) 1f else 0f)
+                        .zIndex(if (activePageIndex == 5) 1f else 0f)
                                 .then(
-                                    if (activePageIndex != 4) Modifier.pointerInput(Unit) {
+                                    if (activePageIndex != 5) Modifier.pointerInput(Unit) {
                                         awaitPointerEventScope { while (true) { awaitPointerEvent() } }
                                     } else Modifier
                                 )
@@ -293,7 +345,12 @@ open class MainActivity : BaseActivity() {
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
                             .navigationBarsPadding()
-                            .padding(horizontal = 40.dp, vertical = 16.dp)
+                            // Six tabs need the room: at five the pill sits 40 dp off each
+                            // edge, at six the capsule would overlap its neighbour there.
+                            .padding(
+                                horizontal = if (pages.size > 5) 20.dp else 40.dp,
+                                vertical = 16.dp,
+                            )
                             .height(NovelaSize.navBarHeight),
                         shape = RoundedCornerShape(NovelaRadius.pill),
                         color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.96f),
@@ -316,7 +373,11 @@ open class MainActivity : BaseActivity() {
                                 // Animate the selected capsule width so the bar
                                 // feels like one object rather than four toggles.
                                 val capsuleWidth by animateDpAsState(
-                                    targetValue = if (isSelected) 56.dp else 44.dp,
+                                    targetValue = if (isSelected) {
+                        if (pages.size > 5) 48.dp else 56.dp
+                    } else {
+                        if (pages.size > 5) 38.dp else 44.dp
+                    },
                                     animationSpec = tween(
                                         durationMillis = NovelaMotion.STANDARD,
                                         easing = NovelaMotion.StandardEasing,
