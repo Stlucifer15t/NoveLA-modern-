@@ -63,8 +63,6 @@ import my.noveldokusha.settings.ui.ExpressiveSwitch
  * and view-model wiring, they are just placed inside a card and filtered as a group.
  */
 
-/** One labelled group of settings. */
-@Composable
 /**
  * A settings group.
  *
@@ -98,7 +96,7 @@ data class SettingsGroupSpec(
     val icon: ImageVector,
     val keywords: List<String>,
     val accent: Color,
-    val content: @Composable ColumnScope.() -> Unit,
+    val content: @Composable () -> Unit,
 )
 
 @Composable
@@ -130,14 +128,15 @@ fun SettingsGroupCard(
                 .padding(
                     horizontal = NovelaSpacing.screenH,
                     vertical = NovelaSpacing.xs,
+                )
+                .then(
+                    // the whole box is the tap target once it opens a screen of its own
+                    if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier,
                 ),
             shape = NovelaRadius.cardShape,
             color = NovelaTheme.colors.elevatedSurface,
             tonalElevation = 0.dp,
             border = androidx.compose.foundation.BorderStroke(1.dp, NovelaTheme.colors.hairline),
-            modifier = Modifier.then(
-                if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier,
-            ),
         ) {
             Column {
                 Row(

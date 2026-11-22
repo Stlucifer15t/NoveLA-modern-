@@ -190,6 +190,7 @@ internal fun CatalogList(
     }
 }
 
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 private fun SourceTile(
     item: CatalogItem,
