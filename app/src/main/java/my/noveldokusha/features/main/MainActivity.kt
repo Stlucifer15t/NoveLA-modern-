@@ -1,10 +1,9 @@
 package my.noveldokusha.features.main
 
-import my.noveldokusha.coreui.theme.NovelaSpacing
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import my.noveldokusha.coreui.theme.AppTheme
@@ -66,8 +65,8 @@ import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import my.noveldokusha.core.appPreferences.AppPreferences
 import my.noveldokusha.settings.NovelaOnboardingActivity
-import my.noveldokusha.settings.foryou.ForYouViewModel
-import my.noveldokusha.settings.foryou.NovelaForYouStrip
+import my.noveldokusha.features.foryou.ForYouViewModel
+import my.noveldokusha.features.foryou.NovelaForYouScreen
 import my.noveldokusha.coreui.BaseActivity
 import my.noveldokusha.tooling.application_workers.setup.PeriodicWorkersInitializer
 import my.noveldokusha.coreui.theme.Theme
@@ -92,6 +91,7 @@ private data class Page(
 
 private val pages = listOf(
     Page(iconRes = R.drawable.ic_baseline_home_24, stringRes = R.string.title_library),
+    Page(iconRes = R.drawable.ic_for_you_24, stringRes = R.string.for_you_title),
     Page(iconRes = R.drawable.ic_baseline_menu_book_24, stringRes = R.string.title_finder),
     Page(iconRes = R.drawable.ic_baseline_history_24, stringRes = R.string.title_history),
     Page(iconRes = R.drawable.ic_twotone_settings_24, stringRes = R.string.title_settings),
@@ -164,20 +164,33 @@ open class MainActivity : BaseActivity() {
                         animationSpec = tween(150), label = "libAlpha"
                     )
 
-                    val finderAlpha by animateFloatAsState(
+                    val forYouAlpha by animateFloatAsState(
                         targetValue = if (activePageIndex == 1) 1f else 0f,
+                        animationSpec = tween(150), label = "forYouAlpha"
+                    )
+
+                    val finderAlpha by animateFloatAsState(
+                        targetValue = if (activePageIndex == 2) 1f else 0f,
                         animationSpec = tween(150), label = "finderAlpha"
                     )
 
                     val historyAlpha by animateFloatAsState(
-                        targetValue = if (activePageIndex == 2) 1f else 0f,
+                        targetValue = if (activePageIndex == 3) 1f else 0f,
                         animationSpec = tween(150), label = "historyAlpha"
                     )
 
                     val settingsAlpha by animateFloatAsState(
-                        targetValue = if (activePageIndex == 3) 1f else 0f,
+                        targetValue = if (activePageIndex == 4) 1f else 0f,
                         animationSpec = tween(150), label = "settingsAlpha"
                     )
+
+                    // The tab only asks the network once somebody looks at it, but installing
+                    // the default source is a one-shot that must not wait for that: the first
+                    // pass of the tab then has something bound to it.
+                    LaunchedEffect(Unit) { forYouViewModel.prepareDefaultSource() }
+                    LaunchedEffect(activePageIndex) {
+                        if (activePageIndex == 1) forYouViewModel.activate()
+                    }
 
                     Box(
                         Modifier
@@ -195,32 +208,42 @@ open class MainActivity : BaseActivity() {
                                     } else Modifier
                                 )
                         ) {
-                            Column(modifier = Modifier.fillMaxSize()) {
-                                NovelaForYouStrip(
-                                    state = forYouViewModel.state,
-                                    onBookClick = { meta ->
-                                        startActivity(navigationRoutes.chapters(this@MainActivity, meta))
-                                    },
-                                    onChangeGenres = {
-                                        startActivity(NovelaOnboardingActivity.createIntent(this@MainActivity))
-                                    },
-                                    modifier = Modifier
-                                        .statusBarsPadding()
-                                        .padding(top = NovelaSpacing.sm),
+                            LibraryScreen()
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .graphicsLayer { alpha = forYouAlpha }
+                                .zIndex(if (activePageIndex == 1) 1f else 0f)
+                                .then(
+                                    if (activePageIndex != 1) Modifier.pointerInput(Unit) {
+                                        awaitPointerEventScope { while (true) { awaitPointerEvent() } }
+                                    } else Modifier
                                 )
-                                Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                                    LibraryScreen()
-                                }
-                            }
+                        ) {
+                            NovelaForYouScreen(
+                                state = forYouViewModel.state,
+                                appPreferences = appPreferences,
+                                onOpenBook = { meta ->
+                                    startActivity(navigationRoutes.chapters(this@MainActivity, meta))
+                                },
+                                onOpenExtensions = { activePageIndex = 2 },
+                                onSetType = forYouViewModel::setType,
+                                onSetBoundSource = forYouViewModel::setBoundSource,
+                                onRefresh = forYouViewModel::refresh,
+                                onLoadMore = forYouViewModel::loadMore,
+                            )
                         }
 
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .graphicsLayer { alpha = finderAlpha }
-                                .zIndex(if (activePageIndex == 1) 1f else 0f)
+                                
+                        .zIndex(if (activePageIndex == 2) 1f else 0f)
                                 .then(
-                                    if (activePageIndex != 1) Modifier.pointerInput(Unit) {
+                                    if (activePageIndex != 2) Modifier.pointerInput(Unit) {
                                         awaitPointerEventScope { while (true) { awaitPointerEvent() } }
                                     } else Modifier
                                 )
@@ -232,9 +255,10 @@ open class MainActivity : BaseActivity() {
                             modifier = Modifier
                                 .fillMaxSize()
                                 .graphicsLayer { alpha = historyAlpha }
-                                .zIndex(if (activePageIndex == 2) 1f else 0f)
+                                
+                        .zIndex(if (activePageIndex == 3) 1f else 0f)
                                 .then(
-                                    if (activePageIndex != 2) Modifier.pointerInput(Unit) {
+                                    if (activePageIndex != 3) Modifier.pointerInput(Unit) {
                                         awaitPointerEventScope { while (true) { awaitPointerEvent() } }
                                     } else Modifier
                                 )
@@ -246,9 +270,10 @@ open class MainActivity : BaseActivity() {
                             modifier = Modifier
                                 .fillMaxSize()
                                 .graphicsLayer { alpha = settingsAlpha }
-                                .zIndex(if (activePageIndex == 3) 1f else 0f)
+                                
+                        .zIndex(if (activePageIndex == 4) 1f else 0f)
                                 .then(
-                                    if (activePageIndex != 3) Modifier.pointerInput(Unit) {
+                                    if (activePageIndex != 4) Modifier.pointerInput(Unit) {
                                         awaitPointerEventScope { while (true) { awaitPointerEvent() } }
                                     } else Modifier
                                 )

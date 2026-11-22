@@ -306,6 +306,21 @@ class AppPreferences @Inject constructor(
         override var value by SharedPreference_Boolean(name, preferences, false)
     }
 
+    /**
+     * Which source the For You tab reads. Empty means "not chosen": the tab then prefers a
+     * source whose name mentions WebNovel (the binding the first-run install aims for) and
+     * falls back to merging every installed source of the selected type, so the tab is never
+     * blank just because nobody picked anything yet.
+     */
+    val FOR_YOU_SOURCE_ID = object : Preference<String>("FOR_YOU_SOURCE_ID") {
+        override var value by SharedPreference_String(name, preferences, "")
+    }
+
+    /** One attempt per install at provisioning the default source. */
+    val FOR_YOU_DEFAULT_SOURCE_DONE = object : Preference<Boolean>("FOR_YOU_DEFAULT_SOURCE_DONE") {
+        override var value by SharedPreference_Boolean(name, preferences, false)
+    }
+
     val IS_FOLLOW_SYSTEM_LANGUAGE = object : Preference<Boolean>("IS_FOLLOW_SYSTEM_LANGUAGE") {
         override var value by SharedPreference_Boolean(name, preferences, false)
     }
