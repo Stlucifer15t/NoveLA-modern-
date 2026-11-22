@@ -12,7 +12,24 @@ data class ReadingStats(
     val libraryBooks: Int = 0,
     val chaptersRead: Int = 0,
     val streakDays: Int = 0,
+    /** Books on the shelf whose source says they are finished, or whose every chapter is read. */
+    val booksFinished: Int = 0,
+    /** Distinct local days with a chapter open — the history table, not a guess. */
+    val daysActive: Int = 0,
+    /** Video titles on the shelf (Book.contentType = video). */
+    val moviesInLibrary: Int = 0,
+    /** Episodes the player reported a position for, i.e. actually opened. */
+    val episodesWatched: Int = 0,
+    /** Seconds watched, summed from the player's own position, capped at the episode length. */
+    val watchSeconds: Long = 0,
 )
+
+/**
+ * Minutes, for the one place that shows a duration rather than a count. A negative total means
+ * "the first read has not finished", which the screen renders as an ellipsis, exactly as the
+ * integer counters above do.
+ */
+internal fun ReadingStats.watchMinutes(): Long = if (watchSeconds < 0) -1 else watchSeconds / 60
 
 /**
  * Consecutive local days that end today or yesterday, counted from chapter-open
@@ -25,8 +42,6 @@ internal fun readingStreakDays(
     nowMillis: Long = System.currentTimeMillis(),
 ): Int {
     if (timestampsMillis.isEmpty()) return 0
-    val zones = TimeZone.getDefault()
-    fun dayIndex(millis: Long): Long = TimeUnit.MILLISECONDS.toDays(millis + zones.getOffset(millis))
 
     val days = timestampsMillis.map { dayIndex(it) }.distinct().sortedDescending()
     val today = dayIndex(nowMillis)
@@ -39,6 +54,21 @@ internal fun readingStreakDays(
     }
     return streak
 }
+
+/**
+ * How many separate days carry a timestamp, which is the "days with reading" counter on the
+ * stats screen. Day boundaries are the device's own, so a chapter opened at 00:20 counts to the
+ * day the reader considers it, not to UTC's.
+ */
+internal fun activeDays(timestampsMillis: List<Long>): Int =
+    timestampsMillis.mapTo(HashSet()) { dayIndex(it) }.size
+
+/**
+ * The local calendar day a timestamp falls on. The offset is added before the division because
+ * `toDays` alone would cut the day at UTC midnight.
+ */
+internal fun dayIndex(millis: Long): Long =
+    TimeUnit.MILLISECONDS.toDays(millis + TimeZone.getDefault().getOffset(millis))
 
 /**
  * -1 means "not read yet": the hub shows an ellipsis instead of a confident 0 while the

@@ -205,6 +205,7 @@ internal fun ChaptersScreenBody(
                             isLocalSource = state.isLocalSource.value,
                             showCancelAction = state.isVideoBook.value,
                             highlighted = entry.data.chapter.url == highlightedChapterUrl,
+                            greyOutRead = state.greyOutReadChapters.value,
                             onClick = { onChapterClick(entry.data) },
                             onLongClick = { onChapterLongClick(entry.data) },
                             onDownload = { onChapterDownload(entry.data) },

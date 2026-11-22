@@ -13,5 +13,8 @@ internal data class DatabaseSearchScreenState(
     val searchTextInput: MutableState<String>,
     val genresList: SnapshotStateList<GenreItem>,
     val listLayoutMode: MutableState<ListLayoutMode>,
+    // Число колонок из BOOKS_GRID_COLUMNS — то же значение, что у библиотеки
+    // и каталога, поэтому настройка «Раскладка» меняет все три экрана сразу.
+    val gridColumns: MutableState<Int>,
     val fetchIterator: PagedListIteratorState<BookMetadata>,
 )

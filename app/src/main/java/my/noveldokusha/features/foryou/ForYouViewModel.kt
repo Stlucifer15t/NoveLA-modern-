@@ -271,7 +271,7 @@ class ForYouViewModel @Inject constructor(
         _state.value = _state.value.copy(
             books = pool,
             rails = rails,
-            pool = if (rails.isEmpty()) pool else pool.filter { it.key !in claimed},
+            pool = if (rails.isEmpty()) pool else pool.filter { it.key !in claimed },
             loading = false,
             loadingMore = false,
             canLoadMore = cursors.values.any { !it.exhausted },

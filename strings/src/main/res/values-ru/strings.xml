@@ -1500,4 +1500,6 @@
     <string name="feeds_unread">Не прочитано: %1$d</string>
     <string name="feeds_all_read">Прочитано всё</string>
     <string name="feeds_no_last_read">Откройте книгу — и новые главы станет видно.</string>
+    <string name="layout_browse_search">Каталог и поиск</string>
+    <string name="layout_library_shared">Библиотека, каталог и поиск</string>
 </resources>

@@ -1136,4 +1136,6 @@
     <string name="feeds_unread">%1$d unread</string>
     <string name="feeds_all_read">All read</string>
     <string name="feeds_no_last_read">Open it once and new chapters can be counted.</string>
+    <string name="layout_browse_search">Browse and search</string>
+    <string name="layout_library_shared">Library, browse and search</string>
 </resources>

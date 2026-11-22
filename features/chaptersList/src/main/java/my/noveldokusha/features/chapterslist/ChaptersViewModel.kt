@@ -161,6 +161,7 @@ internal class ChaptersViewModel @Inject constructor(
         // Флаг видео-книги для UI: та же семантика, что в isVideoBook() —
         // метка из Book.contentType, при пустой — из contentType источника.
         isVideoBook = derivedStateOf { isVideoContentType(book.value.contentType) },
+        greyOutReadChapters = appPreferences.GREY_OUT_READ_CHAPTERS.state(viewModelScope),
         chapterDownloads = mutableStateOf(emptyMap()),
     )
 
