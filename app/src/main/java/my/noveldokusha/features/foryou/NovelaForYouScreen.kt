@@ -323,7 +323,6 @@ fun NovelaForYouScreen(
             rail = rail,
             state = state,
             onOpenBook = onOpenBook,
-            onLoadMore = onLoadMore,
             // Скрытая книга уходит из этого списка сразу: окно закрываем.
             onHide = { book ->
                 onHide(book)
@@ -983,19 +982,12 @@ private fun ForYouExpandedRail(
     rail: ForYouRail,
     state: ForYouUiState,
     onOpenBook: (BookMetadata) -> Unit,
-    onLoadMore: () -> Unit,
     onHide: (ForYouBook) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val palette = MaterialTheme.colorScheme
     val title = rail.genre?.let { stringResource(it.labelRes) }
         ?: stringResource(R.string.for_you_highest_rated)
-    // The window is a snapshot of the rail it was opened from. Reading the live list here is what
-    // lets "Show more" grow the open window instead of leaving it on the first page.
-    val books = remember(state.books, state.rails, rail.genre) {
-        if (rail.genre == null) state.books.highestRated(limit = Int.MAX_VALUE)
-        else state.rails.firstOrNull { it.genre == rail.genre }?.books ?: rail.books
-    }
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false),
@@ -1030,7 +1022,7 @@ private fun ForYouExpandedRail(
                             overflow = TextOverflow.Ellipsis,
                         )
                         Text(
-                            text = stringResource(R.string.for_you_rail_items, books.size),
+                            text = stringResource(R.string.for_you_rail_items, rail.books.size),
                             style = NovelaType.bookMeta,
                             color = palette.onSurfaceVariant,
                         )
@@ -1056,36 +1048,13 @@ private fun ForYouExpandedRail(
                     horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.md),
                     verticalArrangement = Arrangement.spacedBy(NovelaSpacing.lg),
                 ) {
-                    items(items = books, key = { "expanded_" + it.key }) { book ->
+                    items(items = rail.books, key = { "expanded_" + it.key }) { book ->
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .animateItem(),
                         ) {
                             ForYouBookCell(book = book, onOpenBook = onOpenBook, onHide = onHide)
-                        }
-                    }
-                    // Same control as the front page: the window keeps paging the sources it
-                    // already has, instead of ending at whatever the first pass returned.
-                    if (state.canLoadMore) {
-                        item(key = "expanded_more", span = { GridItemSpan(maxLineSpan) }) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.Center,
-                            ) {
-                                Button(
-                                    onClick = onLoadMore,
-                                    enabled = !state.loadingMore,
-                                    modifier = Modifier.padding(bottom = NovelaSpacing.md),
-                                ) {
-                                    Text(
-                                        text = stringResource(
-                                            if (state.loadingMore) R.string.for_you_loading_more
-                                            else R.string.for_you_load_more
-                                        ),
-                                    )
-                                }
-                            }
                         }
                     }
                 }
