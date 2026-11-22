@@ -137,7 +137,7 @@ class LegadoRuleEngineTest {
 
     @Test
     fun `regex extract first with group template`() {
-        val result = engine.getString(doc(), "#info h1@text##(\w+) (\w+)##$2 $1")
+        val result = engine.getString(doc(), "#info h1@text##(\\w+) (\\w+)##$2 $1")
         assertEquals("Title Details", result)
     }
 
