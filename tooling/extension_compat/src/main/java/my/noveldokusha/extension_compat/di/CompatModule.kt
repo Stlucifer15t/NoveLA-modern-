@@ -9,7 +9,6 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import dagger.multibindings.IntoSet
 import my.noveldokusha.extension_compat.core.CompatExtensionLoader
-import my.noveldokusha.extension_compat.core.CompatLoaders
 import my.noveldokusha.extension_compat.core.CompatSourceProviderImpl
 import my.noveldokusha.extension_compat.core.CompatStorage
 import my.noveldokusha.extension_compat.legado.LegadoExtensionLoader
@@ -28,11 +27,15 @@ abstract class CompatModule {
 
     @Binds
     @Singleton
-    @CompatLoaders
     @IntoSet
     abstract fun bindLegadoLoader(impl: LegadoExtensionLoader): CompatExtensionLoader
 
     /**
+     * Multibinding, not a qualified set: Dagger builds the `Set<CompatExtensionLoader>`
+     * unqualified, so `@CompatLoaders` on the elements left the injection point
+     * unsatisfied (Dagger/MissingBinding at :app:hiltJavaCompileDebug). This matches how
+     * `tooling/local_source` binds its LocalSource set.
+     *
      * Mihon/Tachiyomi/Aniyomi (keiyoushi) ship APK extensions. The loader validates
      * the manifest and dex, but this ecosystem's source API is not part of the build
      * (it needs an eu.kanade.tachiyomi.source shim): the binding stays so an installed
@@ -40,7 +43,6 @@ abstract class CompatModule {
      */
     @Binds
     @Singleton
-    @CompatLoaders
     @IntoSet
     abstract fun bindTachiyomiLoader(impl: TachiyomiExtensionLoader): CompatExtensionLoader
 

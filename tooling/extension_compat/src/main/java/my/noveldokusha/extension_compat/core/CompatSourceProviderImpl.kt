@@ -51,7 +51,7 @@ interface CompatExtensionLoader {
 class CompatSourceProviderImpl @Inject constructor(
     private val storage: CompatStorage,
     private val diagnostics: CompatDiagnostics,
-    @CompatLoaders private val loaders: Set<CompatExtensionLoader>,
+    private val loaders: Set<CompatExtensionLoader>,
 ) : CompatSourceProvider {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
