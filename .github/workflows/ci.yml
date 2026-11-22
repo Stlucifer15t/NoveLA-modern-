@@ -148,6 +148,8 @@ jobs:
         # missing or whether :app just does not look at it — this answers both.
         if: failure()
         run: |
+          mkdir -p /tmp/logpub
+          exec > >(tee /tmp/logpub/diagnostics.txt) 2>&1
           echo "=== extension_compat: generated Hilt/Dagger sources ==="
           find tooling/extension_compat/build/generated -type f 2>/dev/null | head -40 || echo "NONE"
           echo "=== CompatModule* generated? ==="
@@ -207,7 +209,11 @@ jobs:
             echo
             cat /tmp/logpub/tests.txt
             echo
-            grep -E '^e: |^> Task .* FAILED|FAILED$|\* What went wrong|^Caused by|error:' "$LOG" | head -400
+            echo "## key build lines"
+            grep -E '^e: |^> Task .* FAILED|FAILED$|\* What went wrong|^Caused by|error:' "$LOG" | head -400 || true
+            echo
+            echo "## diagnostics"
+            cat /tmp/logpub/diagnostics.txt || true
             echo
             echo "## last 400 lines"
             echo '```'
