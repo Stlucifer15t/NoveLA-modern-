@@ -294,6 +294,18 @@ class AppPreferences @Inject constructor(
         override var value by SharedPreference_Boolean(name, preferences, false)
     }
 
+    // What the reader wants to read, chosen once at first open and editable later.
+    // Empty means "not picked yet" — the For You rail then falls back to plain catalog
+    // pages instead of pretending to know a taste profile.
+    val FOR_YOU_GENRES = object : Preference<Set<String>>("FOR_YOU_GENRES") {
+        override var value by SharedPreference_StringSet(name, preferences, setOf())
+    }
+
+    /** True once the first-open genre sheet has been answered (including "Skip"). */
+    val FOR_YOU_GENRES_PICKED = object : Preference<Boolean>("FOR_YOU_GENRES_PICKED") {
+        override var value by SharedPreference_Boolean(name, preferences, false)
+    }
+
     val IS_FOLLOW_SYSTEM_LANGUAGE = object : Preference<Boolean>("IS_FOLLOW_SYSTEM_LANGUAGE") {
         override var value by SharedPreference_Boolean(name, preferences, false)
     }

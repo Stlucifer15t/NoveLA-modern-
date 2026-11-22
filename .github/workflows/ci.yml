@@ -75,10 +75,14 @@ jobs:
             :app:compileDebugKotlin \
             --stacktrace --console=plain --continue 2>&1 | tee -a "$RUNNER_TEMP/build-output.log"
 
-      - name: Unit tests (extension compat layer)
+      - name: Unit tests (extension compat layer + settings)
         run: |
           set -o pipefail
+          # The compat layer is the risky one, but it is not the only module with tests: the
+          # settings module carries the streak computation, which is the one number on the
+          # More screen that is derived rather than counted. Both run, so neither is decoration.
           ./gradlew :tooling:extension_compat:testDebugUnitTest \
+            :features:settings:testDebugUnitTest \
             --stacktrace --console=plain --continue 2>&1 | tee -a "$RUNNER_TEMP/build-output.log"
 
       - name: Assemble debug APK

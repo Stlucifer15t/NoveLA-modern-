@@ -74,6 +74,7 @@ import my.noveldokusha.settings.ui.ExpressiveSwitch
  */
 enum class SettingsGroup {
     Appearance,
+    Reading,
     Library,
     Storage,
     Backup,
@@ -393,6 +394,7 @@ fun SettingsInnerLabel(text: String, modifier: Modifier = Modifier) {
 fun SettingsGroup.label(): String = stringResource(
     when (this) {
         SettingsGroup.Appearance -> my.noveldokusha.strings.R.string.settings_group_appearance
+        SettingsGroup.Reading -> my.noveldokusha.strings.R.string.settings_group_reading
         SettingsGroup.Library -> my.noveldokusha.strings.R.string.settings_group_library
         SettingsGroup.Storage -> my.noveldokusha.strings.R.string.settings_group_data
         SettingsGroup.Backup -> my.noveldokusha.strings.R.string.settings_group_backup
@@ -407,6 +409,7 @@ fun SettingsGroup.label(): String = stringResource(
 fun SettingsGroup.hint(): String = stringResource(
     when (this) {
         SettingsGroup.Appearance -> my.noveldokusha.strings.R.string.settings_group_appearance_hint
+        SettingsGroup.Reading -> my.noveldokusha.strings.R.string.settings_group_reading_hint
         SettingsGroup.Library -> my.noveldokusha.strings.R.string.settings_group_library_hint
         SettingsGroup.Storage -> my.noveldokusha.strings.R.string.settings_group_data_hint
         SettingsGroup.Backup -> my.noveldokusha.strings.R.string.settings_group_backup_hint

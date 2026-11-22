@@ -1,15 +1,15 @@
 package my.noveldokusha.settings
 
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -102,6 +102,7 @@ fun SettingsScreen(
                 onAutoBackupIncludeSettingsChange = viewModel::onAutoBackupIncludeSettingsChange,
                 onAutoBackupIncludePluginsChange = viewModel::onAutoBackupIncludePluginsChange,
                 onDeleteNovelPrompt = viewModel::onDeleteNovelPrompt,
+                reading = viewModel.reading,
                 onOpenGroup = { group ->
                     context.startActivity(navigationRoutes.settingsGroup(context, group.name))
                 },

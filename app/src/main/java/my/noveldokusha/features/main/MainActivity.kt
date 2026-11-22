@@ -1,5 +1,14 @@
 package my.noveldokusha.features.main
 
+import my.noveldokusha.coreui.theme.NovelaSpacing
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import my.noveldokusha.coreui.theme.AppTheme
+import my.noveldokusha.coreui.theme.DarkMode
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -10,6 +19,7 @@ import android.os.Bundle
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
@@ -31,19 +41,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -59,10 +64,12 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
+import my.noveldokusha.core.appPreferences.AppPreferences
+import my.noveldokusha.settings.NovelaOnboardingActivity
+import my.noveldokusha.settings.foryou.ForYouViewModel
+import my.noveldokusha.settings.foryou.NovelaForYouStrip
 import my.noveldokusha.coreui.BaseActivity
 import my.noveldokusha.tooling.application_workers.setup.PeriodicWorkersInitializer
-import my.noveldokusha.coreui.theme.AppTheme
-import my.noveldokusha.coreui.theme.DarkMode
 import my.noveldokusha.coreui.theme.Theme
 import my.noveldokusha.R
 import my.noveldokusha.catalogexplorer.CatalogExplorerScreen
@@ -104,6 +111,15 @@ open class MainActivity : BaseActivity() {
     @Inject
     lateinit var navigationRoutes: NavigationRoutes
 
+    @Inject
+    lateinit var appPreferences: AppPreferences
+
+    /**
+     * Home's "For you" rail. Scoped to the activity, so the rail survives tab switches and
+     * isn't refetched every time the reader comes back to the first page.
+     */
+    private val forYouViewModel: ForYouViewModel by viewModels()
+
     private val requestNotificationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission(),
     ) { }
@@ -125,6 +141,12 @@ open class MainActivity : BaseActivity() {
         })
 
         requestPushNotificationPermission()
+
+        // First open asks what the reader actually likes. The sheet writes the flag that
+        // guards this line, so answering — including "Skip" — means it never runs again.
+        if (!appPreferences.FOR_YOU_GENRES_PICKED.value) {
+            startActivity(NovelaOnboardingActivity.createIntent(this))
+        }
 
         setContent {
             var activePageIndex by rememberSaveable { mutableIntStateOf(0) }
@@ -173,7 +195,23 @@ open class MainActivity : BaseActivity() {
                                     } else Modifier
                                 )
                         ) {
-                            LibraryScreen()
+                            Column(modifier = Modifier.fillMaxSize()) {
+                                NovelaForYouStrip(
+                                    state = forYouViewModel.state,
+                                    onBookClick = { meta ->
+                                        startActivity(navigationRoutes.chapters(this@MainActivity, meta))
+                                    },
+                                    onChangeGenres = {
+                                        startActivity(NovelaOnboardingActivity.createIntent(this@MainActivity))
+                                    },
+                                    modifier = Modifier
+                                        .statusBarsPadding()
+                                        .padding(top = NovelaSpacing.sm),
+                                )
+                                Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                                    LibraryScreen()
+                                }
+                            }
                         }
 
                         Box(
