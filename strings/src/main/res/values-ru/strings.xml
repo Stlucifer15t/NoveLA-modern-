@@ -1507,4 +1507,21 @@
     <string name="feeds_all_read">Непрочитанного нет</string>
     <string name="feeds_empty_filter_title">Такого на полке пока нет</string>
     <string name="table_of_contents">Оглавление</string>
+    <string name="for_you_continue_title">Продолжить</string>
+    <string name="for_you_continue_progress">%1$d / %2$d</string>
+    <string name="for_you_hidden_notice">Скрыто: %1$s</string>
+    <string name="for_you_undo">Отменить</string>
+    <string name="chapters_notify_new">Уведомлять о новых главах</string>
+    <string name="library_test_notification">Тестовое уведомление</string>
+    <string name="library_test_notification_title">Проверка NoveLA</string>
+    <string name="library_test_notification_text">Уведомления о новых главах работают на этом устройстве.</string>
+    <string name="library_test_notification_blocked">Уведомления для NoveLA выключены. Включите их в настройках системы.</string>
+    <string name="video_load_preparing">Загрузка… %1$.1f с</string>
+    <string name="video_load_buffering">Буферизация… %1$.1f с</string>
+    <string name="video_load_ready">Готово за %1$.1f с</string>
+    <string name="video_sleep_title">Таймер сна</string>
+    <string name="video_sleep_off">Выкл.</string>
+    <string name="video_sleep_minutes">%1$d мин</string>
+    <string name="video_sleep_episode">Конец серии</string>
+    <string name="video_sleep_remaining">Сон через %1$s</string>
 </resources>
