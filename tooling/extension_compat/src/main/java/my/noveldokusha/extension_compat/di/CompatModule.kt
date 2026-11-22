@@ -17,20 +17,9 @@ import java.io.File
 import javax.inject.Singleton
 
 /**
- * Wires the compat layer into the application graph.
- *
- * Two shapes here were tried and rejected by the toolchain, and both are worth knowing
- * before "simplifying" this file:
- *
- *  - `@Module` on the companion object makes Hilt treat it as a *second* module and it
- *    fails with "CompatModule.Companion is missing an @InstallIn annotation", so every
- *    @Provides member is a direct member of this module.
- *  - multibound loaders (`@Binds @IntoSet`, and `@Multibinds` + `@Provides @IntoSet`)
- *    left `:app:hiltJavaCompileDebug` with `MissingBinding:
- *    java.util.Set<? extends CompatExtensionLoader>` for the `Set<T>` that
- *    [CompatSourceProviderImpl] injects. A plain provided set needs no wildcard match.
- *
- * A new ecosystem is registered in [provideLoaders] — one place to grep.
+ * The one binding that has to be a `@Binds`: [CompatSourceProviderImpl] is constructed
+ * by Dagger itself. A Dagger module may not mix abstract (`@Binds`) and non-static
+ * (`@Provides`) members, which is why the providers below live in [CompatProviderModule].
  */
 @InstallIn(SingletonComponent::class)
 @Module
@@ -39,6 +28,20 @@ abstract class CompatModule {
     @Binds
     @Singleton
     abstract fun bindCompatSourceProvider(impl: CompatSourceProviderImpl): CompatSourceProvider
+}
+
+/**
+ * Hand-written providers for the compat layer.
+ *
+ * The loader set is *provided*, not multibound: injecting `Set<T>` through
+ * `@Binds @IntoSet` / `@Multibinds` left `:app:hiltJavaCompileDebug` with
+ * `MissingBinding: java.util.Set<? extends CompatExtensionLoader>` on every attempt,
+ * while a concrete set from a `@Provides` needs no wildcard match. A new ecosystem is
+ * registered in [provideLoaders] — one place to grep.
+ */
+@InstallIn(SingletonComponent::class)
+@Module
+object CompatProviderModule {
 
     @Provides
     @Singleton
