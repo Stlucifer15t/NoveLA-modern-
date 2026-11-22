@@ -323,6 +323,11 @@ fun NovelaForYouScreen(
             rail = rail,
             state = state,
             onOpenBook = onOpenBook,
+            // Скрытая книга уходит из этого списка сразу: окно закрываем.
+            onHide = { book ->
+                onHide(book)
+                expanded = null
+            },
             onDismiss = { expanded = null },
         )
     }
@@ -977,6 +982,7 @@ private fun ForYouExpandedRail(
     rail: ForYouRail,
     state: ForYouUiState,
     onOpenBook: (BookMetadata) -> Unit,
+    onHide: (ForYouBook) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val palette = MaterialTheme.colorScheme
@@ -1048,7 +1054,7 @@ private fun ForYouExpandedRail(
                                 .fillMaxWidth()
                                 .animateItem(),
                         ) {
-                            ForYouBookCell(book = book, onOpenBook = onOpenBook)
+                            ForYouBookCell(book = book, onOpenBook = onOpenBook, onHide = onHide)
                         }
                     }
                 }
