@@ -1,5 +1,7 @@
 package my.noveldokusha.extensions
 
+import my.noveldokusha.coreui.components.NovelaTileActionButton
+import my.noveldokusha.coreui.components.NovelaTileIconButton
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -605,6 +607,7 @@ private fun ExtensionTile(
             extension.isInstalling -> NovelaTileActionButton(
                 label = stringResource(my.noveldokusha.strings.R.string.installing),
                 icon = { CircularProgressIndicator(modifier = Modifier.size(12.dp), strokeWidth = 2.dp) },
+                accent = accent,
                 enabled = false,
                 onClick = {},
             )
