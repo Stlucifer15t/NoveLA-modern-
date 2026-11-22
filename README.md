@@ -55,7 +55,7 @@ override it with a private key: [keystore/README.md](keystore/README.md).
 
 | Workflow | When | Output |
 |---|---|---|
-| [`CI`](.github/workflows/ci.yml) | every push and PR | unit tests (fatal), module compiles, **signed debug APK** artifact |
+| [`CI`](.github/workflows/ci.yml) | every push and PR | module compiles, unit tests (fatal), **debug APK signed by the repository key** — the step compares the APK's certificate fingerprint with `keystore/novela-release.p12` and fails on a mismatch |
 | [`Debug APK`](.github/workflows/debugApk.yml) | manual | debug APK for a chosen branch/SHA |
 | [`Nightly Build`](.github/workflows/nightly.yml) | push to `default` | release APK + R8 mapping on the `nightly` GitHub release |
 | [`Build & Publish`](.github/workflows/buildRelease.yml) | manual | draft release |
