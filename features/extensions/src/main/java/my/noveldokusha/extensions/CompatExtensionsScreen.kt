@@ -269,7 +269,7 @@ private fun RepositoryRow(
                     Icons.Default.Extension,
                     contentDescription = null,
                     modifier = Modifier.size(18.dp),
-                    tint = if (selected) colorAccent else MaterialTheme.colorScheme.onSurfaceVariant,
+                    tint = if (selected) colorAccent() else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             Column(Modifier.weight(1f)) {
@@ -360,7 +360,7 @@ private fun RepositoryRow(
                     Text(
                         text = if (selected) "Showing catalog" else "Show catalog",
                         fontSize = 11.sp,
-                        color = if (selected) colorAccent else MaterialTheme.colorScheme.primary,
+                        color = if (selected) colorAccent() else MaterialTheme.colorScheme.primary,
                     )
                 }
                 TextButton(
@@ -680,14 +680,14 @@ fun CompatReposSummaryRow(
                 modifier = Modifier
                     .size(30.dp)
                     .clip(CircleShape)
-                    .background(colorAccent.copy(alpha = 0.16f)),
+                    .background(colorAccent().copy(alpha = 0.16f)),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     Icons.Default.Extension,
                     contentDescription = null,
                     modifier = Modifier.size(17.dp),
-                    tint = colorAccent,
+                    tint = colorAccent(),
                 )
             }
             Column(Modifier.weight(1f)) {

@@ -333,6 +333,7 @@ internal fun SettingsScreenBody(
             accent = palette.tertiary,
             visible = showNetwork,
         ) {
+            val context = LocalContext.current
             SettingsNetwork(
                 context = context,
                 scraperUserAgent = state.scraperUserAgent,
@@ -366,7 +367,7 @@ internal fun SettingsScreenBody(
             NovelaEmptyState(
                 icon = Icons.Outlined.Search,
                 title = "Nothing matches that",
-                message = "No setting mentions \"${searchQuery.value.trim()}\". Try "theme", "backup" or "translation".",
+                message = "Nothing here matches that. Try one of: theme, backup, translation, cache.",
                 modifier = Modifier.padding(top = NovelaSpacing.xl),
             )
         }
