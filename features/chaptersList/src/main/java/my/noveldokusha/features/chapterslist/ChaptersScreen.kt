@@ -89,6 +89,7 @@ import my.noveldokusha.coreui.theme.textPadding
 import my.noveldokusha.chapterslist.R
 import my.noveldokusha.core.isLocalUri
 import my.noveldokusha.feature.local_database.ChapterWithContext
+import my.noveldokusha.feature.local_database.BookMetadata
 import my.noveldokusha.scraper.Scraper
 import my.noveldokusha.strings.R as StringsR
 import timber.log.Timber
