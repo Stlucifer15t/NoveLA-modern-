@@ -1088,4 +1088,6 @@
     <string name="compat_summary_empty">Legado JSON, Mihon/keiyoushi, LNReader, Mangayomi — add a repository URL</string>
     <string name="compat_summary_counts">%1$d repositories · %2$d sources installed</string>
     <string name="compat_subtitle">Paste a repository URL — the format is detected from the content.</string>
+    <string name="for_you_highest_rated">Highest rated</string>
+    <string name="for_you_highest_rated_note">Among the %1$d books the sources returned for this selection — the scores are theirs, not ours.</string>
 </resources>

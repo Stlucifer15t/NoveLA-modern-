@@ -229,6 +229,43 @@ class ForYouEngine @Inject constructor(
     }
 }
 
+/**
+ * A source-declared rating as a number on a ten-point scale, or null when the text is not a
+ * score. Sources write this field heterogeneously — "4.5", "4.8/5", "9.2/10", "#12",
+ * "RANK 216" — and an ordering is not a rating, so anything that is not a plain leading
+ * decimal is dropped rather than guessed at.
+ */
+internal fun parseRatingScore(text: String): Double? {
+    val trimmed = text.trim()
+    if (trimmed.isEmpty()) return null
+    val value = Regex("^\\d{1,2}(?:[.,]\\d{1,2})?")
+        .find(trimmed)
+        ?.value
+        ?.replace(',', '.')
+        ?.toDoubleOrNull()
+        ?: return null
+    val tenPoint = "/10" in trimmed.replace(" ", "") || "из 10" in trimmed
+    return when {
+        tenPoint -> value.takeIf { it in 0.0..10.0 }
+        else -> value.takeIf { it in 0.0..5.0 }?.times(2.0)
+    }
+}
+
+/**
+ * The best-rated of what the sources actually returned, normalized score first and source text
+ * second. A score below 6/10 is not a recommendation, so a thin pass simply yields no rail
+ * rather than a rail that says "highest rated" about mediocre books.
+ */
+internal fun List<ForYouBook>.highestRated(limit: Int = 10): List<ForYouBook> =
+    asSequence()
+        .mapNotNull { book -> parseRatingScore(book.metadata.rating)?.let { book to it } }
+        .filter { (_, score) -> score >= 6.0 }
+        .sortedByDescending { (_, score) -> score }
+        .distinctBy { it.first.key }
+        .take(limit)
+        .map { it.first }
+        .toList()
+
 private val STOP_WORDS = setOf("the", "and", "with", "from", "into", "that", "this", "book", "vol", "chapter")
 
 /** The one word two titles share, or null. Letters and digits only, nothing shorter than 4. */

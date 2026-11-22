@@ -1452,5 +1452,7 @@
     <string name="compat_summary_empty">Legado JSON, Mihon/keiyoushi, LNReader, Mangayomi — добавьте URL репозитория</string>
     <string name="compat_summary_counts">репозитории: %1$d · установлено источников: %2$d</string>
     <string name="compat_subtitle">Вставьте URL репозитория — формат определяется по содержимому.</string>
+    <string name="for_you_highest_rated">Лучшее по рейтингу</string>
+    <string name="for_you_highest_rated_note">Среди %1$d книг, которые источники вернули для этого выбора — оценки их, а не наши.</string>
 </resources>
 

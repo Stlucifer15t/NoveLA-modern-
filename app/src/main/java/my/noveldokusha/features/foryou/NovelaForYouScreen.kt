@@ -22,10 +22,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -207,6 +209,44 @@ fun NovelaForYouScreen(
             onOpenBook = onOpenBook,
             modifier = Modifier.padding(horizontal = NovelaSpacing.screenH),
         )
+
+        // The screenshot this was asked for has a "Highest Rated" rail, and it would be easy to
+        // fake with a shuffled slice. This one is not fake: it is the same pass the grid shows,
+        // ordered by the rating each source declares for the book itself, and it disappears
+        // when nothing in the pass carries a score worth calling high.
+        val topRated = remember(state.books) { state.books.highestRated() }
+        if (topRated.size >= 2) {
+            Column(modifier = Modifier.padding(top = NovelaSpacing.lg)) {
+                Text(
+                    text = stringResource(R.string.for_you_highest_rated),
+                    style = NovelaType.sectionTitle,
+                    color = palette.onBackground,
+                    modifier = Modifier.padding(horizontal = NovelaSpacing.screenH),
+                )
+                Text(
+                    text = stringResource(R.string.for_you_highest_rated_note, state.books.size),
+                    style = NovelaType.bookMeta,
+                    color = palette.onSurfaceVariant,
+                    maxLines = 2,
+                    modifier = Modifier.padding(
+                        start = NovelaSpacing.screenH,
+                        end = NovelaSpacing.screenH,
+                        top = NovelaSpacing.xxs,
+                    ),
+                )
+                LazyRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = NovelaSpacing.sm),
+                    contentPadding = PaddingValues(horizontal = NovelaSpacing.screenH),
+                    horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.md),
+                ) {
+                    items(items = topRated, key = { "rated_" + it.key }) { book ->
+                        ForYouRatedCell(book = book, onOpenBook = onOpenBook)
+                    }
+                }
+            }
+        }
 
         when {
             state.books.isEmpty() && state.loading -> ForYouPlaceholders()
@@ -486,6 +526,29 @@ private fun ForYouBookCell(
             )
         }
     }
+}
+
+/**
+ * A rail cell: the cover, the title, and the rating exactly as the source wrote it — not a
+ * percentage, which is the number the reference shows and the one this app cannot compute.
+ */
+@Composable
+private fun ForYouRatedCell(
+    book: ForYouBook,
+    onOpenBook: (BookMetadata) -> Unit,
+) {
+    val cover = rememberResolvedBookImagePath(
+        bookUrl = book.metadata.url,
+        imagePath = book.metadata.coverImageUrl,
+    )
+    NovelaBookCard(
+        title = book.metadata.title,
+        coverModel = cover,
+        subtitle = book.metadata.rating.takeIf { it.isNotBlank() }?.let { "★ " + it }
+            ?: book.sourceName,
+        modifier = Modifier.width(NovelaSize.carouselCoverWidth),
+        onClick = { onOpenBook(book.metadata) },
+    )
 }
 
 @Composable
