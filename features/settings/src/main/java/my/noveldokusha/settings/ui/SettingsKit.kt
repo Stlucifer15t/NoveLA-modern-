@@ -48,6 +48,7 @@ import my.noveldokusha.coreui.theme.NovelaRadius
 import my.noveldokusha.coreui.theme.NovelaSpacing
 import my.noveldokusha.coreui.theme.NovelaTheme
 import my.noveldokusha.coreui.theme.NovelaType
+import my.noveldokusha.settings.ui.ExpressiveSwitch
 
 /**
  * The Settings "kit": the vocabulary the settings rebrand is built from.

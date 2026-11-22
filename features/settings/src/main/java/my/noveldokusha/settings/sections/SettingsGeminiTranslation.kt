@@ -31,8 +31,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -51,6 +49,7 @@ import my.noveldokusha.coreui.components.SlimListItem
 import my.noveldokusha.coreui.theme.colorAccent
 import my.noveldokusha.coreui.theme.textPadding
 import my.noveldokusha.settings.R
+import my.noveldokusha.settings.ui.ExpressiveSwitch
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -138,16 +137,12 @@ internal fun SettingsGeminiTranslation(
                         )
                     }
                     Spacer(Modifier.width(12.dp))
-                    Switch(
+                    ExpressiveSwitch(
                         checked = translationGlobalMode,
                         onCheckedChange = onTranslationGlobalModeChange,
                         // FIX-C: переключатель недоступен, пока не задана глобальная
                         // пара языков — визуальная индикация + барьер на уровне ViewModel
                         enabled = hasGlobalPair,
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = colorAccent(),
-                            checkedTrackColor = colorAccent().copy(alpha = 0.3f),
-                        ),
                     )
                 }
             }

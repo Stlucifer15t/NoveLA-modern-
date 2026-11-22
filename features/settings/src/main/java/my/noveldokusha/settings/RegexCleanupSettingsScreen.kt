@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.BorderStroke
 import my.noveldokusha.core.models.RegexRule
+import my.noveldokusha.settings.ui.ExpressiveSwitch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -661,15 +662,9 @@ private fun RegexRuleBottomSheetContent(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurface
             )
-            Switch(
+            ExpressiveSwitch(
                 checked = isEnabled,
-                onCheckedChange = { isEnabled = it },
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = MaterialTheme.colorScheme.primary,
-                    checkedTrackColor = MaterialTheme.colorScheme.primaryContainer,
-                    uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
-                )
+                onCheckedChange = { isEnabled = it }
             )
         }
 
@@ -684,15 +679,9 @@ private fun RegexRuleBottomSheetContent(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurface
             )
-            Switch(
+            ExpressiveSwitch(
                 checked = wholeWordsOnly,
-                onCheckedChange = { wholeWordsOnly = it },
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = MaterialTheme.colorScheme.primary,
-                    checkedTrackColor = MaterialTheme.colorScheme.primaryContainer,
-                    uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
-                )
+                onCheckedChange = { wholeWordsOnly = it }
             )
         }
 

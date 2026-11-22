@@ -12,8 +12,6 @@ import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -31,6 +29,7 @@ import my.noveldokusha.core.domain.RemoteAppVersion
 import my.noveldokusha.settings.R
 import my.noveldokusha.settings.SettingsScreenState
 import my.noveldokusha.settings.views.NewAppUpdateDialog
+import my.noveldokusha.settings.ui.ExpressiveSwitch
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -59,15 +58,11 @@ fun LibraryAutoUpdate(
                 )
             },
             trailingContent = {
-                Switch(
+                ExpressiveSwitch(
                     checked = state.autoUpdateEnabled.value,
                     onCheckedChange = {
                         state.autoUpdateEnabled.value = !state.autoUpdateEnabled.value
-                    },
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = colorAccent(),
-                        checkedTrackColor = colorAccent().copy(alpha = 0.4f),
-                    )
+                    }
                 )
             }
         )

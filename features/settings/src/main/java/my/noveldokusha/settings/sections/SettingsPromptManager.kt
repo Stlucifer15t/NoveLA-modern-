@@ -24,8 +24,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -43,6 +41,7 @@ import my.noveldokusha.coreui.theme.colorAccent
 import my.noveldokusha.coreui.theme.textPadding
 import my.noveldokusha.settings.R
 import my.noveldokusha.text_translator.BUILT_IN_PROMPTS
+import my.noveldokusha.settings.ui.ExpressiveSwitch
 
 /**
  * Единый менеджер промптов для LLM-провайдеров (Gemini и OpenAI-compatible).
@@ -252,13 +251,9 @@ internal fun SettingsPromptManager(
                         }
                     }
                     Spacer(Modifier.width(12.dp))
-                    Switch(
+                    ExpressiveSwitch(
                         checked         = promptUseEnglishLocale,
                         onCheckedChange = onPromptUseEnglishLocaleChange,
-                        colors          = SwitchDefaults.colors(
-                            checkedThumbColor = colorAccent(),
-                            checkedTrackColor = colorAccent().copy(alpha = 0.4f),
-                        ),
                     )
                 }
             }
