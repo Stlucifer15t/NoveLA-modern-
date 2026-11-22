@@ -30,14 +30,14 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  BUILD_LOG: ${{ runner.temp }}/build-output.log
-
 jobs:
   verify:
     name: Compile + tests + debug APK
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    env:
+      # Collected by every gradle step so the annotation pass has one file to read.
+      BUILD_LOG: ${{ runner.temp }}/build-output.log
     steps:
       - name: Clone repo
         uses: actions/checkout@v7
