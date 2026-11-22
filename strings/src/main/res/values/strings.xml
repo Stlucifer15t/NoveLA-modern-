@@ -1048,7 +1048,7 @@
     <!-- One-line hints under each settings group screen title -->
     <string name="settings_group_appearance_hint">Theme, dark mode and the app language</string>
     <string name="settings_group_library_hint">Auto-update rules and where new versions come from</string>
-    <string name="settings_group_data_hint">Book, image, manga and video caches — and clearing them</string>
+    <string name="settings_group_data_hint">Book, image, manga and video caches, and clearing them</string>
     <string name="settings_group_backup_hint">Manual backups, scheduled auto-backups and logs</string>
     <string name="settings_group_translation_hint">LLM provider, prompts and regex cleanup rules</string>
     <string name="settings_group_network_hint">User agent, Cloudflare bypass and request delays</string>
@@ -1177,4 +1177,7 @@
     <string name="stats_hours_short">%1$d h</string>
     <string name="stats_reading_note">Reading time is measured while a chapter is open in the reader, from this version on. Nothing is estimated.</string>
     <string name="stats_share_text">NoveLA reading stats: %1$s today, %2$s this week, %3$d chapters read.</string>
+    <string name="settings_nothing_matches_title">Nothing matches that</string>
+    <string name="settings_nothing_matches_message">Try a section name such as Appearance, Reading or Backup.</string>
+    <string name="settings_library_updates">Library updates</string>
 </resources>

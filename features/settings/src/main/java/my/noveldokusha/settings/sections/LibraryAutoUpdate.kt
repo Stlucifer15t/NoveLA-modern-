@@ -40,7 +40,7 @@ fun LibraryAutoUpdate(
 ) {
     Column {
         Text(
-            text = "Library updates",
+            text = stringResource(StringsR.string.settings_library_updates),
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.textPadding(),
             color = colorAccent()

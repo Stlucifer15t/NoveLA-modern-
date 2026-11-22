@@ -181,6 +181,7 @@ internal fun SettingsScreenBody(
         val q = searchQuery.value.trim().lowercase()
         if (expanded || q.isEmpty()) return true
         return spec.title.lowercase().contains(q) ||
+            spec.summary.lowercase().contains(q) ||
             spec.keywords.any { it.contains(q) || q.contains(it) }
     }
 
@@ -425,6 +426,7 @@ internal fun SettingsScreenBody(
                     accent = spec.accent,
                     summary = null,
                     expanded = true,
+                    showHeader = false,
                 ) {
                     spec.content()
                 }
@@ -505,7 +507,12 @@ internal fun SettingsScreenBody(
                 query = searchQuery.value,
                 onQueryChange = { searchQuery.value = it },
                 onClear = { searchQuery.value = "" },
-                suggestions = listOf("Theme", "Reading", "Translation", "Backup", "Cloudflare"),
+                suggestions = listOf(
+                    SettingsGroup.Appearance.label(),
+                    SettingsGroup.Reading.label(),
+                    SettingsGroup.Translation.label(),
+                    SettingsGroup.Backup.label(),
+                ),
                 modifier = Modifier.padding(
                     start = NovelaSpacing.screenH,
                     end = NovelaSpacing.screenH,
@@ -541,22 +548,11 @@ internal fun SettingsScreenBody(
         if (visibleSpecs.isEmpty()) {
             NovelaEmptyState(
                 icon = Icons.Outlined.Search,
-                title = "Nothing matches that",
-                message = "Nothing here matches that. Try one of: theme, backup, translation, cache.",
+                title = stringResource(my.noveldokusha.strings.R.string.settings_nothing_matches_title),
+                message = stringResource(my.noveldokusha.strings.R.string.settings_nothing_matches_message),
                 modifier = Modifier.padding(top = NovelaSpacing.xl),
             )
         }
-        // The mascot closes the screen, quietly.
-        Text(
-            text = "(°.°)",
-            modifier = Modifier
-                .padding(top = NovelaSpacing.xl)
-                .fillMaxWidth(),
-            fontFamily = FontFamily.Monospace,
-            fontWeight = FontWeight.Bold,
-            color = palette.primary.copy(alpha = 0.8f),
-            textAlign = TextAlign.Center,
-        )
         Spacer(modifier = Modifier.height(NovelaSpacing.navBarClearance))
     }
 

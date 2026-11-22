@@ -111,6 +111,8 @@ fun SettingsGroupCard(
     summary: String? = null,
     visible: Boolean = true,
     expanded: Boolean = true,
+    /** A group screen already shows its title in the app bar: the card then drops its own. */
+    showHeader: Boolean = true,
     onClick: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
@@ -142,7 +144,7 @@ fun SettingsGroupCard(
             border = androidx.compose.foundation.BorderStroke(1.dp, NovelaTheme.colors.hairline),
         ) {
             Column {
-                Row(
+                if (showHeader) Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(
@@ -187,13 +189,14 @@ fun SettingsGroupCard(
                     }
                 }
                 if (expanded) {
-                    Box(
+                    if (showHeader) Box(
                         Modifier
                             .padding(horizontal = NovelaSpacing.md)
                             .fillMaxWidth()
                             .height(1.dp)
                             .background(NovelaTheme.colors.hairline),
                     )
+                    if (!showHeader) Spacer(Modifier.height(NovelaSpacing.xs))
                     content()
                     Spacer(Modifier.height(NovelaSpacing.sm))
                 }
@@ -231,7 +234,7 @@ fun SettingsSearchField(
     onQueryChange: (String) -> Unit,
     onClear: () -> Unit,
     modifier: Modifier = Modifier,
-    placeholder: String = "Search settings",
+    placeholder: String? = null,
     suggestions: List<String> = emptyList(),
 ) {
     Surface(
@@ -270,7 +273,7 @@ fun SettingsSearchField(
                         Box(contentAlignment = Alignment.CenterStart) {
                             if (query.isEmpty()) {
                                 Text(
-                                    text = placeholder,
+                                    text = placeholder ?: stringResource(my.noveldokusha.strings.R.string.action_search_settings),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = NovelaTheme.colors.textMuted,
                                 )
@@ -283,7 +286,7 @@ fun SettingsSearchField(
                     IconButton(onClick = onClear, modifier = Modifier.size(32.dp)) {
                         Icon(
                             imageVector = Icons.Filled.Close,
-                            contentDescription = "Clear",
+                            contentDescription = stringResource(my.noveldokusha.strings.R.string.clear),
                             modifier = Modifier.size(16.dp),
                             tint = NovelaTheme.colors.textMuted,
                         )

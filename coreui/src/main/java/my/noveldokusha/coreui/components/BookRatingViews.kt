@@ -95,7 +95,7 @@ fun BookRatingBadge(rating: String?, modifier: Modifier = Modifier) {
             Icon(
                 imageVector = if (parsed.type == BookRatingType.Rank) Icons.Filled.EmojiEvents else Icons.Filled.Star,
                 contentDescription = null,
-                modifier = Modifier.size(8.dp),
+                modifier = Modifier.size(10.dp),
                 tint = MaterialTheme.colorScheme.onPrimary
             )
             Spacer(modifier = Modifier.width(2.dp))
@@ -103,7 +103,7 @@ fun BookRatingBadge(rating: String?, modifier: Modifier = Modifier) {
                 text = parsed.value,
                 style = MaterialTheme.typography.labelSmall.copy(
                     fontWeight = FontWeight.Bold,
-                    fontSize = 8.sp
+                    fontSize = 10.sp
                 ),
                 color = MaterialTheme.colorScheme.onPrimary
             )
