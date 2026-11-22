@@ -438,6 +438,25 @@ internal class ReaderSession(
         runCatching { FloatingTtsService.stop(context) }
     }
 
+    /** Главы книги в порядке чтения (только чтение): для оглавления. */
+    fun tableOfContents(): List<Chapter> = orderedChapters.toList()
+
+    /**
+     * Переход к главе из оглавления: позиция текущей главы сохраняется через
+     * [currentChapter], затем загрузка перезапускается с начала выбранной главы.
+     */
+    fun jumpToChapter(chapterUrl: String) {
+        if (orderedChapters.none { it.url == chapterUrl }) return
+        val target = ChapterState(
+            chapterUrl = chapterUrl,
+            chapterItemPosition = 0,
+            offset = 0,
+            savedWithSplit = appPreferences.READER_SENTENCE_SPLITTING.value,
+        )
+        currentChapter = target
+        reloadReader(target)
+    }
+
     fun reloadReader(chapterLastState: ChapterState) {
         // Перестройка списка: старые позиции подсветок больше не существуют,
         // иначе ручная подсветка/TTS указывают на чужой или несуществующий абзац.

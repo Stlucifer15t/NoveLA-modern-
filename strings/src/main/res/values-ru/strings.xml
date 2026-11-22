@@ -1524,4 +1524,5 @@
     <string name="video_sleep_minutes">%1$d мин</string>
     <string name="video_sleep_episode">Конец серии</string>
     <string name="video_sleep_remaining">Сон через %1$s</string>
+    <string name="table_of_contents_title">Оглавление</string>
 </resources>
