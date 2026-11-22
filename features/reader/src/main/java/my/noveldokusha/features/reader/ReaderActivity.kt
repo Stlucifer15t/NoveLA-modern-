@@ -266,18 +266,6 @@ class ReaderActivity : BaseActivity() {
         }
     }
 
-    override fun onResume() {
-        super.onResume()
-        readingTimer.attach(viewModel.bookUrl)
-        readingTimer.resume()
-    }
-
-    override fun onPause() {
-        // Время читалки учитываем только на переднем плане (см. ReadingTimer).
-        readingTimer.pause()
-        super.onPause()
-    }
-
     override fun onDestroy() {
         readerViewHandlersActions.invalidate()
         if (isFinishing && novelReaderInitialized) {
@@ -1158,6 +1146,8 @@ class ReaderActivity : BaseActivity() {
     }
 
     override fun onPause() {
+        // Время читалки учитываем только на переднем плане (см. ReadingTimer).
+        readingTimer.pause()
         // Автопрокрутка не должна двигать список, пока Activity не на экране.
         autoScrollPaused = true
         updateCurrentReadingPosSavingState(
@@ -1176,6 +1166,8 @@ class ReaderActivity : BaseActivity() {
 
     override fun onResume() {
         super.onResume()
+        readingTimer.attach(viewModel.bookUrl)
+        readingTimer.resume()
 
         // Возобновляем автопрокрутку после возврата на экран, если она включена.
         if (appPreferences.READER_AUTOSCROLL_ENABLED.value) {
