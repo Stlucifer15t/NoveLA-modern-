@@ -388,6 +388,17 @@ added together, and `-1` in any field still renders as an ellipsis while the fir
 flight. There is no "minutes read": the app has never timed a page, so the one duration it can
 show is the video player's own.
 
+**Where the reference is `Novery`.** The app these screens are modeled on is
+[`1Finn2me/Novery`](https://github.com/1Finn2me/Novery) (GPL-3.0), whose source was read for
+this work — `RecommendationTab`/`RecommendationSection` for the rail anatomy (tinted chip, title,
+subtitle, see-all button, sideways row of wide cover cards, 28 dp between sections),
+`RecommendationCard` for the spring press-scale, and `SettingsScreen.kt` for how Layout is grouped
+(UI density, per-screen display mode, per-screen column count). No code was taken from it: the
+data path here is this repo's Lua/Legado sources, cursors and Room tables, and two things in the
+reference are deliberately not copied — its "% match" badge (nothing here can compute an affinity
+score honestly) and its UI-density scale (our spacing tokens are compile-time constants, so a
+density row would move nothing).
+
 Still not claimed: no per-book genre ranking (sources expose genres per *book* only, one request
 each — the rail shows what the sources returned for the searched words, in source order), and no
 similarity scoring of any kind.
