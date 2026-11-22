@@ -1,121 +1,97 @@
-<!--
-  android novel reader, web novel app, light novel reader android, epub reader android, ranobe reader, wuxiaworld, royal road, scribble hub, free novel reader, open source novel app
-  андроид читалка ранобэ, читалка веб новелл андроид, ранобэ приложение, epub читалка андроид, бесплатная читалка новелл, jaomix, ranobelib
-  安卓小说阅读器, 网络小说APP, 轻小说阅读器, 免费小说阅读, epub阅读器安卓, 开源小说应用
--->
+# NoveLA (compat branch)
 
-<div align="center">
+Android novel reader (Kotlin, Jetpack Compose, Material 3) with a **compatibility
+layer for extension ecosystems that are not NoveLA's own Lua plugins**: Legado
+`bookSource` JSON, Mihon/Tachiyomi/keiyoushi indexes, LNReader, Mangayomi and
+CloudStream.
 
-<img src="https://github.com/HnDK0/NoveLA/raw/default/screenshots/NoveLA.png" width="88" height="88" alt="NoveLA"/>
+This README describes what this branch changes. The upstream app (library, reader,
+TTS, translation, EPUB/FB2, backups) is unchanged in behaviour.
 
-# NoveLA
-
-Free and open source web novel reader for Android.
-
-🇬🇧 English · [🇷🇺 Русский](README_RU.md)
-
-[![Release](https://img.shields.io/github/v/release/HnDK0/NoveLA?style=flat-square&labelColor=27303D&color=0D1117)](https://github.com/HnDK0/NoveLA/releases/latest)
-[![Downloads](https://img.shields.io/github/downloads/HnDK0/NoveLA/total?style=flat-square&labelColor=27303D&color=0D1117)](https://github.com/HnDK0/NoveLA/releases)
-[![License: GPL-3.0](https://img.shields.io/github/license/HnDK0/NoveLA?style=flat-square&labelColor=27303D&color=0D1117)](LICENSE)
-[![Android 8.0+](https://img.shields.io/badge/Android-8.0%2B-brightgreen?style=flat-square&labelColor=27303D&color=3DDC84&logo=android&logoColor=white)](https://github.com/HnDK0/NoveLA/releases/latest)
-
-> **Active development of the new app is happening here: https://github.com/HnDK0/MiruTime
-It’s still pretty rough and far from release, but feel free to check it out if you're interested. All issues will be tracked and addressed over there.
-
-> ⭐️ **If you find NoveLA useful, please consider giving it a star!** It helps the project grow and stay motivated to fix bugs and improve performance.
-
-<br/>
-
-<img src="preview_v2.png" alt="NoveLA preview" width="100%"/>
-
-</div>
+Upstream project: `HnDK0/NoveLA` · License: [GPL-3.0](LICENSE)
 
 ---
 
-## Download
+## What's new here
 
-**[Get the latest APK](https://github.com/HnDK0/NoveLA/releases/latest)** — requires Android 8.0+
+### 1. Extension repositories (JSON indexes)
 
-Or build from source:
+A repository manager lives next to the Lua plugin repository: **Finder → Extensions →
+"Third-party extension repos"**. One pasted URL is enough — a repository root, an
+`index.json`/`bookSource.json` blob, a `releases/latest` page, a GitLab project, or a
+raw file on any domain. The format is detected from the content, not from a hard-coded
+site.
+
+| Ecosystem | Indexes understood | Browse | Download | Runs in the app |
+|---|---|:---:|:---:|:---:|
+| **Legado** `bookSource` | object / array / `{bookSources:[…]}` export / one-file-per-source repos / `.txt` + URL-array subscription lists | ✅ | ✅ | ✅ |
+| **Mihon / Tachiyomi / keiyoushi** | `repo.json` pointer → `index.json` (v2), legacy flat `index.min.json` array | ✅ | ✅ APK | ❌ no extension-API runtime |
+| **LNReader** | `.dist/plugins.min.json` | ✅ | ✅ JS | ❌ no `PluginBase` runtime |
+| **Mangayomi** | `repo.json`, `index.json`, `novel_index.json` | ✅ | ✅ JS / Dart | ❌ no `MProvider` runtime |
+| **CloudStream** | `repo.json` → `pluginLists[]` → nested `index.min.json` | ✅ | ✅ `.cs3` | ❌ no `MainAPI` runtime |
+
+A source whose runtime is not part of the build is stored and labelled (with the
+reason) instead of being silently dropped or falsely reported as installed.
+Details, format notes and the follow-up list: [EXTENSION_COMPATIBILITY_MATRIX.md](EXTENSION_COMPATIBILITY_MATRIX.md).
+
+### 2. UI rebrand
+
+Settings and Extensions were rebuilt on the shared design system
+(`coreui/theme/NovelaTokens.kt`, `NovelaColors.kt`, `NovelaScaffold.kt`,
+`Typography.kt`): one spacing/radius/motion scale, semantic colors derived from the
+active theme, section headers, filter chips, empty states. Motion is used where it
+explains a change (section switching, expanding rows, install progress) and is
+disabled under `Reduced motion`. Scope and the preserved-feature checklist:
+[REDESIGN.md](REDESIGN.md).
+
+### 3. Signing key in the repo
+
+`keystore/novela-release.p12` — a self-generated key with empty passwords, used for
+debug and release builds alike, so any machine or CI run produces APKs that install
+over each other. No `key.properties`, no per-machine keystore. Trade-offs and how to
+override it with a private key: [keystore/README.md](keystore/README.md).
+
+### 4. CI
+
+| Workflow | When | Output |
+|---|---|---|
+| [`CI`](.github/workflows/ci.yml) | every push and PR | unit tests (fatal), module compiles, **signed debug APK** artifact |
+| [`Debug APK`](.github/workflows/debugApk.yml) | manual | debug APK for a chosen branch/SHA |
+| [`Nightly Build`](.github/workflows/nightly.yml) | push to `default` | release APK + R8 mapping on the `nightly` GitHub release |
+| [`Build & Publish`](.github/workflows/buildRelease.yml) | manual | draft release |
+
+### 5. Bugs fixed and performance work in this pass
+
+- Sources with an unknown language (a Legado `bookSource` has no language field) are no
+  longer hidden by the Finder's language filter.
+- `repo.json`-based Mihon repositories parse correctly even though `index.min.json` is
+  now a stub for outdated clients; "Outdated App" rows are dropped instead of listed.
+- Legado payloads keep their **raw** JSON, so Legado fields NoveLA does not model
+  (`customOrder`, `lastUpdateTime`, rule defaults) survive into the rule engine.
+- `CompatStorage` no longer touches the disk on the caller's thread during
+  construction, and the repository catalog is served from a disk cache instead of
+  waiting for the first network refresh.
+- Extension list state is derived from flows (`combine`) rather than manual snapshots,
+  removing the "empty list until you refresh" class of bug.
+
+---
+
+## Build
 
 ```bash
-git clone https://github.com/HnDK0/NoveLA
-# Open in Android Studio and run on a device or emulator
+./gradlew :app:assembleDebug          # APK: app/build/outputs/apk/debug/
+./gradlew :tooling:extension_compat:testDebugUnitTest
+./gradlew assembleRelease -PlocalPropertiesFilePath=custom.properties   # with a private key
 ```
 
----
+Requirements: JDK 21, Android SDK 36 (`local.properties` with `sdk.dir`).
+Or run the **CI** workflow and download the APK from the run.
 
-## Features
+## Adding sources
 
-- 35+ sources (built-in + Lua plugins)
-- Global multi-source search; add any novel by URL
-- In-reader translation with parallel mode and novel-specific prompts — no copy-paste, no app switching
-- Infinite chapter scrolling with offline caching
-- Custom fonts, text size, light/dark themes (Material 3)
-- Text-to-speech with floating mini-player, background playback, speed/pitch control, Bluetooth support, and multiple engine support
-- Local EPUB and FB2 library with bulk import
-- Backup & restore with granular selection and auto backup
-- Regex text cleanup (strip ads and injected text)
-- Automatic Cloudflare Turnstile bypass
-- Novel migration between sources
-- Library filters by genre, source, and category
-- Download all chapters
-- TTS reading timer
-- 20 interface languages
-- Manga reader for image-based novels, with tap-to-open menu and a size-capped per-page image cache
-- Export any book to EPUB directly from the chapters screen
-- Book ratings with localized labels
-- In-reader webpage translation via a JS bridge (translate any page inside the reader)
-- Per-novel translation settings — enable/disable and choose a language pair independently for each book, included in backups
-- Reader polish: custom font color, letter spacing, auto-scroll, manual paragraph highlighting, and quick reader toggles
-- Library: source strip on book cards (on-cover or below-cover) and redesigned cover badges
-- Translate or clear translation for local books and selected chapters; batch-download the next 100 chapters
-
----
-
-## Translation
-
-Four backends supported. Multiple API keys are rotated round-robin on rate limits.
-
-| Backend | Cost | API key |
-|---|---|---|
-| Google Translate (Enhanced) | Free | Not required |
-| Google Translate (Simple) | Free | Not required |
-| Google Gemini | Free tier | Required |
-| OpenAI-compatible | Varies | Required |
-
-OpenAI-compatible accepts OpenAI, OpenRouter, DeepSeek, Ollama, Mistral, and any compatible endpoint.
-
-Parallel mode displays original and translated text side by side. Novel-specific prompts let you customize translation behavior per book.
-
----
-
-### Plugins
-
-NoveLA supports external Lua-based source plugins installable directly from the app.
-
-Official plugin repo: [`HnDK0/external-sources`](https://github.com/HnDK0/external-sources)
-
-To add: **Finder → Extensions → ⚙️ → paste repo URL**
-
----
-
-## Contributing
-
-Contributions are always welcome! You can help the project in several ways:
-
-- ⭐️ **Star the repository** — the simplest way to support development and boost visibility.
-- 🐛 **Report bugs or suggest improvements** by opening an [Issue](https://github.com/HnDK0/NoveLA/issues).
-- 🧩 **Fix bugs or add source parsers** via Pull Requests (check the [external-sources](https://github.com/HnDK0/external-sources) repo for Lua plugins).
-
----
-
-## Tech stack
-
-Kotlin · Coroutines · Jetpack Compose · Material 3 · Room · Jsoup · OkHttp · Coil 3 · LuaJ · Hilt · WorkManager · Android TTS & Media APIs
-
----
-
-## License
-
-[GPL-3.0](LICENSE)
+- **Lua plugins (native):** Extensions → ⚙️ → repository URL
+  (`HnDK0/external-sources` by default).
+- **Legado bookSource JSON:** Extensions → *Third-party extension repos* → paste the
+  repo or file URL → Install. The source appears in the Finder immediately.
+- **Mihon/LNReader/Mangayomi/CloudStream:** same flow — the entry is fetched and kept,
+  ready for the runtime that will execute it.

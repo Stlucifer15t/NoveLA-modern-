@@ -6,8 +6,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * URL-резолвер: пользователь вставляет ссылку «как попало», а мы должны понять,
- * что качать. Сеть здесь не нужна — план чисто синтаксический.
+ * The URL resolver: users paste links any way they like, and we have to figure
+ * out what to download. No network here — the plan is purely syntactic.
  */
 class RepoUrlResolverTest {
 
@@ -26,7 +26,7 @@ class RepoUrlResolverTest {
     fun `source-only keiyoushi repo is rewritten to the repo that holds the index`() {
         val rewritten = RepoUrlResolver.rewriteKnown("https://github.com/keiyoushi/extensions-source")
         assertEquals("https://github.com/keiyoushi/extensions", rewritten)
-        // а ссылка на подкаталог исходников не переписывается вслепую
+        // a link to a source subdirectory is not rewritten blindly
         val nested = RepoUrlResolver.rewriteKnown(
             "https://github.com/keiyoushi/extensions-source/tree/main/src/en"
         )
@@ -55,9 +55,9 @@ class RepoUrlResolverTest {
 
     @Test
     fun `tree url with slashed branch keeps first segment as ref guess`() {
-        // `plugins/v3.0.0` — имя ветки, но по URL это неотличимо от пути.
-        // Резолвер даёт гипотезу (ref=первый сегмент), а менеджер пробует и
-        // «ref + следующий сегмент» — см. CompatRepositoryManager.resolveGit.
+        // `plugins/v3.0.0` is a branch name, but from the URL it is not separable
+        // from a path. The resolver guesses (ref = first segment) and the manager also
+        // tries ref + next segment — see CompatRepositoryManager.resolveGit.
         val plan = RepoUrlResolver.plan("https://github.com/LNReader/lnreader-plugins/tree/plugins/v3.0.0/.dist")
             as RepoUrlResolver.Plan.Git
         assertEquals("LNReader", plan.target.owner)
@@ -155,7 +155,7 @@ class RepoUrlResolverTest {
         assertTrue(RepoUrlResolver.plan("just words") is RepoUrlResolver.Plan.Invalid)
     }
 
-    // ── выбор индекса и API ──────────────────────────────────────────────────
+    // ── index selection and API urls ────────────────────────────────────────────
 
     @Test
     fun `index priority prefers repo json and index json over the min stub`() {
@@ -165,7 +165,7 @@ class RepoUrlResolverTest {
             "index.json",
             RepoUrlResolver.findIndexName(listOf("index.min.json", "index.json", "x.txt")),
         )
-        // Mangayomi: новелловый индекс тоже кандидат
+        // Mangayomi: the novel index is a candidate too
         assertEquals(
             "novel_index.json",
             RepoUrlResolver.findIndexName(listOf("novel_index.json", "random.json")),

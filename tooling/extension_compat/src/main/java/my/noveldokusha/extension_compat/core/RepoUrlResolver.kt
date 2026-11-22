@@ -1,34 +1,34 @@
 package my.noveldokusha.extension_compat.core
 
 /**
- * Превращает «ссылку, которую вставил пользователь» в конкретные URL для скачивания.
+ * Turns "whatever link the user pasted" into concrete URLs to download.
  *
- * Пользователь может вставить что угодно:
+ * The user may paste anything:
  *
- * | Ввод | Что понимаем |
+ * | Input | Meaning |
  * |---|---|
- * | `https://github.com/keiyoushi/extensions` | репозиторий → API находит ветку и индекс |
- * | `https://github.com/o/r/blob/main/index.json` | файл → качаем его |
- * | `https://github.com/o/r/tree/repo/index.min.json` | файл в ветке `repo` |
- * | `https://github.com/o/r/releases/download/v1/repo.json` | файл релиза |
- * | `https://raw.githubusercontent.com/o/r/branch/.dist/plugins.min.json` | файл |
- * | `https://gitlab.com/o/r` | репозиторий без API-дерева → пробуем имена |
- * | `https://example.com/bookSource.json` | файл |
- * | `https://example.com/` | каталог → пробуем [CompatRepoParsers.INDEX_FILE_NAMES] |
+ * | `https://github.com/keiyoushi/extensions` | repository → the API finds branch and index |
+ * | `https://github.com/o/r/blob/main/index.json` | a file → download it |
+ * | `https://github.com/o/r/tree/repo/index.min.json` | a file in branch `repo` |
+ * | `https://github.com/o/r/releases/download/v1/repo.json` | a release asset |
+ * | `https://raw.githubusercontent.com/o/r/branch/.dist/plugins.min.json` | a file |
+ * | `https://gitlab.com/o/r` | repository without a tree API → probe known names |
+ * | `https://example.com/bookSource.json` | a file |
+ * | `https://example.com/` | a directory → try [CompatRepoParsers.INDEX_FILE_NAMES] |
  *
- * Все функции чистые (строка → план), поэтому покрыты юнит-тестом без сети.
+ * Every function is pure (string → plan), so it is unit-tested without network.
  */
 object RepoUrlResolver {
 
-    /** Репо, где лежит ИСХОДНИК расширений, а не собранный индекс. */
+    /** Repos holding extension SOURCE code rather than a built index. */
     private val KNOWN_REWRITES = mapOf(
-        // keiyoushi/extensions-source — Kotlin-исходники; собранные APK и индекс
-        // живут в keiyoushi/extensions (ветка `repo`)
+        // keiyoushi/extensions-source is Kotlin source; the built APKs and index
+        // live in keiyoushi/extensions (branch `repo`)
         "github.com/keiyoushi/extensions-source" to "https://github.com/keiyoushi/extensions",
         "github.com/keiyoushi/extensions-source/" to "https://github.com/keiyoushi/extensions",
-        // LNReader: плагины в lnreader-sources, а индекс — в lnreader-plugins.
-        // raw-URL, а не /tree/: ветка `plugins/v3.0.0` содержит слэш, и в форме
-        // /tree/ её не отличить от пути (см. RepoUrlResolverTest).
+        // LNReader: plugins live in lnreader-sources, the index in lnreader-plugins.
+        // A raw URL rather than /tree/: the branch `plugins/v3.0.0` contains a slash,
+        // so in /tree/ form it cannot be told from a path (see RepoUrlResolverTest).
         "github.com/LNReader/lnreader-sources" to
             "https://raw.githubusercontent.com/LNReader/lnreader-plugins/plugins/v3.0.0/.dist/plugins.min.json",
     )
@@ -37,9 +37,9 @@ object RepoUrlResolver {
         val host: GitHost,
         val owner: String,
         val repo: String,
-        /** Ветка/тег из URL; null — надо спросить default_branch (GitHub API). */
+        /** Branch/tag from the URL; null means ask default_branch (GitHub API). */
         val ref: String?,
-        /** Путь внутри репозитория (файл или каталог); null — корень. */
+        /** Path inside the repository (file or directory); null means the root. */
         val path: String?,
     )
 
@@ -48,7 +48,7 @@ object RepoUrlResolver {
         GITLAB,
         ;
 
-        /** Шаблон raw-файла: `format(owner, repo, ref, path)`. */
+        /** Raw file URL template: `format(owner, repo, ref, path)`. */
         fun rawUrl(owner: String, repo: String, ref: String, path: String): String = when (this) {
             GITHUB -> "https://raw.githubusercontent.com/$owner/$repo/$ref/${path.trimStart('/')}"
             GITLAB -> "https://gitlab.com/$owner/$repo/-/raw/$ref/${path.trimStart('/')}"
@@ -56,20 +56,20 @@ object RepoUrlResolver {
     }
 
     sealed interface Plan {
-        /** Один файл: скачать и определить формат по содержимому. */
+        /** A single file: download it and detect the format from its content. */
         data class File(val url: String) : Plan
 
-        /** Git-репозиторий: индекс ищем через API (или перебором имён). */
+        /** Git repository: find the index through the API (or by probing names). */
         data class Git(val target: GitTarget) : Plan
 
-        /** Произвольный хост: пробуем список URL по порядку. */
+        /** Any host: try a list of URLs in order. */
         data class Probe(val urls: List<String>) : Plan
 
-        /** Пустой/непонятный ввод. */
+        /** Empty or unparseable input. */
         data object Invalid : Plan
     }
 
-    /** Сколько кандидатов перебирать на чужом хосте — не устраиваем DoS. */
+    /** How many candidates to probe on a foreign host — no self-inflicted DoS. */
     const val MAX_PROBES = 8
 
     fun plan(input: String): Plan {
@@ -77,7 +77,7 @@ object RepoUrlResolver {
         if (url.isEmpty()) return Plan.Invalid
         val lowered = url.lowercase()
         if (!lowered.startsWith("http://") && !lowered.startsWith("https://")) {
-            // Допускаем «github.com/o/r» без схемы
+            // Allow "github.com/o/r" without a scheme
             val withScheme = if (lowered.contains("/")) "https://$url" else ""
             if (withScheme.isEmpty()) return Plan.Invalid
             return plan(withScheme)
@@ -102,7 +102,7 @@ object RepoUrlResolver {
         }
     }
 
-    /** Подстановка известных «исходных» репозиториев на репозитории с индексом. */
+    /** Rewrite well-known "source code" repositories to the ones holding an index. */
     fun rewriteKnown(input: String): String {
         val trimmed = input.trim().trimEnd('/')
         val key = trimmed.lowercase().removePrefix("https://").removePrefix("http://")
@@ -115,8 +115,8 @@ object RepoUrlResolver {
     // ── GitHub ───────────────────────────────────────────────────────────────
 
     /**
-     * Пути GitHub: `owner/repo[/tree|blob|raw|releases/...]`.
-     * Файл узнаём по расширению — его отдаём как [Plan.File] сразу.
+     * GitHub paths: `owner/repo[/tree|blob|raw|releases/...]`.
+     * A file is recognized by its extension and returned as [Plan.File] directly.
      */
     private fun githubPlan(path: String): Plan {
         val segments = path.split('/').filter { it.isNotBlank() }
@@ -146,18 +146,18 @@ object RepoUrlResolver {
             }
 
             "releases" -> {
-                // /releases/download/<tag>/<asset> — конкретный файл релиза
+                // /releases/download/<tag>/<asset> — a concrete release asset
                 if (segments.getOrNull(3)?.lowercase() == "download" && segments.size >= 6) {
                     val tag = segments[4]
                     val asset = segments.drop(5).joinToString("/")
                     return Plan.File("https://github.com/$owner/$repo/releases/download/$tag/$asset")
                 }
-                // /releases, /releases/latest — индекс всё равно в ветке
+                // /releases, /releases/latest — the index still lives in a branch
                 return Plan.Git(GitTarget(GitHost.GITHUB, owner, repo, null, null))
             }
 
         }
-        // «owner/repo» — обычный корень репозитория; лишние сегменты игнорируем
+        // "owner/repo" — a plain repository root; extra segments are ignored
         return Plan.Git(GitTarget(GitHost.GITHUB, owner, repo, null, null))
     }
 
@@ -173,7 +173,7 @@ object RepoUrlResolver {
         } else if (isIndexLike(sub)) {
             Plan.File("https://raw.githubusercontent.com/$owner/$repo/$ref/$sub")
         } else {
-            // Каталог в raw-домене: пробуем известные имена индексов внутри него
+            // A directory on a raw host: probe known index names inside it
             Plan.Probe(
                 CompatRepoParsers.INDEX_FILE_NAMES.take(MAX_PROBES)
                     .map { "https://raw.githubusercontent.com/$owner/$repo/$ref/$sub/$it" }
@@ -187,7 +187,7 @@ object RepoUrlResolver {
         val owner = segments[0]
         val repo = segments[1].removeSuffix(".git")
         val sub = segments.drop(2)
-        // «-/blob/<ref>/<path>» и «-/raw/<ref>/<path>»
+        // "-/blob/<ref>/<path>" and "-/raw/<ref>/<path>"
         val marker = sub.indexOfFirst { it == "blob" || it == "raw" }
         if (marker >= 0 && sub.size >= marker + 3) {
             val ref = sub[marker + 1]
@@ -221,7 +221,7 @@ object RepoUrlResolver {
         )
     }
 
-    /** Прямая ссылка на файл (свой домен репозитория) или на каталог. */
+    /** Direct link to a file (repository's own domain) or to a directory. */
     private fun fileOrProbe(url: String): Plan {
         val clean = url.substringBefore('?').substringBefore('#')
         val last = clean.substringAfterLast('/')
@@ -243,30 +243,30 @@ object RepoUrlResolver {
     private fun normalize(input: String): String {
         var s = input.trim().trimEnd('/')
         if (s.isEmpty()) return ""
-        // «github.com/o/r» без схемы
+        // "github.com/o/r" without a scheme
         if (!s.contains("://") && s.contains("/")) s = "https://$s"
         return s
     }
 
     // ── GitHub API ───────────────────────────────────────────────────────────
 
-    /** Ветка по умолчанию: `{"default_branch":"repo"}`. */
+    /** Default branch: `{"default_branch":"repo"}`. */
     fun apiDefaultBranchUrl(owner: String, repo: String): String =
         "https://api.github.com/repos/$owner/$repo"
 
     /**
-     * Дерево репозитория. `recursive=false` — имена в корне (быстрый поиск индекса);
-     * `recursive=true` — полное дерево для TREE-скана.
+     * Repository tree. `recursive=false` — root names (fast index lookup);
+     * `recursive=true` — the full tree for a TREE scan.
      */
     fun apiTreeUrl(owner: String, repo: String, ref: String, recursive: Boolean): String =
         "https://api.github.com/repos/$owner/$repo/git/trees/${urlEncodePath(ref)}" +
             if (recursive) "?recursive=1" else ""
 
-    /** ref может содержать `/` (например `plugins/v3.0.0`) — GitHub API это любит. */
+    /** A ref may contain `/` (e.g. `plugins/v3.0.0`) — the GitHub API accepts it. */
     private fun urlEncodePath(ref: String): String =
         ref.split('/').joinToString("%2F") { it.trim() }
 
-    /** Имя индекса, если он лежит в списке файлов корня репозитория. */
+    /** The index file name, if the repository root listing contains one. */
     fun findIndexName(fileNames: List<String>): String? {
         for (candidate in CompatRepoParsers.INDEX_FILE_NAMES) {
             val hit = fileNames.firstOrNull { it.equals(candidate, ignoreCase = true) }
@@ -275,7 +275,7 @@ object RepoUrlResolver {
         return null
     }
 
-    /** Файлы репозитория, годные как источники (для TREE-скана). */
+    /** Repository files that can be sources (used by the TREE scan). */
     fun treeFiles(paths: List<Pair<String, Long>>): List<CompatRepoParsers.TreeFile> =
         paths.filter { (path, _) -> path.substringAfterLast('.', "").lowercase() in setOf("json", "js", "dart") }
             .map { (path, size) -> CompatRepoParsers.TreeFile(path, size) }

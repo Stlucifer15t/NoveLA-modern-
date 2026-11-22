@@ -33,10 +33,10 @@ abstract class CompatModule {
     abstract fun bindLegadoLoader(impl: LegadoExtensionLoader): CompatExtensionLoader
 
     /**
-     * Mihon/Tachiyomi/Aniyomi (keiyoushi) — APK-расширения. Загрузчик проверяет
-     * манифест и dex, но сами источники этой экосистемы в сборку не входят
-     * (нужен shim API-пакета eu.kanade.tachiyomi.source): binding держим, чтобы
-     * установленный пакет был виден с объяснением, а не как «нет загрузчика».
+     * Mihon/Tachiyomi/Aniyomi (keiyoushi) ship APK extensions. The loader validates
+     * the manifest and dex, but this ecosystem's source API is not part of the build
+     * (it needs an eu.kanade.tachiyomi.source shim): the binding stays so an installed
+     * package is reported with an explanation instead of "no loader".
      */
     @Binds
     @Singleton

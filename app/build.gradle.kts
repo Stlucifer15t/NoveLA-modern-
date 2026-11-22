@@ -59,12 +59,27 @@ android {
         buildConfigField("String", "GIT_COMMIT_HASH", "\"$gitCommitHash\"")
     }
 
+    // Repo-bundled signing key (keystore/novela-release.p12, empty passwords): every
+    // machine and every CI run produces APKs signed by the SAME certificate, so a
+    // build can be updated in place without the throwaway debug certificate changing
+    // per machine. A real key from local.properties / custom.properties still wins.
+    val bundledKeystore = rootProject.file("keystore/novela-release.p12")
+    val hasBundledKeystore = bundledKeystore.exists()
+    println("hasBundledKeystore: $hasBundledKeystore")
+
     signingConfigs {
         if (hasDefaultSigningConfigData) create("default") {
             storeFile = file(defaultSigningConfigData.getProperty("storeFile"))
             storePassword = defaultSigningConfigData.getProperty("storePassword")
             keyAlias = defaultSigningConfigData.getProperty("keyAlias")
             keyPassword = defaultSigningConfigData.getProperty("keyPassword")
+        }
+        if (hasBundledKeystore) create("bundled") {
+            storeFile = bundledKeystore
+            storeType = "PKCS12"
+            storePassword = ""
+            keyAlias = "novela"
+            keyPassword = ""
         }
     }
 
@@ -74,10 +89,14 @@ android {
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
             manifestPlaceholders["appLabel"] = "NoveLA Debug"
+            // Signed with the bundled key when present, so side-loading a debug APK
+            // does not conflict with the previously installed one.
+            signingConfigs.asMap["bundled"]?.let { signingConfig = it }
         }
 
         named("release") {
-            signingConfigs.asMap["default"]?.let { signingConfig = it }
+            (signingConfigs.asMap["default"] ?: signingConfigs.asMap["bundled"])
+                ?.let { signingConfig = it }
             isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),

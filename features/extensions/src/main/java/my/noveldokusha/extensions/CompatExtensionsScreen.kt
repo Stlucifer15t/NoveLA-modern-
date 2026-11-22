@@ -67,11 +67,11 @@ import my.noveldokusha.extension_compat.core.CompatRuntimeState
 import my.noveldokusha.coreui.R as CoreUiR
 
 /**
- * Менеджер сторонних репозиториев: подписки (Legado JSON, Mihon/keiyoushi, LNReader,
- * Mangayomi, CloudStream), каталог источников выбранной подписки и установка.
+* Manager of third-party repositories: subscriptions (Legado JSON, Mihon/keiyoushi,
+* LNReader, Mangayomi, CloudStream), the catalog of the selected subscription, installs.
  *
- * Диалог, а не отдельный роут: экран «Расширения» уже показывает Lua-плагины,
- * и compat-слой — второй источник того же списка источников в Finder.
+* A dialog rather than a route: the Extensions screen already lists Lua plugins,
+* and the compat layer is the second supplier of the same Finder source list.
  */
 @Composable
 fun CompatExtensionsDialog(
@@ -513,7 +513,7 @@ private fun CatalogRow(
                     viewModel.onEvent(CompatExtensionsEvent.OnInstall(entry))
                 }
 
-            // INSTALLED / DISABLED: запись есть — показываем, исполняется ли она
+// INSTALLED / DISABLED: a record exists — show whether it actually executes
             else -> {
                 if (runtime.state == CompatRuntimeState.READY) {
                     Text(
@@ -550,7 +550,7 @@ private fun CatalogRow(
     }
 }
 
-/** Компактная кнопка действия в строке каталога. */
+/** Compact action button used in a catalog row. */
 @Composable
 private fun SmallAction(text: String, enabled: Boolean, onClick: () -> Unit) {
     FilledTonalButton(
@@ -631,10 +631,10 @@ private fun InstalledRow(
 }
 
 /**
- * Строка-вход в менеджер compat-репозиториев на экране расширений.
- * Держит пользователя в курсе: сколько подписок и сколько из них реально
- * дали источники, — потому что «установлено» и «работает» для разных экосистем
- * означает разное (см. [CompatRuntime]).
+* Entry row for the compat repository manager on the Extensions screen.
+* It keeps the user informed: how many subscriptions exist and how many of them
+* actually produced sources — because "installed" and "working" mean different
+* things per ecosystem (see [CompatRuntime]).
  */
 @Composable
 fun CompatReposSummaryRow(

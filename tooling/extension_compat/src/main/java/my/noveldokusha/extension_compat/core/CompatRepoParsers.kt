@@ -10,21 +10,21 @@ import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.longOrNull
 
 /**
- * Разбор индекс-файлов чужих репозиториев в единый список [CompatRepoEntry].
+ * Parsing third-party repository index files into one [CompatRepoEntry] list.
  *
- * Форматы выверены по живым репозиториям (2026-11):
+ * Formats verified against live repositories (2026-11):
  *
- * | Экосистема | Индекс | Форма |
+ * | Ecosystem | Index | Shape |
  * |---|---|---|
  * | Mihon/keiyoushi (v2) | `repo.json` → `index.json` | `{name, signingKey, extensionList:{extensions:[…]}}` |
  * | Mihon (v1, legacy) | `index.min.json` | `[{name,pkg,apk,code,version,nsfw,sources:[…]}]` |
- * | Legado | `bookSource.json` / `.txt` | массив bookSource'ов, массив URL, или построчный список URL |
+ * | Legado | `bookSource.json` / `.txt` | array of bookSources, array of URLs, or a line-per-URL list |
  * | LNReader | `.dist/plugins.min.json` | `[{id,name,site,lang,version,url,iconUrl}]` |
  * | Mangayomi | `index.json`, `novel_index.json` | `[{name,id,baseUrl,sourceCodeUrl,itemType,sourceCodeLanguage,…}]` |
- * | CloudStream | `repo.json` | `{name, pluginLists:[{name,url}]}` → вложенные списки `.cs3` |
+ * | CloudStream | `repo.json` | `{name, pluginLists:[{name,url}]}` → nested `.cs3` lists |
  *
- * Здесь нет сети и нет Android: чистый текст → модели, поэтому каждый формат
- * закрыт юнит-тестом `CompatRepoParsersTest`.
+ * No network and no Android here: plain text in, models out — which is why every
+ * format is covered by the `CompatRepoParsersTest` unit test.
  */
 object CompatRepoParsers {
 
@@ -34,22 +34,22 @@ object CompatRepoParsers {
         coerceInputValues = true
     }
 
-    /** Сколько записей максимум отдаём из TREE-репозитория. */
+    /** Maximum number of entries a TREE repository may yield. */
     const val TREE_ENTRY_LIMIT = 400
 
-    /** Один bookSource-файл не бывает гигантским; больше — это подборка или мусор. */
+    /** A single bookSource file is never huge; bigger means a collection or junk. */
     private const val MAX_TREE_FILE_BYTES = 4_000_000L
 
-    /** Кандидаты индекс-файлов, в порядке предпочтения (v2 раньше v1!). */
+    /** Index file candidates, in preference order (v2 before v1!). */
     val INDEX_FILE_NAMES = listOf(
-        "repo.json",          // Mihon v2-указатель / CloudStream / Mangayomi
-        "index.json",         // Mihon v2 (полный), Mangayomi
-        "novel_index.json",   // Mangayomi — новеллы
+        "repo.json",          // Mihon v2 pointer / CloudStream / Mangayomi
+        "index.json",         // Mihon v2 (full), Mangayomi
+        "novel_index.json",   // Mangayomi — novels
         "manga_index.json",
         "index.min.json",     // Mihon v1 / CloudStream
         "plugins.min.json",   // LNReader
         "plugins.json",
-        "bookSource.json",    // Legado-подборки
+        "bookSource.json",    // Legado collections
         "bookSourceNew.json",
         "booksource.json",
         "sources.json",
@@ -59,14 +59,14 @@ object CompatRepoParsers {
         "index.txt",
     )
 
-    /** Файлы, которые точно не источники (мусор TREE-скана). */
+    /** Files that are certainly not sources (noise picked up by a TREE scan). */
     private val TREE_SKIP = listOf(
         "package.json", "package-lock", "tsconfig", "renovate", "crowdin",
         "i18n", "locales", "/res/", "/build/", "/gradle", ".github/", ".gitlab",
         "node_modules", "readme", "changelog", "license", "icon",
     )
 
-    /** Ключи, под которыми экспорт Legado прячет массив bookSource'ов. */
+    /** Keys under which a Legado export hides the bookSource array. */
     private val LEGADO_WRAPPER_KEYS = listOf("bookSources", "data", "sources", "list")
 
     data class ParsedIndex(
@@ -74,23 +74,23 @@ object CompatRepoParsers {
         val repoName: String = "",
         val signerFingerprint: String = "",
         val entries: List<CompatRepoEntry> = emptyList(),
-        /** CloudStream: репозиторий только указывает на вложенные списки плагинов. */
+        /** CloudStream: the repository only points at nested plugin lists. */
         val nestedIndexUrls: List<String> = emptyList(),
     )
 
-    // ── Определение формата ────────────────────────────────────────────────
+    // ── Format detection ───────────────────────────────────────────────────────
 
     /**
-     * Формат по содержимому; порядок важен — сначала самые специфичные маркеры.
-     * null = не похоже ни на один известный индекс (тогда вызывающий пробует
-     * следующий кандидат из [INDEX_FILE_NAMES]).
+     * Format from content; the order matters — most specific markers first.
+     * null = matches no known index, so the caller tries the next candidate
+     * from [INDEX_FILE_NAMES].
      */
     fun sniff(text: String, url: String = ""): CompatEcosystem? {
         val head = text.trimStart('\uFEFF', ' ', '\n', '\r', '\t')
         if (head.isBlank()) return null
 
         if (!head.startsWith("{") && !head.startsWith("[")) {
-            // Не JSON: может быть подпиской «один URL в строке» (Legado .txt)
+            // Not JSON: could be a "one URL per line" subscription (Legado .txt)
             val firstLine = head.lineSequence().map { it.trim() }.firstOrNull { it.isNotEmpty() }
             return if (firstLine != null && firstLine.startsWith("http")) CompatEcosystem.LEGADO else null
         }
@@ -113,7 +113,7 @@ object CompatRepoParsers {
         if (head.contains("\"pkg\"") && head.contains("\"apk\"")) return CompatEcosystem.TACHIYOMI
         if (head.contains("\"site\"") && head.contains("\"url\"")) return CompatEcosystem.LNREADER
 
-        // Содержимое невнятное — последнее средство: имя файла
+        // Content is inconclusive — last resort: the file name
         return when {
             url.endsWith("plugins.min.json") || url.endsWith("plugins.json") -> CompatEcosystem.LNREADER
             url.endsWith("novel_index.json") || url.contains("mangayomi") -> CompatEcosystem.MANGAYOMI
@@ -122,7 +122,7 @@ object CompatRepoParsers {
         }
     }
 
-    /** Определить формат и разобрать. null — если формат не распознан. */
+    /** Detect the format and parse it. null when the format is unknown. */
     fun parse(repoId: String, indexUrl: String, text: String): ParsedIndex? {
         val ecosystem = sniff(text, indexUrl) ?: return null
         return parse(ecosystem, repoId, indexUrl, text)
@@ -146,7 +146,7 @@ object CompatRepoParsers {
     // ── Mihon / Tachiyomi / Aniyomi / keiyoushi ─────────────────────────────
 
     /**
-     * v2 (нынешний keiyoushi):
+     * v2 (current keiyoushi):
      * ```json
      * {"name":"Keiyoushi","signingKey":"9add…","extensionList":{"extensions":[
      *   {"name":"AchyManga","packageName":"eu.kanade…achymanga",
@@ -154,11 +154,11 @@ object CompatRepoParsers {
      *    "versionCode":"106001","versionName":"1.6.1","contentWarning":"CONTENT_WARNING_MIXED",
      *    "sources":[{"id":"…","name":"…","language":"es","homeUrl":"https://…"}]}]}}
      * ```
-     * v1 (legacy): плоский массив, где `apk` — имя файла рядом с индексом.
+     * v1 (legacy): a flat array where `apk` is a file name next to the index.
      *
-     * Одна запись = один APK: payload качается один раз, а несколько источников
-     * внутри пакета загрузчик создаёт сам ([CompatExtensionLoader.load] возвращает
-     * список). Чем пакет «многоязычнее», тем больше строк в его описании.
+     * One row = one APK: the payload is downloaded once, and the several sources
+     * inside the package are created by the loader itself ([CompatExtensionLoader.load]
+     * returns a list — the more languages a package has, the more rows it produces.
      */
     fun parseMihon(
         repoId: String,
@@ -268,8 +268,8 @@ object CompatRepoParsers {
     }
 
     /**
-     * Mihon-репозиторий кладёт в `index.min.json` заглушку для устаревших
-     * клиентов («Outdated App», «Update to Mihon 0.20.1+»). Это не источник.
+     * A Mihon repository puts a stub for outdated clients into `index.min.json`
+     * ("Outdated App", "Update to Mihon 0.20.1+"). That is not a source.
      */
     private fun isOutdatedStub(name: String): Boolean {
         val n = name.lowercase()
@@ -279,22 +279,22 @@ object CompatRepoParsers {
     // ── Legado ───────────────────────────────────────────────────────────────
 
     /**
-     * BookSource-подборка. Формы из живых репозиториев:
-     *  - массив bookSource-объектов (`entr0pia/MyLegadoSource` → `bookSource.json`);
-     *  - обёртка `{bookSources:[…]}` / `{data:[…]}` (экспорт приложения);
-     *  - одиночный bookSource-объект;
-     *  - массив URL-строк или построчный `.txt` — тогда payload качаем отдельно.
+     * A bookSource collection. Shapes seen in live repositories:
+     *  - an array of bookSource objects (`entr0pia/MyLegadoSource` → `bookSource.json`);
+     *  - a wrapper `{bookSources:[…]}` / `{data:[…]}` (in-app export);
+     *  - a single bookSource object;
+     *  - an array of URL strings or a line-per-URL `.txt` — then the payload is fetched.
      *
-     * Инлайновые объекты не перекодируем: при установке берем их исходный текст
-     * из кэша индекса ([extractSourceJson]), чтобы не потерять поля, которых нет
-     * в нашей модели.
+     * Inline objects are never re-encoded: install takes their original text
+     * out of the index cache ([extractSourceJson]) so that fields missing from
+     * our model are not lost.
      */
     fun parseLegado(repoId: String, indexUrl: String, text: String): ParsedIndex {
         val trimmed = text.trim()
         if (trimmed.isEmpty()) return ParsedIndex(CompatEcosystem.LEGADO)
         val repoName = indexUrl.substringAfterLast('/').ifBlank { hostOf(indexUrl) }
 
-        // a) построчный список URL
+        // a) line-per-URL list
         if (!trimmed.startsWith("[") && !trimmed.startsWith("{")) {
             val urls = trimmed.lineSequence()
                 .map { it.trim() }
@@ -310,7 +310,7 @@ object CompatRepoParsers {
 
         val objects = inlineSources(trimmed)
 
-        // b) массив URL-строк
+        // b) array of URL strings
         if (objects.isEmpty()) {
             val urls = trimmed.parseArray()
                 ?.mapNotNull { (it as? JsonPrimitive)?.contentOrNull?.trim() }
@@ -329,8 +329,8 @@ object CompatRepoParsers {
             val bookUrl = obj.stringOr("bookSourceUrl").trim()
             val name = obj.stringOr("bookSourceName").trim()
             if (bookUrl.isBlank() && name.isBlank()) return@mapIndexedNotNull null
-            // Без правил поиска источник нерабочий: Legado подставляет дефолты сам,
-            // но мы угадывать не будем — такой источник только засоряет список.
+            // Without search rules a source is useless: Legado fills in defaults itself,
+            // but we do not guess — such a source only clutters the list.
             val hasSearch = obj["ruleSearch"].asObject().stringOr("bookList").isNotBlank() ||
                 obj.stringOr("searchUrl").isNotBlank() ||
                 obj["ruleExplore"].asObject().stringOr("bookList").isNotBlank()
@@ -383,7 +383,7 @@ object CompatRepoParsers {
         )
     }
 
-    /** bookSource-объекты инлайном в индексе (массив, обёртка или одиночный объект). */
+    /** bookSource objects inlined in the index (array, wrapper or single object). */
     private fun inlineSources(trimmed: String): List<JsonObject> {
         if (trimmed.startsWith("[")) return trimmed.parseArray().orEmpty().filterIsInstance<JsonObject>()
         val root = trimmed.parseObject() ?: return emptyList()
@@ -402,8 +402,8 @@ object CompatRepoParsers {
     }
 
     /**
-     * Исходный JSON одного bookSource из текста кэшированного индекса — по
-     * [CompatRepoEntry.inlineKey] (bookSourceUrl, реже bookSourceName).
+     * The original JSON of one bookSource, taken from the cached index text by
+     * [CompatRepoEntry.inlineKey] (bookSourceUrl, less often bookSourceName).
      */
     fun extractSourceJson(indexText: String, key: String): String? {
         val trimmed = indexText.trim()
@@ -416,7 +416,7 @@ object CompatRepoParsers {
         return null
     }
 
-    /** Текст bookSource-объекта, если его bookSourceUrl/bookSourceName == [key]. */
+    /** Text of the bookSource object whose bookSourceUrl/bookSourceName == [key]. */
     private fun String.matchesLegadoKey(key: String): Boolean {
         val obj = runCatching { trim().parseObject() }.getOrNull() ?: return false
         return obj.stringOr("bookSourceUrl").trim() == key ||
@@ -465,7 +465,7 @@ object CompatRepoParsers {
      *    "sourceCodeUrl":"https://…/x.js","itemType":2,"isManga":false,
      *    "sourceCodeLanguage":1,"version":"0.0.1","isNsfw":false,"appMinVerReq":"0.5.0"}]`
      *
-     * `itemType`: 0 = манга, 1 = аниме, 2 = роман. `sourceCodeLanguage`: 0 = Dart, 1 = JS.
+     * `itemType`: 0 = manga, 1 = anime, 2 = novel. `sourceCodeLanguage`: 0 = Dart, 1 = JS.
      */
     fun parseMangayomi(repoId: String, indexUrl: String, text: String): ParsedIndex {
         val trimmed = text.trim()
@@ -520,8 +520,8 @@ object CompatRepoParsers {
 
     /**
      * `repo.json` = `{"name":"…","pluginLists":[{"name":"v1.0","url":"…/index.min.json"}]}`.
-     * Вложенные списки отдаём как [ParsedIndex.nestedIndexUrls] — их догружает
-     * [CompatRepositoryManager] (одна лишняя сетевая операция на репозиторий).
+     * Nested lists are returned as [ParsedIndex.nestedIndexUrls] — the manager
+     * [CompatRepositoryManager] loads them (one extra request per repository).
      */
     fun parseCloudStream(repoId: String, indexUrl: String, text: String): ParsedIndex {
         val trimmed = text.trim()
@@ -545,7 +545,7 @@ object CompatRepoParsers {
         )
     }
 
-    /** Уже раскрытый список плагинов: `[{name,version,url,iconUrl,description,authors[]}]`. */
+    /** An already expanded plugin list: `[{name,version,url,iconUrl,description,authors[]}]`. */
     fun parseCloudStreamList(repoId: String, indexUrl: String, text: String): List<CompatRepoEntry> {
         val trimmed = text.trim()
         val array: List<JsonElement> = if (trimmed.startsWith("[")) {
@@ -581,22 +581,22 @@ object CompatRepoParsers {
         }.distinctByKey(CompatRepoEntry::key)
     }
 
-    // ── Mihon v2 `repo.json` (указатель, а не индекс) ────────────────────────
+    // ── Mihon v2 `repo.json` (a pointer, not an index) ────────────────────────
 
     /**
-     * `repo.json` Mihon-репозитория второго поколения — это не список источников,
-     * а указатель:
+     * The `repo.json` of a second-generation Mihon repository is not a source list,
+     * it is a pointer:
      * ```json
      * {"index_v2":"https://…/index.pb","meta":{"name":"Keiyoushi",
      *  "website":"https://keiyoushi.github.io","signingKeyFingerprint":"9add…"}}
      * ```
-     * `index_v2` ссылается на protobuf, который мы не читаем, — но рядом всегда
-     * лежит JSON-вариант того же индекса, на него и ставим первым кандидатом.
+     * `index_v2` points at protobuf, which we cannot read — but next to it there is
+     * always a JSON variant of the same index, which is why it ranks first.
      */
     data class RepoPointer(
         val repoName: String,
         val signerFingerprint: String,
-        /** Кандидаты индекса в порядке попытки (абсолютные или относительные). */
+        /** Index candidates in attempt order (absolute or relative). */
         val indexUrls: List<String>,
     )
 
@@ -613,7 +613,7 @@ object CompatRepoParsers {
             }
             urls += pointer
         } else if (root.stringOr("name").isNotBlank() && meta != null) {
-            // `repo.json` без указателя: репозиторий лежит рядом с index.json
+            // `repo.json` without a pointer: the repository sits next to index.json
             urls += "index.json"
             urls += "index.min.json"
         } else {
@@ -627,14 +627,14 @@ object CompatRepoParsers {
         )
     }
 
-    // ── TREE: репозиторий без индекса, источники — отдельные файлы ───────────
+    // ── TREE: a repository with no index, sources as separate files ────────────
 
     data class TreeFile(val path: String, val size: Long = 0)
 
     /**
-     * `jiwangyihao/source-j-legado` хранит каждый bookSource своим файлом
-     * (`bilinovel.json`, `masiro.json`, …), индекс-файла там нет. Значит
-     * источником файла является сам файл, а его payload качается по raw-URL.
+     * `jiwangyihao/source-j-legado` keeps every bookSource in its own file
+     * (`bilinovel.json`, `masiro.json`, …), there is no index file — so the file
+     * itself is the source and its payload is downloaded from the raw URL.
      */
     fun parseTree(
         repoId: String,
@@ -680,11 +680,11 @@ object CompatRepoParsers {
     private fun isTreeJunk(path: String): Boolean {
         val p = path.lowercase()
         if (TREE_SKIP.any { p.contains(it) }) return true
-        // Индекс мы уже искали отдельно — в дереве он не нужен
+        // The index was already looked for separately — a tree scan skips it
         return INDEX_FILE_NAMES.any { p.endsWith(it) }
     }
 
-    // ── Утилиты ──────────────────────────────────────────────────────────────
+    // ── Utilities ──────────────────────────────────────────────────────────────
 
     /** `https://host/dir/index.json` + `x.apk` → `https://host/dir/x.apk`. */
     fun absolutize(indexUrl: String, relative: String): String {
@@ -725,9 +725,9 @@ object CompatRepoParsers {
         ((this?.get(key)) as? JsonArray)?.mapNotNull { it as? JsonObject } ?: emptyList()
 
     /**
-     * Значение первого непустого поля. Строка, число и boolean приводятся к
-     * строке: репозитории пишут `"version": 26` и `"version": "26"` в разных
-     * индексах, а нам нужен только текст.
+     * Value of the first non-empty field. Strings, numbers and booleans are all
+     * converted to text: repositories write `"version": 26` and `"version": "26"`
+     * in different indexes, and we only need the text.
      */
     private fun JsonObject?.stringOr(vararg keys: String): String {
         val self = this ?: return ""
@@ -758,11 +758,11 @@ object CompatRepoParsers {
     }
 }
 
-/** Помощь для `extra`: null/пустые значения в карту не попадают. */
+/** Helper for `extra`: null/empty values never enter the map. */
 internal fun meta(vararg pairs: Pair<String, String?>): Map<String, String> =
     pairs.mapNotNull { (k, v) -> if (v.isNullOrBlank()) null else k to v }.toMap()
 
-/** Убрать дубликаты по ключу, сохранив порядок. */
+/** Drop duplicate keys, keeping the original order. */
 internal fun <T> List<T>.distinctByKey(selector: (T) -> String): List<T> {
     val seen = HashSet<String>(size)
     val out = ArrayList<T>(size)
@@ -773,11 +773,11 @@ internal fun <T> List<T>.distinctByKey(selector: (T) -> String): List<T> {
 }
 
 /**
- * Верхний JSON-массив → подстроки его элементов. Обход с учётом кавычек и
- * вложенности, чтобы вырезать один bookSource дословно.
+ * Top-level JSON array → substrings of its elements. The scan respects quotes and
+ * nesting so that one bookSource can be cut out verbatim.
  *
- * Для объекта-обёртки ищем первый массив под одним из ключей
- * `bookSources`/`data`/`sources`/`list`. null — если списка нет.
+ * For a wrapper object we look for the first array under one of the
+ * `bookSources`/`data`/`sources`/`list` keys. null when there is no array.
  */
 internal fun topLevelArrayElements(text: String): List<String>? {
     val trimmed = text.trim()

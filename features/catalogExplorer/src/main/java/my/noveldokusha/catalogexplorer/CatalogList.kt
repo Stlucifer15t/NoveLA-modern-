@@ -229,10 +229,10 @@ internal fun CatalogList(
                         }
                         val extensionId = translationSettingsExtensionIds[it.catalog.id]
                         if (extensionId != null && it.catalog.contentType !in setOf("manga", "video")) {
-                            // Открываем настройки под catalog.id (ключ чтения каскада) — для
-                            // Lua-плагинов он равен metadata.id ("lua_<ext.id>" или кастомному id).
-                            // Для манга-источников переводить нечего (контент — картинки), для
-                            // аниме (video) — тоже, поэтому иконка переводчика скрывается.
+// Settings are opened under catalog.id (the cascade lookup key): for Lua
+// plugins it equals metadata.id ("lua_<ext.id>" or a custom id).
+// Manga sources have nothing to translate (the content is images), and
+// neither do anime (video) ones, so the translator icon is hidden.
                             IconButton(onClick = { onTranslationSettingsClick(it.catalog.id) }) {
                                 Icon(
                                     Icons.Filled.Translate,

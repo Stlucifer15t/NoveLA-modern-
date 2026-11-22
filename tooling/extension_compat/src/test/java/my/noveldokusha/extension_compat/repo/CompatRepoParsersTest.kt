@@ -12,8 +12,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Парсеры индексов проверяются на живых форматах (2026-11): keiyoushi v2/v1,
- * Legado-подборки и подписки, LNReader, Mangayomi, CloudStream.
+ * Index parsers are tested against live formats (2026-11): keiyoushi v2/v1,
+ * Legado collections and subscription lists, LNReader, Mangayomi, CloudStream.
  */
 class CompatRepoParsersTest {
 
@@ -75,7 +75,7 @@ class CompatRepoParsersTest {
 
         val first = parsed.entries.first { it.key.endsWith("achymanga") }
         assertEquals("AchyManga", first.name)
-        // versionCode приходит СТРОКОЙ — должен всё равно стать числом для сверки обновлений
+        // versionCode arrives as a STRING — it must still become a number for update checks
         assertEquals(106001L, first.versionCode)
         assertEquals("1.6.1", first.version)
         assertEquals("https://achymanga.online", first.baseUrl)
@@ -134,7 +134,7 @@ class CompatRepoParsersTest {
             "https://raw.githubusercontent.com/keiyoushi/extensions/repo/index.min.json",
             mihonV1,
         )
-        // «Outdated App» — заглушка для старых клиентов, не источник
+        // "Outdated App" is a stub for old clients, not a source
         assertEquals(2, parsed.entries.size)
         val dex = parsed.entries.first { it.key.endsWith("mangadex") }
         assertEquals(
@@ -145,7 +145,7 @@ class CompatRepoParsersTest {
         assertEquals("https://mangadex.org", dex.baseUrl)
 
         val anime = parsed.entries.first { it.key.contains("aniexample") }
-        // пакет из animeextension → Aniyomi, контент = видео
+        // a package from animeextension → Aniyomi, content = video
         assertEquals(CompatEcosystem.ANIYOMI, anime.ecosystem)
         assertEquals("video", anime.contentType)
         assertTrue(anime.nsfw)
@@ -165,7 +165,7 @@ class CompatRepoParsersTest {
         """.trimIndent()
         assertEquals(CompatEcosystem.TACHIYOMI, CompatRepoParsers.sniff(pointer))
         val parsed = CompatRepoParsers.parseRepoPointer(pointer)!!
-        assertEquals("index.pb не читаем, берём JSON-вариант", 2, parsed.indexUrls.size)
+        assertEquals("index.pb is not read, the JSON variant is used", 2, parsed.indexUrls.size)
         assertTrue(parsed.indexUrls[0].endsWith("index.json"))
         assertEquals("Keiyoushi", parsed.repoName)
         assertTrue(parsed.signerFingerprint.length > 40)
@@ -222,7 +222,7 @@ class CompatRepoParsersTest {
 
         val manga = parsed.entries.first { it.key == "https://manga-two.example" }
         assertEquals("manga", manga.contentType)
-        assertTrue("группа с 18+ помечает nsfw", manga.nsfw)
+        assertTrue("an 18+ group marks the entry nsfw", manga.nsfw)
     }
 
     @Test
@@ -232,7 +232,7 @@ class CompatRepoParsersTest {
         assertTrue(raw!!.contains("customOrder"))
         assertTrue(raw.contains("lastUpdateTime"))
         assertTrue(raw.contains("ruleBookInfo"))
-        // Соседний объект не подмешивается
+        // The neighbouring object must not leak in
         assertFalse(raw.contains("manga-two"))
         assertNull(CompatRepoParsers.extractSourceJson(legadoCollection, "https://nope.example"))
     }
@@ -288,7 +288,7 @@ class CompatRepoParsersTest {
 
         val asText = """
             https://gamma.example/books.json
-            # комментарий
+            # a comment line, must be ignored
             https://delta.example/books.json
         """.trimIndent()
         val fromText = CompatRepoParsers.parseLegado(repoId, "https://host/sources.txt", asText)
@@ -331,7 +331,7 @@ class CompatRepoParsersTest {
     @Test
     fun `mangayomi novel index keeps js payload and novel content type`() {
         val index = """
-[{"name":"коlnovel","id":756554088,"baseUrl":"https://kolnovel.com","lang":"ar","typeSource":"single","iconUrl":"https://x/icon.png","isNsfw":false,"hasCloudflare":false,"sourceCodeUrl":"https://raw.githubusercontent.com/entityJY/mangayomi-extensions/main/javascript/novel/src/ar/kolnovel.js","version":"0.0.1","isManga":false,"itemType":2,"appMinVerReq":"0.5.0","sourceCodeLanguage":1,"notes":""}]
+[{"name":"kolnovel","id":756554088,"baseUrl":"https://kolnovel.com","lang":"ar","typeSource":"single","iconUrl":"https://x/icon.png","isNsfw":false,"hasCloudflare":false,"sourceCodeUrl":"https://raw.githubusercontent.com/entityJY/mangayomi-extensions/main/javascript/novel/src/ar/kolnovel.js","version":"0.0.1","isManga":false,"itemType":2,"appMinVerReq":"0.5.0","sourceCodeLanguage":1,"notes":""}]
         """.trimIndent()
         assertEquals(CompatEcosystem.MANGAYOMI, CompatRepoParsers.sniff(index))
         val parsed = CompatRepoParsers.parseMangayomi(repoId, "https://host/novel_index.json", index)
@@ -392,7 +392,7 @@ class CompatRepoParsersTest {
         assertEquals("someone", entry.description)
     }
 
-    // ── TREE-скан ────────────────────────────────────────────────────────────
+    // ── TREE scan ───────────────────────────────────────────────────────────────
 
     @Test
     fun `tree scan turns json files into legado entries and skips junk`() {
@@ -428,7 +428,7 @@ class CompatRepoParsersTest {
         assertEquals(CompatRepoParsers.TREE_ENTRY_LIMIT, entries.size)
     }
 
-    // ── утилиты ──────────────────────────────────────────────────────────────
+    // ── utilities ───────────────────────────────────────────────────────────────
 
     @Test
     fun `absolutize handles relative, root-relative and protocol relative urls`() {

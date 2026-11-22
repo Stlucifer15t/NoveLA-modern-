@@ -17,18 +17,18 @@ import javax.xml.xpath.XPathConstants
 import javax.xml.xpath.XPathFactory
 
 /**
- * Движок правил Legado.
+ * The Legado rule engine.
  *
- * Поддерживает:
- *  - CSS-цепочки с end-правилами (`@text`, `@href`, `@html`, ...)
- *  - индексные суффиксы (`.0`, `.-1`, `.!0`, `[0,2]`, `.0:5`)
- *  - regex-операции (`##pattern`, `##pattern##replacement`, `###`, `####`)
- *  - альтернативы `||`, конкатенацию `&&`, zip `%%`
- *  - legacy-селекторы (`id.x`, `class.x`, `tag.x`)
+ * Supports:
+ *  - CSS chains with end rules (`@text`, `@href`, `@html`, ...)
+ *  - index suffixes (`.0`, `.-1`, `.!0`, `[0,2]`, `.0:5`)
+ *  - regex operations (`##pattern`, `##pattern##replacement`, `###`, `####`)
+ *  - alternatives `||`, concatenation `&&`, zip `%%`
+ *  - legacy selectors (`id.x`, `class.x`, `tag.x`)
  *  - XPath (`//...`, `@xpath:`)
  *  - JSONPath (`$.`, `$[`, `@json:`)
- *  - JavaScript (`@js:`) с таймаутом и ClassShutter
- *  - шаблоны `@get:{key}` и `{{var}}`
+ *  - JavaScript (`@js:`) with a timeout and a ClassShutter
+ *  - `@get:{key}` and `{{var}}` templates
  */
 class LegadoRuleEngine(
     private val jsTimeoutMs: Long = 8_000,
@@ -36,7 +36,7 @@ class LegadoRuleEngine(
     private val compiledCache = ConcurrentHashMap<String, CompiledRule>()
     private val json = Json { ignoreUnknownKeys = true; isLenient = true }
 
-    // ── Публичный API ────────────────────────────────────────────────────────
+    // ── Public API ──────────────────────────────────────────────────────────────
 
     fun getString(content: Any?, rule: String, vars: MutableMap<String, String> = mutableMapOf()): String =
         getStrings(content, rule, vars).filter { it.isNotBlank() }.joinToString("\n")
@@ -66,7 +66,7 @@ class LegadoRuleEngine(
 
     fun compile(rule: String): CompiledRule = compiledCache.getOrPut(rule) { parseRule(rule) }
 
-    // ── Компиляция ───────────────────────────────────────────────────────────
+    // ── Compilation ────────────────────────────────────────────────────────────
 
     private fun parseRule(rule: String): CompiledRule {
         if (rule.isBlank()) return CompiledRule(emptyList())
@@ -111,7 +111,7 @@ class LegadoRuleEngine(
         }
     }
 
-    // ── Выполнение ───────────────────────────────────────────────────────────
+    // ── Execution ───────────────────────────────────────────────────────────────
 
     private fun evalAlternative(input: Any?, alt: Alternative, vars: MutableMap<String, String>): Any? {
         val results = alt.chains.map { chain -> evalChain(input, chain, vars) }
@@ -339,7 +339,7 @@ class LegadoRuleEngine(
         }
     }
 
-    // ── End-правила ──────────────────────────────────────────────────────────
+    // ── End rules ───────────────────────────────────────────────────────────────
 
     private fun extractEnd(content: Any?, name: String): Any? {
         val elements = normalizeElements(content)
@@ -490,7 +490,7 @@ class LegadoRuleEngine(
         }
     }
 
-    // ── Шаблоны ──────────────────────────────────────────────────────────────
+    // ── Templates ───────────────────────────────────────────────────────────────
 
     private fun expandTemplate(raw: String, vars: MutableMap<String, String>): String {
         var out = raw
@@ -554,7 +554,7 @@ class LegadoRuleEngine(
         else -> listOf(content)
     }
 
-    // ── Нормализация ─────────────────────────────────────────────────────────
+    // ── Normalization ───────────────────────────────────────────────────────────
 
     fun normalizeStrings(content: Any?): List<String> = when (content) {
         null -> emptyList()
@@ -590,7 +590,7 @@ class LegadoRuleEngine(
         else -> Document("")
     }
 
-    // ── Разбор верхнего уровня ───────────────────────────────────────────────
+    // ── Top-level parsing ───────────────────────────────────────────────────────
 
     private fun splitTopLevel(input: String, separator: String): List<String> {
         if (separator !in input) return listOf(input)
@@ -740,7 +740,7 @@ class LegadoRuleEngine(
         return -1
     }
 
-    // ── Модели ───────────────────────────────────────────────────────────────
+    // ── Models ──────────────────────────────────────────────────────────────────
 
     data class CompiledRule(val alternatives: List<Alternative>)
 

@@ -39,7 +39,7 @@ class ExtensionsManagerViewModel @Inject constructor(
     private val httpClient: NetworkClient,
     private val appPreferences: AppPreferences,
     private val scraperRepository: ScraperRepository,
-    private val luaSourceLoader: LuaSourceLoader,          // ← для скачивания .lua
+private val luaSourceLoader: LuaSourceLoader,          // ← downloads the .lua file
     private val luaSourceProvider: LuaSourceProvider,
     private val translationManager: TranslationManager,
 ) : ViewModel() {
@@ -47,14 +47,14 @@ class ExtensionsManagerViewModel @Inject constructor(
     private val _state = MutableStateFlow(ExtensionsScreenState())
     val state: StateFlow<ExtensionsScreenState> = _state.asStateFlow()
 
-    // ponytail: реактивный поток для Compose — чтобы иконка переводчика
-    // в CatalogList обновлялась при переключении per-plugin toggle.
+// ponytail: a reactive flow for Compose so that the translator icon
+// in CatalogList updates when the per-plugin toggle flips.
     val pluginEnabledMap: StateFlow<Map<String, Boolean>> =
         appPreferences.TRANSLATION_PLUGIN_ENABLED_MAP.flow()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), appPreferences.TRANSLATION_PLUGIN_ENABLED_MAP.value)
 
-    /** Сериализует импорт/сохранение/сброс локальных Lua-скриптов,
-     *  чтобы параллельные операции не гоняли reload() и запись файлов одновременно. */
+/** Serializes import/save/reset of local Lua scripts so that concurrent
+*  operations don't run reload() and file writes at the same time. */
     private val localMutex = Mutex()
 
     private var cachedAvailableExtensions: List<ExtensionInfo>? = null
@@ -69,7 +69,7 @@ class ExtensionsManagerViewModel @Inject constructor(
             )
         }
 
-        // Реактивно синхронизируем список установленных расширений (Lua + Compat)
+// Keep the installed extension list in sync reactively (Lua + compat)
         viewModelScope.launch {
             extensionManager.getInstalledExtensionsFlow().collectLatest { extensions ->
                 _state.update { it.copy(extensions = extensions) }
@@ -79,9 +79,9 @@ class ExtensionsManagerViewModel @Inject constructor(
 
         // Compat layer not yet implemented - skip sync
 
-        // Загружаем кеш и (при необходимости) актуальные данные из сети — на фоновом потоке
+// Load the cache and (when needed) fresh network data — on a background thread
         viewModelScope.launch {
-            loadCachedExtensions()        // выставляет cachedAvailableExtensions + lastFetchTime
+loadCachedExtensions()        // sets cachedAvailableExtensions + lastFetchTime
             loadAllAvailableExtensions()
         }
     }
@@ -112,7 +112,7 @@ class ExtensionsManagerViewModel @Inject constructor(
 
 
 
-    // ── Загрузка доступных расширений из репозитория ─────────────────────────
+// ── Loading available extensions from the repository ────────────────────────
 
     private fun loadAllAvailableExtensions(forceRefresh: Boolean = false) {
         val now = System.currentTimeMillis()
@@ -123,8 +123,8 @@ class ExtensionsManagerViewModel @Inject constructor(
 
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, error = null) }
-            // Пустой URL репозитория — это не ошибка: работаем только с локально установленными плагинами,
-            // поэтому не ходим в сеть и не выставляем state.error.
+// An empty repository URL is not an error: with only locally installed plugins
+// we stay offline and do not set state.error.
             val repoUrl = _state.value.repositoryUrl.trim()
             if (repoUrl.isEmpty()) {
                 _state.update { it.copy(isLoading = false, error = null) }
@@ -195,7 +195,7 @@ class ExtensionsManagerViewModel @Inject constructor(
                 cachedAvailableExtensions = allExt
                 lastFetchTime = now
 
-                // Сохраняем в кеш для быстрой загрузки при следующем запуске
+// Persist to the cache so the next start loads instantly
                 saveCachedExtensions(allExt)
 
                 val langList = allExt.groupBy { it.language }
@@ -239,8 +239,8 @@ class ExtensionsManagerViewModel @Inject constructor(
     }
 
     private suspend fun loadCachedExtensions() {
-        // Чтение SharedPrefs и построение списка (десятки записей) — выносим с main-потока,
-        // чтобы инициализация экрана расширений не задерживала первый кадр при холодном старте.
+// Reading SharedPrefs and building the list (dozens of rows) leaves the main thread
+// so Extensions screen init never delays the first frame of a cold start.
         val (extensions, langList) = withContext(Dispatchers.IO) {
             val cachedEntries = appPreferences.EXTENSIONS_AVAILABLE_CACHE.value
             if (cachedEntries.isEmpty()) return@withContext null
@@ -300,14 +300,14 @@ class ExtensionsManagerViewModel @Inject constructor(
         Timber.d("Saved ${cached.size} extensions to cache")
     }
 
-    // ── Установка ─────────────────────────────────────────────────────────────
+// ── Installation ────────────────────────────────────────────────────────────
 
     /**
-     * Процесс установки:
-     * 1. Для Lua: скачать .lua файл на диск через LuaSourceLoader
-     * 2. Для Compat: установить через CompatRepositoryManager
-     * 3. Сохранить запись в БД через ExtensionManager
-     * 4. Scraper перезагрузится реактивно через Flow установленных расширений
+* Install process:
+* 1. Lua: download the .lua file to disk through LuaSourceLoader
+* 2. Compat: install through CompatRepositoryManager
+* 3. Save the record to the database through ExtensionManager
+* 4. The scraper reloads reactively through the installed-extensions Flow
      */
     private fun installExtension(extensionId: String) {
         viewModelScope.launch {
@@ -322,36 +322,36 @@ class ExtensionsManagerViewModel @Inject constructor(
                     Timber.d("Compat installation not yet implemented")
                 } else {
                     // Lua extension installation
-                    // Шаг 1: Скачать .lua на диск
+// Step 1: download the .lua file to disk
                     val downloaded = luaSourceLoader.downloadAndCacheScript(extensionId, extInfo.codeUrl)
                     if (!downloaded) {
                         _state.update { it.copy(error = context.getString(my.noveldokusha.strings.R.string.ext_failed_to_download, extInfo.name)) }
                         return@launch
                     }
 
-                    // Шаг 2: Записать в БД с НОВОЙ версией
+// Step 2: write to the database with the NEW version
                     extensionManager.installExtensionFromInfo(
                         id       = extensionId,
                         name     = extInfo.name,
-                        version  = extInfo.remoteVersion, // Используем новую версию!
+version  = extInfo.remoteVersion, // use the new version!
                         language = extInfo.language,
                         imageUrl = extInfo.iconUrl,
                         codeUrl  = extInfo.codeUrl
                     )
-                    // Шаг 2б: Сохранить codeUrl и content_type в settings как JSON,
-                    // чтобы LuaSourceLoader знал откуда перескачать при следующем запуске
+// Step 2b: store codeUrl and content_type in settings as JSON so that
+// LuaSourceLoader knows where to re-download on the next start
                     val settingsJson = Gson().toJson(mapOf("codeUrl" to extInfo.codeUrl, "content_type" to extInfo.contentType))
                     extensionManager.updateExtensionSettings(extensionId, settingsJson)
 
                     Timber.d("Installed extension: ${extInfo.name}")
                 }
-                // Шаг 3: Scraper обновится реактивно через extensionRepository.getInstalledExtensionsFlow()
+// Step 3: the scraper refreshes reactively via getInstalledExtensionsFlow()
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
                 Timber.e(e, "Failed to install ${extInfo.name}")
                 _state.update { it.copy(error = context.getString(my.noveldokusha.strings.R.string.ext_failed_to_install, extInfo.name, e.message)) }
-                // Если установка не удалась, удаляем скачанный файл
+// If installation failed, delete the downloaded file
                 luaSourceLoader.removeScript(extensionId)
             } finally {
                 setInstalling(extensionId, false)
@@ -368,7 +368,7 @@ class ExtensionsManagerViewModel @Inject constructor(
         }
     }
 
-    // ── Удаление ──────────────────────────────────────────────────────────────
+// ── Removal ──────────────────────────────────────────────────────────────────
 
     private fun uninstallExtension(extensionId: String) = uninstallExtensionById(extensionId)
 
@@ -382,7 +382,7 @@ class ExtensionsManagerViewModel @Inject constructor(
                     extensionManager.uninstallExtension(extensionId)
                     luaSourceLoader.removeScript(extensionId)
                 }
-                // Scraper обновится реактивно
+// The scraper refreshes reactively
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -392,7 +392,7 @@ class ExtensionsManagerViewModel @Inject constructor(
         }
     }
 
-    // ── Локальный импорт / редактор Lua ──────────────────────────────────────
+// ── Local import / Lua editor ───────────────────────────────────────────────
 
     private fun luaField(code: String, key: String, fallback: String = ""): String {
         val regex = Regex("""(?m)^\s*$key\s*=\s*["']([^"']+)["']""")
@@ -407,7 +407,7 @@ class ExtensionsManagerViewModel @Inject constructor(
             if (raw.startsWith("{")) {
                 Gson().fromJson(raw, Map::class.java) as? Map<String, Any>
             } else {
-                // Миграция со старого YAML-формата на JSON
+// Migration from the old YAML format to JSON
                 val legacy = Yaml().loadAs(raw, Map::class.java) as? Map<String, Any>
                 if (legacy != null) {
                     val json = Gson().toJson(legacy)
@@ -427,10 +427,10 @@ class ExtensionsManagerViewModel @Inject constructor(
     private suspend fun getCodeUrl(extensionId: String): String? =
         settingsMap(extensionId)?.get("codeUrl")?.toString()
 
-    /** Уникальный id локального скрипта: префикс + база + 5 случайных символов.
-     *  Случайный суффикс гарантирует, что разные импорты не перезаписывают друг друга,
-     *  а сгенерированный id один раз запекается в скрипт (см. [withLocalId]), поэтому
-     *  повторный импорт того же файла (в т.ч. отредактированного) идемпотентен. */
+/** Unique local script id: prefix + base + 5 random characters.
+*  The random suffix makes sure separate imports do not overwrite each other,
+*  and the generated id is baked into the script once (see [withLocalId]), so a
+*  re-import of the same file (edited included) stays idempotent. */
     private fun localStorageId(baseId: String): String {
         val safe = baseId.replace(Regex("""[^A-Za-z0-9_]"""), "_")
             .takeIf { it.isNotBlank() } ?: "local_source"
@@ -439,7 +439,7 @@ class ExtensionsManagerViewModel @Inject constructor(
         return "local_${safe}_$rand"
     }
 
-    /** Подставляет в Lua-код поле id = [id]: заменяет существующее или дописывает в начало. */
+/** Puts id = [id] into the Lua code: replaces it or prepends it at the top. */
     private fun withLocalId(code: String, id: String): String {
         val idRegex = Regex("""(?m)^\s*id\s*=\s*["'][^"']*["']""")
         return if (idRegex.containsMatchIn(code)) {
@@ -463,8 +463,8 @@ class ExtensionsManagerViewModel @Inject constructor(
             val fallbackId = fileName.substringBeforeLast('.').ifBlank { "local_source" }
             val declaredId = luaField(code, "id").trim()
             val baseId = declaredId.ifBlank { fallbackId }
-            // id уже в нашем формате (local_...) — переиспользуем как есть (идемпотентный реимпорт).
-            // Иначе генерируем уникальный local_<base>_<rand> и запекаем его в скрипт.
+// The id is already in our format (local_...) — reuse it (idempotent re-import).
+// Otherwise generate a unique local_<base>_<rand> and bake it into the script.
             val storageId = if (declaredId.startsWith("local_")) declaredId
                             else localStorageId(baseId)
             val finalCode = if (declaredId.startsWith("local_")) code
@@ -477,7 +477,7 @@ class ExtensionsManagerViewModel @Inject constructor(
             val contentType = luaField(finalCode, "content_type", "novel")
 
             if (extensionManager.isExtensionInstalled(storageId)) {
-                // Идемпотентный реимпорт того же файла — обновляем скрипт без создания дубля.
+// Idempotent re-import of the same file: update the script, no duplicate.
                 luaSourceLoader.saveScript(storageId, finalCode)
                 val settingsJson = Gson().toJson(mapOf("sourceType" to "local", "content_type" to contentType))
                 extensionManager.updateExtensionSettings(storageId, settingsJson)
@@ -485,7 +485,7 @@ class ExtensionsManagerViewModel @Inject constructor(
                 return@withLock
             }
 
-            // Защита от двух локальных копий с одинаковым именем.
+// Guards against two local copies with the same name.
             val nameClash = _state.value.extensions.find { it.name == name }
             if (nameClash != null && isLocalExtension(nameClash.id)) {
                 _state.update { it.copy(error = context.getString(my.noveldokusha.strings.R.string.lua_duplicate_error, name)) }
@@ -602,9 +602,9 @@ class ExtensionsManagerViewModel @Inject constructor(
         }
     }
 
-    // ── Настройки перевода плагина ──────────────────────────────────────────
+// ── Plugin translation settings ─────────────────────────────────────────────
 
-    /** Открывает диалог настроек перевода для установленного плагина. */
+/** Opens the translation settings dialog for an installed plugin. */
     private fun openTranslationSettings(extensionId: String) {
         _state.update { it.copy(translationSettingsExtensionId = extensionId) }
     }
@@ -613,22 +613,22 @@ class ExtensionsManagerViewModel @Inject constructor(
         _state.update { it.copy(translationSettingsExtensionId = null) }
     }
 
-    /** Модели языков для выбора пары перевода (из TranslationManager). */
+/** Language models for picking a translation pair (from TranslationManager). */
     val translationModels: List<my.noveldokusha.text_translator.domain.TranslationModelState>
         get() = translationManager.models
 
-    /** Глобальный режим перевода активен — настройки плагина не применяются. */
+/** Global translation mode is active — plugin settings do not apply. */
     val translationGlobalMode: Boolean
         get() = appPreferences.TRANSLATION_GLOBAL_MODE.value
 
-    /** Глобальная пара по умолчанию (для fallback-превью, когда у плагина пусто). */
+/** The global default pair (fallback preview when the plugin has none). */
     val globalTranslationSource: String
         get() = appPreferences.GLOBAL_TRANSLATION_PREFERRED_SOURCE.value
 
     val globalTranslationTarget: String
         get() = appPreferences.GLOBAL_TRANSLATION_PREFERRED_TARGET.value
 
-    // Чтение текущих значений плагина (пустые/дефолтные, если не заданы).
+// Read the plugin's current values (empty/default when unset).
     fun translationEnabled(extensionId: String): Boolean =
         appPreferences.translationEnabledForPlugin(extensionId)
 
@@ -644,7 +644,7 @@ class ExtensionsManagerViewModel @Inject constructor(
     fun translationPrompt(extensionId: String): String? =
         appPreferences.translationPromptForPlugin(extensionId)
 
-    // Запись: пишем в AppPreferences сразу (write+rebuild — диалог читает заново).
+// Write: stored in AppPreferences at once (write+rebuild re-reads the dialog).
     fun setTranslationEnabled(extensionId: String, enabled: Boolean) {
         appPreferences.setTranslationEnabledForPlugin(extensionId, enabled)
     }
@@ -694,7 +694,7 @@ class ExtensionsManagerViewModel @Inject constructor(
         appPreferences.setTranslationPluginHideMap(appPreferences.TRANSLATION_PLUGIN_HIDE_SEARCH, extensionId, hide)
     }
 
-    // Мост к избранным языкам и последним парам: делегируют напрямую в AppPreferences.
+// Bridge to favorite languages and recent pairs: delegated to AppPreferences.
     fun favoriteLanguages(): List<String> = appPreferences.favoriteLanguages()
     fun toggleFavoriteLanguage(code: String) = appPreferences.toggleFavoriteLanguage(code)
     fun recentTranslationPairs() = appPreferences.recentTranslationPairs()
@@ -702,14 +702,14 @@ class ExtensionsManagerViewModel @Inject constructor(
     fun removeRecentTranslationPair(pair: my.noveldokusha.core.appPreferences.TranslationLangPair) =
         appPreferences.removeRecentTranslationPair(pair)
 
-    // ── Вкл/выкл ─────────────────────────────────────────────────────────────
+// ── Enable / disable ────────────────────────────────────────────────────────
 
     private fun toggleExtension(extensionId: String, enabled: Boolean) {
         viewModelScope.launch {
             try {
                 if (enabled) extensionManager.enableExtension(extensionId)
                 else         extensionManager.disableExtension(extensionId)
-                // Scraper обновится реактивно
+// The scraper refreshes reactively
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -719,7 +719,7 @@ class ExtensionsManagerViewModel @Inject constructor(
         }
     }
 
-    // ── Фильтры / репозиторий ────────────────────────────────────────────────
+// ── Filters / repository ────────────────────────────────────────────────────
 
     private fun toggleLanguageFilter(code: String) {
         _state.update { state ->
@@ -751,7 +751,7 @@ class ExtensionsManagerViewModel @Inject constructor(
         }
     }
 
-    // ── Вспомогательные ──────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
     private fun updateAvailableExtensionsStatus() {
         _state.update { state ->

@@ -11,26 +11,26 @@ import java.io.File
 import java.util.concurrent.locks.ReentrantLock
 
 /**
- * Персистентное хранилище compat-расширений:
+ * Persistent storage for compat extensions:
  *
  * ```
  * filesDir/compat/
- *   registry.json                 — список CompatInstallRecord (что установлено)
- *   repos.json                    — список CompatRepository (на что подписан пользователь)
- *   indexes/<repoId>.index.json   — сырой индекс подписки (кэш: офлайн-просмотр и инлайновые bookSource)
- *   indexes/<repoId>.entries.json — разобранный каталог подписки
- *   <ecosystem>/<payloadPath>     — сами файлы (js/json/apk/cs3)
+ *   registry.json                 — CompatInstallRecord list (what is installed)
+ *   repos.json                    — CompatRepository list (what the user subscribed to)
+ *   indexes/<repoId>.index.json   — raw subscription index (offline browsing, inline bookSource)
+ *   indexes/<repoId>.entries.json — parsed subscription catalog
+ *   <ecosystem>/<payloadPath>     — the payload files themselves (js/json/apk/cs3)
  * ```
  *
- * Реестр записей и список подписок — разные файлы намеренно: подписку можно
- * удалить, а установленные из неё источники оставить (см. remove()).
+ * The record registry and the subscription list are separate files on purpose: a
+ * subscription can be removed while its installed sources stay (see remove()).
  *
- * Всё пишется атомарно ([atomicWrite]); чтение registry терпимо к битому JSON
- * (возвращает пустой список и логирует — не роняет приложение).
+ * Everything is written atomically ([atomicWrite]); reading the registry tolerates
+ * (broken JSON returns an empty list and logs instead of crashing the app).
  *
- * Инжектится через `@Provides` в di/CompatModule (конструктор принимает File,
- * Dagger сам его не соберёт), поэтому у конструктора нет `@Inject` — иначе
- * была бы дублирующаяся биндинг-ошибка Dagger.
+ * Injected via `@Provides` in di/CompatModule (the constructor takes a File,
+ * Dagger cannot resolve it), so the constructor has no `@Inject` — adding one
+ * would produce a duplicate Dagger binding error.
  */
 class CompatStorage(
     private val rootDir: File,
@@ -45,8 +45,8 @@ class CompatStorage(
     private val reposFile = File(rootDir, "repos.json")
 
     /**
-     * Каталог кэша индексов: сырой индекс + разобранные записи на репозиторий.
-     * Объявлен до `init`, т.к. инициализаторы и init-блоки идут по порядку.
+     * Index cache directory: raw index + parsed entries per repository.
+     * Declared before `init`: initializers and init blocks run in declaration order.
      */
     private val indexesDir = File(rootDir, "indexes")
     private val mutex = java.util.concurrent.locks.ReentrantLock()
@@ -54,7 +54,7 @@ class CompatStorage(
     private val _records = MutableStateFlow<List<CompatInstallRecord>>(emptyList())
     val records: StateFlow<List<CompatInstallRecord>> = _records.asStateFlow()
 
-    /** Подписки на сторонние репозитории (см. [CompatRepository]). */
+    /** Subscriptions to third-party repositories (see [CompatRepository]). */
     private val _repositories = MutableStateFlow<List<CompatRepository>>(emptyList())
     val repositories: StateFlow<List<CompatRepository>> = _repositories.asStateFlow()
 
@@ -63,7 +63,7 @@ class CompatStorage(
         loadRepositories()
     }
 
-    // ── Репозитории ──────────────────────────────────────────────────────────
+    // ── Repositories ───────────────────────────────────────────────────────────
 
     fun loadRepositories(): List<CompatRepository> {
         mutex.lock()
@@ -108,7 +108,7 @@ class CompatStorage(
         saveRepositories(current)
     }
 
-    /** Удалить подписку и её кэш; payload'ы установленных источников — на совести вызывающего. */
+    /** Remove a subscription and its cache; payload files stay until the caller removes them. */
     fun removeRepository(id: String) {
         saveRepositories(_repositories.value.filterNot { it.id == id })
         indexFile(id, "index").delete()
@@ -122,9 +122,9 @@ class CompatStorage(
     }
 
     /**
-     * Файл кэша репозитория. `suffix` = "index" (сырой текст индекса — из него
-     * берём инлайновые bookSource при установке) или "entries" (разобранный список).
-     * Расширение всегда .json: содержимое может быть и .txt-подпиской, это не важно.
+     * Repository cache file. `suffix` = "index" (raw index text — inline bookSource
+     * objects are extracted from it at install time) or "entries" (parsed list).
+     * The extension is always .json: the content may be a .txt subscription, it does not matter.
      */
     fun indexFile(repoId: String, suffix: String): File {
         indexesDir.mkdirs()
@@ -142,7 +142,7 @@ class CompatStorage(
             if (file.exists()) file.readText() else null
         }.getOrNull()
 
-    /** Имена payload'ов и кэша: только безопасные символы. */
+    /** Payload and cache file names: safe characters only. */
     fun safeFileName(raw: String): String = buildString(raw.length.coerceAtMost(120)) {
         for (c in raw) {
             when {
@@ -202,7 +202,7 @@ class CompatStorage(
     fun remove(id: String) {
         val current = _records.value.filterNot { it.id == id }
         saveRegistry(current)
-        // Удаляем payload
+        // Delete the payload
         _records.value.find { it.id == id }?.let { /* already filtered */ }
     }
 
@@ -213,14 +213,14 @@ class CompatStorage(
         saveRegistry(current)
     }
 
-    /** Файл payload'а записи; parent создаётся. */
+    /** Payload file of a record; the parent directory is created. */
     fun payloadFile(record: CompatInstallRecord): File {
         val file = File(File(rootDir, record.ecosystem.id), record.payloadPath)
         file.parentFile?.mkdirs()
         return file
     }
 
-    /** Сохранить бинарный payload, вернуть относительный путь. */
+    /** Store a binary payload and return its relative path. */
     fun writePayload(ecosystem: CompatEcosystem, relativePath: String, bytes: ByteArray): String {
         val file = File(File(rootDir, ecosystem.id), relativePath)
         file.parentFile?.mkdirs()
@@ -237,7 +237,7 @@ class CompatStorage(
         payloadFile(record).delete()
     }
 
-    /** Очистка всего storage (uninstall-all / отладка). */
+    /** Wipe all storage (uninstall-all / debugging). */
     fun clearAll() {
         saveRegistry(emptyList())
         saveRepositories(emptyList())
@@ -247,7 +247,7 @@ class CompatStorage(
     }
 
     companion object {
-        /** Имя каталога внутри filesDir. */
+        /** Directory name inside filesDir. */
         const val DIR_NAME = "compat"
     }
 }

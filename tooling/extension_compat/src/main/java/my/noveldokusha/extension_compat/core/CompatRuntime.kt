@@ -1,26 +1,26 @@
 package my.noveldokusha.extension_compat.core
 
 /**
- * Что сборка умеет ИСПОЛНЯТЬ, а не только разбирать.
+ * What this build can actually RUN, not just parse.
  *
- * Разобрать индекс и скачать payload можно для любой экосистемы, но источник
- * появляется в Finder только когда есть рантайм, который его выполнит. Честный
- * статус здесь нужен, чтобы UI не выглядел сломанным: «скачано, но не
- * запускается, потому что X» лучше, чем молчаливый ноль источников.
+ * Any ecosystem's index can be parsed and its payload downloaded, but a source
+ * only shows up in the Finder when a runtime exists that can execute it. An
+ * honest status here keeps the UI from looking broken: "downloaded but not
+ * runnable because of X" beats a silent zero-source list.
  */
 enum class CompatRuntimeState {
-    /** Правила/адаптер встроены — установленный источник сразу работает. */
+    /** Rules/adapter built in — an installed source works immediately. */
     READY,
 
-    /** Payload сохраняется, но рантайм этой экосистемы в сборку не вошёл. */
+    /** Payload is stored, but this ecosystem's runtime is not part of the build. */
     RUNTIME_NOT_BUNDLED,
 }
 
 data class CompatRuntimeInfo(
     val state: CompatRuntimeState,
-    /** Короткая метка для чипа в UI. */
+    /** Short label for the UI chip. */
     val badge: String,
-    /** Объяснение «почему» + что нужно, чтобы заработало. */
+    /** The "why" plus what is needed to make it work. */
     val detail: String,
 )
 

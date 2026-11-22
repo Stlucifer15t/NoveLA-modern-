@@ -23,13 +23,13 @@ import timber.log.Timber
 import javax.inject.Inject
 
 /**
- * Сторонние репозитории расширений: Legado JSON, Mihon/keiyoushi, LNReader,
- * Mangayomi, CloudStream — подписки, каталог источников и установка.
+* Third-party extension repositories: Legado JSON, Mihon/keiyoushi, LNReader,
+* Mangayomi, CloudStream — subscriptions, source catalog and installation.
  *
- * Отдельный от [ExtensionsManagerViewModel]: тот ведёт Lua-плагины. Состояние
- * полностью выводится из flow compat-слоя (репозитории, каталог, записи
- * установки, статусы загрузки), поэтому никаких ручных «обнови список» нет:
- * установка/удаление само прилетает из [CompatStorage].
+* Separate from [ExtensionsManagerViewModel], which owns the Lua plugins. The state
+* is derived entirely from the compat layer's flows (repositories, catalog, install
+* records, load statuses) — there is no manual "refresh the list" anywhere:
+* installing and uninstalling arrives from [CompatStorage] on its own.
  */
 @HiltViewModel
 class CompatExtensionsViewModel @Inject constructor(
@@ -40,12 +40,12 @@ class CompatExtensionsViewModel @Inject constructor(
     private val local = MutableStateFlow(CompatExtensionsLocal())
 
     init {
-        // Каталоги живут в памяти менеджера, но кэшированы на диск — поднимаем их,
-        // чтобы после перезапуска список не был пустым до первого refresh.
+// Catalogs live in manager memory but are cached on disk — load them up so that
+// the list is not empty after a restart, before the first refresh.
         viewModelScope.launch { manager.primeFromCache() }
     }
 
-    /** Каталог + подписки: читаем из кэша диска, если память пуста. */
+/** Catalog + subscriptions: read from the disk cache when memory is empty. */
     private val repoSnapshot = combine(
         manager.repositories,
         manager.entries,
@@ -124,7 +124,7 @@ class CompatExtensionsViewModel @Inject constructor(
             key.lowercase().contains(query) ||
             language.lowercase().contains(query)
 
-    // ── События ──────────────────────────────────────────────────────────────
+// ── Events ────────────────────────────────────────────────────────────────────
 
     fun onEvent(event: CompatExtensionsEvent) {
         when (event) {
@@ -268,7 +268,7 @@ class CompatExtensionsViewModel @Inject constructor(
     }
 
     private companion object {
-        /** Каталог keiyoushi отдаёт ~1300 записей: режем хвост, а не рендерим всё. */
+/** The keiyoushi index returns ~1300 rows: cap the tail instead of rendering all. */
         const val MAX_VISIBLE_ENTRIES = 250
     }
 }
@@ -279,7 +279,7 @@ private data class CompatRuntimeSnapshot(
     val infos: List<CompatSourceInfo>,
 )
 
-/** Локальный выбор пользователя — фильтры и состояние диалога добавления. */
+/** The user's local choices — filters and the add-repository dialog state. */
 private data class CompatExtensionsLocal(
     val searchQuery: String = "",
     val filterEcosystem: CompatEcosystem? = null,
@@ -338,8 +338,8 @@ sealed interface CompatExtensionsEvent {
 }
 
 /**
- * Ссылку вставляют «как есть» из браузера — с якорем, слеком и без схемы.
- * Чистим то, что ломает распознавание формата, остальное решает RepoUrlResolver.
+* A link is pasted "as is" from the browser — with an anchor, a slash, no scheme.
+* Strip what would break format detection; RepoUrlResolver handles the rest.
  */
 private object RepoUrlHint {
     fun normalize(input: String): String {

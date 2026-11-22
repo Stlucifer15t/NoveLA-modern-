@@ -135,8 +135,8 @@ private fun UnifiedExtensionsScreen(
                 }
             }
             else -> {
-                // Compat-репозитории (Legado JSON, Mihon/keiyoushi, LNReader, Mangayomi):
-                // второй источник списка источников, живёт рядом с Lua-плагинами.
+// Compat repositories (Legado JSON, Mihon/keiyoushi, LNReader, Mangayomi):
+// a second supplier of the source list, next to the Lua plugins.
                 val compatViewModel: CompatExtensionsViewModel = hiltViewModel()
                 val compatState by compatViewModel.state.collectAsStateWithLifecycle()
                 CompatReposSummaryRow(
@@ -387,7 +387,7 @@ private fun UnifiedExtensionsScreen(
         )
     }
 
-    // Сторонние репозитории расширений (JSON/JS/APK-индексы)
+// Third-party extension repositories (JSON/JS/APK indexes)
     if (showCompatRepos) {
         CompatExtensionsDialog(onDismiss = { showCompatRepos = false })
     }

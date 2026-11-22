@@ -3,7 +3,7 @@ package my.noveldokusha.extension_compat.core
 import javax.inject.Qualifier
 
 /**
- * Qualifier для multibinding'а загрузчиков экосистем compat-слоя.
+ * Qualifier for the multibinding of compat ecosystem loaders.
  */
 @Qualifier
 @Retention(AnnotationRetention.BINARY)

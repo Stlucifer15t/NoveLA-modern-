@@ -19,19 +19,19 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Mihon/Tachiyomi/Aniyomi (и keiyoushi) поставляют расширения как APK с dex-байткодом,
- * написанным против API хоста: `eu.kanade.tachiyomi.source.model.*`, Injekt-преференсы,
- * RxJava-заголовки. Поэтому загрузчик делает ровно то, что честно:
+ * Mihon/Tachiyomi/Aniyomi (and keiyoushi) ship extensions as APKs with dex bytecode
+ * written against host APIs: `eu.kanade.tachiyomi.source.model.*`, Injekt preferences,
+ * RxJava headers. So the loader does exactly what is honest:
  *
- *  1. читает метаданные манифеста APK (`tachiyomi.extension.class` / `.factory` / `.name`) —
- *     это доказывает, что файл действительно расширение, а не «просто apk»;
- *  2. поднимает dex в изолированном [DexClassLoader] и пробует разрешить класс источника;
- *  3. если хост не предоставляет API расширения — падает с внятным объяснением, и
- *     [CompatInstallRecord] остаётся в библиотеке: достаточно добавить shim, чтобы
- *     установленные пакеты ожили без переустановки.
+ *  1. reads the APK manifest metadata (`tachiyomi.extension.class` / `.factory` / `.name`)
+ *     which proves the file really is an extension and not "just an apk";
+ *  2. loads the dex in an isolated [DexClassLoader] and tries to resolve the source class;
+ *  3. when the host provides no extension API it fails with a clear explanation, and
+ *     the [CompatInstallRecord] stays in the library: adding the shim is enough to
+ *     bring installed packages to life without reinstalling.
  *
- * Ошибка загрузки попадает в [my.noveldokusha.extension_compat.core.CompatDiagnostics]
- * и показывается в списке расширений, а не проглатывается.
+ * The load error goes to [my.noveldokusha.extension_compat.core.CompatDiagnostics]
+ * and is shown in the extension list rather than swallowed.
  */
 @Singleton
 class TachiyomiExtensionLoader @Inject constructor(
@@ -74,8 +74,8 @@ class TachiyomiExtensionLoader @Inject constructor(
                 operation = "load",
             )
         }
-        // Класс виден — но без адаптера suspend-методов источника в источники NoveLA
-        // загружать его не во что. Держим запись и объясняем следующий шаг.
+        // The class resolves — but without an adapter turning its suspend methods into
+        // NoveLA sources there is nothing to load it into. Keep the record, explain next.
         val runtime = CompatRuntime.of(ecosystem)
         val suffix = declaredName?.let { " (declared as '$it')" }.orEmpty()
         throw CompatException(
@@ -85,8 +85,8 @@ class TachiyomiExtensionLoader @Inject constructor(
     }
 
     /**
-     * Метаданные манифеста APK, который нигде не установлен. Пустая карта означает
-     * «архив не читается» — вызывающий сообщит о формате, а не упадёт.
+     * Manifest metadata of an APK that is not installed anywhere. An empty map means
+     * "the archive cannot be read" — the caller then reports a format problem.
      */
     private fun readMetadata(path: String): Map<String, String?> = runCatching {
         @Suppress("DEPRECATION")
@@ -94,7 +94,7 @@ class TachiyomiExtensionLoader @Inject constructor(
             ?: return@runCatching emptyMap()
         val app: ApplicationInfo? = info.applicationInfo
         if (app != null) {
-            // Без явных путей PackageManager игнорирует metaData у не-установленного архива
+            // Without explicit paths PackageManager ignores metaData of an uninstalled archive
             app.sourceDir = path
             app.publicSourceDir = path
         }
@@ -130,7 +130,7 @@ class TachiyomiExtensionLoader @Inject constructor(
         return file
     }
 
-    /** Экосистема не исполняется в этой сборке — статус для UI без исключения. */
+    /** This ecosystem is not executed by this build — a UI status, not an exception. */
     fun availability(): CompatRuntimeState = CompatRuntime.of(ecosystem).state
 
     private companion object {

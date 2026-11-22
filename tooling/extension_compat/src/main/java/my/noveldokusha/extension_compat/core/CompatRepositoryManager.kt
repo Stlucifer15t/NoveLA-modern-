@@ -22,24 +22,24 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Менеджер сторонних репозиториев расширений: добавить подписку → разобрать её
- * индекс → установить выбранные источники в [CompatStorage] → [CompatSourceProviderImpl]
- * пересоберёт список источников, и они появятся в Finder.
+ * Manager of third-party extension repositories: subscribe → parse the index
+ * → install the chosen sources into [CompatStorage] → [CompatSourceProviderImpl]
+ * rebuilds the source list and they show up in the Finder.
  *
- * Поток добавления URL ([add]):
- *  1. [RepoUrlResolver.plan] решает, что URL значит (файл / git-репозиторий / каталог);
- *  2. для git-репозитория GitHub спрашиваем дерево (одним запросом) и выбираем
- *     индекс-файл по приоритету [CompatRepoParsers.INDEX_FILE_NAMES]; если индекса
- *     нет — переходим на TREE-режим (каждый `*.json` = отдельный источник);
- *  3. содержимое индекса снифится ([CompatRepoParsers.sniff]) и парсится парсером
- *     экосистемы; CloudStream дополнительно раскрывает вложенные pluginLists;
- *  4. сырой индекс и разобранные записи кэшируются на диск, чтобы список
- *     можно было показать офлайн и чтобы установка инлайнового bookSource не
- *     требовала сети.
+ * Adding a URL ([add]) goes like this:
+ *  1. [RepoUrlResolver.plan] decides what the URL means (file / git repo / directory);
+ *  2. for a GitHub repository we ask for the tree (one request) and pick the
+ *     index file by [CompatRepoParsers.INDEX_FILE_NAMES] priority; with no index
+ *     at all we fall back to TREE mode (every `*.json` = one source);
+ *  3. the index content is sniffed ([CompatRepoParsers.sniff]) and parsed by the
+ *     ecosystem parser; CloudStream additionally expands nested pluginLists;
+ *  4. the raw index and the parsed rows are cached on disk, so the list can be
+ *     shown offline and so installing an inline bookSource does not need the
+ *     network.
  *
- * Установка сохраняет payload и создаёт [CompatInstallRecord]; если рантайм
- * экосистемы не входит в сборку ([CompatRuntime]), источник будет виден в
- * списке расширений с объяснением, а не молча отсутствовать.
+ * Installing stores the payload and creates a [CompatInstallRecord]; when the
+ * ecosystem's runtime is not part of the build ([CompatRuntime]) the source is
+ * still listed in Extensions with an explanation instead of silently missing.
  */
 @Singleton
 class CompatRepositoryManager @Inject constructor(
@@ -59,17 +59,17 @@ class CompatRepositoryManager @Inject constructor(
     val installedRecords: StateFlow<List<CompatInstallRecord>> = storage.records
 
     private val _entries = MutableStateFlow<Map<String, List<CompatRepoEntry>>>(emptyMap())
-    /** Разобранные каталоги репозиториев: repoId → доступные источники. */
+    /** Parsed repository catalogs: repoId → installable sources. */
     val entries: StateFlow<Map<String, List<CompatRepoEntry>>> = _entries.asStateFlow()
 
     private val _busy = MutableStateFlow<Set<String>>(emptySet())
-    /** repoId репозиториев, которые сейчас обновляются (UI: спиннер на строке). */
+    /** repoId of repositories being refreshed right now (UI: row spinner). */
     val busy: StateFlow<Set<String>> = _busy.asStateFlow()
 
-    /** Один запрос на пересборку записей: параллельные refresh не дерутся за кэш. */
+    /** One rebuild at a time: parallel refreshes must not fight over the cache. */
     private val refreshMutex = Mutex()
 
-    // ── Подписки ─────────────────────────────────────────────────────────────
+    // ── Subscriptions ───────────────────────────────────────────────────────────
 
     suspend fun add(inputUrl: String): CompatRepoResult {
         val url = RepoUrlResolver.rewriteKnown(inputUrl)
@@ -94,7 +94,7 @@ class CompatRepositoryManager @Inject constructor(
         storage.upsertRepository(repo)
         val result = refreshInternal(repo)
         if (!result.ok) {
-            // Нечего держать в списке: пустая подписка только сбивает с толку
+            // Nothing to keep: an empty subscription only confuses the list
             storage.removeRepository(id)
             return result.copy(repository = null)
         }
@@ -108,8 +108,8 @@ class CompatRepositoryManager @Inject constructor(
     }
 
     /**
-     * Удалить подписку. Установленные из неё источники по умолчанию остаются —
-     * пользователь мог уже начать их читать; [removeInstalled] чистит и их.
+     * Remove a subscription. Sources installed from it stay by default —
+     * the user may already be reading from them; [removeInstalled] clears those too.
      */
     suspend fun remove(repoId: String, removeInstalled: Boolean = false) {
         if (removeInstalled) {
@@ -125,7 +125,7 @@ class CompatRepositoryManager @Inject constructor(
         storage.setRepositoryEnabled(repoId, enabled)
     }
 
-    // ── Каталог источников репозитория ───────────────────────────────────────
+    // ── Repository source catalog ──────────────────────────────────────────────
 
     suspend fun entriesOf(repoId: String): List<CompatRepoEntry> =
         _entries.value[repoId] ?: withContext(Dispatchers.IO) {
@@ -138,21 +138,21 @@ class CompatRepositoryManager @Inject constructor(
         }
 
     /**
-     * Достать каталоги всех подписок из дискового кэша. После перезапуска процесса
-     * память пуста, а показывать список «установлено/не установлено» надо сразу —
-     * иначе каталог выглядел бы пустым до первого refresh.
+     * Load every subscription's catalog from the disk cache. After a process restart
+     * memory is empty while "installed / not installed" has to be right away —
+     * otherwise the catalog would look empty until the first refresh.
      */
     suspend fun primeFromCache() {
         storage.repositories.value.forEach { entriesOf(it.id) }
     }
 
-    // ── Установка / удаление источников ─────────────────────────────────────
+    // ── Installing / removing sources ─────────────────────────────────────────
 
     data class InstallOutcome(
         val ok: Boolean,
         val recordId: String = "",
         val message: String = "",
-        /** true — источник сразу появился в Finder; false — лежит в библиотеке. */
+        /** true = usable in the Finder right away; false = stored in the library. */
         val runnable: Boolean = false,
     )
 
@@ -171,8 +171,8 @@ class CompatRepositoryManager @Inject constructor(
 
         val record = buildRecord(entry, payload)
         val previous = provider.findRecord(entry.ecosystem, entry.key)
-        // APK/JAR без поддерживаемого рантайма всё равно сохраняем: иначе при
-        // появлении рантайма пользователю пришлось бы переустанавливать руками.
+        // APK/JAR without a supported runtime is still stored: otherwise, once the
+        // runtime exists the user would have to reinstall everything by hand.
         provider.install(record, payload)
         val runtime = CompatRuntime.of(entry.ecosystem)
         return InstallOutcome(
@@ -186,7 +186,7 @@ class CompatRepositoryManager @Inject constructor(
         )
     }
 
-    /** Установить всё, что ещё не установлено (кэшированный индекс, без повторной сети). */
+    /** Install everything not installed yet (cached index, no extra network). */
     suspend fun installAll(repoId: String, limit: Int = 100): List<InstallOutcome> {
         val installed = storage.records.value.mapTo(HashSet()) { it.id }
         val todo = entriesOf(repoId)
@@ -224,7 +224,7 @@ class CompatRepositoryManager @Inject constructor(
             (entry.versionCode == record.versionCode &&
                 entry.version.isNotBlank() && entry.version != record.version)
 
-    /** Обновить все устаревшие установки репозитория; возвращает число обновлений. */
+    /** Update every outdated install of a repository; returns the number updated. */
     suspend fun updateAll(repoId: String): Int {
         val records = storage.records.value.filter { it.repositoryId == repoId }
         if (records.isEmpty()) return 0
@@ -238,7 +238,7 @@ class CompatRepositoryManager @Inject constructor(
         return updated
     }
 
-    // ── Внутреннее ───────────────────────────────────────────────────────────
+    // ── Internals ──────────────────────────────────────────────────────────────
 
     private suspend fun refreshInternal(repo: CompatRepository): CompatRepoResult =
         refreshMutex.withLock {
@@ -338,7 +338,7 @@ class CompatRepositoryManager @Inject constructor(
         val treeMode: Boolean,
     )
 
-    /** URL указывает на конкретный файл: качаем и верим содержимому. */
+    /** The URL names a concrete file: download it and trust its content. */
     private suspend fun resolveFile(url: String, repo: CompatRepository): ResolvedIndex? {
         val text = fetchText(url) ?: return null
         val parsed = parseWithPointer(repo.id, url, text) ?: return null
@@ -347,7 +347,7 @@ class CompatRepositoryManager @Inject constructor(
         return ResolvedIndex(url, refOf(url), parsed, treeMode = false)
     }
 
-    /** Ветка из raw-URL (`…/{owner}/{repo}/{ref}/…`); для чужих хостов — пусто. */
+    /** Branch taken from a raw URL (`…/{owner}/{repo}/{ref}/…`); empty for other hosts. */
     private fun refOf(url: String): String =
         if (url.contains("raw.githubusercontent.com")) {
             url.substringAfter("raw.githubusercontent.com/", "").split('/').getOrNull(2).orEmpty()
@@ -356,9 +356,9 @@ class CompatRepositoryManager @Inject constructor(
         }
 
     /**
-     * Mihon-репозитории второго поколения кладут в корень `repo.json` с
-     * указателем `index_v2` на `.pb` (protobuf). JSON-вариант того же файла
-     * рядом — на него и переключаемся, protobuf не парсим.
+     * Second-generation Mihon repositories put a `repo.json` in the root with an
+     * `index_v2` pointer at `.pb` (protobuf). The JSON variant of the same file
+     * sits next to it — we switch to that instead of parsing protobuf.
      */
     private suspend fun parseWithPointer(repoId: String, indexUrl: String, text: String): CompatRepoParsers.ParsedIndex? {
         val pointer = CompatRepoParsers.parseRepoPointer(text)
@@ -383,8 +383,8 @@ class CompatRepositoryManager @Inject constructor(
     }
 
     /**
-     * Git-репозиторий: спрашиваем дерево, ищем индекс, иначе — TREE-скан.
-     * Для GitLab API нет, только перебор имён в ветке `HEAD`.
+     * Git repository: ask for the tree, look for an index, otherwise TREE scan.
+     * For GitLab there is no API — only known file names under `HEAD`.
      */
     private suspend fun resolveGit(
         target: RepoUrlResolver.GitTarget,
@@ -395,9 +395,9 @@ class CompatRepositoryManager @Inject constructor(
         val name = target.repo
         val baseRef = target.ref ?: fetchDefaultBranch(host, owner, name) ?: "main"
         val dir = target.path.orEmpty().trimEnd('/')
-        // Ветка может содержать слэш (`plugins/v3.0.0`), и в URL вида /tree/… это
-        // неотличимо от пути. Пробуем сначала как есть, потом — забрав первый
-        // сегмент пути в имя ветки.
+        // A branch name may contain a slash (`plugins/v3.0.0`), and in a /tree/ URL
+        // that is indistinguishable from a path. Try as-is first, then with the first
+        // path segment folded into the branch name.
         val variants = buildList {
             add(baseRef to dir)
             if (target.ref != null && dir.contains('/')) {
@@ -411,7 +411,7 @@ class CompatRepositoryManager @Inject constructor(
         return null
     }
 
-    /** Одна попытка: конкретная ветка + каталог внутри неё. */
+    /** One attempt: a specific branch plus a directory inside it. */
     private suspend fun resolveGitAt(
         host: RepoUrlResolver.GitHost,
         owner: String,
@@ -423,7 +423,7 @@ class CompatRepositoryManager @Inject constructor(
         if (host == RepoUrlResolver.GitHost.GITHUB) {
             val tree = fetchTree(owner, name, ref, recursive = true)
                 .let { if (it == null || it.truncated || it.files.isEmpty()) fetchTree(owner, name, ref, recursive = false) else it }
-            // Сначала файлы, выглядящие как индекс, в приоритете INDEX_FILE_NAMES
+            // Files that look like an index first, in INDEX_FILE_NAMES priority order
             for (path in indexCandidates(tree, dir)) {
                 val url = host.rawUrl(owner, name, ref, path)
                 val text = fetchText(url) ?: continue
@@ -432,7 +432,7 @@ class CompatRepositoryManager @Inject constructor(
                 storage.writeIndex(repo.id, "index", text)
                 return ResolvedIndex(url, ref, parsed, treeMode = false)
             }
-            // Индекса нет: каждый *.json в репозитории может быть отдельным bookSource
+            // No index: every *.json in the repository may be a bookSource of its own
             if (tree != null) {
                 val usable = RepoUrlResolver.treeFiles(tree.files.map { it.path to it.size })
                 val entries = CompatRepoParsers.parseTree(
@@ -457,7 +457,7 @@ class CompatRepositoryManager @Inject constructor(
             }
         }
 
-        // GitLab и прочие: перебор известных имён в ветке (HEAD — валидная ветка GitLab)
+        // GitLab and others: probe known file names in the branch (HEAD is valid on GitLab)
         val refOrDefault = if (host == RepoUrlResolver.GitHost.GITLAB) ref.ifBlank { "HEAD" } else ref
         val base = host.rawUrl(owner, name, refOrDefault, dir).trimEnd('/')
         for (fileName in CompatRepoParsers.INDEX_FILE_NAMES.take(RepoUrlResolver.MAX_PROBES)) {
@@ -472,9 +472,9 @@ class CompatRepositoryManager @Inject constructor(
     }
 
     /**
-     * Файлы дерева, годные на роль индекса: имя совпало с [CompatRepoParsers.INDEX_FILE_NAMES]
-     * (в порядке приоритета), а если путь каталога задан — только внутри него.
-     * На глубине меньше — раньше: `index.json` в корне важнее `sub/dir/index.json`.
+     * Tree files that can act as the index: name matches [CompatRepoParsers.INDEX_FILE_NAMES]
+     * (in priority order) and, when a directory is given, only inside it.
+     * Shallower wins: a root `index.json` beats `sub/dir/index.json`.
      */
     private fun indexCandidates(tree: Tree?, dir: String): List<String> {
         if (tree == null) return emptyList()
@@ -489,7 +489,7 @@ class CompatRepositoryManager @Inject constructor(
         return out.distinct()
     }
 
-    /** Произвольный хост: пробуем URL и известные имена, первый распознанный выигрывает. */
+    /** Any host: try the URL and known names, the first one that parses wins. */
     private suspend fun resolveProbe(urls: List<String>, repo: CompatRepository): ResolvedIndex? {
         for (url in urls) {
             val text = fetchText(url) ?: continue
@@ -501,7 +501,7 @@ class CompatRepositoryManager @Inject constructor(
         return null
     }
 
-    /** Payload источника: инлайн-объект из кэша индекса или скачанный файл. */
+    /** Source payload: an inline object from the index cache, or a downloaded file. */
     private suspend fun payloadFor(entry: CompatRepoEntry): ByteArray? {
         if (entry.inlineKey.isNotBlank() && entry.payloadUrl.isBlank()) {
             val indexText = storage.readIndex(entry.repoId, "index")
@@ -546,7 +546,7 @@ class CompatRepositoryManager @Inject constructor(
         )
     }
 
-    // ── Сеть ─────────────────────────────────────────────────────────────────
+    // ── Networking ─────────────────────────────────────────────────────────────
 
     private data class Tree(val files: List<CompatRepoParsers.TreeFile>, val truncated: Boolean)
 
@@ -558,8 +558,8 @@ class CompatRepositoryManager @Inject constructor(
                     resp.body.string()
                 }
         }.onFailure {
-            // Ошибку сети показываем на самой подписке (CompatRepository.lastError),
-            // в per-source диагностику её не пишем: это не источник падал.
+            // A network failure is reported on the subscription itself (CompatRepository.lastError),
+            // not in per-source diagnostics: no source failed here.
             Timber.d(it, "Compat: fetch %s failed", url)
         }.getOrNull()
     }
@@ -611,7 +611,7 @@ class CompatRepositoryManager @Inject constructor(
     }.getOrDefault("")
 
     companion object {
-        /** Стабильный id подписки: хост/путь + короткий хэш, чтобы не сталкивались `o/r`. */
+        /** Stable subscription id: host/path + short hash, so two `o/r` cannot collide. */
         fun repositoryId(url: String): String {
             val readable = url.removePrefix("https://").removePrefix("http://")
                 .trimEnd('/')
@@ -628,7 +628,7 @@ class CompatRepositoryManager @Inject constructor(
     }
 }
 
-/** Id записи установки: одна и та же функция у менеджера и у UI (сверить «установлено ли»). */
+/** Install record id: one function for the manager and the UI ("is it installed?"). */
 object CompatInstallIds {
     fun recordId(ecosystem: CompatEcosystem, key: String): String = "${ecosystem.id}:$key"
 }
@@ -639,7 +639,7 @@ internal fun String.displayNameFromUrl(): String {
     return stripUrlPrefix(stripped)
 }
 
-/** `github.com/o/r` → `o/r`; длинный путь режем по хвосту. */
+/** `github.com/o/r` → `o/r`; long paths are cut at the tail. */
 private fun stripUrlPrefix(s: String): String {
     val body = s.removePrefix("github.com/").removePrefix("raw.githubusercontent.com/")
         .removePrefix("gitlab.com/")

@@ -6,9 +6,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Проверяет LegadoRuleEngine на реалистичных правилах из публичных bookSource:
- * CSS-цепочки с end-правилами, индексные суффиксы, regex-операции, альтернативы,
- * @js, legacy-селекторы (tag./id./class.), шаблоны {{}}.
+ * Exercises LegadoRuleEngine with realistic rules from public bookSources:
+ * CSS chains with end rules, index suffixes, regex operations, alternatives,
+ * @js, legacy selectors (tag./id./class.) and {{}} templates.
  */
 class LegadoRuleEngineTest {
 
@@ -44,7 +44,7 @@ class LegadoRuleEngineTest {
 
     private fun doc() = Jsoup.parse(searchHtml, "https://example.com")
 
-    // ── CSS + end-правила ────────────────────────────────────────────────────
+    // ── CSS + end rules ─────────────────────────────────────────────────────────
 
     @Test
     fun `css chain with text end rule`() {
@@ -89,7 +89,7 @@ class LegadoRuleEngineTest {
         val text = engine.getString(doc(), "#content@text")
         assertTrue(text.contains("Paragraph one."))
         assertTrue(text.contains("Paragraph two."))
-        assertTrue(!text.contains("AD BLOCK") || text.contains("AD BLOCK")) // text() включает всё
+        assertTrue(!text.contains("AD BLOCK") || text.contains("AD BLOCK")) // text() takes everything
     }
 
     @Test
@@ -98,7 +98,7 @@ class LegadoRuleEngineTest {
         assertTrue(html.contains("<br>") || html.contains("<br/>"))
     }
 
-    // ── Индексные суффиксы ───────────────────────────────────────────────────
+    // ── Index suffixes ──────────────────────────────────────────────────────────
 
     @Test
     fun `index suffix selects single element`() {
@@ -141,7 +141,7 @@ class LegadoRuleEngineTest {
         assertEquals("Title Details", result)
     }
 
-    // ── Альтернативы и конкатенация ──────────────────────────────────────────
+    // ── Alternatives and concatenation ──────────────────────────────────────────
 
     @Test
     fun `alternative rules pick first non-empty`() {
@@ -155,7 +155,7 @@ class LegadoRuleEngineTest {
         assertEquals(listOf("Details Title", "Writer Name"), result)
     }
 
-    // ── Legacy-селекторы ─────────────────────────────────────────────────────
+    // ── Legacy selectors ────────────────────────────────────────────────────────
 
     @Test
     fun `legacy id selector`() {
@@ -189,13 +189,13 @@ class LegadoRuleEngineTest {
     @Test
     fun `js infinite loop is terminated`() {
         val start = System.currentTimeMillis()
-        // Довольно короткий таймаут для теста
+        // A deliberately short timeout for the test
         val fastEngine = LegadoRuleEngine(jsTimeoutMs = 500)
         val result = fastEngine.getString(doc(), "#info h1@text@js:while(true){}")
         val elapsed = System.currentTimeMillis() - start
-        // Либо прервалось по таймауту (result остаётся входным), либо не зависло
+        // Either it timed out (result stays as the input) or it did not hang
         assertTrue("elapsed=${elapsed}ms", elapsed < 15_000)
-        assertEquals("Details Title", result) // fallback на текущее значение
+        assertEquals("Details Title", result) // falls back to the current value
     }
 
     // ── JSONPath ─────────────────────────────────────────────────────────────
@@ -214,7 +214,7 @@ class LegadoRuleEngineTest {
         assertEquals(listOf("A", "B"), elements)
     }
 
-    // ── Шаблоны ──────────────────────────────────────────────────────────────
+    // ── Templates ───────────────────────────────────────────────────────────────
 
     @Test
     fun `template get variable substitution`() {
@@ -224,7 +224,7 @@ class LegadoRuleEngineTest {
             "https://api.example.com/book?id=@get:{bid}",
             vars,
         )
-        // Правило целиком — шаблон, возвращается подстановка
+        // The whole rule is a template; the substitution is returned
         assertEquals(listOf("https://api.example.com/book?id=12345"), result)
     }
 
@@ -239,7 +239,7 @@ class LegadoRuleEngineTest {
     @Test
     fun `xpath with attribute predicate`() {
         val result = engine.getString(doc(), "//h1[@id='none']|//h1")
-        // XPath-альтернативы через | — h1 без id: проверяем что хоть что-то вернулось
+        // XPath alternatives via | — h1 without id: just assert something came back
         assertTrue(result.isBlank() || result.contains("Details Title"))
     }
 }

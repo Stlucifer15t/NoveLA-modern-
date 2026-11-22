@@ -5,15 +5,15 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 
 /**
- * JSON-модель bookSource (формат Legado/阅读3.0).
- * Все поля необязательны — Legado экспортирует очень разные наборы полей.
+ * bookSource JSON model (Legado / 阅读 3.0 format).
+ * Every field is optional — Legado exports wildly different field sets.
  */
 @Serializable
 data class LegadoBookSource(
     @SerialName("bookSourceName") val bookSourceName: String = "",
     @SerialName("bookSourceUrl") val bookSourceUrl: String = "",
     @SerialName("bookSourceGroup") val bookSourceGroup: String = "",
-    /** 0=текст, 1=аудио, 2=картинки(манга), 3=файл, 4=видео */
+    /** 0 = text, 1 = audio, 2 = images (manga), 3 = file, 4 = video */
     @SerialName("bookSourceType") val bookSourceType: Int = 0,
     @SerialName("bookSourceComment") val bookSourceComment: String = "",
     @SerialName("enabled") val enabled: Boolean = true,
