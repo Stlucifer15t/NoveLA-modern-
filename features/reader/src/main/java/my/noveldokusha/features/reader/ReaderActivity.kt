@@ -53,6 +53,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import my.noveldokusha.core.appPreferences.AppPreferences
+import my.noveldokusha.core.readingtime.ReadingTimer
 import my.noveldokusha.coreui.BaseActivity
 import my.noveldokusha.coreui.composableActions.SetSystemBarTransparent
 import my.noveldokusha.coreui.theme.Theme
@@ -117,6 +118,8 @@ class ReaderActivity : BaseActivity() {
 
     @Inject
     lateinit var appPreferences: AppPreferences
+
+    private val readingTimer by lazy { ReadingTimer(appPreferences) }
 
     @Inject
     internal lateinit var readerViewHandlersActions: ReaderViewHandlersActions
@@ -261,6 +264,18 @@ class ReaderActivity : BaseActivity() {
             viewModel.onCloseManually()
             finish()
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        readingTimer.attach(viewModel.bookUrl)
+        readingTimer.resume()
+    }
+
+    override fun onPause() {
+        // Время читалки учитываем только на переднем плане (см. ReadingTimer).
+        readingTimer.pause()
+        super.onPause()
     }
 
     override fun onDestroy() {

@@ -1525,4 +1525,22 @@
     <string name="video_sleep_episode">Конец серии</string>
     <string name="video_sleep_remaining">Сон через %1$s</string>
     <string name="table_of_contents_title">Оглавление</string>
+    <string name="stats_reading_title">Статистика чтения</string>
+    <string name="stats_share">Поделиться</string>
+    <string name="stats_this_week_title">Эта неделя</string>
+    <string name="stats_reading_time">Время чтения</string>
+    <string name="stats_today">Сегодня</string>
+    <string name="stats_period_week">За неделю</string>
+    <string name="stats_period_month">За месяц</string>
+    <string name="stats_most_read">Больше всего читаете</string>
+    <string name="stats_most_read_empty">Время появится здесь после того, как вы прочитаете главу в читалке. Считается начиная с этой версии.</string>
+    <string name="stats_achievements">Достижения</string>
+    <string name="stats_ach_bookworm">Книжный червь</string>
+    <string name="stats_ach_week">Недельный воин</string>
+    <string name="stats_ach_month">Мастер месяца</string>
+    <string name="stats_all_time">За всё время</string>
+    <string name="stats_total">Всего</string>
+    <string name="stats_hours_short">%1$d ч</string>
+    <string name="stats_reading_note">Время чтения измеряется, пока глава открыта в читалке, начиная с этой версии. Ничего не оценивается.</string>
+    <string name="stats_share_text">Статистика чтения NoveLA: сегодня %1$s, за неделю %2$s, прочитано глав: %3$d.</string>
 </resources>

@@ -101,6 +101,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import my.noveldokusha.core.LocaleManager
 import my.noveldokusha.core.appPreferences.AppPreferences
+import my.noveldokusha.core.readingtime.ReadingTimer
 import my.noveldokusha.coreui.AppThemeProvider
 import my.noveldokusha.coreui.theme.LocalIsDark
 import my.noveldokusha.coreui.theme.Theme
@@ -167,6 +168,8 @@ internal class MangaReaderActivity : ComponentActivity() {
 
     @Inject
     lateinit var appPreferences: AppPreferences
+
+    private val readingTimer by lazy { ReadingTimer(appPreferences) }
 
     @Inject
     lateinit var themeProvider: AppThemeProvider
@@ -253,6 +256,18 @@ internal class MangaReaderActivity : ComponentActivity() {
             viewModel.saveState()
             finish()
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        intent.getStringExtra(EXTRA_BOOK_URL)?.let { readingTimer.attach(it) }
+        readingTimer.resume()
+    }
+
+    override fun onPause() {
+        // Время читалки учитываем только на переднем плане (см. ReadingTimer).
+        readingTimer.pause()
+        super.onPause()
     }
 
     override fun onDestroy() {

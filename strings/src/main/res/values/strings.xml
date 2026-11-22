@@ -1159,4 +1159,22 @@
     <string name="video_sleep_episode">End of this episode</string>
     <string name="video_sleep_remaining">Sleep in %1$s</string>
     <string name="table_of_contents_title">Table of Contents</string>
+    <string name="stats_reading_title">Reading Stats</string>
+    <string name="stats_share">Share</string>
+    <string name="stats_this_week_title">This Week</string>
+    <string name="stats_reading_time">Reading Time</string>
+    <string name="stats_today">Today</string>
+    <string name="stats_period_week">This Week</string>
+    <string name="stats_period_month">This Month</string>
+    <string name="stats_most_read">Most Read</string>
+    <string name="stats_most_read_empty">Reading time appears here after you read a chapter in the reader. Counted from this version on.</string>
+    <string name="stats_achievements">Achievements</string>
+    <string name="stats_ach_bookworm">Bookworm</string>
+    <string name="stats_ach_week">Week Warrior</string>
+    <string name="stats_ach_month">Monthly Master</string>
+    <string name="stats_all_time">All Time</string>
+    <string name="stats_total">Total</string>
+    <string name="stats_hours_short">%1$d h</string>
+    <string name="stats_reading_note">Reading time is measured while a chapter is open in the reader, from this version on. Nothing is estimated.</string>
+    <string name="stats_share_text">NoveLA reading stats: %1$s today, %2$s this week, %3$d chapters read.</string>
 </resources>

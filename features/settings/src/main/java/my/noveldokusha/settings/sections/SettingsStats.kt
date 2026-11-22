@@ -5,9 +5,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.MenuBook
@@ -75,15 +77,12 @@ internal fun SettingsStats(stats: ReadingStats) {
         }
 
         if (!showMovies) {
+            ReadingStatsPanel(stats = stats)
+            Spacer(Modifier.height(12.dp))
             StatRow(
                 icon = Icons.Outlined.MenuBook,
                 title = stringResource(R.string.stats_library_books),
                 value = stats.libraryBooks.displayCount(),
-            )
-            StatRow(
-                icon = Icons.Outlined.MenuBook,
-                title = stringResource(R.string.stats_chapters_read),
-                value = stats.chaptersRead.displayCount(),
             )
             StatRow(
                 icon = Icons.Outlined.MenuBook,
@@ -94,11 +93,6 @@ internal fun SettingsStats(stats: ReadingStats) {
                 icon = Icons.Outlined.MenuBook,
                 title = stringResource(R.string.stats_streak),
                 value = stats.streakDays.displayCount(),
-            )
-            StatRow(
-                icon = Icons.Outlined.MenuBook,
-                title = stringResource(R.string.stats_days_active),
-                value = stats.daysActive.displayCount(),
             )
         } else {
             StatRow(
