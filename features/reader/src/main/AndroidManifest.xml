@@ -13,8 +13,9 @@
 			android:configChanges="orientation|screenSize|keyboardHidden" />
 		<activity
 			android:name="my.noveldokusha.features.reader.video.VideoPlayerActivity"
-			android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
+			android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden"
 			android:exported="false"
+			android:supportsPictureInPicture="true"
 			android:launchMode="singleTask" />
 
 		<service

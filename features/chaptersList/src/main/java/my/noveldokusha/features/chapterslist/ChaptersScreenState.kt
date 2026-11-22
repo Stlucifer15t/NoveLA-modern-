@@ -34,6 +34,8 @@ internal data class ChaptersScreenState(
     // Прочитанные главы/серии гасятся в списке. Значение то же, что пишет экран
     // «Настройки → Раскладка», так что второго источника правды нет.
     val greyOutReadChapters: State<Boolean>,
+    // Per-book: выключено ли уведомление о новых главах этой книги.
+    val notifyNewChapters: State<Boolean>,
     // Статусы загрузок глав (видео media3 + текст/манга): chapterUrl → бейдж.
     val chapterDownloads: MutableState<Map<String, ChapterDownloadUi>>,
 ) {

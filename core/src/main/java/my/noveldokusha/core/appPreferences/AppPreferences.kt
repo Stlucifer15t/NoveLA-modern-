@@ -1611,6 +1611,38 @@ class AppPreferences @Inject constructor(
     fun videoVariantForBook(bookUrl: String): String? =
         VIDEO_VARIANT_BOOK_QUALITY_MAP.value[bookUrl]
 
+    // Измеренное время чтения: день (индекс) -> url книги -> миллисекунды. Пишется
+    // только при уходе из читалки (см. ReadingTimer), поэтому оценок здесь нет.
+    val READING_TIME_LOG =
+        object : Preference<Map<String, Map<String, Long>>>("READING_TIME_LOG") {
+            override var value by SharedPreference_Serializable<Map<String, Map<String, Long>>>(
+                name = name,
+                sharedPreferences = preferences,
+                defaultValue = emptyMap(),
+                encode = { Json.encodeToString(it) },
+                decode = { Json.decodeFromString(it) }
+            )
+        }
+
+    // Книги, по которым НЕ присылать уведомления о новых главах. Главы обновляются
+    // как обычно — гасится только уведомление, поэтому полка остаётся честной.
+    val NOTIFY_MUTED_BOOK_URLS =
+        object : Preference<Set<String>>("NOTIFY_MUTED_BOOK_URLS") {
+            override var value by SharedPreference_Serializable<Set<String>>(
+                name = name,
+                sharedPreferences = preferences,
+                defaultValue = emptySet(),
+                encode = { Json.encodeToString(it) },
+                decode = { Json.decodeFromString(it) }
+            )
+        }
+
+    fun setNewChapterNotifications(bookUrl: String, enabled: Boolean) {
+        val current = NOTIFY_MUTED_BOOK_URLS.value.toMutableSet()
+        if (enabled) current.remove(bookUrl) else current.add(bookUrl)
+        NOTIFY_MUTED_BOOK_URLS.value = current
+    }
+
     // ── Video player: жесты и поведение панели (глобально, не per-book) ─────
 
     // Шаг перемотки двойным тапом/свайпом, мс. Дефолт 10с — как у VLC/MX.

@@ -149,6 +149,12 @@ internal class ReaderViewModel @Inject constructor(
 
     }
 
+    /** Оглавление новеллы: главы книги по порядку (см. ReaderSession.tableOfContents). */
+    fun tableOfContents() = readerSession.tableOfContents()
+
+    /** Переход к выбранной главе из оглавления. */
+    fun jumpToChapter(chapterUrl: String) = readerSession.jumpToChapter(chapterUrl)
+
     val items = readerSession.items
     val chaptersLoader = readerSession.readerChaptersLoader
     val readerSpeaker = readerSession.readerTextToSpeech

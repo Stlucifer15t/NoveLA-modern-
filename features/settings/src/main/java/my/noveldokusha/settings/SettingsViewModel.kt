@@ -15,6 +15,7 @@ import androidx.core.content.FileProvider
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import androidx.lifecycle.ViewModel
@@ -33,6 +34,8 @@ import my.noveldokusha.tooling.application_workers.AppWorkersInteractions
 import android.net.Uri
 import android.provider.DocumentsContract
 import java.io.File
+import my.noveldokusha.core.readingtime.summarizeReadingLog
+import my.noveldokusha.scraper.Scraper
 import my.noveldokusha.settings.BuildConfig
 import my.noveldokusha.debug.MemoryDiagnostics
 import timber.log.Timber
@@ -45,6 +48,7 @@ internal class SettingsViewModel @Inject constructor(
     private val appPreferences: AppPreferences,
     @ApplicationContext private val context: Context,
     private val appFileResolver: AppFileResolver,
+    private val notificationsCenter: my.noveldokusha.coreui.states.NotificationsCenter,
     private val appRemoteRepository: AppRemoteRepository,
     private val toasty: Toasty,
     private val appWorkersInteractions: AppWorkersInteractions,
@@ -52,7 +56,14 @@ internal class SettingsViewModel @Inject constructor(
     private val libraryDao: LibraryDao,
     private val readingHistoryDao: ReadingHistoryDao,
     private val chapterDao: ChapterDao,
+    private val scraper: Scraper,
 ) : ViewModel() {
+
+    /** Source name for the Most Read list, resolved the same way the history screen does. */
+    private fun sourceNameOf(bookUrl: String): String? {
+        val id = scraper.getSourceId(bookUrl) ?: return null
+        return scraper.sourcesList.find { it.id == id }?.resolveName(context)
+    }
 
     /**
      * Reader defaults. These are the reader panel's own preference states, not a mirror —
@@ -123,7 +134,8 @@ internal class SettingsViewModel @Inject constructor(
             ),
             autoUpdateIntervalHours = appPreferences.GLOBAL_APP_AUTOMATIC_LIBRARY_UPDATES_INTERVAL_HOURS.state(
                 viewModelScope
-            )
+            ),
+            onSendTestNotification = { sendTestNewChapterNotification() },
         ),
         massAddDelayMs = appPreferences.MASS_ADD_DELAY_MS.state(viewModelScope),
         downloadDelayMs = appPreferences.DOWNLOAD_DELAY_MS.state(viewModelScope),
@@ -170,6 +182,31 @@ internal class SettingsViewModel @Inject constructor(
         stats = _stats,
     )
 
+    /**
+     * Posts one notification on the channel the real new-chapter alerts use, so the permission,
+     * the channel and the notification shade can be checked before a chapter is ever involved.
+     */
+    fun sendTestNewChapterNotification() {
+        if (!androidx.core.app.NotificationManagerCompat.from(context).areNotificationsEnabled()) {
+            android.widget.Toast.makeText(
+                context,
+                my.noveldokusha.strings.R.string.library_test_notification_blocked,
+                android.widget.Toast.LENGTH_LONG,
+            ).show()
+            return
+        }
+        notificationsCenter.showNotification(
+            channelId = "New chapters",
+            channelName = context.getString(my.noveldokusha.strings.R.string.notification_channel_name_new_chapters),
+            notificationId = TEST_NOTIFICATION_ID,
+            importance = android.app.NotificationManager.IMPORTANCE_DEFAULT,
+        ) {
+            setContentTitle(context.getString(my.noveldokusha.strings.R.string.library_test_notification_title))
+            setContentText(context.getString(my.noveldokusha.strings.R.string.library_test_notification_text))
+            setAutoCancel(true)
+        }
+    }
+
     init {
         updateDatabaseSize()
         updateImagesFolderSize()
@@ -207,6 +244,41 @@ internal class SettingsViewModel @Inject constructor(
                     daysActive = activeDays(rows.map { it.lastReadEpochTimeMilli }),
                     episodesWatched = chapterDao.countWatchedEpisodes(),
                     watchSeconds = chapterDao.sumWatchedMs()?.div(1000L) ?: 0L,
+                )
+            }
+        }
+
+        // Measured reading time (ReadingTimer) joined with the history rows that name each book.
+        // Nothing here is estimated: the log holds only sessions the reader actually measured.
+        viewModelScope.launch {
+            combine(
+                readingHistoryDao.getAllFlow(),
+                appPreferences.READING_TIME_LOG.flow(),
+            ) { rows, log -> rows to log }.collect { (rows, log) ->
+                val periods = summarizeReadingLog(log, System.currentTimeMillis())
+                val rowByUrl = rows.associateBy { it.bookUrl }
+                val mostRead = periods.perBookMs.asSequence()
+                    .mapNotNull { (url, ms) ->
+                        val row = rowByUrl[url] ?: return@mapNotNull null
+                        MostReadBook(
+                            bookUrl = url,
+                            title = row.bookTitle,
+                            coverUrl = row.bookCoverUrl,
+                            sourceName = sourceNameOf(url),
+                            seconds = ms / 1000L,
+                        )
+                    }
+                    .take(3)
+                    .toList()
+                _stats.value = _stats.value.copy(
+                    readSecondsToday = periods.todayMs / 1000L,
+                    readSecondsThisWeek = periods.weekMs / 1000L,
+                    readSecondsThisMonth = periods.monthMs / 1000L,
+                    readSecondsAllTime = periods.allTimeMs / 1000L,
+                    weekDailySeconds = periods.weekDailyMs.map { it / 1000L },
+                    daysWithReadingWeek = periods.daysWithReadingWeek,
+                    daysWithReadingMonth = periods.daysWithReadingMonth,
+                    mostRead = mostRead,
                 )
             }
         }
@@ -750,3 +822,6 @@ internal class SettingsViewModel @Inject constructor(
         appPreferences.BACKUP_AUTO_INCLUDE_PLUGINS.value = include
     }
 }
+
+// Фиксированный id тестового уведомления: повторный тест заменяет предыдущее, а не плодит новые.
+private const val TEST_NOTIFICATION_ID = 0x7e57

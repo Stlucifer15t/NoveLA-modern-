@@ -22,6 +22,27 @@ data class ReadingStats(
     val episodesWatched: Int = 0,
     /** Seconds watched, summed from the player's own position, capped at the episode length. */
     val watchSeconds: Long = 0,
+    /** Measured reading time (chapter open in the reader). -1 while the first read is in flight. */
+    val readSecondsToday: Long = -1,
+    val readSecondsThisWeek: Long = -1,
+    val readSecondsThisMonth: Long = -1,
+    val readSecondsAllTime: Long = -1,
+    /** Seven values, Monday first: measured seconds for each day of the current week. */
+    val weekDailySeconds: List<Long> = emptyList(),
+    /** Days inside the current week / month with any measured reading. */
+    val daysWithReadingWeek: Int = 0,
+    val daysWithReadingMonth: Int = 0,
+    /** Top books by measured reading time, largest first. */
+    val mostRead: List<MostReadBook> = emptyList(),
+)
+
+/** A book in the Most Read list. [sourceName] is null for local books or unknown sources. */
+data class MostReadBook(
+    val bookUrl: String,
+    val title: String,
+    val coverUrl: String,
+    val sourceName: String?,
+    val seconds: Long,
 )
 
 /**

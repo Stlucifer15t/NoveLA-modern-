@@ -85,6 +85,7 @@ import androidx.media3.common.Tracks
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.mediacodec.MediaCodecSelector
+import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.session.MediaSession
@@ -101,6 +102,13 @@ import my.noveldokusha.coreui.theme.Theme
 import my.noveldokusha.features.reader.video.VideoPlayerViewModel.State
 import my.noveldokusha.network.MediaHttpClient
 import my.noveldokusha.reader.R
+import kotlinx.coroutines.delay
+import androidx.compose.runtime.produceState
+import androidx.compose.material3.IconButton
+import androidx.compose.material.icons.outlined.Timer
+import android.util.Rational
+import android.os.SystemClock
+import android.app.PictureInPictureParams
 import my.noveldokusha.scraper.domain.VideoSource
 import okhttp3.OkHttpClient
 import timber.log.Timber
@@ -163,6 +171,107 @@ private fun createRenderersFactory(
             }
         }
     }
+
+/** Фаза загрузки плеера для плашки: до первого кадра, буферизация, готово. */
+private enum class LoadPhase { Preparing, Buffering, Ready }
+
+/** [sinceMs] — момент входа в фазу (SystemClock.elapsedRealtime). [readyAfterMs] — время до первого готового кадра. */
+private data class LoadStatus(
+    val phase: LoadPhase,
+    val sinceMs: Long,
+    val readyAfterMs: Long? = null,
+)
+
+/** Таймер сна: пауза по времени либо в конце текущей серии. */
+private sealed interface SleepTimer {
+    data object Off : SleepTimer
+    data class Minutes(val endAtMs: Long) : SleepTimer
+    data object EndOfEpisode : SleepTimer
+}
+
+/**
+ * Плашка загрузки: показывает реальное время, сколько плеер ждёт (до кадра или при буферизации),
+ * и на 2.5 с — за сколько стартовал. Ничего не оценивает — только секунды от часов.
+ */
+@Composable
+private fun VideoLoadPill(status: LoadStatus, modifier: Modifier = Modifier) {
+    val now by produceState(initialValue = SystemClock.elapsedRealtime(), status) {
+        while (true) {
+            value = SystemClock.elapsedRealtime()
+            delay(100)
+        }
+    }
+    val text = when (status.phase) {
+        LoadPhase.Preparing -> stringResource(R.string.video_load_preparing, (now - status.sinceMs) / 1000f)
+        LoadPhase.Buffering -> stringResource(R.string.video_load_buffering, (now - status.sinceMs) / 1000f)
+        LoadPhase.Ready -> stringResource(R.string.video_load_ready, (status.readyAfterMs ?: 0L) / 1000f)
+    }
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(16.dp),
+        color = Color.Black.copy(alpha = 0.6f),
+    ) {
+        Text(
+            text = text,
+            color = Color.White,
+            style = MaterialTheme.typography.labelLarge,
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+        )
+    }
+}
+
+/** Оставшееся время сна, тикает раз в секунду. */
+@Composable
+private fun SleepCountdownText(endAtMs: Long) {
+    val remainingMs by produceState(initialValue = endAtMs - SystemClock.elapsedRealtime(), endAtMs) {
+        while (true) {
+            value = endAtMs - SystemClock.elapsedRealtime()
+            delay(1_000)
+        }
+    }
+    val totalSeconds = (remainingMs / 1000).coerceAtLeast(0L)
+    Text(
+        text = stringResource(
+            R.string.video_sleep_remaining,
+            "%d:%02d".format(totalSeconds / 60, totalSeconds % 60),
+        ),
+        color = Color.White,
+        style = MaterialTheme.typography.labelMedium,
+    )
+}
+
+/** Выбор таймера сна: 15–60 минут или конец текущей серии. Выключение — отдельным пунктом. */
+@Composable
+private fun SleepTimerDialog(onPick: (SleepTimer) -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.video_sleep_title)) },
+        text = {
+            Column {
+                TextButton(onClick = { onPick(SleepTimer.Off) }, modifier = Modifier.fillMaxWidth()) {
+                    Text(stringResource(R.string.video_sleep_off))
+                }
+                listOf(15, 30, 45, 60).forEach { minutes ->
+                    TextButton(
+                        onClick = {
+                            onPick(SleepTimer.Minutes(SystemClock.elapsedRealtime() + minutes * 60_000L))
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(stringResource(R.string.video_sleep_minutes, minutes))
+                    }
+                }
+                TextButton(onClick = { onPick(SleepTimer.EndOfEpisode) }, modifier = Modifier.fillMaxWidth()) {
+                    Text(stringResource(R.string.video_sleep_episode))
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.close)) }
+        },
+    )
+}
 
 /**
  * HUD жеста: иконка + значение по центру экрана поверх видео.
@@ -303,6 +412,26 @@ class VideoPlayerActivity : ComponentActivity() {
         }
     }
 
+    // PiP: экран «картинка в картинке» — только видео, строка и панель скрыты.
+    private var inPip by mutableStateOf(false)
+
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        // Уходим домой во время воспроизведения — сворачиваем в PiP, а не останавливаем.
+        if (player?.isPlaying == true && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            runCatching {
+                enterPictureInPictureMode(
+                    PictureInPictureParams.Builder().setAspectRatio(Rational(16, 9)).build()
+                )
+            }
+        }
+    }
+
+    override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: Configuration) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
+        inPip = isInPictureInPictureMode
+    }
+
     private val playerListener = object : Player.Listener {
         override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) = updateKeepScreenOn()
         override fun onPlaybackStateChanged(playbackState: Int) = updateKeepScreenOn()
@@ -433,13 +562,6 @@ class VideoPlayerActivity : ComponentActivity() {
                                 }
                             }
                         }
-                        // Прогрев кеша — сразу при получении источников, без
-                        // ожидания открытия окна (ключи — URL, равенство по
-                        // содержимому). Открытый/закрытый диалог эти пробы не
-                        // отменяет: эффект висит на s.videos, а не на окне.
-                        LaunchedEffect(s.videos.map { it.url }) {
-                            probeAll(s.videos.filter { probeStatuses[it.url] == null })
-                        }
                         // Открытие окна — дозапуск: отсутствующие плюс DEAD
                         // (DEAD перепроверяем при каждом открытии, как договорились).
                         LaunchedEffect(showVariantDialog) {
@@ -511,6 +633,48 @@ class VideoPlayerActivity : ComponentActivity() {
                         // Верхняя строка и панель меди3 видимы вместе: тап по
                         // видео показывает обе, скрытие — через таймаут меди3.
                         var controlsVisible by remember(video.url) { mutableStateOf(true) }
+                        // Точка отсчёта загрузки — с первого показа этой серии/варианта.
+                        val loadStartedAt = remember(video.url, forceSoftwareDecoder, retryToken) {
+                            SystemClock.elapsedRealtime()
+                        }
+                        var loadStatus by remember(video.url, forceSoftwareDecoder, retryToken) {
+                            mutableStateOf(LoadStatus(LoadPhase.Preparing, loadStartedAt))
+                        }
+                        // Готово-плашка гаснет сама через 2.5 с (readyAfterMs → null).
+                        LaunchedEffect(loadStatus) {
+                            if (loadStatus.phase == LoadPhase.Ready && loadStatus.readyAfterMs != null) {
+                                delay(2_500)
+                                loadStatus = loadStatus.copy(readyAfterMs = null)
+                            }
+                        }
+                        // Прогрев проб — только после первого готового кадра: проба не
+                        // конкурирует с стартом плеера за соединения и полосу. Бейджи
+                        // вариантов появятся чуть позже, открытие окна дозапустит пробы.
+                        LaunchedEffect(s.videos.map { it.url }, loadStatus.phase) {
+                            if (loadStatus.phase != LoadPhase.Ready) return@LaunchedEffect
+                            probeAll(s.videos.filter { probeStatuses[it.url] == null })
+                        }
+                        var sleepTimer by remember { mutableStateOf<SleepTimer>(SleepTimer.Off) }
+                        var showSleepDialog by remember { mutableStateOf(false) }
+                        // Таймер по времени: пауза по сроку; отменяется сам при смене/выключении.
+                        LaunchedEffect(sleepTimer) {
+                            val timer = sleepTimer
+                            if (timer is SleepTimer.Minutes) {
+                                val waitMs = timer.endAtMs - SystemClock.elapsedRealtime()
+                                if (waitMs > 0) delay(waitMs)
+                                player?.pause()
+                                sleepTimer = SleepTimer.Off
+                            }
+                        }
+                        if (showSleepDialog) {
+                            SleepTimerDialog(
+                                onPick = {
+                                    sleepTimer = it
+                                    showSleepDialog = false
+                                },
+                                onDismiss = { showSleepDialog = false },
+                            )
+                        }
                         Box(Modifier.fillMaxSize()) {
                             // key(): смена варианта/переключение на программный
                             // декодер/повтор пересоздаёт AndroidView → новый плеер.
@@ -612,9 +776,18 @@ class VideoPlayerActivity : ComponentActivity() {
                                         updateKeepScreenOn()
                                     },
                                     onPlayerEnded = {
-                                        persistAndSwitch(viewModel.nextChapterUrl())
+                                        if (sleepTimer == SleepTimer.EndOfEpisode) {
+                                            // Таймер «до конца серии» выполнен: не переходим на следующую.
+                                            sleepTimer = SleepTimer.Off
+                                            persistPosition()
+                                        } else {
+                                            persistAndSwitch(viewModel.nextChapterUrl())
+                                        }
                                     },
                                     preferSoftwareDecoder = forceSoftwareDecoder,
+                                    loadStartedAtMs = loadStartedAt,
+                                    onLoadStatus = { loadStatus = it },
+                                    inPip = inPip,
                                     // Первый декодер-крэш молча уводит в
                                     // программный декодер; прочие ошибки → экран ниже.
                                     onPlayerError = { error ->
@@ -639,7 +812,7 @@ class VideoPlayerActivity : ComponentActivity() {
                             // Оверлей поверх видео: строка видна ровно тогда, когда
                             // панель меди3, и гаснет вместе с ней (fade, не мигает).
                             AnimatedVisibility(
-                                visible = controlsVisible,
+                                visible = controlsVisible && !inPip,
                                 enter = fadeIn(),
                                 exit = fadeOut(),
                                 modifier = Modifier
@@ -727,12 +900,35 @@ class VideoPlayerActivity : ComponentActivity() {
                                         ) {
                                             Text(stringResource(R.string.video_open_in_other))
                                         }
+                                        when (val timer = sleepTimer) {
+                                            is SleepTimer.Minutes -> SleepCountdownText(timer.endAtMs)
+                                            SleepTimer.EndOfEpisode -> Text(
+                                                text = stringResource(R.string.video_sleep_episode),
+                                                color = Color.White,
+                                                style = MaterialTheme.typography.labelMedium,
+                                            )
+                                            SleepTimer.Off -> Unit
+                                        }
+                                        IconButton(onClick = { showSleepDialog = true }) {
+                                            Icon(
+                                                Icons.Outlined.Timer,
+                                                contentDescription = stringResource(R.string.video_sleep_title),
+                                                tint = if (sleepTimer == SleepTimer.Off) Color.White
+                                                else MaterialTheme.colorScheme.primary,
+                                            )
+                                        }
                                     }
                                 }
                             }
                             // HUD жеста (перемотка/яркость/громкость/скорость):
                             // поверх видео, читает только свой state — Ready
                             // от кадровых обновлений не перекомпозуется.
+                            if (!inPip && (loadStatus.phase != LoadPhase.Ready || loadStatus.readyAfterMs != null)) {
+                                VideoLoadPill(
+                                    status = loadStatus,
+                                    modifier = Modifier.align(Alignment.Center),
+                                )
+                            }
                             GestureHudOverlay(gestureHud)
                             // Экран ошибки поверх плеера (последний ребёнок Box —
                             // рисуется поверх шапки/панели и гасит их жесты,
@@ -1230,6 +1426,9 @@ private fun PlayerSurface(
     preferSoftwareDecoder: Boolean,
     // Ошибка воспроизведения уходит наверх: экран ошибки поверх плеера.
     onPlayerError: (PlaybackException) -> Unit,
+    loadStartedAtMs: Long,
+    onLoadStatus: (LoadStatus) -> Unit,
+    inPip: Boolean,
 ) {
     AndroidView(
         modifier = Modifier
@@ -1274,8 +1473,21 @@ private fun PlayerSurface(
                     OkHttpDataSource.Factory(mediaClient)
                         .setDefaultRequestProperties(video.headers)
                 )
+                // Буфер: старт по 0.5 с данных вместо дефолтных 2.5 с (порог первого кадра),
+                // после перебуферизации — 2 с (дефолт 5 с). Минимум 15 с вместо дефолтных 50 с,
+                // максимум 50 с как у дефолта: меньше данных держим наперёд, память не растёт.
+                // Эффект на время старта проверяется замером (плашка «Готово за N с»).
+                val loadControl = DefaultLoadControl.Builder()
+                    .setBufferDurationsMs(
+                        /* minBufferMs = */ 15_000,
+                        /* maxBufferMs = */ 50_000,
+                        /* bufferForPlaybackMs = */ 500,
+                        /* bufferForPlaybackAfterRebufferMs = */ 2_000,
+                    )
+                    .build()
                 val exoPlayer = ExoPlayer.Builder(ctx, createRenderersFactory(ctx, preferSoftwareDecoder))
                     .setMediaSourceFactory(DefaultMediaSourceFactory(dataSourceFactory))
+                    .setLoadControl(loadControl)
                     // Аудио-фокус: handleAudioFocus=true обязателен — без второго
                     // аргумента плеер фокус не запрашивает. Becoming-noisy: вынутые
                     // наушники ставят паузу сами.
@@ -1367,9 +1579,27 @@ private fun PlayerSurface(
                         onHud = onGestureHud,
                     )
                 )
+                var readyReported = false
                 exoPlayer.addListener(object : Player.Listener {
                     override fun onPlaybackStateChanged(playbackState: Int) {
                         if (playbackState == Player.STATE_ENDED) onPlayerEnded()
+                        when (playbackState) {
+                            Player.STATE_BUFFERING -> onLoadStatus(
+                                LoadStatus(LoadPhase.Buffering, SystemClock.elapsedRealtime())
+                            )
+                            Player.STATE_READY -> {
+                                val now = SystemClock.elapsedRealtime()
+                                if (!readyReported) {
+                                    // Первый готовый кадр: время от открытия серии до старта — честная цифра.
+                                    readyReported = true
+                                    val afterMs = now - loadStartedAtMs
+                                    Timber.d("Video ready in ${afterMs}ms")
+                                    onLoadStatus(LoadStatus(LoadPhase.Ready, now, readyAfterMs = afterMs))
+                                } else {
+                                    onLoadStatus(LoadStatus(LoadPhase.Ready, now))
+                                }
+                            }
+                        }
                     }
 
                     // Без этого колбэка playback-ошибка (падение декодера)
@@ -1400,6 +1630,7 @@ private fun PlayerSurface(
             // Смена автоскрытия в панели применяется живьём: factory
             // выполняется один раз, только update видит новый gestureSettings.
             view.setControllerShowTimeoutMs(gestureSettings.controllerAutoHideMs)
+            view.useController = !inPip
         },
         onRelease = { view ->
             // view.player — обёртка ChapterSwitchingPlayer; освобождаем сырой

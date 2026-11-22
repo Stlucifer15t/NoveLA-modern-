@@ -101,6 +101,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import my.noveldokusha.core.LocaleManager
 import my.noveldokusha.core.appPreferences.AppPreferences
+import my.noveldokusha.core.readingtime.ReadingTimer
 import my.noveldokusha.coreui.AppThemeProvider
 import my.noveldokusha.coreui.theme.LocalIsDark
 import my.noveldokusha.coreui.theme.Theme
@@ -114,6 +115,8 @@ import my.noveldokusha.features.reader.manga.viewer.pager.createPagerViewer
 import my.noveldokusha.features.reader.manga.viewer.webtoon.MangaWebtoonViewer
 import my.noveldokusha.features.reader.tools.PageImageLoader
 import my.noveldokusha.features.reader.ui.PluginErrorDialog
+import my.noveldokusha.features.reader.ui.TableOfContentsSheet
+import my.noveldokusha.features.reader.ui.TocEntry
 import my.noveldokusha.reader.R
 import timber.log.Timber
 import javax.inject.Inject
@@ -165,6 +168,8 @@ internal class MangaReaderActivity : ComponentActivity() {
 
     @Inject
     lateinit var appPreferences: AppPreferences
+
+    private val readingTimer by lazy { ReadingTimer(appPreferences) }
 
     @Inject
     lateinit var themeProvider: AppThemeProvider
@@ -251,6 +256,18 @@ internal class MangaReaderActivity : ComponentActivity() {
             viewModel.saveState()
             finish()
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        intent.getStringExtra(EXTRA_BOOK_URL)?.let { readingTimer.attach(it) }
+        readingTimer.resume()
+    }
+
+    override fun onPause() {
+        // Время читалки учитываем только на переднем плане (см. ReadingTimer).
+        readingTimer.pause()
+        super.onPause()
     }
 
     override fun onDestroy() {
@@ -1115,10 +1132,8 @@ internal class MangaReaderActivity : ComponentActivity() {
     }
 
     /**
-     * In-reader список глав (вместо отдельного ChaptersActivity): диалог в стиле
-     * MangaReaderSettingsSheet, текущая глава подсвечена, тап — переход на главу.
+     * In-reader оглавление: общий шит [TableOfContentsSheet] (как у новеллы).
      */
-    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     private fun MangaReaderChapterListPanel(
         chapters: List<Chapter>,
@@ -1126,93 +1141,12 @@ internal class MangaReaderActivity : ComponentActivity() {
         onChapterClick: (String) -> Unit,
         onClose: () -> Unit,
     ) {
-        BasicAlertDialog(onDismissRequest = onClose) {
-            ElevatedCard(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(max = 700.dp)
-                    .fillMaxHeight(0.8f)
-                    .navigationBarsPadding(),
-                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 12.dp),
-            ) {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(start = 20.dp, end = 4.dp, top = 8.dp),
-                    ) {
-                        Text(
-                            text = stringResource(R.string.table_of_contents),
-                            style = MaterialTheme.typography.titleMedium,
-                            modifier = Modifier.weight(1f),
-                        )
-                        IconButton(onClick = onClose) {
-                            Icon(
-                                Icons.Filled.Close,
-                                contentDescription = stringResource(R.string.close),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    }
-                    HorizontalDivider()
-                    if (chapters.isEmpty()) {
-                        Text(
-                            text = stringResource(R.string.manga_reader_chapter_list_empty),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(20.dp),
-                        )
-                    } else {
-                        val current = currentIndex.coerceIn(0, chapters.size - 1)
-                        // Сетка номерованных плиток, 4 в ряд: видно сразу весь
-                        // диапазон глав, а не один ряд на весь экран.
-                        LazyVerticalGrid(
-                            columns = GridCells.Fixed(4),
-                            modifier = Modifier.fillMaxWidth(),
-                            contentPadding = PaddingValues(12.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            itemsIndexed(chapters, key = { _, item -> item.url }) { index, chapter ->
-                                val isCurrent = index == current
-                                // Номер добавляем, только если его нет в самом названии
-                                // (иначе «97: Chapter 97»).
-                                val label = if (chapter.title.contains(Regex("\\b${index + 1}\\b"))) {
-                                    chapter.title
-                                } else {
-                                    "${index + 1}: ${chapter.title}"
-                                }
-                                Surface(
-                                    onClick = { onChapterClick(chapter.url) },
-                                    shape = RoundedCornerShape(12.dp),
-                                    color = if (isCurrent) MaterialTheme.colorScheme.primary
-                                    else MaterialTheme.colorScheme.surfaceContainerHigh,
-                                    contentColor = if (isCurrent) MaterialTheme.colorScheme.onPrimary
-                                    else MaterialTheme.colorScheme.onSurface,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(48.dp),
-                                ) {
-                                    Box(
-                                        contentAlignment = Alignment.Center,
-                                        modifier = Modifier.padding(horizontal = 6.dp),
-                                    ) {
-                                        Text(
-                                            text = label,
-                                            style = MaterialTheme.typography.labelLarge,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis,
-                                            textAlign = TextAlign.Center,
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        TableOfContentsSheet(
+            entries = chapters.map { TocEntry(url = it.url, title = it.title) },
+            currentIndex = currentIndex,
+            onSelect = onChapterClick,
+            onDismiss = onClose,
+        )
     }
 
     private fun blendModeFor(mode: Int): BlendMode = when (mode) {

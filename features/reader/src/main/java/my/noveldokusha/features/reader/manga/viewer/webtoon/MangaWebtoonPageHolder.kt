@@ -42,6 +42,14 @@ internal class MangaWebtoonPageHolder(
     /** URL главы, к которой привязан холдер (ключ для guard'а протухших результатов). */
     private var boundChapterUrl: String = ""
 
+    /**
+     * Ключ (chapterUrl|pageUrl) страницы, которая уже передана в SSIV. Нужен, чтобы
+     * перебинд той же страницы не сбрасывал картинку: DiffUtil шлёт onChanged при смене
+     * isLoading соседей, и без этого каждая видимая страница мигала чёрным на время
+     * перечитывания из кэша.
+     */
+    private var shownKey: String? = null
+
     /** Картинка страницы: fit-width, без тачей (лента скроллит сама). */
     private val pageImage = MangaPageImageView(context)
 
@@ -96,6 +104,22 @@ internal class MangaWebtoonPageHolder(
      *  ленте соседние главы имеют разные URL, глобальный viewer.chapterUrl
      *  здесь не годится. */
     fun bind(page: MangaPage, chapterUrl: String) {
+        val key = "$chapterUrl|${page.url}"
+        if (key == shownKey) {
+            // Та же страница уже на экране: оставляем картинку, обновляем только
+            // раскладку (отступы/ширина) и конфиг. Без recycle не бывает чёрной вспышки.
+            this.page = page
+            boundChapterUrl = chapterUrl
+            refreshLayoutParams()
+            updateImageConfig()
+            if (pageImage.sWidth > 0 && pageImage.sHeight > 0) {
+                val height = (availableWidth() * pageImage.sHeight) / pageImage.sWidth
+                pageImage.setHeightIfChanged(height)
+                progressContainer.setHeightIfChanged(height)
+            }
+            return
+        }
+        shownKey = null
         // Ключ главы захватывается СИНХРОННО: внутри корутины он мог бы устареть
         // к моменту чтения (холдер перепривязан к другой главе).
         this.page = page
@@ -167,6 +191,7 @@ internal class MangaWebtoonPageHolder(
                 // Fit-width: SSIV сам декодирует и позиционирует по ширине;
                 // горизонтальная позиция — из конфига вьюера (zoomStart).
                 pageImage.setPage(file)
+                shownKey = key
             }
         }
     }
@@ -290,6 +315,7 @@ internal class MangaWebtoonPageHolder(
     override fun recycle() {
         loadJob?.cancel()
         loadJob = null
+        shownKey = null
         removeError()
         pageImage.recycle()
         page = null

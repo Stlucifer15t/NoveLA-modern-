@@ -53,6 +53,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import my.noveldokusha.core.appPreferences.AppPreferences
+import my.noveldokusha.core.readingtime.ReadingTimer
 import my.noveldokusha.coreui.BaseActivity
 import my.noveldokusha.coreui.composableActions.SetSystemBarTransparent
 import my.noveldokusha.coreui.theme.Theme
@@ -83,6 +84,7 @@ import my.noveldokusha.features.reader.ui.ReaderScreen
 import my.noveldokusha.features.reader.ui.ReaderScreenState
 import my.noveldokusha.features.reader.ui.ReaderViewHandlersActions
 import my.noveldokusha.navigation.NavigationRoutes
+import my.noveldokusha.features.reader.ui.TocEntry
 import my.noveldokusha.reader.R
 import my.noveldokusha.reader.databinding.ActivityReaderBinding
 import my.noveldokusha.text_to_speech.Utterance
@@ -116,6 +118,8 @@ class ReaderActivity : BaseActivity() {
 
     @Inject
     lateinit var appPreferences: AppPreferences
+
+    private val readingTimer by lazy { ReadingTimer(appPreferences) }
 
     @Inject
     internal lateinit var readerViewHandlersActions: ReaderViewHandlersActions
@@ -698,6 +702,10 @@ class ReaderActivity : BaseActivity() {
                         viewModel.onCloseManually()
                         finish()
                     },
+                    tableOfContents = {
+                        viewModel.tableOfContents().map { TocEntry(url = it.url, title = it.title) }
+                    },
+                    onJumpToChapter = { viewModel.jumpToChapter(it) },
                     onOpenChapterInWeb = {
                         // Текущая глава из VM (обновляется при листании); если по какой-то
                         // причине пуста — фолбэк на главу, с которой открыт ридер.
@@ -1138,6 +1146,8 @@ class ReaderActivity : BaseActivity() {
     }
 
     override fun onPause() {
+        // Время читалки учитываем только на переднем плане (см. ReadingTimer).
+        readingTimer.pause()
         // Автопрокрутка не должна двигать список, пока Activity не на экране.
         autoScrollPaused = true
         updateCurrentReadingPosSavingState(
@@ -1156,6 +1166,8 @@ class ReaderActivity : BaseActivity() {
 
     override fun onResume() {
         super.onResume()
+        readingTimer.attach(viewModel.bookUrl)
+        readingTimer.resume()
 
         // Возобновляем автопрокрутку после возврата на экран, если она включена.
         if (appPreferences.READER_AUTOSCROLL_ENABLED.value) {

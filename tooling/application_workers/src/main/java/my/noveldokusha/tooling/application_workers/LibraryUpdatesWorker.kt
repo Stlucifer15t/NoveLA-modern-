@@ -175,7 +175,10 @@ internal class LibraryUpdatesWorker @AssistedInject constructor(
                     failedUpdates = failedUpdates,
                 )
 
-                val updates = newUpdates.value.toList()
+                // Книга, по которой уведомления выключены, не шлёт их — главы в БД всё равно
+                // обновлены, так что список и «Лента» остаются верными.
+                val muted = appPreferences.NOTIFY_MUTED_BOOK_URLS.value
+                val updates = newUpdates.value.toList().filter { it.book.url !in muted }
                 for (index in updates.indices) {
                     val newUpdate = updates[index]
                     libraryUpdateNotification.showNewChaptersNotification(
