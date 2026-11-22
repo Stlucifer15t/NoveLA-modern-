@@ -1425,7 +1425,6 @@
     <string name="compat_installed_section">Установленные источники · %1$d</string>
     <string name="compat_add_repo">Добавить репозиторий</string>
     <string name="compat_detect_add">Определить и добавить</string>
-    <string name="compat_cancel">Отмена</string>
     <string name="compat_yes">Да</string>
     <string name="compat_no">Нет</string>
     <string name="compat_unknown_format">формат не определён</string>
@@ -1454,5 +1453,7 @@
     <string name="compat_subtitle">Вставьте URL репозитория — формат определяется по содержимому.</string>
     <string name="for_you_highest_rated">Лучшее по рейтингу</string>
     <string name="for_you_highest_rated_note">Среди %1$d книг, которые источники вернули для этого выбора — оценки их, а не наши.</string>
+    <string name="extensions_repo_url_title">URL репозитория Lua-плагинов</string>
+    <string name="extensions_repo_url_label">URL индекса репозитория (index.json)</string>
 </resources>
 

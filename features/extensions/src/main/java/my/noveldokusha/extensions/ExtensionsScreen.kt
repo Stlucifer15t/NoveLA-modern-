@@ -498,13 +498,13 @@ private fun RepositoryUrlDialog(
             viewModel.onEvent(ExtensionsScreenEvent.OnHideRepositoryDialog)
         },
         title = {
-            Text("Repository URL")
+            Text(stringResource(StringsR.string.extensions_repo_url_title))
         },
         text = {
             OutlinedTextField(
                 value = tempUrl,
                 onValueChange = { tempUrl = it },
-                label = { Text("Extensions Repository URL") },
+                label = { Text(stringResource(StringsR.string.extensions_repo_url_label)) },
                 placeholder = { Text("https://raw.githubusercontent.com/.../index.json") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
@@ -536,7 +536,7 @@ private fun RepositoryUrlDialog(
                     modifier = Modifier.weight(1f)
                 ) {
                     Text(
-                        text = "Cancel",
+                        text = stringResource(StringsR.string.cancel),
                         fontSize = 12.sp,
                         textAlign = TextAlign.Center
                     )
@@ -553,7 +553,7 @@ private fun RepositoryUrlDialog(
                     modifier = Modifier.weight(1f)
                 ) {
                     Text(
-                        text = "Save",
+                        text = stringResource(StringsR.string.save),
                         fontSize = 12.sp,
                         textAlign = TextAlign.Center
                     )

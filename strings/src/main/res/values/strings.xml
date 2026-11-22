@@ -1061,7 +1061,6 @@
     <string name="compat_installed_section">Installed sources · %1$d</string>
     <string name="compat_add_repo">Add repository</string>
     <string name="compat_detect_add">Detect and add</string>
-    <string name="compat_cancel">Cancel</string>
     <string name="compat_yes">Yes</string>
     <string name="compat_no">No</string>
     <string name="compat_unknown_format">unknown format</string>
@@ -1090,4 +1089,6 @@
     <string name="compat_subtitle">Paste a repository URL — the format is detected from the content.</string>
     <string name="for_you_highest_rated">Highest rated</string>
     <string name="for_you_highest_rated_note">Among the %1$d books the sources returned for this selection — the scores are theirs, not ours.</string>
+    <string name="extensions_repo_url_title">Lua plugin repository URL</string>
+    <string name="extensions_repo_url_label">Repository index URL (index.json)</string>
 </resources>

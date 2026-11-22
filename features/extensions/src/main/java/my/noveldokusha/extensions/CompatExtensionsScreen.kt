@@ -268,7 +268,7 @@ private fun AddRepoBlock(
                 onClick = { viewModel.onEvent(CompatExtensionsEvent.OnHideAddRepo) },
                 shape = RoundedCornerShape(8.dp),
             ) {
-                Text(stringResource(StringsR.string.compat_cancel), fontSize = 12.sp)
+                Text(stringResource(StringsR.string.cancel), fontSize = 12.sp)
             }
         }
         state.feedback?.let { FeedbackLine(it) }
