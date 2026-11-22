@@ -12,6 +12,8 @@ import my.noveldokusha.core.Response
 import my.noveldokusha.network.interceptors.PluginUARegistry
 import my.noveldokusha.scraper.configs.SourceMetadata
 import my.noveldokusha.scraper.domain.BookResult
+import my.noveldokusha.scraper.domain.BookReview
+import my.noveldokusha.scraper.domain.BookReviewsPage
 import my.noveldokusha.scraper.domain.ChapterResult
 import my.noveldokusha.scraper.domain.PluginShowErrorException
 import my.noveldokusha.scraper.domain.VideoSource
@@ -73,7 +75,7 @@ open class LuaSourceAdapter(
     protected val luaEngine: LuaEngine,
     protected val iconUrlFromYaml: String? = null,
     protected val fileName: String?
-) : SourceInterface.Catalog {
+) : SourceInterface.Catalog, SourceInterface.Reviews {
 
     // LuaJ Globals and runtime execution states (stacks) are not thread-safe.
     // Concurrent calls from multiple coroutines on Dispatchers.IO to the same luaScript
@@ -383,6 +385,35 @@ open class LuaSourceAdapter(
             }
         }
 
+    override suspend fun hasBookReviews(): Boolean =
+        withContext(Dispatchers.IO) {
+            mutex.withLock {
+                withSourceContext {
+                    !luaScript.get("getBookReviews").isnil()
+                }
+            }
+        }
+
+    override suspend fun getBookReviews(bookUrl: String, index: Int): Response<BookReviewsPage> =
+        withContext(Dispatchers.IO) {
+            mutex.withLock {
+                withSourceContext {
+                    luaEngine.resetShowError()
+                    try {
+                        val fn = luaScript.get("getBookReviews")
+                        if (fn.isnil()) return@withSourceContext Response.Success(BookReviewsPage(emptyList(), false))
+                        val result = fn.call(LuaValue.valueOf(bookUrl), LuaValue.valueOf(index))
+                        checkShowError() ?: convertLuaResultToReviews(result)
+                    } catch (e: Exception) {
+                        checkShowError() ?: run {
+                            Timber.e(e, "Lua getBookReviews [${metadata.id}]")
+                            Response.Error(e.message ?: "Unknown Lua error", e)
+                        }
+                    }
+                }
+            }
+        }
+
     override suspend fun getBookStatus(bookUrl: String): Response<String?> =
         withContext(Dispatchers.IO) {
             mutex.withLock {
@@ -640,6 +671,51 @@ open class LuaSourceAdapter(
         // а не поле таблицы книги. Читаем её тем же способом, что и в extractMetadata.
         contentType   = readContentType()
     )
+
+    /** Ответ getBookReviews: { items = { {...}, ... }, hasNext = bool }. nil → пустая страница. */
+    internal fun convertLuaResultToReviews(luaResult: LuaValue): Response<BookReviewsPage> {
+        if (!luaResult.istable()) return Response.Success(BookReviewsPage(emptyList(), false))
+        return try {
+            val table = luaResult.checktable()
+            val items = mutableListOf<BookReview>()
+            val itemsTable = table.get("items").opttable(null)
+            if (itemsTable != null) {
+                for (i in 1..itemsTable.length()) {
+                    val item = itemsTable.get(LuaValue.valueOf(i))
+                    if (item.istable()) convertLuaTableToBookReview(item.checktable())?.let(items::add)
+                }
+            }
+            Response.Success(BookReviewsPage(items, table.get("hasNext").optboolean(false)))
+        } catch (e: Exception) {
+            Timber.e(e, "convertLuaResultToReviews failed")
+            Response.Error(e.message ?: "Conversion error", e)
+        }
+    }
+
+    /** Отзыв без текста пропускаем: пустая карточка не несёт информации. */
+    internal fun convertLuaTableToBookReview(table: LuaTable): BookReview? {
+        val content = table.get("content").optjstring("").trim()
+        if (content.isEmpty()) return null
+        return BookReview(
+            id = table.get("id").let { if (it.isnil()) "" else it.tojstring() },
+            author = table.get("author").optjstring("").trim(),
+            // rating: number | string | nil; шкала 0..5, вне диапазона — обрезаем.
+            rating = table.get("rating").let { v ->
+                when {
+                    v.isnumber() -> v.todouble().toFloat()
+                    v.isstring() -> v.tojstring().toFloatOrNull()
+                    else -> null
+                }?.coerceIn(0f, 5f)
+            },
+            time = table.get("time").optjstring("").takeIf { it.isNotBlank() },
+            content = content,
+            likes = table.get("likes").optint(0),
+            replyCount = table.get("replies").optint(0),
+            isSpoiler = table.get("spoiler").optboolean(false),
+            isPinned = table.get("pinned").optboolean(false),
+            isEdited = table.get("edited").optboolean(false),
+        )
+    }
 
     private fun convertLuaTableToChapterResult(table: LuaTable) = ChapterResult(
         title  = table.get("title").optjstring(""),

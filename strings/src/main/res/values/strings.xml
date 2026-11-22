@@ -1194,7 +1194,17 @@
     <string name="book_related_no_genre">This book has no genre to search by.</string>
     <string name="book_related_failed">The source did not answer. Try again later.</string>
     <string name="book_related_empty">The source has nothing else for this search yet.</string>
-    <string name="book_reviews_title">No reviews here</string>
-    <string name="book_reviews_message">The sources NoveLA reads do not publish reviews, so this tab has nothing real to show.</string>
     <string name="book_related_retry">Try again</string>
+    <string name="book_reviews_unsupported_title">Reviews are not available</string>
+    <string name="book_reviews_unsupported_message">This source does not publish reviews. Reviews appear here once an extension supports them for this source.</string>
+    <string name="book_reviews_empty_title">No reviews yet</string>
+    <string name="book_reviews_empty_message">This source has no reviews for this book yet.</string>
+    <string name="book_reviews_failed">Reviews could not be loaded.</string>
+    <string name="book_reviews_retry">Try again</string>
+    <string name="book_reviews_load_more">Load more</string>
+    <string name="book_reviews_load_more_failed">Could not load more reviews.</string>
+    <string name="book_review_spoiler_hidden">Spoiler. Tap to show</string>
+    <string name="book_review_pinned">Pinned</string>
+    <string name="book_review_edited">Edited</string>
+    <string name="book_review_replies">Replies: %1$d</string>
 </resources>

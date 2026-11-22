@@ -70,6 +70,8 @@ internal fun ChaptersScreenBody(
     onDownloadNext100: () -> Unit,
     onLoadRelatedBooks: () -> Unit,
     onRelatedBookClick: (BookMetadata) -> Unit,
+    onLoadReviews: () -> Unit,
+    onLoadMoreReviews: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var isRefreshingDelayed by remember { mutableStateOf(state.isRefreshing.value) }
@@ -248,7 +250,11 @@ internal fun ChaptersScreenBody(
                 key = "reviews",
                 contentType = { 4 }
             ) {
-                ChaptersReviewsContent()
+                ChaptersReviewsContent(
+                    state = state.reviews.value,
+                    onLoad = onLoadReviews,
+                    onLoadMore = onLoadMoreReviews,
+                )
             }
 
             if (state.error.value.isNotBlank()) item(

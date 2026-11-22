@@ -6,6 +6,7 @@ import my.noveldokusha.core.LanguageCode
 import my.noveldokusha.core.PagedList
 import my.noveldokusha.core.Response
 import my.noveldokusha.scraper.domain.BookResult
+import my.noveldokusha.scraper.domain.BookReviewsPage
 import my.noveldokusha.scraper.domain.ChapterResult
 import my.noveldokusha.scraper.domain.VideoSource
 import org.jsoup.nodes.Document
@@ -62,6 +63,19 @@ sealed interface SourceInterface {
      * Пустой список Success — объявил, но потоки не найдены (UI: «Источники не найдены»).
      */
     suspend fun getVideoList(episodeUrl: String): Response<List<VideoSource>>? = null
+
+    /**
+     * Отзывы к книге. Необязательная возможность: её объявляет только плагин, у которого
+     * есть функция getBookReviews(bookUrl, index). Без неё экран отзывов честно показывает
+     * «источник не публикует отзывы», а не пустой список.
+     */
+    interface Reviews : SourceInterface {
+        /** true, если плагин объявил getBookReviews. */
+        suspend fun hasBookReviews(): Boolean
+
+        /** Страница отзывов; index начинается с 0, как у каталога. */
+        suspend fun getBookReviews(bookUrl: String, index: Int): Response<BookReviewsPage>
+    }
 
     interface Base : SourceInterface
     interface Catalog : SourceInterface {

@@ -412,6 +412,6 @@ Source of the layout: the Novery book page. Only the layout is borrowed, not cod
 - Bottom navigation: Chapters (with a real chapter count badge), Related and Reviews. Back on Related or Reviews returns to Chapters.
 - Stats are real data only. Read and Saved come from the local database. Saved counts chapters that have a stored body or download size. Rating comes from the source and shows a dash when the source gives none.
 - Related runs a search on the book's source using its first genre and drops the book itself from the results. A book without a genre, or a source without search, shows a plain message.
-- Reviews: no source returns reviews, so the tab shows an honest unavailable state.
+- Reviews: optional. A source shows reviews only when its extension defines `getBookReviews` (see `docs/REVIEWS_EXTENSION_API.md`). Otherwise the tab says the source does not publish reviews. Pages load on demand, with Load more and spoilers hidden until tapped.
 - Colours all come from the app theme (surface, surfaceContainer, primary, outlineVariant). No white or cream surfaces.
 

@@ -110,6 +110,8 @@ class ChaptersActivity : BaseActivity() {
                     onDownloadNext100Chapters = viewModel::downloadNext100Chapters,
                     onLoadRelatedBooks = viewModel::loadRelatedBooks,
                     onRelatedBookClick = { navigationRoutes.chapters(this, it).let(::startActivity) },
+                    onLoadReviews = viewModel::loadBookReviews,
+                    onLoadMoreReviews = viewModel::loadMoreBookReviews,
                     onDownloadAllChapters = viewModel::downloadAllChapters,
                     onExport = viewModel::onExportClicked,
                     onExportContentChosen = viewModel::onExportContentChosen,

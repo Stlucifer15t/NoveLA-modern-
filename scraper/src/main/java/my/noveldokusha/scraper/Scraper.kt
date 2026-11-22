@@ -105,6 +105,11 @@ class Scraper @Inject constructor(
         return refererFor(pageUrl)
     }
 
+    /** Источник книги, если он умеет отдавать отзывы (проверка наличия функции — в hasBookReviews). */
+    fun getCompatibleSourceReviews(url: String): SourceInterface.Reviews? =
+        loadedSourcesList.filterIsInstance<SourceInterface.Reviews>()
+            .find { url.isCompatibleWithBaseUrl(it.baseUrl) }
+
     fun getCompatibleSourceCatalog(url: String): SourceInterface.Catalog? =
         loadedSourcesList.filterIsInstance<SourceInterface.Catalog>()
             .find { url.isCompatibleWithBaseUrl(it.baseUrl) }

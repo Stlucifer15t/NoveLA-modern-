@@ -45,8 +45,8 @@ android {
 
     defaultConfig {
         applicationId = "my.novela"
-        versionCode = 42
-        versionName = "1.6.4"
+        versionCode = 43
+        versionName = "1.6.5"
         base.archivesName.set("NoveLA_v$versionName")
         manifestPlaceholders["appLabel"] = "NoveLA"
         ndk {

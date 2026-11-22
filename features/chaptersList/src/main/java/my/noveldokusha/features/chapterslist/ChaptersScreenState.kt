@@ -40,6 +40,8 @@ internal data class ChaptersScreenState(
     val chapterDownloads: MutableState<Map<String, ChapterDownloadUi>>,
     // Вкладка «Похожие»: результат поиска в том же источнике, загружается лениво.
     val relatedBooks: MutableState<RelatedBooksState>,
+    // Вкладка «Отзывы»: грузится лениво, страницами, из скрипта источника.
+    val reviews: MutableState<BookReviewsUiState>,
 ) {
 
     val isInSelectionMode = derivedStateOf { selectedChaptersUrl.size != 0 }
@@ -91,6 +93,22 @@ sealed interface RelatedBooksState {
         val sourceName: String,
         val books: List<my.noveldokusha.feature.local_database.BookMetadata>,
     ) : RelatedBooksState
+}
+
+/** Состояние вкладки «Отзывы». [Unsupported] — источник не объявил getBookReviews. */
+sealed interface BookReviewsUiState {
+    data object Idle : BookReviewsUiState
+    data object Loading : BookReviewsUiState
+    data object Unsupported : BookReviewsUiState
+    data object Failed : BookReviewsUiState
+
+    data class Loaded(
+        val reviews: List<my.noveldokusha.scraper.domain.BookReview>,
+        val hasNext: Boolean,
+        val nextPage: Int,
+        val isLoadingMore: Boolean = false,
+        val loadMoreFailed: Boolean = false,
+    ) : BookReviewsUiState
 }
 
 /** Пара языков перевода, доступная для экспорта, с числом переведённых глав. */

@@ -1583,7 +1583,17 @@
     <string name="book_related_no_genre">У этой книги нет жанра, по которому можно искать.</string>
     <string name="book_related_failed">Источник не ответил. Попробуйте позже.</string>
     <string name="book_related_empty">По этому запросу в источнике пока ничего больше нет.</string>
-    <string name="book_reviews_title">Отзывов здесь нет</string>
-    <string name="book_reviews_message">Источники, с которыми работает NoveLA, не публикуют отзывы, поэтому на этой вкладке нечего настоящего показать.</string>
     <string name="book_related_retry">Повторить</string>
+    <string name="book_reviews_unsupported_title">Отзывы недоступны</string>
+    <string name="book_reviews_unsupported_message">Этот источник не публикует отзывы. Они появятся здесь, когда расширение для этого источника их поддержит.</string>
+    <string name="book_reviews_empty_title">Отзывов пока нет</string>
+    <string name="book_reviews_empty_message">У этого источника пока нет отзывов к этой книге.</string>
+    <string name="book_reviews_failed">Не удалось загрузить отзывы.</string>
+    <string name="book_reviews_retry">Повторить</string>
+    <string name="book_reviews_load_more">Загрузить ещё</string>
+    <string name="book_reviews_load_more_failed">Не удалось загрузить ещё отзывы.</string>
+    <string name="book_review_spoiler_hidden">Спойлер. Нажмите, чтобы открыть</string>
+    <string name="book_review_pinned">Закреплён</string>
+    <string name="book_review_edited">Изменён</string>
+    <string name="book_review_replies">Ответов: %1$d</string>
 </resources>

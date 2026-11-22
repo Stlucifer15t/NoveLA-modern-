@@ -103,6 +103,8 @@ internal fun ChaptersScreen(
     onResumeReading: () -> Unit,
     onLoadRelatedBooks: () -> Unit,
     onRelatedBookClick: (BookMetadata) -> Unit,
+    onLoadReviews: () -> Unit,
+    onLoadMoreReviews: () -> Unit,
     onPressBack: () -> Unit,
     onSelectedDeleteDownloads: () -> Unit,
     onSelectedDownload: () -> Unit,
@@ -381,6 +383,8 @@ internal fun ChaptersScreen(
                 onDownloadNext100 = onDownloadNext100Chapters,
                 onLoadRelatedBooks = onLoadRelatedBooks,
                 onRelatedBookClick = onRelatedBookClick,
+                onLoadReviews = onLoadReviews,
+                onLoadMoreReviews = onLoadMoreReviews,
             )
             Box(Modifier.padding(innerPadding)) {
                 InternalLazyColumnScrollbar(state = lazyListState)

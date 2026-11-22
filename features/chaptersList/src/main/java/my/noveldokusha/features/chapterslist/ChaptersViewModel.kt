@@ -167,7 +167,59 @@ internal class ChaptersViewModel @Inject constructor(
         },
         chapterDownloads = mutableStateOf(emptyMap()),
         relatedBooks = mutableStateOf(RelatedBooksState.Idle),
+        reviews = mutableStateOf(BookReviewsUiState.Idle),
     )
+
+    /** Первая страница отзывов. Повторно не грузим, пока есть результат или идёт загрузка. */
+    fun loadBookReviews() {
+        val current = state.reviews.value
+        if (current is BookReviewsUiState.Loading || current is BookReviewsUiState.Loaded) return
+        startReviewsRequest(page = 0, previous = emptyList(), isLoadMore = false)
+    }
+
+    /** Следующая страница: добавляется к уже загруженным отзывам. */
+    fun loadMoreBookReviews() {
+        val current = state.reviews.value as? BookReviewsUiState.Loaded ?: return
+        if (!current.hasNext || current.isLoadingMore) return
+        state.reviews.value = current.copy(isLoadingMore = true, loadMoreFailed = false)
+        startReviewsRequest(page = current.nextPage, previous = current.reviews, isLoadMore = true)
+    }
+
+    private fun startReviewsRequest(
+        page: Int,
+        previous: List<my.noveldokusha.scraper.domain.BookReview>,
+        isLoadMore: Boolean,
+    ) {
+        val bookUrl = state.book.value.url
+        // Отзывы есть только у источников, чей скрипт объявил getBookReviews.
+        val source = scraper.getCompatibleSourceReviews(bookUrl)
+        if (source == null) {
+            state.reviews.value = BookReviewsUiState.Unsupported
+            return
+        }
+        if (!isLoadMore) state.reviews.value = BookReviewsUiState.Loading
+        viewModelScope.launch {
+            if (!source.hasBookReviews()) {
+                state.reviews.value = BookReviewsUiState.Unsupported
+                return@launch
+            }
+            state.reviews.value = when (val result = source.getBookReviews(bookUrl, page)) {
+                is Response.Success -> BookReviewsUiState.Loaded(
+                    reviews = previous + result.data.reviews,
+                    hasNext = result.data.hasNext,
+                    nextPage = page + 1,
+                )
+                // Ошибка при догрузке не стирает уже показанные отзывы.
+                is Response.Error -> if (isLoadMore) {
+                    (state.reviews.value as? BookReviewsUiState.Loaded)
+                        ?.copy(isLoadingMore = false, loadMoreFailed = true)
+                        ?: BookReviewsUiState.Failed
+                } else {
+                    BookReviewsUiState.Failed
+                }
+            }
+        }
+    }
 
     /**
      * Вкладка «Похожие»: поиск в том же источнике по первому жанру книги.
