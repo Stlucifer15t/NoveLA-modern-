@@ -497,7 +497,7 @@ internal fun ReaderScreen(
                                     }
                                     IconButton(onClick = { showTableOfContents = true }, modifier = Modifier.size(36.dp)) {
                                         Icon(
-                                            ListIcon,
+                                            Icons.Filled.ListIcon,
                                             stringResource(R.string.table_of_contents_title),
                                             modifier = Modifier.size(20.dp),
                                             tint = MaterialTheme.colorScheme.onSurfaceVariant
