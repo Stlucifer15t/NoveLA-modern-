@@ -311,3 +311,84 @@ fun NovelaTileIconButton(
         ) { content() }
     }
 }
+
+/** A circle for an icon, as used by the row groups (the tile language uses [NovelaIconChip]). */
+@Composable
+fun NovelaCircleIcon(
+    accent: Color,
+    modifier: Modifier = Modifier,
+    size: androidx.compose.ui.unit.Dp = 40.dp,
+    content: @Composable () -> Unit,
+) {
+    Box(
+        modifier = modifier
+            .size(size)
+            .clip(CircleShape)
+            .background(accent.copy(alpha = 0.14f)),
+        contentAlignment = Alignment.Center,
+    ) { content() }
+}
+
+/** One number + its label, for the little summary row under a hero header. */
+@Composable
+fun NovelaStatCard(
+    value: String,
+    label: String,
+    accent: Color,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier,
+        shape = NovelaRadius.cardShape,
+        color = NovelaTheme.colors.elevatedSurface,
+        border = androidx.compose.foundation.BorderStroke(1.dp, NovelaTheme.colors.hairline),
+    ) {
+        Column(modifier = Modifier.padding(horizontal = NovelaSpacing.sm, vertical = NovelaSpacing.md)) {
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleMedium,
+                color = accent,
+                maxLines = 1,
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = NovelaTheme.colors.textMuted,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
+}
+
+/**
+ * A labelled group of rows in one card — the "Menu"/"About" block shape: rows separated
+ * by hairlines instead of floating as individual cards, so a group reads as one object.
+ */
+@Composable
+fun NovelaCardGroup(
+    modifier: Modifier = Modifier,
+    content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit,
+) {
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = NovelaSpacing.screenH, vertical = NovelaSpacing.xxs),
+        shape = NovelaRadius.cardShape,
+        color = NovelaTheme.colors.elevatedSurface,
+        border = androidx.compose.foundation.BorderStroke(1.dp, NovelaTheme.colors.hairline),
+    ) {
+        Column(content = content)
+    }
+}
+
+/** The hairline between two rows of a [NovelaCardGroup]. */
+@Composable
+fun NovelaCardGroupDivider(modifier: Modifier = Modifier) {
+    androidx.compose.material3.HorizontalDivider(
+        modifier = modifier.padding(start = NovelaSpacing.lg),
+        thickness = 0.5.dp,
+        color = NovelaTheme.colors.hairline,
+    )
+}

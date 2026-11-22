@@ -1,5 +1,10 @@
 package my.noveldokusha.extensions
 
+import my.noveldokusha.coreui.components.NovelaStatCard
+import my.noveldokusha.coreui.components.NovelaCardGroupDivider
+import my.noveldokusha.coreui.components.NovelaCardGroup
+import my.noveldokusha.coreui.components.NovelaCircleIcon
+import androidx.compose.foundation.shape.CircleShape
 import my.noveldokusha.coreui.components.NovelaTileActionButton
 import my.noveldokusha.coreui.components.NovelaTileIconButton
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -345,22 +350,18 @@ private fun UnifiedExtensionsScreen(
                         searchFilteredExtensions.filter { !it.isInstalled }.sortedBy { it.name.lowercase(Locale.ROOT) }
                     }
 
-                    LazyVerticalGrid(
-                        columns = GridCells.Fixed(2),
+                    LazyColumn(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.sm),
-                        verticalArrangement = Arrangement.spacedBy(NovelaSpacing.sm),
                         contentPadding = PaddingValues(
-                            start = NovelaSpacing.screenH,
-                            end = NovelaSpacing.screenH,
                             top = NovelaSpacing.xs,
                             bottom = 240.dp,
                         ),
                     ) {
-                        // Two columns is the point: the mockups read as a board of cards,
-                        // not a settings list. A short section spans both columns instead of
-                        // leaving a lone half-width tile.
-                        item(span = { GridItemSpan(maxLineSpan) }, contentType = "hero") {
+                        // The second mockup's structure: a greeting-style header, a row of
+                        // counters, then labelled groups whose rows carry a circular tinted
+                        // icon and a trailing action. Counters come from the same filtered
+                        // lists the groups render, so they cannot disagree with what is shown.
+                        item(contentType = "hero") {
                             val accent = MaterialTheme.colorScheme.primary
                             NovelaHeroHeader(
                                 title = stringResource(my.noveldokusha.strings.R.string.title_extensions),
@@ -374,21 +375,42 @@ private fun UnifiedExtensionsScreen(
                                         tint = accent,
                                     )
                                 },
-                                pill = {
-                                    NovelaHeroPill(
-                                        value = state.extensions.size.toString(),
-                                        label = stringResource(StringsR.string.installed_count_label),
-                                        accent = accent,
-                                    )
-                                },
                             )
                         }
 
+                        item(contentType = "stats") {
+                            val scheme = MaterialTheme.colorScheme
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = NovelaSpacing.screenH),
+                                horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.sm),
+                            ) {
+                                NovelaStatCard(
+                                    value = searchInstalledExtensions.size.toString(),
+                                    label = stringResource(my.noveldokusha.strings.R.string.installed),
+                                    accent = scheme.primary,
+                                    modifier = Modifier.weight(1f),
+                                )
+                                NovelaStatCard(
+                                    value = searchAvailableExtensions.size.toString(),
+                                    label = stringResource(my.noveldokusha.strings.R.string.available),
+                                    accent = scheme.tertiary,
+                                    modifier = Modifier.weight(1f),
+                                )
+                                NovelaStatCard(
+                                    value = searchInstalledExtensions.count { it.isUpdateAvailable }.toString(),
+                                    label = stringResource(my.noveldokusha.strings.R.string.update),
+                                    accent = scheme.secondary,
+                                    modifier = Modifier.weight(1f),
+                                )
+                            }
+                        }
+
                         if (searchInstalledExtensions.isNotEmpty()) {
-                            item(span = { GridItemSpan(maxLineSpan) }, contentType = "header") {
+                            item(contentType = "header") {
                                 NovelaSectionHeader(
-                                    title = stringResource(my.noveldokusha.strings.R.string.installed) +
-                                        " · ${searchInstalledExtensions.size}",
+                                    title = stringResource(my.noveldokusha.strings.R.string.installed),
                                     actionLabel = stringResource(StringsR.string.update_all)
                                         .takeIf { searchInstalledExtensions.any { it.isUpdateAvailable } },
                                     onActionClick = {
@@ -396,40 +418,39 @@ private fun UnifiedExtensionsScreen(
                                     },
                                 )
                             }
-                            items(
-                                items = searchInstalledExtensions,
-                                key = { extension -> "installed_${extension.id}" },
-                                contentType = { "extension" },
-                                span = {
-                                    GridItemSpan(if (searchInstalledExtensions.size > 2) 1 else 2)
-                                },
-                            ) { extension ->
-                                ExtensionTile(
-                                    extension = extension,
-                                    viewModel = viewModel
-                                )
+                            item(contentType = "group_installed") {
+                                NovelaCardGroup {
+                                    searchInstalledExtensions.forEachIndexed { index, extension ->
+                                        if (index > 0) {
+                                            NovelaCardGroupDivider()
+                                        }
+                                        ExtensionRow(
+                                            extension = extension,
+                                            viewModel = viewModel,
+                                        )
+                                    }
+                                }
                             }
                         }
 
                         if (searchAvailableExtensions.isNotEmpty()) {
-                            item(span = { GridItemSpan(maxLineSpan) }, contentType = "header") {
+                            item(contentType = "header") {
                                 NovelaSectionHeader(
-                                    title = stringResource(my.noveldokusha.strings.R.string.available) +
-                                        " · ${searchAvailableExtensions.size}",
+                                    title = stringResource(my.noveldokusha.strings.R.string.available),
                                 )
                             }
-                            items(
-                                items = searchAvailableExtensions,
-                                key = { extension -> "available_${extension.id}" },
-                                contentType = { "extension" },
-                                span = {
-                                    GridItemSpan(if (searchAvailableExtensions.size > 2) 1 else 2)
-                                },
-                            ) { extension ->
-                                ExtensionTile(
-                                    extension = extension,
-                                    viewModel = viewModel
-                                )
+                            item(contentType = "group_available") {
+                                NovelaCardGroup {
+                                    searchAvailableExtensions.forEachIndexed { index, extension ->
+                                        if (index > 0) {
+                                            NovelaCardGroupDivider()
+                                        }
+                                        ExtensionRow(
+                                            extension = extension,
+                                            viewModel = viewModel,
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
@@ -548,61 +569,66 @@ private fun RepositoryUrlDialog(
  * dropped on the way (and no second copy of those handlers exists to drift).
  */
 @Composable
-private fun ExtensionTile(
+private fun ExtensionRow(
     extension: ExtensionInfo,
     viewModel: ExtensionsManagerViewModel,
 ) {
     val accent = novelaTileAccent(extension.id)
     val updateAvailable = extension.isUpdateAvailable
 
-    // Same state machine as the old trailingContent block — installing / update /
-    // installed / available — because that ordering is what the view model's flags
-    // actually support. The card is not a tap target: the row never was either, and
-    // inventing a tap here would mean inventing a destination.
-    NovelaTileCard(
-        accent = accent,
-        onClick = null,
-        overlay = {
-            if (extension.isInstalled || updateAvailable) {
-                NovelaTileBadge(
-                    text = if (updateAvailable) {
-                        stringResource(my.noveldokusha.strings.R.string.update)
-                    } else {
-                        extension.version
-                    },
-                    accent = if (updateAvailable) MaterialTheme.colorScheme.tertiary else accent,
-                )
-            }
-        },
+    // A row inside a group, not a floating card: the group already carries the surface.
+    // The icon is circular because the row is where you *act*, while the squares on the
+    // Browse board mark things you *open*.
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = NovelaSpacing.md, vertical = NovelaSpacing.sm),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.md),
     ) {
-        NovelaIconChip(accent = accent) {
+        NovelaCircleIcon(accent = accent) {
             ImageView(
                 imageModel = extension.iconUrl,
                 modifier = Modifier
                     .fillMaxSize()
-                    .clip(NovelaRadius.coverShape),
+                    .clip(CircleShape),
                 error = my.noveldokusha.coreui.R.drawable.default_icon,
             )
         }
-        Spacer(Modifier.height(NovelaSpacing.xxs))
-        Text(
-            text = extension.name,
-            style = MaterialTheme.typography.titleSmall,
-            maxLines = 2,
-            minLines = 2,
-            overflow = TextOverflow.Ellipsis,
-        )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.xs),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            NovelaTileBadge(text = extension.language.uppercase(), accent = accent)
-            if (extension.isLocal) {
-                NovelaTileBadge(text = stringResource(my.noveldokusha.strings.R.string.local), accent = accent)
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = extension.name,
+                style = MaterialTheme.typography.titleSmall,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = extension.description.ifBlank { extension.author },
+                style = NovelaType.bookMeta,
+                color = NovelaTheme.colors.textMuted,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Spacer(Modifier.height(NovelaSpacing.xxs))
+            Row(horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.xs)) {
+                NovelaTileBadge(text = extension.language.uppercase(), accent = accent)
+                if (extension.isLocal) {
+                    NovelaTileBadge(
+                        text = stringResource(my.noveldokusha.strings.R.string.local),
+                        accent = accent,
+                    )
+                }
+                if (updateAvailable) {
+                    NovelaTileBadge(
+                        text = stringResource(my.noveldokusha.strings.R.string.update),
+                        accent = MaterialTheme.colorScheme.tertiary,
+                    )
+                }
             }
         }
-        Spacer(Modifier.height(NovelaSpacing.xs))
+        // The state machine the old row used, unchanged: installing / update / installed /
+        // available. Only its shape moved from a trailing column to the row's end.
         when {
             extension.isInstalling -> NovelaTileActionButton(
                 label = stringResource(my.noveldokusha.strings.R.string.installing),
@@ -619,10 +645,7 @@ private fun ExtensionTile(
                 onClick = { viewModel.onEvent(ExtensionsScreenEvent.OnExtensionInstall(extension.id)) },
             )
 
-            extension.isInstalled -> Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.xs),
-            ) {
+            extension.isInstalled -> Row(horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.xs)) {
                 NovelaTileIconButton(
                     accent = accent,
                     contentDescription = stringResource(my.noveldokusha.strings.R.string.edit_lua),
