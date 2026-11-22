@@ -33,16 +33,23 @@ interface NavigationRoutes {
         databaseBaseUrl: String
     ): Intent
 
-    // contentType: "" — все типы, иначе "novel"/"manga"/"video"
+    // contentType: "" = every type, otherwise "novel"/"manga"/"video"
     fun globalSearch(context: Context, text: String, contentType: String = ""): Intent
     fun sourceCatalog(context: Context, sourceBaseUrl: String): Intent
 
     fun novelMigration(context: Context, bookUrl: String, bookTitle: String): Intent
-    // sourceBaseUrl == null — режим «неизвестный источник» (плагин удалён/не установлен)
+    // sourceBaseUrl == null — "unknown source" mode (plugin removed or uninstalled)
     fun massMigration(context: Context, sourceBaseUrl: String?): Intent
     fun migrationHistory(context: Context): Intent
 
     fun regexRules(context: Context, bookUrl: String? = null): Intent
+
+    /**
+     * A single settings group as its own screen. `groupKey` is the name of
+     * `my.noveldokusha.settings.ui.SettingsGroup`; the interface stays Intent-typed so
+     * the navigation module does not depend on the settings feature.
+     */
+    fun settingsGroup(context: Context, groupKey: String): Intent
 }
 
 @HiltViewModel

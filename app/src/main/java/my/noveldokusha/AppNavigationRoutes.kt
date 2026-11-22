@@ -15,6 +15,7 @@ import my.noveldokusha.feature.local_database.BookMetadata
 import my.noveldokusha.tooling.novel_migration.MigrationActivity
 import my.noveldokusha.webview.WebViewActivity
 import my.noveldokusha.settings.RegexRulesActivity
+import my.noveldokusha.settings.SettingsGroupActivity
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -111,4 +112,7 @@ class AppNavigationRoutes @Inject constructor() : NavigationRoutes {
     override fun regexRules(context: Context, bookUrl: String?): Intent {
         return RegexRulesActivity.IntentData(context, bookUrl = bookUrl)
     }
+
+    override fun settingsGroup(context: Context, groupKey: String): Intent =
+        SettingsGroupActivity.IntentData(context, groupKey = groupKey)
 }

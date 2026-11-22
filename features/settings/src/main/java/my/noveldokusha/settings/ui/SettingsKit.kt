@@ -1,5 +1,6 @@
 package my.noveldokusha.settings.ui
 
+import androidx.compose.ui.res.stringResource
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
@@ -64,6 +65,43 @@ import my.noveldokusha.settings.ui.ExpressiveSwitch
 
 /** One labelled group of settings. */
 @Composable
+/**
+ * A settings group.
+ *
+ * [expandSections] is what makes the two-level navigation possible without duplicating
+ * the section list: the Settings screen renders every spec as a *header-only* card
+ * (tap → open), a group screen renders the same specs *expanded*, with their sections
+ * inside. A spec that is not expanded draws no divider and no body, so it is exactly the
+ * tappable "box" the design asks for.
+ */
+enum class SettingsGroup {
+    Appearance,
+    Library,
+    Storage,
+    Backup,
+    Translation,
+    Network,
+    Support,
+    ;
+
+    companion object {
+        fun fromKey(key: String?): SettingsGroup? = entries.firstOrNull {
+            it.name.equals(key?.trim().orEmpty(), ignoreCase = true)
+        }
+    }
+}
+
+data class SettingsGroupSpec(
+    val group: SettingsGroup,
+    val title: String,
+    val summary: String,
+    val icon: ImageVector,
+    val keywords: List<String>,
+    val accent: Color,
+    val content: @Composable ColumnScope.() -> Unit,
+)
+
+@Composable
 fun SettingsGroupCard(
     title: String,
     icon: ImageVector,
@@ -71,6 +109,8 @@ fun SettingsGroupCard(
     modifier: Modifier = Modifier,
     summary: String? = null,
     visible: Boolean = true,
+    expanded: Boolean = true,
+    onClick: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     AnimatedVisibility(
@@ -95,6 +135,9 @@ fun SettingsGroupCard(
             color = NovelaTheme.colors.elevatedSurface,
             tonalElevation = 0.dp,
             border = androidx.compose.foundation.BorderStroke(1.dp, NovelaTheme.colors.hairline),
+            modifier = Modifier.then(
+                if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier,
+            ),
         ) {
             Column {
                 Row(
@@ -110,7 +153,17 @@ fun SettingsGroupCard(
                 ) {
                     GroupIcon(icon = icon, accent = accent)
                     Spacer(Modifier.width(NovelaSpacing.md))
-                    Column(modifier = Modifier.weight(1f)) {
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .then(
+                                if (onClick != null) {
+                                    Modifier
+                                        .clip(NovelaRadius.cardShape)
+                                        .clickable(onClick = onClick)
+                                } else Modifier,
+                            ),
+                    ) {
                         Text(
                             text = title,
                             style = MaterialTheme.typography.titleMedium,
@@ -127,16 +180,21 @@ fun SettingsGroupCard(
                             )
                         }
                     }
+                    if (onClick != null) {
+                        SettingsCaret()
+                    }
                 }
-                Box(
-                    Modifier
-                        .padding(horizontal = NovelaSpacing.md)
-                        .fillMaxWidth()
-                        .height(1.dp)
-                        .background(NovelaTheme.colors.hairline),
-                )
-                content()
-                Spacer(Modifier.height(NovelaSpacing.sm))
+                if (expanded) {
+                    Box(
+                        Modifier
+                            .padding(horizontal = NovelaSpacing.md)
+                            .fillMaxWidth()
+                            .height(1.dp)
+                            .background(NovelaTheme.colors.hairline),
+                    )
+                    content()
+                    Spacer(Modifier.height(NovelaSpacing.sm))
+                }
             }
         }
     }
@@ -330,3 +388,31 @@ fun SettingsInnerLabel(text: String, modifier: Modifier = Modifier) {
         ),
     )
 }
+
+/** The group's own title, for its screen header — the pre-existing group labels. */
+@Composable
+fun SettingsGroup.label(): String = stringResource(
+    when (this) {
+        SettingsGroup.Appearance -> my.noveldokusha.strings.R.string.settings_group_appearance
+        SettingsGroup.Library -> my.noveldokusha.strings.R.string.settings_group_library
+        SettingsGroup.Storage -> my.noveldokusha.strings.R.string.settings_group_data
+        SettingsGroup.Backup -> my.noveldokusha.strings.R.string.settings_group_backup
+        SettingsGroup.Translation -> my.noveldokusha.strings.R.string.settings_group_translation
+        SettingsGroup.Network -> my.noveldokusha.strings.R.string.settings_group_network
+        SettingsGroup.Support -> my.noveldokusha.strings.R.string.settings_group_about
+    },
+)
+
+/** One line under the title: what to expect inside. */
+@Composable
+fun SettingsGroup.hint(): String = stringResource(
+    when (this) {
+        SettingsGroup.Appearance -> my.noveldokusha.strings.R.string.settings_group_appearance_hint
+        SettingsGroup.Library -> my.noveldokusha.strings.R.string.settings_group_library_hint
+        SettingsGroup.Storage -> my.noveldokusha.strings.R.string.settings_group_data_hint
+        SettingsGroup.Backup -> my.noveldokusha.strings.R.string.settings_group_backup_hint
+        SettingsGroup.Translation -> my.noveldokusha.strings.R.string.settings_group_translation_hint
+        SettingsGroup.Network -> my.noveldokusha.strings.R.string.settings_group_network_hint
+        SettingsGroup.Support -> my.noveldokusha.strings.R.string.settings_group_about_hint
+    },
+)

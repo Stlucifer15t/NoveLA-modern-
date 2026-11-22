@@ -4,6 +4,8 @@
     <string name="title_finder">Finder</string>
     <string name="title_extensions">Extensions</string>
     <string name="title_settings">Settings</string>
+    <string name="browse_hero_subtitle">Discover novels from your sources</string>
+    <string name="extension_kind_local">Local</string>
     <string name="title_history">History</string>
     <string name="no_history_yet">No reading history yet</string>
     <string name="no_books_in_library">No books in library</string>
@@ -965,4 +967,13 @@
     <string name="settings_group_backup">Backup</string>
     <string name="settings_group_updates">Updates</string>
     <string name="settings_group_about">About</string>
+
+    <!-- One-line hints under each settings group screen title -->
+    <string name="settings_group_appearance_hint">Theme, dark mode and the app language</string>
+    <string name="settings_group_library_hint">Auto-update rules and where new versions come from</string>
+    <string name="settings_group_data_hint">Book, image, manga and video caches — and clearing them</string>
+    <string name="settings_group_backup_hint">Manual backups, scheduled auto-backups and logs</string>
+    <string name="settings_group_translation_hint">LLM provider, prompts and regex cleanup rules</string>
+    <string name="settings_group_network_hint">User agent, Cloudflare bypass and request delays</string>
+    <string name="settings_group_about_hint">Help, credits and the version you are running</string>
 </resources>

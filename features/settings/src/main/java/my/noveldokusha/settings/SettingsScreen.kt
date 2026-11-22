@@ -102,6 +102,9 @@ fun SettingsScreen(
                 onAutoBackupIncludeSettingsChange = viewModel::onAutoBackupIncludeSettingsChange,
                 onAutoBackupIncludePluginsChange = viewModel::onAutoBackupIncludePluginsChange,
                 onDeleteNovelPrompt = viewModel::onDeleteNovelPrompt,
+                onOpenGroup = { group ->
+                    context.startActivity(navigationRoutes.settingsGroup(context, group.name))
+                },
                 onExportLogs = viewModel::exportLogs,
                 modifier = Modifier.padding(innerPadding),
             )
