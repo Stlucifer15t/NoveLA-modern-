@@ -273,8 +273,7 @@ class LegadoRuleEngine(
 
             else -> null
         } ?: return emptyList<Any>()
-        val w3c = W3CDom().fromJsoup(doc)
-        stripHtmlNamespace(w3c)
+        val w3c = stripXhtmlNamespace(W3CDom().fromJsoup(doc))
         val xpath = XPathFactory.newInstance().newXPath()
         val nodes = try {
             xpath.evaluate(expression, w3c, XPathConstants.NODESET) as? org.w3c.dom.NodeList
@@ -295,21 +294,27 @@ class LegadoRuleEngine(
     }
 
     /**
-     * Jsoup is namespace-aware for HTML: every element it produces lives in the
-     * `html:` namespace, and `W3CDom` keeps that. An XPath like `//ul/li` then matches
-     * nothing, because the document's element names are `html:ul` / `html:li`. Renaming
-     * to the local name is what makes the `//…` rules of real Legado sources work.
+     * `W3CDom.fromJsoup` puts every element in the XHTML namespace: the root gets
+     * `xmlns="http://www.w3.org/1999/xhtml"` and the rest inherit it. XPath 1.0 matches
+     * an unqualified step only against the empty namespace, so `//ul/li` finds nothing in
+     * such a document — and that is the shape of most `//…` rules in the wild.
+     *
+     * Renaming every element into the null namespace is what makes them work. Probing
+     * jsoup 1.23.1 showed the alternatives are worse: `renameNode` on a prefixed name is
+     * a no-op here (names carry no prefix, the namespace is inherited), and re-parsing
+     * with `Parser.xmlParser()` breaks on void elements such as `<img>` without a slash.
      */
-    private fun stripHtmlNamespace(doc: org.w3c.dom.Document) {
-        val nodes = doc.getElementsByTagName("*")
-        for (i in 0 until nodes.length) {
-            val node = nodes.item(i) as? org.w3c.dom.Element ?: continue
-            val name = node.nodeName
-            val colon = name.indexOf(':')
-            if (colon > 0) {
-                runCatching { doc.renameNode(node, null, name.substring(colon + 1)) }
-            }
+    private fun stripXhtmlNamespace(doc: org.w3c.dom.Document): org.w3c.dom.Document {
+        fun rename(node: org.w3c.dom.Node?) {
+            if (node !is org.w3c.dom.Element) return
+            val ns = node.namespaceURI ?: return
+            runCatching { doc.renameNode(node, null, node.localName ?: node.nodeName) }
+                .onFailure { Timber.d("Legado XPath: cannot drop namespace on <%s> — %s", node.nodeName, it.message) }
         }
+        rename(doc.documentElement)
+        val nodes = doc.getElementsByTagName("*")
+        for (i in 0 until nodes.length) rename(nodes.item(i))
+        return doc
     }
 
     private fun w3cToJsoup(node: org.w3c.dom.Element): Element? = try {
