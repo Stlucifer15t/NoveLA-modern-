@@ -472,12 +472,13 @@ class CompatRepoParsersTest {
 
     // ── Legado names ───────────────────────────────────────────────────────────
 
+    // Fixtures encoded with urllib.parse.quote("笔趣阁") — not by hand.
     @Test
     fun `tree file names are percent decoded so non ascii sources stay readable`() {
         // GitHub's tree API escapes anything outside ASCII, and most Legado repositories
         // name their files after the Chinese source they describe.
         val files = listOf(
-            CompatRepoParsers.TreeFile("%E7%AC%94%E9%98%81%E5%AD%97.json", 12_000),
+            CompatRepoParsers.TreeFile("%E7%AC%94%E8%B6%A3%E9%98%81.json", 12_000),
             CompatRepoParsers.TreeFile("sub/%E5%A4%A7%E9%91%AB%E5%86%B0%E7%AE%B1.json", 9_000),
         )
         val entries = CompatRepoParsers.parseTree(
@@ -493,7 +494,7 @@ class CompatRepoParsersTest {
 
     @Test
     fun `legado url list names come from the decoded file name`() {
-        val text = "https://raw.githubusercontent.com/o/r/main/%E7%AC%94%E9%98%81%E5%AD%97.json\n"
+        val text = "https://raw.githubusercontent.com/o/r/main/%E7%AC%94%E8%B6%A3%E9%98%81.json\n"
         val parsed = CompatRepoParsers.parseLegado(repoId, "https://host/sources.txt", text)
         assertEquals("笔趣阁", parsed.entries.single().name)
     }
