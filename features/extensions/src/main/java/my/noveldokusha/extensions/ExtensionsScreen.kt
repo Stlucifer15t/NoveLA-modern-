@@ -552,152 +552,99 @@ private fun ExtensionTile(
 ) {
     val accent = novelaTileAccent(extension.id)
     val updateAvailable = extension.isUpdateAvailable
+
+    // Same state machine as the old trailingContent block — installing / update /
+    // installed / available — because that ordering is what the view model's flags
+    // actually support. The card is not a tap target: the row never was either, and
+    // inventing a tap here would mean inventing a destination.
     NovelaTileCard(
         accent = accent,
-        onClick = {
-            // Opening a card is never destructive: it only edits the Lua source when
-            // there is one to edit, which mirrors tapping the row in the old list.
-            if (extension.isInstalled && extension.isLocal) {
-                viewModel.onEvent(ExtensionsScreenEvent.OnEditLuaClick(extension.id))
+        onClick = null,
+        overlay = {
+            if (extension.isInstalled || updateAvailable) {
+                NovelaTileBadge(
+                    text = if (updateAvailable) {
+                        stringResource(my.noveldokusha.strings.R.string.update)
+                    } else {
+                        extension.version
+                    },
+                    accent = if (updateAvailable) MaterialTheme.colorScheme.tertiary else accent,
+                )
             }
         },
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.sm),
-        ) {
-            NovelaIconChip(accent = accent) {
-                if (extension.iconUrl.isNotBlank()) {
-                    val iconUrlWithCacheBuster = Uri.parse(extension.iconUrl)
-                        .buildUpon()
-                        .appendQueryParameter("v", extension.version)
-                        .build()
-                        .toString()
-                    ImageView(
-                        imageModel = iconUrlWithCacheBuster,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .clip(RoundedCornerShape(NovelaRadius.cover)),
-                        error = R.drawable.default_icon,
-                        placeholder = R.drawable.default_icon,
-                    )
-                } else {
-                    Icon(
-                        imageVector = Icons.Default.Settings,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp),
-                        tint = accent,
-                    )
-                }
-            }
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = extension.name,
-                    style = MaterialTheme.typography.titleSmall,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    text = getLanguageDisplayName(extension.language),
-                    style = NovelaType.bookMeta,
-                    color = NovelaTheme.colors.textMuted,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-        }
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.xs),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            NovelaTileBadge(
-                text = if (extension.isLocal) {
-                    stringResource(my.noveldokusha.strings.R.string.local)
-                } else {
-                    "v" + (if (updateAvailable) extension.remoteVersion else extension.version)
-                },
-                accent = if (updateAvailable) MaterialTheme.colorScheme.tertiary else accent,
+        NovelaIconChip(accent = accent) {
+            ImageView(
+                imageModel = extension.iconUrl,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(NovelaRadius.coverShape),
+                error = my.noveldokusha.coreui.R.drawable.default_icon,
             )
-            if (updateAvailable) {
-                NovelaTileBadge(text = "↑ " + extension.version, accent = MaterialTheme.colorScheme.tertiary)
-            }
         }
-        HorizontalDivider(
-            color = NovelaTheme.colors.hairline,
-            modifier = Modifier.padding(vertical = NovelaSpacing.xxs),
+        Spacer(Modifier.height(NovelaSpacing.xxs))
+        Text(
+            text = extension.name,
+            style = MaterialTheme.typography.titleSmall,
+            maxLines = 2,
+            minLines = 2,
+            overflow = TextOverflow.Ellipsis,
         )
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.xs, Alignment.End),
+            horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.xs),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            when {
-                extension.isInstalling -> {
-                    FilledTonalButton(onClick = {}, enabled = false) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(16.dp),
-                            strokeWidth = 2.dp,
-                        )
-                        Spacer(modifier = Modifier.size(6.dp))
-                        Text(stringResource(my.noveldokusha.strings.R.string.installing))
-                    }
-                }
-                updateAvailable -> {
-                    FilledTonalButton(
-                        onClick = {
-                            viewModel.onEvent(ExtensionsScreenEvent.OnExtensionInstall(extension.id))
-                        },
-                    ) {
-                        Icon(Icons.Filled.Refresh, null, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.size(6.dp))
-                        Text(stringResource(my.noveldokusha.strings.R.string.update))
-                    }
-                }
-                extension.isInstalled -> {
-                    FilledTonalIconButton(
-                        onClick = { viewModel.onEvent(ExtensionsScreenEvent.OnEditLuaClick(extension.id)) }
-                    ) {
-                        Icon(
-                            Icons.Filled.Edit,
-                            contentDescription = stringResource(my.noveldokusha.strings.R.string.edit_lua),
-                            modifier = Modifier.size(18.dp),
-                        )
-                    }
-                    if (!extension.isLocal) {
-                        FilledTonalIconButton(
-                            onClick = { viewModel.onEvent(ExtensionsScreenEvent.OnResetLuaClick(extension.id)) }
-                        ) {
-                            Icon(
-                                Icons.Filled.Refresh,
-                                contentDescription = stringResource(my.noveldokusha.strings.R.string.reset),
-                                modifier = Modifier.size(18.dp),
-                            )
-                        }
-                    }
-                    FilledTonalIconButton(
-                        onClick = {
-                            viewModel.onEvent(ExtensionsScreenEvent.OnExtensionUninstallById(extension.id))
-                        }
-                    ) {
-                        Icon(
-                            Icons.Filled.Delete,
-                            contentDescription = stringResource(my.noveldokusha.strings.R.string.uninstall),
-                            modifier = Modifier.size(18.dp),
-                        )
-                    }
-                }
-                else -> {
-                    FilledTonalButton(
-                        onClick = {
-                            viewModel.onEvent(ExtensionsScreenEvent.OnExtensionInstall(extension.id))
-                        },
-                    ) {
-                        Icon(Icons.Filled.Add, null, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.size(6.dp))
-                        Text(stringResource(my.noveldokusha.strings.R.string.install))
-                    }
-                }
+            NovelaTileBadge(text = extension.language.uppercase(), accent = accent)
+            if (extension.isLocal) {
+                NovelaTileBadge(text = stringResource(my.noveldokusha.strings.R.string.local), accent = accent)
             }
+        }
+        Spacer(Modifier.height(NovelaSpacing.xs))
+        when {
+            extension.isInstalling -> NovelaTileActionButton(
+                label = stringResource(my.noveldokusha.strings.R.string.installing),
+                icon = { CircularProgressIndicator(size = 12.dp, strokeWidth = 2.dp) },
+                enabled = false,
+                onClick = {},
+            )
+
+            updateAvailable -> NovelaTileActionButton(
+                label = stringResource(my.noveldokusha.strings.R.string.update),
+                icon = { Icon(Icons.Filled.Refresh, null, modifier = Modifier.size(14.dp)) },
+                accent = MaterialTheme.colorScheme.tertiary,
+                onClick = { viewModel.onEvent(ExtensionsScreenEvent.OnExtensionInstall(extension.id)) },
+            )
+
+            extension.isInstalled -> Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.xs),
+            ) {
+                NovelaTileIconButton(
+                    accent = accent,
+                    contentDescription = stringResource(my.noveldokusha.strings.R.string.edit_lua),
+                    onClick = { viewModel.onEvent(ExtensionsScreenEvent.OnEditLuaClick(extension.id)) },
+                ) { Icon(Icons.Filled.Edit, null, modifier = Modifier.size(16.dp)) }
+                if (!extension.isLocal) {
+                    NovelaTileIconButton(
+                        accent = accent,
+                        contentDescription = stringResource(my.noveldokusha.strings.R.string.reset),
+                        onClick = { viewModel.onEvent(ExtensionsScreenEvent.OnResetLuaClick(extension.id)) },
+                    ) { Icon(Icons.Filled.Refresh, null, modifier = Modifier.size(16.dp)) }
+                }
+                NovelaTileIconButton(
+                    accent = MaterialTheme.colorScheme.error,
+                    contentDescription = stringResource(my.noveldokusha.strings.R.string.uninstall),
+                    onClick = { viewModel.onEvent(ExtensionsScreenEvent.OnExtensionUninstallById(extension.id)) },
+                ) { Icon(Icons.Filled.Delete, null, modifier = Modifier.size(16.dp)) }
+            }
+
+            else -> NovelaTileActionButton(
+                label = stringResource(my.noveldokusha.strings.R.string.install),
+                icon = { Icon(Icons.Filled.Add, null, modifier = Modifier.size(14.dp)) },
+                accent = accent,
+                onClick = { viewModel.onEvent(ExtensionsScreenEvent.OnExtensionInstall(extension.id)) },
+            )
         }
     }
 }
