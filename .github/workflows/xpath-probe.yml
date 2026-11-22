@@ -24,86 +24,61 @@ jobs:
       - name: Run the probe
         run: |
           set -e
-          curl -sSfL -o /tmp/jsoup.jar https://repo1.maven.org/maven2/org/jsoup/jsoup/1.18.3/jsoup-1.18.3.jar
+          curl -sSfL -o /tmp/jsoup.jar https://repo1.maven.org/maven2/org/jsoup/jsoup/1.23.1/jsoup-1.23.1.jar
           mkdir -p /tmp/probe
           cat > /tmp/probe/p.jsh <<'JSH'
           import org.jsoup.Jsoup;
-          import org.jsoup.nodes.Element;
+          import org.jsoup.helper.W3CDom;
           import org.jsoup.parser.Parser;
-          import org.w3c.dom.NodeList;
           import org.w3c.dom.Document;
           import org.w3c.dom.Node;
-          import javax.xml.xpath.*;
-          import javax.xml.transform.dom.DOMSource;
+          import org.w3c.dom.NodeList;
+          import javax.xml.xpath.XPathConstants;
+          import javax.xml.xpath.XPathFactory;
           import javax.xml.transform.TransformerFactory;
+          import javax.xml.transform.dom.DOMSource;
           import javax.xml.transform.stream.StreamResult;
           import java.io.StringWriter;
-          java.util.stream.IntStream;
 
           String html = "<html><body><ul id=\"chapter-list\"><li><a href=\"/c/1\">Chapter 1</a></li><li>x</li><li>y</li></ul></body></html>";
           String xp = "//ul[@id='chapter-list']/li";
 
-          Document convert(org.jsoup.nodes.Document d) {
-            org.jsoup.parser.Parser xmlParser = new org.jsoup.parser.Parser();
-            xmlParser.setSuppressClosingTag("ul");
-            return new org.jsoup.parser.W3CDom().fromJsoup(d);
-          }
-
-          void report(String label, Document w3c, String expr) {
+          void dump(String label, Document w3c, String expr) {
             try {
-              NodeList nl = (NodeList) XPathFactory.newInstance().newXPath().evaluate(expr, w3c, XPathConstants.NODESET);
-              StringBuilder sb = new StringBuilder(label + ": count=" + nl.getLength() + " names=[");
-              for (int i = 0; i < Math.min(nl.getLength(), 6); i++) sb.append(nl.item(i).getNodeName()).append(" ");
-              sb.append("]");
-              System.out.println(sb);
-              System.out.println(label + ": root child names=" + IntStream.range(0, w3c.getDocumentElement().getChildNodes().getLength())
-                  .mapToObj(i -> w3c.getDocumentElement().getChildNodes().item(i).getNodeName()).reduce("", (a,b)->a+" "+b));
+              StringBuilder names = new StringBuilder();
+              NodeList all = w3c.getElementsByTagName("*");
+              for (int i = 0; i < Math.min(all.getLength(), 8); i++) names.append(all.item(i).getNodeName()).append(" ");
+              System.out.println(label + " NAMES: " + names);
+              Object r = XPathFactory.newInstance().newXPath().evaluate(expr, w3c, XPathConstants.NODESET);
+              NodeList nl = (NodeList) r;
+              System.out.println(label + " XPATH(" + expr + ") = " + nl.getLength());
               StringWriter sw = new StringWriter();
               TransformerFactory.newInstance().newTransformer().transform(new DOMSource(w3c), new StreamResult(sw));
-              String dump = sw.toString().replaceAll("\\s+", " ");
-              System.out.println(label + ": xml=" + dump.substring(0, Math.min(dump.length(), 420)));
+              String xml = sw.toString().replaceAll("\\s+", " ");
+              System.out.println(label + " XML: " + xml.substring(0, Math.min(xml.length(), 300)));
             } catch (Exception e) {
-              System.out.println(label + ": EXCEPTION " + e);
+              System.out.println(label + " EXC: " + e);
             }
           }
 
-          // 1) default (html) parser
-          Document d1 = convert(Jsoup.parse(html));
-          report("html-parser", d1, xp);
+          Document a = new W3CDom().fromJsoup(Jsoup.parse(html));
+          dump("html-parser", a, xp);
+          dump("html-parser-count", a, "//li");
 
-          // 2) xml parser, suppressClosingTag
-          org.jsoup.parser.Parser xmlp = org.jsoup.parser.Parser.xmlParser();
-          xmlp.setSuppressClosingTag("ul");
-          Document d2 = new org.jsoup.parser.W3CDom().fromJsoup(Jsoup.parse(html, "", xmlp));
-          report("xml-parser", d2, xp);
-
-          // 3) html parser + rename nodes to strip the namespace
-          Document d3 = convert(Jsoup.parse(html));
-          NodeList all = d3.getElementsByTagName("*");
-          StringBuilder names = new StringBuilder();
-          for (int i = 0; i < all.getLength(); i++) names.append(all.item(i).getNodeName()).append(" ");
-          System.out.println("before-rename: " + names);
+          Document b = new W3CDom().fromJsoup(Jsoup.parse(html));
+          NodeList all = b.getElementsByTagName("*");
           for (int i = 0; i < all.getLength(); i++) {
             Node n = all.item(i);
             String nm = n.getNodeName();
             int c = nm.indexOf(':');
-            if (c > 0) d3.renameNode(n, null, nm.substring(c + 1));
+            if (c > 0) {
+              try { b.renameNode(n, null, nm.substring(c + 1)); } catch (Exception e) { System.out.println("rename EXC @ " + nm + ": " + e); break; }
+            }
           }
-          NodeList all2 = d3.getElementsByTagName("*");
-          StringBuilder names2 = new StringBuilder();
-          for (int i = 0; i < all2.getLength(); i++) names2.append(all2.item(i).getNodeName()).append(" ");
-          System.out.println("after-rename: " + names2);
-          report("html-parser+rename", d3, xp);
+          dump("html+rename", b, xp);
 
-          // 4) html parser + a fresh non-namespace-aware import
-          Document src = convert(Jsoup.parse(html));
-          try {
-            Document clean = javax.xml.parsers.DocumentBuilderFactory.newInstance()
-                .newDocumentBuilder().newDocument();
-            clean.adoptNode(src.getDocumentElement());
-            clean.appendChild(src.getDocumentElement());
-            report("adopted", clean, xp);
-          } catch (Exception e) { System.out.println("adopted: EXCEPTION " + e); }
+          Document c2 = new W3CDom().fromJsoup(Jsoup.parse(html, "", Parser.xmlParser()));
+          dump("xml-parser", c2, xp);
           /exit
           JSH
           jshell --class-path /tmp/jsoup.jar -q /tmp/probe/p.jsh > /tmp/probe/out.txt 2>&1 || true
