@@ -1380,8 +1380,6 @@
     <string name="for_you_status_fanout">Сразу %1$d источника</string>
     <string name="for_you_status_getting_started">Читать пока нечего</string>
     <string name="for_you_loading">Ищем, что почитать…</string>
-    <string name="for_you_bound_to">Источник: %1$s</string>
-    <string name="for_you_reading_all">Опросим все установленные источники</string>
     <string name="for_you_change">Сменить</string>
     <string name="for_you_bound_auto">Авто — все источники этого типа</string>
     <string name="for_you_change_source">Какой источник читать</string>
@@ -1455,5 +1453,6 @@
     <string name="for_you_highest_rated_note">Среди %1$d книг, которые источники вернули для этого выбора — оценки их, а не наши.</string>
     <string name="extensions_repo_url_title">URL репозитория Lua-плагинов</string>
     <string name="extensions_repo_url_label">URL индекса репозитория (index.json)</string>
+    <string name="for_you_subtitle">Что почитать дальше — из установленных источников.</string>
 </resources>
 

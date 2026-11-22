@@ -64,6 +64,7 @@ import my.noveldokusha.coreui.components.NovelaBookCard
 import my.noveldokusha.coreui.components.NovelaEmptyState
 import my.noveldokusha.coreui.components.NovelaFilterChip
 import my.noveldokusha.coreui.components.NovelaTileIconButton
+import my.noveldokusha.coreui.components.novelaGreeting
 import my.noveldokusha.coreui.theme.NovelaRadius
 import my.noveldokusha.coreui.theme.NovelaSize
 import my.noveldokusha.coreui.theme.NovelaSpacing
@@ -125,13 +126,20 @@ fun NovelaForYouScreen(
                 )
             }
             Column(modifier = Modifier.weight(1f)) {
+                // The reference design opens with a greeting rather than the word "For you" —
+                // the tab in the navigation pill already says what this is, so the header is
+                // free to be a person, not a label.
                 Text(
-                    text = stringResource(R.string.for_you_title),
+                    text = novelaGreeting(),
                     style = MaterialTheme.typography.headlineSmall,
                     color = palette.onBackground,
                 )
-                Spacer(modifier = Modifier.height(NovelaSpacing.xxs))
-                ForYouStatusPill(state = state)
+                Text(
+                    text = stringResource(R.string.for_you_subtitle),
+                    style = NovelaType.bookMeta,
+                    color = palette.onSurfaceVariant,
+                    maxLines = 2,
+                )
             }
             NovelaTileIconButton(
                 contentDescription = stringResource(R.string.for_you_genres_title),
@@ -168,39 +176,27 @@ fun NovelaForYouScreen(
             }
         }
 
-        // Which source this tab reads. Kept out of the header so the header stays about
-        // status, and hidden entirely when there is nothing installed to bind.
-        if (state.sourcesOfThisType > 0) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = NovelaSpacing.screenH)
-                    .padding(bottom = NovelaSpacing.sm),
-                verticalAlignment = Alignment.CenterVertically,
+        // One line that says which source this tab is reading (or that it is asking all of
+        // them), with the way to change it next to it.
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = NovelaSpacing.screenH)
+                .padding(bottom = NovelaSpacing.sm),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.sm),
+        ) {
+            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+                ForYouStatusPill(state = state)
+            }
+            TextButton(
+                onClick = { showSourcePicker = true },
+                enabled = state.sourcesOfThisType > 0 || state.boundSourceId.isNotEmpty(),
             ) {
-                val boundName = state.boundSourceName
                 Text(
-                    text = if (boundName != null) {
-                        stringResource(R.string.for_you_bound_to, boundName)
-                    } else {
-                        stringResource(R.string.for_you_reading_all)
-                    },
-                    style = NovelaType.bookMeta,
-                    color = palette.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(NovelaRadius.sm))
-                        .clickable { showSourcePicker = true }
-                        .padding(vertical = NovelaSpacing.xxs),
+                    text = stringResource(R.string.for_you_change),
+                    style = MaterialTheme.typography.labelLarge,
                 )
-                TextButton(onClick = { showSourcePicker = true }) {
-                    Text(
-                        text = stringResource(R.string.for_you_change),
-                        style = MaterialTheme.typography.labelLarge,
-                    )
-                }
             }
         }
 

@@ -23,8 +23,6 @@
     <string name="for_you_status_fanout">Asking %1$d sources at once</string>
     <string name="for_you_status_getting_started">No source to read yet</string>
     <string name="for_you_loading">Looking for something to read…</string>
-    <string name="for_you_bound_to">Reading from %1$s</string>
-    <string name="for_you_reading_all">Reading from all your installed sources</string>
     <string name="for_you_change">Change</string>
     <string name="for_you_bound_auto">Auto — every source of this type</string>
     <string name="for_you_change_source">Which source to read</string>
@@ -1091,4 +1089,5 @@
     <string name="for_you_highest_rated_note">Among the %1$d books the sources returned for this selection — the scores are theirs, not ours.</string>
     <string name="extensions_repo_url_title">Lua plugin repository URL</string>
     <string name="extensions_repo_url_label">Repository index URL (index.json)</string>
+    <string name="for_you_subtitle">What to read next, from the sources you installed.</string>
 </resources>
