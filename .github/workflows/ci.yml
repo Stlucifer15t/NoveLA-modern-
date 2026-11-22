@@ -143,6 +143,22 @@ jobs:
               f.write("\n".join(summary) + "\n")
           print(f"errors in {len(by_file)} file(s), {sum(len(v) for v in by_file.values())} total")
           PYEOF
+      - name: Hilt diagnostics (only when the build fails)
+        # The Dagger error alone does not say whether the module's generated code is
+        # missing or whether :app just does not look at it — this answers both.
+        if: failure()
+        run: |
+          echo "=== extension_compat: generated Hilt/Dagger sources ==="
+          find tooling/extension_compat/build/generated -type f 2>/dev/null | head -40 || echo "NONE"
+          echo "=== CompatModule* generated? ==="
+          find . -path "*/build/generated/*" -name "*CompatModule*" 2>/dev/null | head -20 || echo "NONE"
+          echo "=== :app aggregated deps classpath contains extension_compat? ==="
+          find app/build/intermediates -path "*hiltAgg*" -name "*.txt" 2>/dev/null | head -3 | xargs -r grep -l extension_compat 2>/dev/null || echo "NOT LISTED"
+          echo "=== who injects the loader set ==="
+          grep -rn "loaders: Set<CompatExtensionLoader>" --include=*.kt . | head -3
+          echo "=== CompatModule as committed ==="
+          sed -n '1,60p' tooling/extension_compat/src/main/java/my/noveldokusha/extension_compat/di/CompatModule.kt
+
       - name: Publish the raw build log to the ci-log branch
         # Runner logs and artifacts are not reachable from every environment, and the
         # Checks API caps annotations at 50 per run — so on failure the raw log is
