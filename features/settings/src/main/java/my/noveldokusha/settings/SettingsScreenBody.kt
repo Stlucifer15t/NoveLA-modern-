@@ -654,6 +654,7 @@ private fun Preview() {
                     libraryAutoUpdate = SettingsScreenState.LibraryAutoUpdate(
                         autoUpdateEnabled = remember { mutableStateOf(true) },
                         autoUpdateIntervalHours = remember { mutableIntStateOf(24) },
+                        onSendTestNotification = {},
                     ),
                     massAddDelayMs = remember { derivedStateOf { 2000L } },
                     downloadDelayMs = remember { derivedStateOf { 2000L } },

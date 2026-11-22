@@ -137,6 +137,7 @@ internal fun ChaptersScreen(
     onMigrateBook: () -> Unit = {},
     onDeleteTranslations: () -> Unit = {},
     onFixBook: () -> Unit = {},
+    onToggleNewChapterNotifications: () -> Unit = {},
     categories: () -> List<String>,
     onUpdateCategory: (String) -> Unit,
     translatedTitle: String?,
@@ -280,6 +281,8 @@ internal fun ChaptersScreen(
                                         onMigrateBook = onMigrateBook,
                                         onDeleteTranslations = onDeleteTranslations,
                                         onFixBook = onFixBook,
+                                        notifyNewChapters = state.notifyNewChapters.value,
+                                        onToggleNotifyNewChapters = onToggleNewChapterNotifications,
                                     )
                                 }
                             }

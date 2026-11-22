@@ -125,6 +125,7 @@ class ChaptersActivity : BaseActivity() {
                     },
                     onDeleteTranslations = viewModel::deleteTranslationsForBook,
                     onFixBook = viewModel::fixBook,
+                    onToggleNewChapterNotifications = viewModel::toggleNewChapterNotifications,
                     categories = viewModel::getCategories,
                     onUpdateCategory = viewModel::updateBookCategory,
                     translatedTitle = viewModel.translatedTitle.value,

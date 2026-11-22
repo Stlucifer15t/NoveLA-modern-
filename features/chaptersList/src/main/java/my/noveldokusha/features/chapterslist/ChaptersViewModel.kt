@@ -162,6 +162,9 @@ internal class ChaptersViewModel @Inject constructor(
         // метка из Book.contentType, при пустой — из contentType источника.
         isVideoBook = derivedStateOf { isVideoContentType(book.value.contentType) },
         greyOutReadChapters = appPreferences.GREY_OUT_READ_CHAPTERS.state(viewModelScope),
+        notifyNewChapters = appPreferences.NOTIFY_MUTED_BOOK_URLS.state(viewModelScope).let { muted ->
+            derivedStateOf { book.value.url !in muted.value }
+        },
         chapterDownloads = mutableStateOf(emptyMap()),
     )
 
@@ -938,6 +941,12 @@ internal class ChaptersViewModel @Inject constructor(
 
     suspend fun getLastReadChapter(): String? =
         chaptersRepository.getLastReadChapter(bookUrl = bookUrl)
+
+    fun toggleNewChapterNotifications() {
+        val url = book.value.url
+        val currentlyMuted = url in appPreferences.NOTIFY_MUTED_BOOK_URLS.value
+        appPreferences.setNewChapterNotifications(url, enabled = currentlyMuted)
+    }
 
     private fun refreshReadingHistory() {
         appScope.launch {

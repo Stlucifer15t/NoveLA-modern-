@@ -45,6 +45,7 @@ internal class SettingsViewModel @Inject constructor(
     private val appPreferences: AppPreferences,
     @ApplicationContext private val context: Context,
     private val appFileResolver: AppFileResolver,
+    private val notificationsCenter: my.noveldokusha.coreui.states.NotificationsCenter,
     private val appRemoteRepository: AppRemoteRepository,
     private val toasty: Toasty,
     private val appWorkersInteractions: AppWorkersInteractions,
@@ -123,7 +124,8 @@ internal class SettingsViewModel @Inject constructor(
             ),
             autoUpdateIntervalHours = appPreferences.GLOBAL_APP_AUTOMATIC_LIBRARY_UPDATES_INTERVAL_HOURS.state(
                 viewModelScope
-            )
+            ),
+            onSendTestNotification = { sendTestNewChapterNotification() },
         ),
         massAddDelayMs = appPreferences.MASS_ADD_DELAY_MS.state(viewModelScope),
         downloadDelayMs = appPreferences.DOWNLOAD_DELAY_MS.state(viewModelScope),
@@ -169,6 +171,31 @@ internal class SettingsViewModel @Inject constructor(
         appVersion = appRemoteRepository.getDisplayVersion(),
         stats = _stats,
     )
+
+    /**
+     * Posts one notification on the channel the real new-chapter alerts use, so the permission,
+     * the channel and the notification shade can be checked before a chapter is ever involved.
+     */
+    fun sendTestNewChapterNotification() {
+        if (!androidx.core.app.NotificationManagerCompat.from(context).areNotificationsEnabled()) {
+            android.widget.Toast.makeText(
+                context,
+                my.noveldokusha.strings.R.string.library_test_notification_blocked,
+                android.widget.Toast.LENGTH_LONG,
+            ).show()
+            return
+        }
+        notificationsCenter.showNotification(
+            channelId = "New chapters",
+            channelName = context.getString(my.noveldokusha.strings.R.string.notification_channel_name_new_chapters),
+            notificationId = TEST_NOTIFICATION_ID,
+            importance = android.app.NotificationManager.IMPORTANCE_DEFAULT,
+        ) {
+            setContentTitle(context.getString(my.noveldokusha.strings.R.string.library_test_notification_title))
+            setContentText(context.getString(my.noveldokusha.strings.R.string.library_test_notification_text))
+            setAutoCancel(true)
+        }
+    }
 
     init {
         updateDatabaseSize()
@@ -750,3 +777,6 @@ internal class SettingsViewModel @Inject constructor(
         appPreferences.BACKUP_AUTO_INCLUDE_PLUGINS.value = include
     }
 }
+
+// Фиксированный id тестового уведомления: повторный тест заменяет предыдущее, а не плодит новые.
+private const val TEST_NOTIFICATION_ID = 0x7e57

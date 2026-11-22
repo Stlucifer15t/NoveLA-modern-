@@ -27,6 +27,8 @@ import my.noveldokusha.coreui.theme.textPadding
 import my.noveldokusha.core.domain.AppVersion
 import my.noveldokusha.core.domain.RemoteAppVersion
 import my.noveldokusha.settings.R
+import my.noveldokusha.strings.R as StringsR
+import androidx.compose.material.icons.outlined.NotificationsActive
 import my.noveldokusha.settings.SettingsScreenState
 import my.noveldokusha.settings.views.NewAppUpdateDialog
 import my.noveldokusha.settings.ui.ExpressiveSwitch
@@ -81,6 +83,20 @@ fun LibraryAutoUpdate(
             },
             leadingContent = {
                 Icon(Icons.Outlined.Timer, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        )
+        // Проверка канала: тот же канал, что у настоящих уведомлений о главах.
+        SlimListItem(
+            modifier = Modifier.clickable { state.onSendTestNotification() },
+            headlineContent = {
+                Text(text = stringResource(StringsR.string.library_test_notification))
+            },
+            leadingContent = {
+                Icon(
+                    Icons.Outlined.NotificationsActive,
+                    null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         )
     }

@@ -10,6 +10,7 @@ import androidx.compose.material.icons.outlined.Public
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.outlined.DeleteSweep
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -33,6 +34,8 @@ internal fun ChaptersDropDown(
     onMigrateBook: () -> Unit = {},
     onDeleteTranslations: () -> Unit = {},
     onFixBook: () -> Unit = {},
+    notifyNewChapters: Boolean = true,
+    onToggleNotifyNewChapters: () -> Unit = {},
 ) {
     if (!isLocalSource) DropdownMenuItem(
         onClick = openInBrowser,
@@ -102,6 +105,15 @@ internal fun ChaptersDropDown(
                 stringResource(R.string.download_all_chapters),
             )
         }
+    )
+    if (!isLocalSource) DropdownMenuItem(
+        onClick = onToggleNotifyNewChapters,
+        text = {
+            Text(text = stringResource(StringsR.string.chapters_notify_new))
+        },
+        trailingIcon = {
+            Checkbox(checked = notifyNewChapters, onCheckedChange = null)
+        },
     )
     DropdownMenuItem(
         onClick = { onExport(bookUrl, bookTitle) },
