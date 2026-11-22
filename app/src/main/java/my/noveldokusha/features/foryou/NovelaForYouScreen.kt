@@ -265,10 +265,12 @@ fun NovelaForYouScreen(
             state.books.isEmpty() -> NovelaEmptyState(
                 icon = Icons.Outlined.Update,
                 title = stringResource(R.string.for_you_no_answer_title),
+                // The failure text is appended rather than hidden: "the tab is empty and I do
+                // not know why" is the complaint this whole screen exists to answer.
                 message = stringResource(
                     if (state.queriedSources > 0) R.string.for_you_no_answer_message
                     else R.string.for_you_no_answer_offline
-                ),
+                ) + state.error?.let { "\n\n" + it }.orEmpty(),
                 actionLabel = stringResource(R.string.for_you_refresh),
                 onAction = onRefresh,
                 modifier = Modifier.padding(horizontal = NovelaSpacing.screenH),
