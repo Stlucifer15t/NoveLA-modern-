@@ -19,12 +19,18 @@ import javax.inject.Singleton
 /**
  * Wires the compat layer into the application graph.
  *
- * The loader set is *provided* rather than multibound. Injecting `Set<T>` through
- * `@Multibinds`/`@Binds @IntoSet` kept failing in `:app:hiltJavaCompileDebug` with
- * `MissingBinding: java.util.Set<? extends CompatExtensionLoader>` across several CI
- * runs, while the same module's `@Provides` for [CompatStorage] was picked up
- * immediately — so the app graph is handed a concrete set and no wildcard has to match.
- * A new ecosystem is registered in [provideLoaders], which keeps the registry greppable.
+ * Two shapes here were tried and rejected by the toolchain, and both are worth knowing
+ * before "simplifying" this file:
+ *
+ *  - `@Module` on the companion object makes Hilt treat it as a *second* module and it
+ *    fails with "CompatModule.Companion is missing an @InstallIn annotation", so every
+ *    @Provides member is a direct member of this module.
+ *  - multibound loaders (`@Binds @IntoSet`, and `@Multibinds` + `@Provides @IntoSet`)
+ *    left `:app:hiltJavaCompileDebug` with `MissingBinding:
+ *    java.util.Set<? extends CompatExtensionLoader>` for the `Set<T>` that
+ *    [CompatSourceProviderImpl] injects. A plain provided set needs no wildcard match.
+ *
+ * A new ecosystem is registered in [provideLoaders] — one place to grep.
  */
 @InstallIn(SingletonComponent::class)
 @Module
@@ -34,27 +40,24 @@ abstract class CompatModule {
     @Singleton
     abstract fun bindCompatSourceProvider(impl: CompatSourceProviderImpl): CompatSourceProvider
 
-    @Module
-    companion object {
-        @Provides
-        @Singleton
-        fun provideCompatStorage(@ApplicationContext context: Context): CompatStorage =
-            CompatStorage(File(context.filesDir, CompatStorage.DIR_NAME))
+    @Provides
+    @Singleton
+    fun provideCompatStorage(@ApplicationContext context: Context): CompatStorage =
+        CompatStorage(File(context.filesDir, CompatStorage.DIR_NAME))
 
-        /**
-         * Every ecosystem the app can load.
-         *
-         * Tachiyomi/Mihon/Aniyomi (keiyoushi) ship extensions as APKs with dex written
-         * against host APIs (`eu.kanade.tachiyomi.source.model.*`, Injekt, RxJava). That
-         * source API is not part of this build, so the loader only validates the manifest
-         * and dex and then explains itself: registering it is what turns "installed but
-         * unusable here" into a message instead of "no loader for this ecosystem".
-         */
-        @Provides
-        @Singleton
-        fun provideLoaders(
-            legado: LegadoExtensionLoader,
-            tachiyomi: TachiyomiExtensionLoader,
-        ): Set<CompatExtensionLoader> = setOf(legado, tachiyomi)
-    }
+    /**
+     * Every ecosystem the app can load.
+     *
+     * Tachiyomi/Mihon/Aniyomi (keiyoushi) ship extensions as APKs with dex written
+     * against host APIs (`eu.kanade.tachiyomi.source.model.*`, Injekt, RxJava). That
+     * source API is not part of this build, so the loader only validates the manifest
+     * and dex and then explains itself: registering it is what turns "installed but
+     * unusable here" into a message instead of "no loader for this ecosystem".
+     */
+    @Provides
+    @Singleton
+    fun provideLoaders(
+        legado: LegadoExtensionLoader,
+        tachiyomi: TachiyomiExtensionLoader,
+    ): Set<CompatExtensionLoader> = setOf(legado, tachiyomi)
 }
