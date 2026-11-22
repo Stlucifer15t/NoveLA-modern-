@@ -1134,7 +1134,7 @@
     <string name="feeds_filter_all">All</string>
     <string name="feeds_checking_now">Asking the sources for new chapters…</string>
     <string name="feeds_open_library">Open the library</string>
-    <string name="feeds_note">A row counts the chapters the shelf has that this device has not opened. “Check” runs the library update worker, which is what actually asks the sources; the app has no push channel, so nothing arrives on its own.</string>
+    <string name="feeds_note">A row counts the chapters the shelf has that this device has not opened. “Check” runs the library update now. The app also checks on its own at the interval set under Settings → Library (6 hours to 2 days) and posts a notification when a new chapter appears.</string>
     <string name="feeds_new_chapter">1 new chapter</string>
     <string name="feeds_new_chapters">%1$d new chapters</string>
     <string name="feeds_new_episode">1 new episode</string>

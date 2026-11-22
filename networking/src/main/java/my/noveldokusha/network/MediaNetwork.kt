@@ -36,6 +36,9 @@ object MediaNetworkModule {
     ): OkHttpClient =
         OkHttpClient.Builder()
             .cookieJar(networkClient.cookieJar)
+            // Тот же DoH-фолбэк, что у скрапера: системный DNS у части провайдеров
+            // не отдаёт адреса CDN, и плеер висел на «загрузке» при хорошей сети.
+            .dns(networkClient.dns)
             .addInterceptor(UserAgentInterceptor(appPreferences))
             .readTimeout(30, TimeUnit.SECONDS)
             .connectTimeout(15, TimeUnit.SECONDS)

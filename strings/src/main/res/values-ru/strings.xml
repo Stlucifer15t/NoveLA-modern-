@@ -1499,11 +1499,12 @@
     <string name="feeds_filter_all">Все</string>
     <string name="feeds_checking_now">Спрашиваем у источников новые главы…</string>
     <string name="feeds_open_library">Открыть библиотеку</string>
-    <string name="feeds_note">В строке — главы, которые есть на полке и которые на этом устройстве не открывали. «Проверить» запускает обновление библиотеки: источники спрашивает именно оно, push-канала у приложения нет, само ничего не приходит.</string>
+    <string name="feeds_note">В строке — главы, которые есть на полке и которые на этом устройстве не открывали. «Проверить» запускает обновление библиотеки прямо сейчас. Приложение проверяет само с интервалом из Настройки → Библиотека (от 6 часов до 2 суток) и присылает уведомление, когда появляется новая глава.</string>
     <string name="feeds_new_chapter">1 новая глава</string>
     <string name="feeds_new_chapters">%1$d новых глав</string>
     <string name="feeds_new_episode">1 новая серия</string>
     <string name="feeds_new_episodes">%1$d новых серий</string>
     <string name="feeds_all_read">Непрочитанного нет</string>
     <string name="feeds_empty_filter_title">Такого на полке пока нет</string>
+    <string name="table_of_contents">Оглавление</string>
 </resources>

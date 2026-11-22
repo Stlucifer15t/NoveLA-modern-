@@ -41,6 +41,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.material3.Surface
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -1137,7 +1143,7 @@ internal class MangaReaderActivity : ComponentActivity() {
                             .padding(start = 20.dp, end = 4.dp, top = 8.dp),
                     ) {
                         Text(
-                            text = stringResource(R.string.manga_reader_chapter_list),
+                            text = stringResource(R.string.table_of_contents),
                             style = MaterialTheme.typography.titleMedium,
                             modifier = Modifier.weight(1f),
                         )
@@ -1158,35 +1164,46 @@ internal class MangaReaderActivity : ComponentActivity() {
                             modifier = Modifier.padding(20.dp),
                         )
                     } else {
-                        LazyColumn(modifier = Modifier.fillMaxWidth()) {
-                            items(chapters, key = { it.url }) { chapter ->
-                                val isCurrent =
-                                    chapters[currentIndex.coerceIn(0, chapters.size - 1)].url == chapter.url
-                                Row(
+                        val current = currentIndex.coerceIn(0, chapters.size - 1)
+                        // Сетка номерованных плиток, 4 в ряд: видно сразу весь
+                        // диапазон глав, а не один ряд на весь экран.
+                        LazyVerticalGrid(
+                            columns = GridCells.Fixed(4),
+                            modifier = Modifier.fillMaxWidth(),
+                            contentPadding = PaddingValues(12.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            itemsIndexed(chapters, key = { _, item -> item.url }) { index, chapter ->
+                                val isCurrent = index == current
+                                // Номер добавляем, только если его нет в самом названии
+                                // (иначе «97: Chapter 97»).
+                                val label = if (chapter.title.contains(Regex("\\b${index + 1}\\b"))) {
+                                    chapter.title
+                                } else {
+                                    "${index + 1}: ${chapter.title}"
+                                }
+                                Surface(
+                                    onClick = { onChapterClick(chapter.url) },
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = if (isCurrent) MaterialTheme.colorScheme.primary
+                                    else MaterialTheme.colorScheme.surfaceContainerHigh,
+                                    contentColor = if (isCurrent) MaterialTheme.colorScheme.onPrimary
+                                    else MaterialTheme.colorScheme.onSurface,
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clickable { onChapterClick(chapter.url) }
-                                        .background(
-                                            if (isCurrent) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
-                                            else Color.Transparent
-                                        )
-                                        .padding(horizontal = 20.dp, vertical = 12.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
+                                        .height(48.dp),
                                 ) {
-                                    Text(
-                                        text = chapter.title,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurface,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                        modifier = Modifier.weight(1f),
-                                    )
-                                    if (isCurrent) {
+                                    Box(
+                                        contentAlignment = Alignment.Center,
+                                        modifier = Modifier.padding(horizontal = 6.dp),
+                                    ) {
                                         Text(
-                                            text = stringResource(R.string.manga_reader_chapter_list_current),
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.primary,
-                                            modifier = Modifier.padding(start = 8.dp),
+                                            text = label,
+                                            style = MaterialTheme.typography.labelLarge,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                            textAlign = TextAlign.Center,
                                         )
                                     }
                                 }
