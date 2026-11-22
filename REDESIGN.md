@@ -300,6 +300,14 @@ network. `decorate()` normalizes through `mapToBookMetadata()` (so keys match th
 normalized URLs), dedupes by url, and marks `inLibrary`; books already on the shelf go last
 rather than being hidden.
 
+The header is a greeting plus one line about what the tab does, and the
+source status is a pill on its own row with **Change** beside it — the tab is
+named by the navigation pill, so the header does not have to repeat it. Under
+the reading card sits a "Highest rated" rail: the same pass the grid shows,
+ordered by the `rating` string each source returns (`parseRatingScore` accepts
+"4.5", "4.8/5", "9.2/10"; a "#12" or "RANK 216" is an ordering, not a score,
+and is dropped), and it hides when fewer than two books carry a score.
+
 No percentage-match badge and no "because you like this" score: nothing in this codebase can
 compute one honestly. The one claim the tab does make — "shares a word with <your book>" — is a
 literal keyword overlap between a returned title and a title in `ReadingHistory`.
