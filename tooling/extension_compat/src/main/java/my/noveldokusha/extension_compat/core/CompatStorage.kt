@@ -166,11 +166,11 @@ class CompatStorage(
     }
 
     fun readIndex(repoId: String, suffix: String): String? {
-        return
-        runCatching {
+        return runCatching {
             val file = indexFile(repoId, suffix)
             if (file.exists()) file.readText() else null
         }.getOrNull()
+    }
 
     /** Payload and cache file names: safe characters only. */
     fun safeFileName(raw: String): String = buildString(raw.length.coerceAtMost(120)) {

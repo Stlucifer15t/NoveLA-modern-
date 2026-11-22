@@ -23,7 +23,8 @@ on:
         type: string
 
 permissions:
-  contents: read
+  # write only so the failure path can publish the raw log to the `ci-log` branch
+  contents: write
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -100,7 +101,7 @@ jobs:
           LOG="$RUNNER_TEMP/build-output.log"
           [ -f "$LOG" ] || { echo "no build log"; exit 0; }
           python3 - "$LOG" <<'PYEOF'
-          import re, sys, collections
+          import re, sys, os, collections
           log = open(sys.argv[1], errors="ignore").read().splitlines()
           by_file = collections.OrderedDict()
           tests = []
@@ -108,7 +109,7 @@ jobs:
               m = re.match(r"^e: file://([^:]+):(\d+):\d+: (.*)$", line)
               if m:
                   path, ln, msg = m.group(1), m.group(2), m.group(3)
-                  path = re.sub(r".*/workflows/[^/]+/", "", path)
+                  path = path.replace(f"{os.environ.get('GITHUB_WORKSPACE', '')}/", "")
                   by_file.setdefault(path, []).append((ln, msg))
                   continue
               if re.search(r"FAILED$|tests? completed", line):
@@ -142,13 +143,45 @@ jobs:
               f.write("\n".join(summary) + "\n")
           print(f"errors in {len(by_file)} file(s), {sum(len(v) for v in by_file.values())} total")
           PYEOF
+      - name: Publish the raw build log to the ci-log branch
+        # Runner logs and artifacts are not reachable from every environment, and the
+        # Checks API caps annotations at 50 per run — so on failure the raw log is
+        # pushed to an orphan branch. Read it with:
+        #   gh api repos/<owner>/<repo>/contents/ci-build.log?ref=ci-log
+        if: failure()
+        env:
+          GITHUB_TOKEN: ${'$'}{{ github.token }}
+        run: |
+          LOG="$RUNNER_TEMP/build-output.log"
+          [ -f "$LOG" ] || exit 0
+          mkdir -p /tmp/logpub
+          {
+            echo "# CI build log"
+            echo "run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            echo "commit: ${GITHUB_SHA}"
+            echo
+            grep -E '^e: |^> Task .* FAILED|FAILED$|\* What went wrong|^Caused by|error:' "$LOG" | head -400
+            echo
+            echo "## last 400 lines"
+            echo '```'
+            tail -400 "$LOG"
+            echo '```'
+          } > /tmp/logpub/ci-build.log
+          cd /tmp/logpub
+          git init -q -b ci-log
+          git config user.name "ci-log"
+          git config user.email "ci-log@users.noreply.github.com"
+          git add ci-build.log
+          git commit -qm "ci log ${GITHUB_SHA:0:7} [skip ci]"
+          git push -f "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:refs/heads/ci-log
+
       - name: Upload build log and test reports
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: ci-build-log-${{ github.sha }}
           path: |
-            $RUNNER_TEMP/build-output.log
+            ${{ runner.temp }}/build-output.log
             **/build/test-results/**
             **/build/reports/tests/**
           retention-days: 14
