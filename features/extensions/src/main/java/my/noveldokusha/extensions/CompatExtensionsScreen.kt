@@ -1,5 +1,12 @@
 package my.noveldokusha.extensions
 
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.outlined.Extension
+import my.noveldokusha.coreui.components.NovelaEmptyState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -94,23 +101,18 @@ fun CompatExtensionsDialog(
             }
         },
         text = {
-            Column(
+            LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(max = 460.dp)
-                    .verticalScroll(rememberScrollState()),
+                    .heightIn(max = 520.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
+                contentPadding = PaddingValues(top = 2.dp, bottom = 6.dp),
             ) {
-                AddRepoBlock(state = state, viewModel = viewModel)
+                item { AddRepoBlock(state = state, viewModel = viewModel) }
 
                 if (state.repositories.isNotEmpty()) {
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-                    Text(
-                        text = "Repositories",
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    state.repositories.forEach { repo ->
+                    item { SectionLabel("Repositories · ${state.repositories.size}") }
+                    items(items = state.repositories, key = { "repo_" + it.id }) { repo ->
                         RepositoryRow(
                             repo = repo,
                             selected = repo.id == state.selectedRepoId,
@@ -119,19 +121,29 @@ fun CompatExtensionsDialog(
                             viewModel = viewModel,
                         )
                     }
-
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-                    RepoCatalogBlock(state = state, viewModel = viewModel)
+                    item { HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp)) }
+                    // Catalog rows are items of THIS list on purpose: a Mihon index can
+                    // hold a thousand sources, and composing them all inside one block is
+                    // what makes a dialog feel like it hangs.
+                    item { CatalogToolbar(state = state, viewModel = viewModel) }
+                    items(
+                        items = state.entries,
+                        key = { "entry_${it.repoId}_${it.key}" },
+                        contentType = { "catalog-row" },
+                    ) { entry ->
+                        CatalogRow(
+                            entry = entry,
+                            installState = state.installStates[entry.key]
+                                ?: CompatRepositoryManager.InstallState.NOT_INSTALLED,
+                            busy = state.isRefreshing,
+                            viewModel = viewModel,
+                        )
+                    }
                 }
 
                 if (state.installed.isNotEmpty()) {
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-                    Text(
-                        text = "Installed compat sources (${state.installed.size})",
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    state.installed.forEach { record ->
+                    item { SectionLabel("Installed compat sources · ${state.installed.size}") }
+                    items(items = state.installed, key = { "installed_" + it.id }) { record ->
                         InstalledRow(
                             record = record,
                             loadError = state.loadInfos.firstOrNull { it.record.id == record.id }?.loadError,
@@ -140,15 +152,18 @@ fun CompatExtensionsDialog(
                     }
                 }
 
-                if (state.repositories.isEmpty() && state.installed.isEmpty() && !state.showAddRepo) {
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        text = "No repositories yet. Add one, or import a bookSource.json file " +
-                            "from a Legado-style repo.",
-                        fontSize = 12.sp,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
+                if (state.repositories.isEmpty() && state.installed.isEmpty()) {
+                    item {
+                        NovelaEmptyState(
+                            icon = Icons.Outlined.Extension,
+                            title = "No repositories yet",
+                            message = "Add a repository URL, or pick a Legado-style bookSource.json " +
+                                "file — the format is detected from the content.",
+                            actionLabel = "Add repository",
+                            onAction = { viewModel.onEvent(CompatExtensionsEvent.OnShowAddRepo) },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
                 }
             }
         },
@@ -361,7 +376,7 @@ private fun RepositoryRow(
 }
 
 @Composable
-private fun RepoCatalogBlock(
+private fun CatalogToolbar(
     state: CompatExtensionsState,
     viewModel: CompatExtensionsViewModel,
 ) {
@@ -422,16 +437,19 @@ private fun RepoCatalogBlock(
             fontSize = 10.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        state.entries.forEach { entry ->
-            CatalogRow(
-                entry = entry,
-                installState = state.installStates[entry.key]
-                    ?: CompatRepositoryManager.InstallState.NOT_INSTALLED,
-                busy = state.isRefreshing,
-                viewModel = viewModel,
-            )
-        }
     }
+}
+
+/** Small uppercase label used between blocks of the dialog. */
+@Composable
+private fun SectionLabel(text: String) {
+    Text(
+        text = text,
+        fontSize = 11.sp,
+        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(top = 6.dp),
+    )
 }
 
 @Composable
@@ -658,12 +676,20 @@ fun CompatReposSummaryRow(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            Icon(
-                Icons.Default.Extension,
-                contentDescription = null,
-                modifier = Modifier.size(18.dp),
-                tint = colorAccent,
-            )
+            Box(
+                modifier = Modifier
+                    .size(30.dp)
+                    .clip(CircleShape)
+                    .background(colorAccent.copy(alpha = 0.16f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    Icons.Default.Extension,
+                    contentDescription = null,
+                    modifier = Modifier.size(17.dp),
+                    tint = colorAccent,
+                )
+            }
             Column(Modifier.weight(1f)) {
                 Text(
                     text = "Third-party extension repos",
@@ -693,9 +719,9 @@ fun CompatReposSummaryRow(
                 CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp)
             } else {
                 Icon(
-                    Icons.Default.Refresh,
+                    Icons.AutoMirrored.Filled.KeyboardArrowRight,
                     contentDescription = null,
-                    modifier = Modifier.size(16.dp),
+                    modifier = Modifier.size(18.dp),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }

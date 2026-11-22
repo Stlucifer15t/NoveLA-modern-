@@ -167,7 +167,7 @@ class CompatRepositoryManager @Inject constructor(
                     else -> "Cannot download ${entry.payloadUrl.ifBlank { "(no payload URL in index)" }}"
                 },
             )
-        if (payload.isEmpty) return InstallOutcome(ok = false, message = "Empty payload for ${entry.name}")
+        if (payload.isEmpty()) return InstallOutcome(ok = false, message = "Empty payload for ${entry.name}")
 
         val record = buildRecord(entry, payload)
         val previous = provider.findRecord(entry.ecosystem, entry.key)
@@ -536,7 +536,7 @@ class CompatRepositoryManager @Inject constructor(
             contentType = entry.contentType,
             payloadPath = fileName,
             sourceUrl = entry.payloadUrl.ifBlank { repo?.indexUrl ?: entry.repoId },
-            iconUrl = entry.iconUrl,
+            iconUrl = entry.iconUrl.orEmpty(),
             enabled = true,
             versionCode = entry.versionCode,
             repositoryId = entry.repoId,

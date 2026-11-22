@@ -52,15 +52,41 @@ class CompatStorage(
     private val mutex = java.util.concurrent.locks.ReentrantLock()
 
     private val _records = MutableStateFlow<List<CompatInstallRecord>>(emptyList())
-    val records: StateFlow<List<CompatInstallRecord>> = _records.asStateFlow()
+    val records: StateFlow<List<CompatInstallRecord>>
+        get() {
+            ensureLoaded()
+            return _records.asStateFlow()
+        }
 
     /** Subscriptions to third-party repositories (see [CompatRepository]). */
     private val _repositories = MutableStateFlow<List<CompatRepository>>(emptyList())
-    val repositories: StateFlow<List<CompatRepository>> = _repositories.asStateFlow()
+    val repositories: StateFlow<List<CompatRepository>>
+        get() {
+            ensureLoaded()
+            return _repositories.asStateFlow()
+        }
 
-    init {
-        loadRegistry()
-        loadRepositories()
+    private var loaded = false
+
+    /**
+     * Nothing is read in the constructor: [CompatStorage] is created by Dagger while
+     * the app graph is being built (i.e. possibly on the main thread), and two file
+     * reads + JSON parses there cost a visible slice of cold start. `ensureLoaded()`
+     * runs on first use instead — from the IO-bound callers below — and is idempotent.
+     * The two loaders themselves ([loadRegistry], [loadRepositories]) must not call it:
+     * they are what it delegates to.
+     */
+    private fun ensureLoaded() {
+        if (loaded) return
+        mutex.lock()
+        try {
+            if (loaded) return
+            loaded = true
+            loadRegistry()
+            loadRepositories()
+        } finally {
+            mutex.unlock()
+        }
     }
 
     // ── Repositories ───────────────────────────────────────────────────────────
@@ -102,6 +128,7 @@ class CompatStorage(
     }
 
     fun upsertRepository(repo: CompatRepository) {
+        ensureLoaded()
         val current = _repositories.value.toMutableList()
         val idx = current.indexOfFirst { it.id == repo.id }
         if (idx >= 0) current[idx] = repo else current.add(repo)
@@ -110,12 +137,14 @@ class CompatStorage(
 
     /** Remove a subscription and its cache; payload files stay until the caller removes them. */
     fun removeRepository(id: String) {
+        ensureLoaded()
         saveRepositories(_repositories.value.filterNot { it.id == id })
         indexFile(id, "index").delete()
         indexFile(id, "entries").delete()
     }
 
     fun setRepositoryEnabled(id: String, enabled: Boolean) {
+        ensureLoaded()
         saveRepositories(_repositories.value.map {
             if (it.id == id) it.copy(enabled = enabled) else it
         })
@@ -136,7 +165,8 @@ class CompatStorage(
             .onFailure { Timber.e(it, "CompatStorage: failed to write index cache $suffix for $repoId") }
     }
 
-    fun readIndex(repoId: String, suffix: String): String? =
+    fun readIndex(repoId: String, suffix: String): String? {
+        return
         runCatching {
             val file = indexFile(repoId, suffix)
             if (file.exists()) file.readText() else null
@@ -189,10 +219,13 @@ class CompatStorage(
         }
     }
 
-    fun getRecord(id: String): CompatInstallRecord? =
-        _records.value.find { it.id == id }
+    fun getRecord(id: String): CompatInstallRecord? {
+        ensureLoaded()
+        return _records.value.find { it.id == id }
+    }
 
     fun upsert(record: CompatInstallRecord) {
+        ensureLoaded()
         val current = _records.value.toMutableList()
         val idx = current.indexOfFirst { it.id == record.id }
         if (idx >= 0) current[idx] = record else current.add(record)
@@ -200,6 +233,7 @@ class CompatStorage(
     }
 
     fun remove(id: String) {
+        ensureLoaded()
         val current = _records.value.filterNot { it.id == id }
         saveRegistry(current)
         // Delete the payload
@@ -207,6 +241,7 @@ class CompatStorage(
     }
 
     fun setEnabled(id: String, enabled: Boolean) {
+        ensureLoaded()
         val current = _records.value.map {
             if (it.id == id) it.copy(enabled = enabled) else it
         }
@@ -229,16 +264,19 @@ class CompatStorage(
     }
 
     fun readPayload(record: CompatInstallRecord): ByteArray? {
+        ensureLoaded()
         val file = payloadFile(record)
         return if (file.exists()) file.readBytes() else null
     }
 
     fun deletePayload(record: CompatInstallRecord) {
+        ensureLoaded()
         payloadFile(record).delete()
     }
 
     /** Wipe all storage (uninstall-all / debugging). */
     fun clearAll() {
+        ensureLoaded()
         saveRegistry(emptyList())
         saveRepositories(emptyList())
         rootDir.listFiles()?.forEach { dir ->

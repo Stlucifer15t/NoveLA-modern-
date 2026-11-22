@@ -264,13 +264,15 @@ class LegadoRuleEngine(
     // ── XPath ────────────────────────────────────────────────────────────────
 
     private fun selectXPath(content: Any?, expression: String): Any? {
-        val doc = when (content) {
+        val doc: Document? = when (content) {
             is Document -> content
             is Element -> Jsoup.parse(content.outerHtml())
             is String -> Jsoup.parse(content)
-            is List<*> -> content.filterIsInstance<Element>().firstOrNull()?.let { Jsoup.parse(it.outerHtml()) }
-            else -> return emptyList<Any>()
-        }
+            is List<*> -> content.filterIsInstance<Element>().firstOrNull()
+                ?.let { Jsoup.parse(it.outerHtml()) }
+
+            else -> null
+        } ?: return emptyList<Any>()
         val w3c = W3CDom().fromJsoup(doc)
         val xpath = XPathFactory.newInstance().newXPath()
         val nodes = try {
@@ -279,13 +281,13 @@ class LegadoRuleEngine(
             Timber.d("Legado XPath failed: $expression — ${e.message}")
             return emptyList<Any>()
         } ?: return emptyList<Any>()
-        val out = mutableListOf<Any>()
+        val out = ArrayList<Any>(nodes.length)
         for (i in 0 until nodes.length) {
             val node = nodes.item(i)
             when (node) {
-                is org.w3c.dom.Element -> w3cToJsoup(node)?.let { out += it }
-                is org.w3c.dom.Attr -> out += node.value
-                else -> out += node.textContent ?: ""
+                is org.w3c.dom.Element -> w3cToJsoup(node)?.let { out.add(it) }
+                is org.w3c.dom.Attr -> out.add(node.value)
+                else -> out.add(node.textContent ?: "")
             }
         }
         return out

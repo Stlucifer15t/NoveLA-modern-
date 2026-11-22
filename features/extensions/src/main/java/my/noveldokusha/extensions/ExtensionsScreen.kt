@@ -1,5 +1,9 @@
 package my.noveldokusha.extensions
 
+import my.noveldokusha.coreui.components.NovelaFilterChip
+import my.noveldokusha.coreui.components.NovelaSectionHeader
+import my.noveldokusha.coreui.components.NovelaTopProgress
+import my.noveldokusha.coreui.theme.NovelaRadius
 import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -171,10 +175,19 @@ private fun UnifiedExtensionsScreen(
                 }
                 val localExtensionDesc = stringResource(my.noveldokusha.strings.R.string.local_extension_description)
                 val localExtensionAuthor = stringResource(my.noveldokusha.strings.R.string.extension_author_local)
-                val filteredExtensions = state.availableExtensions
-                    .filter { state.selectedLanguages.isEmpty() || it.language in state.selectedLanguages }
-                    .filter { state.selectedContentType.isEmpty() || it.contentType == state.selectedContentType || (state.selectedContentType == "novel" && it.contentType.isEmpty()) }
-                    .filter { true } // Ecosystem filter removed - no compat layer yet
+                val filteredExtensions = remember(
+                    state.availableExtensions,
+                    state.selectedLanguages,
+                    state.selectedContentType,
+                ) {
+                    state.availableExtensions
+                        .filter { state.selectedLanguages.isEmpty() || it.language in state.selectedLanguages }
+                        .filter {
+                            state.selectedContentType.isEmpty() ||
+                                it.contentType == state.selectedContentType ||
+                                (state.selectedContentType == "novel" && it.contentType.isEmpty())
+                        }
+                }
 
                 val localInstalledExtensions = remember(state.extensions, state.availableExtensions, state.selectedLanguages, state.selectedContentType) {
                     val ids = filteredExtensions.map { it.id }.toSet()
@@ -182,7 +195,6 @@ private fun UnifiedExtensionsScreen(
                         .filter { it.id !in ids }
                         .filter { state.selectedLanguages.isEmpty() || it.language in state.selectedLanguages }
                         .filter { state.selectedContentType.isEmpty() || it.contentType == state.selectedContentType || (state.selectedContentType == "novel" && it.contentType.isEmpty()) }
-                        .filter { true } // Ecosystem filter removed - no compat layer yet
                         .map { installed ->
                             ExtensionInfo(
                                 id = installed.id,
@@ -259,10 +271,9 @@ private fun UnifiedExtensionsScreen(
                                 }
                             }
                         },
-                        singleLine = true
+                        singleLine = true,
+                        shape = RoundedCornerShape(NovelaRadius.lg),
                     )
-
-                    // Ecosystem filter chips removed - no compat layer yet
 
                     // Content type filter chips
                     Row(
@@ -278,29 +289,35 @@ private fun UnifiedExtensionsScreen(
                             "video" to stringResource(StringsR.string.content_type_video),
                         )
                         contentTypeOptions.forEach { (value, label) ->
-                            FilterChip(
+                            NovelaFilterChip(
+                                label = label,
                                 selected = state.selectedContentType == value,
-                                onClick = { viewModel.onEvent(ExtensionsScreenEvent.OnContentTypeFilterToggle(value)) },
-                                label = { Text(label) },
+                                onClick = {
+                                    viewModel.onEvent(ExtensionsScreenEvent.OnContentTypeFilterToggle(value))
+                                },
                             )
                         }
                     }
 
-                    val searchFilteredExtensions = if (searchQuery.isBlank()) {
-                        filteredExtensions
-                    } else {
-                        filteredExtensions.filter {
-                            it.name.contains(searchQuery, ignoreCase = true) ||
-                            it.description.contains(searchQuery, ignoreCase = true)
+                    val searchFilteredExtensions = remember(filteredExtensions, searchQuery) {
+                        if (searchQuery.isBlank()) {
+                            filteredExtensions
+                        } else {
+                            filteredExtensions.filter {
+                                it.name.contains(searchQuery, ignoreCase = true) ||
+                                    it.description.contains(searchQuery, ignoreCase = true)
+                            }
                         }
                     }
 
-                    val searchLocalInstalled = if (searchQuery.isBlank()) {
-                        localInstalledExtensions
-                    } else {
-                        localInstalledExtensions.filter {
-                            it.name.contains(searchQuery, ignoreCase = true) ||
-                            it.description.contains(searchQuery, ignoreCase = true)
+                    val searchLocalInstalled = remember(localInstalledExtensions, searchQuery) {
+                        if (searchQuery.isBlank()) {
+                            localInstalledExtensions
+                        } else {
+                            localInstalledExtensions.filter {
+                                it.name.contains(searchQuery, ignoreCase = true) ||
+                                    it.description.contains(searchQuery, ignoreCase = true)
+                            }
                         }
                     }
 
@@ -320,30 +337,15 @@ private fun UnifiedExtensionsScreen(
                     ) {
                         if (searchInstalledExtensions.isNotEmpty()) {
                             item(contentType = "header") {
-                                val hasUpdates = searchInstalledExtensions.any { it.isUpdateAvailable }
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 16.dp)
-                                        .padding(top = 8.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = stringResource(my.noveldokusha.strings.R.string.installed),
-                                        style = MaterialTheme.typography.titleMedium,
-                                        color = MaterialTheme.colorScheme.primary,
-                                    )
-                                    if (hasUpdates) {
-                                        TextButton(
-                                            onClick = { viewModel.onEvent(ExtensionsScreenEvent.OnUpdateAll) }
-                                        ) {
-                                            Text(stringResource(StringsR.string.update_all))
-}
-
-
-                                    }
-                                }
+                                NovelaSectionHeader(
+                                    title = stringResource(my.noveldokusha.strings.R.string.installed) +
+                                        " · ${searchInstalledExtensions.size}",
+                                    actionLabel = stringResource(StringsR.string.update_all)
+                                        .takeIf { searchInstalledExtensions.any { it.isUpdateAvailable } },
+                                    onActionClick = {
+                                        viewModel.onEvent(ExtensionsScreenEvent.OnUpdateAll)
+                                    },
+                                )
                             }
 
                             items(searchInstalledExtensions, key = { extension -> "installed_${extension.id}" }, contentType = { "extension" }) { extension ->
@@ -356,13 +358,9 @@ private fun UnifiedExtensionsScreen(
 
                         if (searchAvailableExtensions.isNotEmpty()) {
                             item(contentType = "header") {
-                                Text(
-                                    text = stringResource(my.noveldokusha.strings.R.string.available),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier
-                                        .padding(horizontal = 16.dp)
-                                        .padding(top = 8.dp),
+                                NovelaSectionHeader(
+                                    title = stringResource(my.noveldokusha.strings.R.string.available) +
+                                        " · ${searchAvailableExtensions.size}",
                                 )
                             }
 

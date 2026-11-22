@@ -409,7 +409,7 @@ object CompatRepoParsers {
         val trimmed = indexText.trim()
         if (trimmed.isEmpty() || key.isBlank()) return null
         val elements = topLevelArrayElements(trimmed)
-            ?: return trimmed.takeIf { it.startsWith("{") }?.matchesLegadoKey(key)
+            ?: return trimmed.takeIf { it.startsWith("{") && it.matchesLegadoKey(key) }
         for (slice in elements) {
             if (slice.trim().matchesLegadoKey(key)) return slice.trim()
         }

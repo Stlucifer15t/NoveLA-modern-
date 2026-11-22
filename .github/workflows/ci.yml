@@ -93,25 +93,55 @@ jobs:
           "$BUILD_TOOLS/apksigner" verify --print-certs "$APK" | head -20
 
       - name: Publish errors as annotations
-        # Runs on success too: warnings about unused/deliberate things are useful, and
-        # it costs nothing when the log has no errors.
+        # The Checks API caps a run at 50 annotations, so errors are grouped per file
+        # (5 each) instead of dumping the first 50 lines of one module.
         if: always()
         run: |
-          if [ ! -f "$RUNNER_TEMP/build-output.log" ]; then echo "no build log"; exit 0; fi
-          : > /tmp/errors.txt
-          # Kotlin compile errors look like: "e: file:///path/File.kt:12:5: message"
-          grep -E '^e: ' "$RUNNER_TEMP/build-output.log" | head -80             | sed -E 's|^e: file://([^:]+):([0-9]+):[0-9]+: (.*)$|::error file=\1,line=\2::\3|; t; s|^e: (.*)$|::error::\1|' >> /tmp/errors.txt
-          # Failing unit tests and the Gradle failure block
-          grep -E 'FAILED$|[0-9]+ tests? completed' "$RUNNER_TEMP/build-output.log" | sort -u | head -40             | sed 's|^|::error::|' >> /tmp/errors.txt
-          grep -A 12 -E '^\* What went wrong' "$RUNNER_TEMP/build-output.log" | grep -vE '^\* What went wrong|^--$'             | head -40 | sed 's|^|::error::|' >> /tmp/errors.txt
-          cat /tmp/errors.txt
-          {
-            echo "### Build errors ($(wc -l < /tmp/errors.txt | tr -d ' ') shown, see the log artifact for all)"
-            echo '```'
-            grep -E '^e: |FAILED$|What went wrong' "$RUNNER_TEMP/build-output.log" | head -40
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY" || true
-
+          LOG="$RUNNER_TEMP/build-output.log"
+          [ -f "$LOG" ] || { echo "no build log"; exit 0; }
+          python3 - "$LOG" <<'PYEOF'
+          import re, sys, collections
+          log = open(sys.argv[1], errors="ignore").read().splitlines()
+          by_file = collections.OrderedDict()
+          tests = []
+          for line in log:
+              m = re.match(r"^e: file://([^:]+):(\d+):\d+: (.*)$", line)
+              if m:
+                  path, ln, msg = m.group(1), m.group(2), m.group(3)
+                  path = re.sub(r".*/workflows/[^/]+/", "", path)
+                  by_file.setdefault(path, []).append((ln, msg))
+                  continue
+              if re.search(r"FAILED$|tests? completed", line):
+                  tests.append(line.strip())
+              if line.startswith("* What went wrong"):
+                  idx = log.index(line)
+                  for extra in log[idx + 1: idx + 8]:
+                      if extra.startswith("* Try:") or extra.startswith("* Get more"):
+                          break
+                      if extra.strip():
+                          tests.append(extra.strip())
+          emitted = 0
+          for path, errs in by_file.items():
+              for ln, msg in errs[:5]:
+                  msg = msg.replace("%", "%25").replace("\r", " ").replace("\n", " ")[:400]
+                  print(f"::error file={path},line={ln},title=compile error::{msg}")
+                  emitted += 1
+              if len(errs) > 5:
+                  print(f"::error file={path},title=more errors::{len(errs) - 5} more error(s) in this file are in the log artifact")
+                  emitted += 1
+          for t in list(dict.fromkeys(tests))[:40 - min(emitted, 40)]:
+              print(f"::error title=test failure::{t.replace('%', '%25')[:400]}")
+          summary = ["### Build errors", ""]
+          for path, errs in by_file.items():
+              summary.append(f"- `{path}` — {len(errs)} error(s)")
+              for ln, msg in errs[:3]:
+                  summary.append(f"  - L{ln}: {msg[:200]}")
+          for t in list(dict.fromkeys(tests))[:10]:
+              summary.append(f"- {t}")
+          with open(__import__("os").environ.get("GITHUB_STEP_SUMMARY", "/dev/null"), "a") as f:
+              f.write("\n".join(summary) + "\n")
+          print(f"errors in {len(by_file)} file(s), {sum(len(v) for v in by_file.values())} total")
+          PYEOF
       - name: Upload build log and test reports
         if: always()
         uses: actions/upload-artifact@v7
