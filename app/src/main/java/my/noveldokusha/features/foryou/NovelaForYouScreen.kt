@@ -103,6 +103,9 @@ fun NovelaForYouScreen(
     val palette = MaterialTheme.colorScheme
     var showSourcePicker by remember { mutableStateOf(false) }
     var showGenres by remember { mutableStateOf(false) }
+    // Declared out here because the expanded rail is rendered beside the column, not inside
+    // it: a dialog that lives in the scrolling content would scroll with it.
+    var expanded by remember { mutableStateOf<ForYouRail?>(null) }
 
     Column(
         modifier = modifier
@@ -225,7 +228,6 @@ fun NovelaForYouScreen(
                 }
             }
         }
-        var expanded by remember { mutableStateOf<ForYouRail?>(null) }
 
         when {
             state.books.isEmpty() && state.loading -> ForYouPlaceholders()
