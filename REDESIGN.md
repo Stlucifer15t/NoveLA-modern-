@@ -201,3 +201,20 @@ alone, and search that filters whole groups once a page grows past ~30 destinati
 
 Behaviour was deliberately not touched: every section composable keeps its own
 view-model wiring, and the compat entry point still opens the same dialog.
+
+### 8b. Two-level settings + the tile board (third round)
+
+Requested shape: Settings as "clickable boxes with the respective settings inside", and
+Browse/Extensions as cards rather than a stock source list.
+
+| Change | Notes |
+|---|---|
+| `SettingsGroupSpec` + one list, two renderings | `SettingsScreenBody` builds seven specs (title, icon, accent, keywords, sections-lambda) and renders them header-only on the Settings tab or expanded inside `SettingsGroupActivity`. Sections exist once, so a setting cannot be present on one level and missing on the other |
+| `SettingsGroupActivity` | opened through `NavigationRoutes.settingsGroup(groupKey)`, the same intent-style route as `regexRules`; an unknown key finishes instead of rendering an empty page |
+| `coreui/components/NovelaTile.kt` | `novelaTileAccent(seed)` (four *scheme* colours, cycled by a stable hash), `NovelaTileCard`, `NovelaIconChip`, `NovelaTileBadge`, `NovelaHeroHeader`, `NovelaHeroPill` |
+| Browse | 2-column `LazyVerticalGrid` with a hero header + count pill, database tiles, source tiles; pinned sources sort first; config/translate/pin live in the tile's corner, and the text reserves that corner |
+| Extensions | same grid; sections with ≤2 items span both columns so a lone tile does not sit beside an empty half-row; `ExtensionTile` replaced `ExtensionListItem` outright (no dead copy to drift) |
+
+Known gaps carried forward honestly: the mockups' "For You" tab, the "More" tab with
+reading-stat chips, and the "57 genres" figure do not exist in this codebase — there is
+no per-source genre count or reading-time stat to render. Nothing was faked for them.
