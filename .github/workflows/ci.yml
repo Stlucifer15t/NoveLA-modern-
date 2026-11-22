@@ -1,18 +1,138 @@
 name: CI
 
+# Verification gate for the branch: compile every touched module, run the
+# extension-compat unit tests (fatal — these are the tests that pin the JSON index
+# formats), then assemble a debug APK signed with the repo key and keep it as an
+# artifact.
+#
+# Runner logs are not reachable from every tool, so each gradle step also publishes
+# its errors as check annotations (::error::) — `gh api .../check-runs/<id>/annotations`
+# or the Checks UI shows the exact file:line of every failure.
+
 on:
   push:
     branches:
       - '**'
   pull_request:
   workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Branch, tag or SHA to build'
+        required: false
+        default: ''
+        type: string
 
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   verify:
-    name: Probe
+    name: Compile + tests + debug APK
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
-      - run: echo hello
+      - name: Clone repo
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+
+      - name: Set up JDK environment
+        uses: actions/setup-java@v6
+        with:
+          distribution: 'temurin'
+          java-version: 21
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6.3.0
+
+      # A developer's org.gradle.java.home does not exist on the runner.
+      - name: Remove local Java home from gradle.properties
+        run: sed -i '/org\.gradle\.java\.home/d' gradle.properties
+
+      - name: Check the signing key
+        # Not fatal: a missing key only means the debug certificate is used instead.
+        run: |
+          if [ -f keystore/novela-release.p12 ]; then
+            echo "keystore: present"
+            openssl pkcs12 -in keystore/novela-release.p12 -passin pass: -nokeys -noout -info
+          else
+            echo "keystore: MISSING — falling back to the debug certificate"
+          fi
+
+      - name: Compile every touched module
+        run: |
+          set -o pipefail
+          ./gradlew \
+            :tooling:extension_compat:compileDebugKotlin \
+            :features:extensions:compileDebugKotlin \
+            :features:catalogExplorer:compileDebugKotlin \
+            :features:settings:compileDebugKotlin \
+            :app:compileDebugKotlin \
+            --stacktrace --console=plain --continue 2>&1 | tee -a "$RUNNER_TEMP/build-output.log"
+
+      - name: Unit tests (extension compat layer)
+        run: |
+          set -o pipefail
+          ./gradlew :tooling:extension_compat:testDebugUnitTest \
+            --stacktrace --console=plain --continue 2>&1 | tee -a "$RUNNER_TEMP/build-output.log"
+
+      - name: Assemble debug APK
+        run: |
+          set -o pipefail
+          ./gradlew :app:assembleDebug --stacktrace --console=plain 2>&1 | tee -a "$RUNNER_TEMP/build-output.log"
+
+      - name: Verify APK signature
+        run: |
+          APK=$(find app/build/outputs/apk/debug -name '*.apk' | head -n1)
+          echo "APK=$APK" >> "$GITHUB_ENV"
+          BUILD_TOOLS=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -n1)
+          "$BUILD_TOOLS/apksigner" verify --print-certs "$APK" | head -20
+
+      - name: Publish errors as annotations
+        # Runs on success too: warnings about unused/deliberate things are useful, and
+        # it costs nothing when the log has no errors.
+        if: always()
+        run: |
+          if [ ! -f "$RUNNER_TEMP/build-output.log" ]; then echo "no build log"; exit 0; fi
+          : > /tmp/errors.txt
+          # Kotlin compile errors look like: "e: file:///path/File.kt:12:5: message"
+          grep -E '^e: ' "$RUNNER_TEMP/build-output.log" | head -80             | sed -E 's|^e: file://([^:]+):([0-9]+):[0-9]+: (.*)$|::error file=\1,line=\2::\3|; t; s|^e: (.*)$|::error::\1|' >> /tmp/errors.txt
+          # Failing unit tests and the Gradle failure block
+          grep -E 'FAILED$|[0-9]+ tests? completed' "$RUNNER_TEMP/build-output.log" | sort -u | head -40             | sed 's|^|::error::|' >> /tmp/errors.txt
+          grep -A 12 -E '^\* What went wrong' "$RUNNER_TEMP/build-output.log" | grep -vE '^\* What went wrong|^--$'             | head -40 | sed 's|^|::error::|' >> /tmp/errors.txt
+          cat /tmp/errors.txt
+          {
+            echo "### Build errors ($(wc -l < /tmp/errors.txt | tr -d ' ') shown, see the log artifact for all)"
+            echo '```'
+            grep -E '^e: |FAILED$|What went wrong' "$RUNNER_TEMP/build-output.log" | head -40
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY" || true
+
+      - name: Upload build log and test reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ci-build-log-${{ github.sha }}
+          path: |
+            $RUNNER_TEMP/build-output.log
+            **/build/test-results/**
+            **/build/reports/tests/**
+          retention-days: 14
+          if-no-files-found: ignore
+
+      - name: Collect and upload the debug APK
+        if: success()
+        run: |
+          mkdir -p ci-artifacts
+          find app/build/outputs/apk -name '*.apk' -exec cp {} ci-artifacts/ \;
+          ls -lah ci-artifacts
+      - uses: actions/upload-artifact@v7
+        if: success()
+        with:
+          name: NoveLA-ci-debug-${{ github.sha }}
+          path: ci-artifacts/
+          retention-days: 14
