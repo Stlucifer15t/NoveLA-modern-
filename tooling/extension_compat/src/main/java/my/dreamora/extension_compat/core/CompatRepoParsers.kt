@@ -204,7 +204,7 @@ object CompatRepoParsers {
                 ecosystem = ecosystem,
                 version = obj.stringOr("version", "versionName"),
                 versionCode = obj.longOf("code", "versionCode") ?: 0L,
-                language = first.stringOr("lang", "language").ifBlank { obj.stringOr("lang") },
+                language = first.languagesOr("lang", "language").ifBlank { obj.languagesOr("lang") },
                 baseUrl = first.stringOr("baseUrl", "homeUrl").trimEnd('/'),
                 payloadUrl = apkUrl,
                 iconUrl = obj.stringOr("icon").ifBlank { null },
@@ -246,7 +246,7 @@ object CompatRepoParsers {
             ecosystem = ecosystem,
             version = ext.stringOr("versionName", "version"),
             versionCode = ext.longOf("versionCode", "code") ?: 0L,
-            language = first.stringOr("language", "lang").ifBlank { ext.stringOr("lang") },
+            language = first.languagesOr("language", "lang").ifBlank { ext.languagesOr("lang") },
             baseUrl = first.stringOr("homeUrl", "baseUrl").trimEnd('/'),
             payloadUrl = apkUrl,
             iconUrl = resources.stringOr("iconUrl").ifBlank { null },
@@ -441,7 +441,7 @@ object CompatRepoParsers {
                 ecosystem = CompatEcosystem.LNREADER,
                 version = obj.stringOr("version"),
                 versionCode = obj.longOf("versionCode") ?: 0L,
-                language = obj.stringOr("lang", "language"),
+                language = obj.languagesOr("lang", "language"),
                 baseUrl = obj.stringOr("site", "source").trimEnd('/'),
                 payloadUrl = absolutize(indexUrl, codeUrl),
                 iconUrl = obj.stringOr("iconUrl", "icon").ifBlank { null },
@@ -489,7 +489,7 @@ object CompatRepoParsers {
                 ecosystem = CompatEcosystem.MANGAYOMI,
                 version = obj.stringOr("version", "versionLast"),
                 versionCode = obj.longOf("versionCode") ?: 0L,
-                language = obj.stringOr("lang", "language"),
+                language = obj.languagesOr("lang", "language"),
                 baseUrl = baseUrl,
                 payloadUrl = absolutize(indexUrl, codeUrl),
                 iconUrl = obj.stringOr("iconUrl").ifBlank { null },
@@ -566,7 +566,7 @@ object CompatRepoParsers {
                 ecosystem = CompatEcosystem.CLOUDSTREAM,
                 version = obj.stringOr("version", "versionName"),
                 versionCode = obj.longOf("versionCode") ?: 0L,
-                language = obj.stringOr("language", "lang"),
+                language = obj.languagesOr("language", "lang"),
                 payloadUrl = url,
                 iconUrl = obj.stringOr("iconUrl").ifBlank { null },
                 contentType = "video",
@@ -789,6 +789,28 @@ object CompatRepoParsers {
         for (k in keys) {
             val v = (self[k] as? JsonPrimitive)?.contentOrNull?.trim()
             if (!v.isNullOrEmpty()) return v
+        }
+        return ""
+    }
+
+    /** Reads a language field that may be a single string ("en") or an array (["en","es"]).
+     * Returns comma-separated codes (e.g. "en,es") for downstream consumers. */
+    private fun JsonObject?.languagesOr(vararg keys: String): String {
+        val self = this ?: return ""
+        for (k in keys) {
+            val v = self[k] ?: continue
+            when (v) {
+                is JsonPrimitive -> {
+                    val s = v.contentOrNull?.trim()
+                    if (!s.isNullOrEmpty()) return s
+                }
+                is JsonArray -> {
+                    val codes = v.mapNotNull {
+                        (it as? JsonPrimitive)?.contentOrNull?.trim()
+                    }.filter { it.isNotEmpty() }
+                    if (codes.isNotEmpty()) return codes.joinToString(",")
+                }
+            }
         }
         return ""
     }

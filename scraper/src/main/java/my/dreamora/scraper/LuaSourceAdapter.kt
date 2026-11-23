@@ -100,11 +100,12 @@ open class LuaSourceAdapter(
     // "" = не указано → авто-рефер от URL картинки.
     override val referer: String = readReferer()
 
-    override val language: LanguageCode? = when (metadata.language.lowercase().trim()) {
-        "mtl", "multi" -> LanguageCode.MTL
-        else -> LanguageCode.values().find { it.iso639_1.equals(metadata.language, ignoreCase = true) }
-            ?: LanguageCode.ENGLISH
-    }
+    override val language: LanguageCode? = metadata.language.split(",").map { it.trim().lowercase() }.firstNotNullOfOrNull { code ->
+        when (code) {
+            "mtl", "multi" -> LanguageCode.MTL
+            else -> LanguageCode.values().find { it.iso639_1.equals(code, ignoreCase = true) }
+        }
+    } ?: LanguageCode.ENGLISH
 
     override val languageTag: String? = metadata.language.takeIf { it.isNotBlank() }
     override val iconResId: Int? = null
