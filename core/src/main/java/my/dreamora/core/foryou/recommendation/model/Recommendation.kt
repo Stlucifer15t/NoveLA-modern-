@@ -17,6 +17,8 @@ enum class TrackedStatus {
     ON_HOLD,
     /** The reader stopped. Counts as a negative signal, as removing it from the library would. */
     DROPPED,
+    /** Mature-content shelf. Hidden from the library by default. Describes the content, not taste, so no signal. */
+    SPICY,
 }
 
 /**

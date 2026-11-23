@@ -702,6 +702,10 @@ class AppPreferences @Inject constructor(
             TernaryState.Inactive
         ) { enumValueOf(it) }
     }
+    // Spicy-status titles are hidden from the library unless the reader opts in.
+    val LIBRARY_SHOW_SPICY = object : Preference<Boolean>("LIBRARY_SHOW_SPICY") {
+        override var value by SharedPreference_Boolean(name, preferences, false)
+    }
     val LIBRARY_SORT_CONFIG = object : Preference<SortConfig>("LIBRARY_SORT_CONFIG") {
         override var value by SharedPreference_Serializable(
             name,

@@ -594,6 +594,7 @@ private fun readingStatusLabel(status: String): String = stringResource(
         "ON_HOLD" -> StringsR.string.reading_status_on_hold
         "COMPLETED" -> StringsR.string.reading_status_completed
         "DROPPED" -> StringsR.string.reading_status_dropped
+        "SPICY" -> StringsR.string.reading_status_spicy
         else -> StringsR.string.reading_status_auto
     }
 )

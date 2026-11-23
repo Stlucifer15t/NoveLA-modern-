@@ -1588,6 +1588,7 @@
     <string name="reading_status_reading">Читаю</string>
     <string name="reading_status_completed">Прочитано</string>
     <string name="reading_status_dropped">Брошено</string>
+    <string name="reading_status_spicy">Спайси</string>
     <string name="book_synopsis">Описание</string>
     <string name="book_action_start">Читать</string>
     <string name="book_action_continue">Продолжить</string>

@@ -515,6 +515,7 @@ internal fun ChaptersScreen(
             "ON_HOLD" to stringResource(StringsR.string.reading_status_on_hold),
             "COMPLETED" to stringResource(StringsR.string.reading_status_completed),
             "DROPPED" to stringResource(StringsR.string.reading_status_dropped),
+            "SPICY" to stringResource(StringsR.string.reading_status_spicy),
         )
         AlertDialog(
             onDismissRequest = { showStatusPicker = false },

@@ -166,7 +166,7 @@ class AuthorPreferenceManager @Inject constructor(
             TrackedStatus.READING -> scoreDelta += 25
             TrackedStatus.PLAN_TO_READ -> scoreDelta += 10
             // Our choice, not Novery's: on hold is neutral; dropped costs a little.
-            TrackedStatus.ON_HOLD -> Unit
+            TrackedStatus.ON_HOLD, TrackedStatus.SPICY -> Unit
             TrackedStatus.DROPPED -> scoreDelta -= 50
         }
         authorDao.updateAuthor(
@@ -223,7 +223,7 @@ class AuthorPreferenceManager @Inject constructor(
                     }
                     TrackedStatus.READING -> score += 50 + (item.progressPercent * 50).toInt()
                     TrackedStatus.PLAN_TO_READ -> score += 30
-                    TrackedStatus.ON_HOLD -> Unit
+                    TrackedStatus.ON_HOLD, TrackedStatus.SPICY -> Unit
                     TrackedStatus.DROPPED -> score -= 50
                 }
                 score += calculateReadingBoost(item.chaptersRead, item.readingTimeSeconds)

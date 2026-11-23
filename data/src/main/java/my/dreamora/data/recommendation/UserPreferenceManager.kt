@@ -163,7 +163,7 @@ class UserPreferenceManager @Inject constructor(
             TrackedStatus.COMPLETED -> InteractionType.COMPLETED_NOVEL to 1
             TrackedStatus.READING -> InteractionType.STATUS_READING to 0
             TrackedStatus.PLAN_TO_READ -> InteractionType.STATUS_PLAN_TO_READ to 0
-            TrackedStatus.ON_HOLD -> return@withContext
+            TrackedStatus.ON_HOLD, TrackedStatus.SPICY -> return@withContext
             TrackedStatus.DROPPED -> InteractionType.REMOVED_FROM_LIBRARY to 0
         }
         for (tag in TagNormalizer.normalizeAll(rawTags)) {
@@ -219,7 +219,7 @@ class UserPreferenceManager @Inject constructor(
                     TrackedStatus.PLAN_TO_READ ->
                         scoreChange(InteractionType.STATUS_PLAN_TO_READ) +
                             scoreChange(InteractionType.ADDED_TO_LIBRARY)
-                    TrackedStatus.ON_HOLD -> 0
+                    TrackedStatus.ON_HOLD, TrackedStatus.SPICY -> 0
                     TrackedStatus.DROPPED -> scoreChange(InteractionType.REMOVED_FROM_LIBRARY)
                 }
                 val chapterBonus = (book.chaptersRead * scoreChange(InteractionType.READ_CHAPTER))

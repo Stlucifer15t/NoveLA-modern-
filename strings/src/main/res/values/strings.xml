@@ -1199,6 +1199,7 @@
     <string name="reading_status_reading">Reading</string>
     <string name="reading_status_completed">Completed</string>
     <string name="reading_status_dropped">Dropped</string>
+    <string name="reading_status_spicy">Spicy</string>
     <string name="book_synopsis">Synopsis</string>
     <string name="book_action_start">Start reading</string>
     <string name="book_action_continue">Continue reading</string>
