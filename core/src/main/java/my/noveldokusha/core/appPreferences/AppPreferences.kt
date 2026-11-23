@@ -675,7 +675,7 @@ class AppPreferences @Inject constructor(
         override var value by SharedPreference_String(
             name,
             preferences,
-            "https://raw.githubusercontent.com/HnDK0/external-sources/refs/heads/main/index.yaml"
+            "https://raw.githubusercontent.com/Stlucifer15t/external-sources/refs/heads/main/index.yaml"
         )
     }
     val EXTENSIONS_AVAILABLE_CACHE = object : Preference<List<ExtensionInfoCached>>("EXTENSIONS_AVAILABLE_CACHE") {
