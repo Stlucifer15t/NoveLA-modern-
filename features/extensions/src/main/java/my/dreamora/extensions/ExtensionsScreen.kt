@@ -208,7 +208,7 @@ private fun UnifiedExtensionsScreen(
                     state.selectedContentType,
                 ) {
                     state.availableExtensions
-                        .filter { state.selectedLanguages.isEmpty() || it.language in state.selectedLanguages }
+                        .filter { state.selectedLanguages.isEmpty() || it.language.split(",").map { it.trim() }.any { it in state.selectedLanguages } }
                         .filter {
                             state.selectedContentType.isEmpty() ||
                                 it.contentType == state.selectedContentType ||
@@ -220,7 +220,7 @@ private fun UnifiedExtensionsScreen(
                     val ids = filteredExtensions.map { it.id }.toSet()
                     state.extensions
                         .filter { it.id !in ids }
-                        .filter { state.selectedLanguages.isEmpty() || it.language in state.selectedLanguages }
+                        .filter { state.selectedLanguages.isEmpty() || it.language.split(",").map { it.trim() }.any { it in state.selectedLanguages } }
                         .filter { state.selectedContentType.isEmpty() || it.contentType == state.selectedContentType || (state.selectedContentType == "novel" && it.contentType.isEmpty()) }
                         .map { installed ->
                             ExtensionInfo(

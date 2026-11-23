@@ -105,8 +105,8 @@ fun PluginTranslationSettingsDialog(
     var showSourceDialog by rememberSaveable { mutableStateOf(false) }
     var showTargetDialog by rememberSaveable { mutableStateOf(false) }
 
-    val sourceModel = models.firstOrNull { it.language == pair.value.source }
-    val targetModel = models.firstOrNull { it.language == pair.value.target }
+    val sourceModel = models.firstOrNull { it.language.split(",").map { it.trim() }.any { it == pair.value.source } }
+    val targetModel = models.firstOrNull { it.language.split(",").map { it.trim() }.any { it == pair.value.target } }
 
     AlertDialog(
         onDismissRequest = onDismiss,
