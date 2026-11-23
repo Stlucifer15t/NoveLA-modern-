@@ -84,7 +84,7 @@ class LuaSourceProviderImpl @Inject constructor(
                     name = it.name,
                     nameStrId = it.nameStrId.toIntOrNull() ?: 0,
                     baseUrl = it.baseUrl,
-                    language = it.language?.split(",").map { it.trim() }.firstNotNullOfOrNull { code ->
+                    language = it.language?.split(",")?.map { it.trim() }?.firstNotNullOfOrNull { code ->
                         my.dreamora.core.LanguageCode.entries.find { it.iso639_1 == code }
                     },
                     iconUrl = it.iconUrl,
