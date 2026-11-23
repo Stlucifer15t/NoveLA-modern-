@@ -1459,6 +1459,7 @@
     <string name="for_you_rail_note">%1$d названий из этого запроса</string>
     <string name="for_you_rail_expand">Показать все «%1$s»</string>
     <string name="for_you_rail_items">%1$d названий</string>
+    <string name="for_you_rail_best_in">Лучшее в «%1$s»</string>
     <string name="settings_group_layout">Раскладка</string>
     <string name="settings_group_layout_hint">Сетка или список, и сколько колонок в каждой закладке</string>
     <string name="settings_group_stats">Статистика чтения</string>
@@ -1576,6 +1577,18 @@
     <string name="book_stat_read">Прочитано</string>
     <string name="book_stat_saved">Сохранено</string>
     <string name="book_stat_rating">Рейтинг</string>
+    <string name="book_add_to_library">В библиотеку</string>
+    <string name="book_in_library">В библиотеке</string>
+    <string name="book_read_more">Нажмите, чтобы читать дальше…</string>
+    <string name="book_action_download">Скачать</string>
+    <string name="reading_status_title">Статус чтения</string>
+    <string name="reading_status_auto">Автоматически</string>
+    <string name="reading_status_plan">В планах</string>
+    <string name="reading_status_on_hold">Отложено</string>
+    <string name="reading_status_reading">Читаю</string>
+    <string name="reading_status_completed">Прочитано</string>
+    <string name="reading_status_dropped">Брошено</string>
+    <string name="reading_status_spicy">Спайси</string>
     <string name="book_synopsis">Описание</string>
     <string name="book_action_start">Читать</string>
     <string name="book_action_continue">Продолжить</string>

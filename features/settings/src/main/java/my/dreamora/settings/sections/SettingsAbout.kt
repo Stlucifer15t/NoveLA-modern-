@@ -23,8 +23,8 @@ import my.dreamora.coreui.theme.colorAccent
 import my.dreamora.coreui.theme.textPadding
 import my.dreamora.settings.R
 
-private const val REPO_URL = "https://github.com/HnDK0/NoveLA"
-private const val ISSUES_URL = "https://github.com/HnDK0/NoveLA/issues"
+private const val REPO_URL = "https://github.com/Stlucifer15t/NoveLA-modern-"
+private const val ISSUES_URL = "https://github.com/Stlucifer15t/NoveLA-modern-/issues"
 
 @Composable
 internal fun SettingsAbout(

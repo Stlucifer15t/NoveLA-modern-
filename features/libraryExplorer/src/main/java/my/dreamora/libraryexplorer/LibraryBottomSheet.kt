@@ -3,6 +3,7 @@ package my.dreamora.libraryexplorer
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -22,6 +23,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
@@ -43,6 +45,7 @@ import my.dreamora.core.appPreferences.LibrarySortOption
 import my.dreamora.core.appPreferences.SortDirection
 import my.dreamora.core.appPreferences.SourceStripPosition
 import my.dreamora.core.utils.toToggleableState
+import my.dreamora.strings.R as StringsR
 
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
@@ -313,6 +316,23 @@ internal fun LibraryBottomSheet(
                 onStateChange = { model.readFilterToggle() },
                 modifier = Modifier.fillMaxWidth()
             )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { model.showSpicyToggle() }
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(id = StringsR.string.reading_status_spicy),
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                Switch(
+                    checked = uiState.showSpicy,
+                    onCheckedChange = { model.showSpicyToggle() }
+                )
+            }
 
             // ── Жанры — только если есть хоть один в библиотеке ──────────────
             if (availableGenres.isNotEmpty()) {

@@ -408,17 +408,16 @@ version  = extInfo.remoteVersion, // use the new version!
     /** Reads `key` as either a quoted string ("en,es") or a Lua table ({"en","es"}).
      * Returns comma-separated codes (e.g. "en,es"). */
     private fun luaLanguages(code: String, key: String, fallback: String = "en"): String {
-        // Try Lua table format: key = {"en", "es"}
-        val tableRegex = Regex("""(?m)^\s*$key\s*=\s*\{\s*["']([^"']+)["']""")
-        val first = tableRegex.find(code)?.groupValues?.getOrNull(1)?.trim()
-        if (first.isNotBlank()) {
-            // Collect all quoted strings in the table
-            val all = Regex("""["']([^"']+)["']""").findAll(code.substringAfter(tableRegex.find(code)!!.value))
-                .map { it.groupValues[1] }
-                .filter { it.isNotBlank() }
+        // Table form: key = {"en", "es"}. Read the whole table body, not only the first entry.
+        val body = Regex("""(?m)^\s*$key\s*=\s*\{([^}]*)\}""").find(code)?.groupValues?.getOrNull(1)
+        if (!body.isNullOrBlank()) {
+            val all = Regex("""["']([^"']+)["']""").findAll(body)
+                .map { it.groupValues[1].trim() }
+                .filter { it.isNotEmpty() }
+                .toList()
             if (all.isNotEmpty()) return all.joinToString(",")
         }
-        // Fall back to quoted string format: key = "en,es"
+        // Quoted string form: key = "en,es"
         return luaField(code, key, fallback)
     }
 

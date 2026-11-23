@@ -33,8 +33,6 @@ import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.CloudDownload
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.DeleteSweep
-import androidx.compose.material.icons.outlined.Favorite
-import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.PublishedWithChanges
 import androidx.compose.material.icons.outlined.SelectAll
 import androidx.compose.material.icons.outlined.Translate
@@ -145,6 +143,7 @@ internal fun ChaptersScreen(
     onToggleNewChapterNotifications: () -> Unit = {},
     categories: () -> List<String>,
     onUpdateCategory: (String) -> Unit,
+    onUpdateReadingStatus: (String) -> Unit,
     translatedTitle: String?,
     translatedDescription: String?,
     isTranslatingInfo: Boolean,
@@ -156,6 +155,7 @@ internal fun ChaptersScreen(
     var showDropDown by rememberSaveable { mutableStateOf(false) }
     var showBottomSheet by rememberSaveable { mutableStateOf(false) }
     var showCategoryPicker by rememberSaveable { mutableStateOf(false) }
+    var showStatusPicker by rememberSaveable { mutableStateOf(false) }
     var selectedTab by rememberSaveable { mutableStateOf(ChaptersTab.Chapters) }
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val lazyListState = rememberLazyListState()
@@ -252,13 +252,6 @@ internal fun ChaptersScreen(
                             }
                         },
                         actions = {
-                            IconButton(onClick = onLibraryToggle) {
-                                Icon(
-                                    if (state.book.value.inLibrary) Icons.Outlined.Favorite else Icons.Outlined.FavoriteBorder,
-                                    stringResource(R.string.open_the_web_view),
-                                    tint = MaterialTheme.colorScheme.error
-                                )
-                            }
                             IconButton(onClick = { showBottomSheet = !showBottomSheet }) {
                                 Icon(
                                     Icons.Filled.FilterList,
@@ -376,6 +369,10 @@ internal fun ChaptersScreen(
                 onGlobalSearchClick = onGlobalSearchClick,
                 bookCategory = state.book.value.category,
                 onCategoryClick = { showCategoryPicker = true },
+                inLibrary = state.book.value.inLibrary,
+                onLibraryToggle = onLibraryToggle,
+                readingStatus = state.book.value.readingStatus,
+                onStatusClick = { showStatusPicker = true },
                 scraper = scraper,
                 tab = selectedTab,
                 canDownload = !state.isLocalSource.value,
@@ -472,6 +469,7 @@ internal fun ChaptersScreen(
             if (!state.isInSelectionMode.value) ChaptersTabBar(
                 selected = selectedTab,
                 chapterCount = state.chapters.size,
+                reviewsCount = reviewsBadgeText(state.reviews.value),
                 onSelect = { selectedTab = it },
             )
             }
@@ -508,6 +506,49 @@ internal fun ChaptersScreen(
         onDismiss = { showBottomSheet = false },
         state = state
     )
+
+    if (showStatusPicker) {
+        val options = listOf(
+            "" to stringResource(StringsR.string.reading_status_auto),
+            "READING" to stringResource(StringsR.string.reading_status_reading),
+            "PLAN_TO_READ" to stringResource(StringsR.string.reading_status_plan),
+            "ON_HOLD" to stringResource(StringsR.string.reading_status_on_hold),
+            "COMPLETED" to stringResource(StringsR.string.reading_status_completed),
+            "DROPPED" to stringResource(StringsR.string.reading_status_dropped),
+            "SPICY" to stringResource(StringsR.string.reading_status_spicy),
+        )
+        AlertDialog(
+            onDismissRequest = { showStatusPicker = false },
+            title = { Text(text = stringResource(StringsR.string.reading_status_title)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    options.forEach { (value, label) ->
+                        if (state.book.value.readingStatus == value) {
+                            FilledTonalButton(
+                                onClick = {},
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) { Text(text = label) }
+                        } else {
+                            OutlinedButton(
+                                onClick = {
+                                    onUpdateReadingStatus(value)
+                                    showStatusPicker = false
+                                },
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) { Text(text = label) }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showStatusPicker = false }) {
+                    Text(text = stringResource(android.R.string.cancel))
+                }
+            }
+        )
+    }
 
     if (showCategoryPicker) {
         val categoryList = categories().let { cats ->

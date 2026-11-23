@@ -73,6 +73,7 @@ fun List<BookWithContext>.filterByType(type: ContentTypeFilter): List<BookWithCo
 // in the combine chain. Easier to reason about, fewer intermediate list allocations.
 private data class FilterPrefs(
     val read: TernaryState = TernaryState.Inactive,
+    val showSpicy: Boolean = false,
     val query: String = "",
     val genres: Set<String> = emptySet(),
     val sources: Set<String> = emptySet(),
@@ -82,6 +83,9 @@ private data class FilterPrefs(
 
 // ponytail: Sequence-based filters avoid intermediate list allocations.
 // For ~1000 books × 5 filters = 5 fewer List<BookWithContext> copies.
+private fun Sequence<BookWithContext>.applySpicyFilter(showSpicy: Boolean) =
+    if (showSpicy) this else filter { it.book.readingStatus != "SPICY" }
+
 private fun Sequence<BookWithContext>.applyReadFilter(filter: TernaryState) = when (filter) {
     TernaryState.Active -> filter { it.chaptersCount == it.chaptersReadCount }
     TernaryState.Inverse -> filter { it.chaptersCount != it.chaptersReadCount }
@@ -308,13 +312,23 @@ internal class LibraryPageViewModel @Inject constructor(
     // ponytail: single combine for all filter prefs — replaces 5 separate .combine() calls.
     // Data class makes the filter state explicit and composable.
     private val filterPrefsFlow = combine(
-        preferences.LIBRARY_FILTER_READ.flow(),
+        combine(
+            preferences.LIBRARY_FILTER_READ.flow(),
+            preferences.LIBRARY_SHOW_SPICY.flow()
+        ) { read, showSpicy -> read to showSpicy },
         _searchQueryFlow,
         _selectedGenres,
         _selectedSources,
         _selectedContentType
-    ) { read, query, genres, sources, contentType ->
-        FilterPrefs(read = read, query = query, genres = genres, sources = sources, contentType = contentType)
+    ) { (read, showSpicy), query, genres, sources, contentType ->
+        FilterPrefs(
+            read = read,
+            showSpicy = showSpicy,
+            query = query,
+            genres = genres,
+            sources = sources,
+            contentType = contentType
+        )
     }
 
     // ponytail: pre-category filtered books — all filters except category in a single pass.
@@ -331,6 +345,7 @@ internal class LibraryPageViewModel @Inject constructor(
             .applyGenreFilter(prefs.genres, genreCache)
             .applySourceFilter(prefs.sources, ::resolveSourceName)
             .applyContentTypeFilter(prefs.contentType)
+            .applySpicyFilter(prefs.showSpicy)
             .toList()
     }
 

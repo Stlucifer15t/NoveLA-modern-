@@ -132,6 +132,7 @@ class ChaptersActivity : BaseActivity() {
                     onToggleNewChapterNotifications = viewModel::toggleNewChapterNotifications,
                     categories = viewModel::getCategories,
                     onUpdateCategory = viewModel::updateBookCategory,
+                    onUpdateReadingStatus = viewModel::updateBookReadingStatus,
                     translatedTitle = viewModel.translatedTitle.value,
                     translatedDescription = viewModel.translatedDescription.value,
                     isTranslatingInfo = viewModel.isTranslatingInfo.value,

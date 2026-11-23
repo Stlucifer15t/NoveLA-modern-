@@ -1095,6 +1095,7 @@
     <string name="for_you_rail_note">%1$d titles this query returned</string>
     <string name="for_you_rail_expand">Show all of %1$s</string>
     <string name="for_you_rail_items">%1$d titles</string>
+    <string name="for_you_rail_best_in">Best in %1$s</string>
     <string name="settings_group_layout">Layout</string>
     <string name="settings_group_layout_hint">Grid or list, and how many columns each tab uses</string>
     <string name="settings_group_stats">Reading stats</string>
@@ -1187,6 +1188,18 @@
     <string name="book_stat_read">Read</string>
     <string name="book_stat_saved">Saved</string>
     <string name="book_stat_rating">Rating</string>
+    <string name="book_add_to_library">Add to Library</string>
+    <string name="book_in_library">In Library</string>
+    <string name="book_read_more">Tap to read more…</string>
+    <string name="book_action_download">Download</string>
+    <string name="reading_status_title">Reading status</string>
+    <string name="reading_status_auto">Automatic</string>
+    <string name="reading_status_plan">Plan to read</string>
+    <string name="reading_status_on_hold">On hold</string>
+    <string name="reading_status_reading">Reading</string>
+    <string name="reading_status_completed">Completed</string>
+    <string name="reading_status_dropped">Dropped</string>
+    <string name="reading_status_spicy">Spicy</string>
     <string name="book_synopsis">Synopsis</string>
     <string name="book_action_start">Start reading</string>
     <string name="book_action_continue">Continue reading</string>

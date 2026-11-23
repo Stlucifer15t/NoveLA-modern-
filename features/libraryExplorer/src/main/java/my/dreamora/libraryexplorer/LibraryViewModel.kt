@@ -55,6 +55,7 @@ internal data class LibraryUiState(
     val sourceStripPosition: SourceStripPosition = SourceStripPosition.BelowCover,
     val showBottomSheet: Boolean = false,
     val readFilter: TernaryState = TernaryState.Inactive,
+    val showSpicy: Boolean = false,
     val sortConfig: SortConfig = SortConfig.DEFAULT,
     val customCategories: List<String> = emptyList(),
     val toolbarMode: ToolbarMode = ToolbarMode.MAIN,
@@ -103,6 +104,11 @@ internal class LibraryViewModel @Inject constructor(
             launch {
                 appPreferences.LIBRARY_FILTER_READ.flow().collect { filter ->
                     _uiState.update { it.copy(readFilter = filter) }
+                }
+            }
+            launch {
+                appPreferences.LIBRARY_SHOW_SPICY.flow().collect { show ->
+                    _uiState.update { it.copy(showSpicy = show) }
                 }
             }
             launch {
@@ -261,6 +267,10 @@ internal class LibraryViewModel @Inject constructor(
 
     fun readFilterToggle() {
         appPreferences.LIBRARY_FILTER_READ.value = _uiState.value.readFilter.next()
+    }
+
+    fun showSpicyToggle() {
+        appPreferences.LIBRARY_SHOW_SPICY.value = !_uiState.value.showSpicy
     }
 
     fun sortConfigToggleDirection() {
