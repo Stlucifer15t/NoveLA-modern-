@@ -63,6 +63,8 @@ internal fun ChaptersScreenBody(
     onGlobalSearchClick: (input: String, contentType: String) -> Unit,
     bookCategory: String,
     onCategoryClick: () -> Unit,
+    inLibrary: Boolean,
+    onLibraryToggle: () -> Unit,
     scraper: Scraper,
     tab: ChaptersTab,
     canDownload: Boolean,
@@ -198,6 +200,8 @@ internal fun ChaptersScreenBody(
                     onDownloadNext100 = onDownloadNext100,
                     bookCategory = bookCategory,
                     onCategoryClick = onCategoryClick,
+                    inLibrary = inLibrary,
+                    onLibraryToggle = onLibraryToggle,
                 )
             }
 

@@ -15,16 +15,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.List
 import androidx.compose.material.icons.outlined.Explore
 import androidx.compose.material.icons.outlined.StarBorder
-import androidx.compose.material3.Badge
-import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -55,48 +53,105 @@ import my.dreamora.scraper.domain.BookReview
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 
-/** Нижняя панель вкладок книги: Главы / Похожие / Отзывы. */
+/**
+ * Нижняя панель вкладок книги по макету Novery: три пилюли, у выбранной заливка акцентом.
+ * Счётчики только реальные: глав из базы, отзывов из загруженной страницы.
+ */
 @Composable
 internal fun ChaptersTabBar(
     selected: ChaptersTab,
     chapterCount: Int,
+    reviewsCount: String?,
     onSelect: (ChaptersTab) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    NavigationBar(
-        modifier = modifier,
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        modifier = modifier.fillMaxWidth(),
     ) {
-        ChaptersTab.entries.forEach { tab ->
-            val label = when (tab) {
-                ChaptersTab.Chapters -> stringResource(StringsR.string.book_tab_chapters)
-                ChaptersTab.Related -> stringResource(StringsR.string.book_tab_related)
-                ChaptersTab.Reviews -> stringResource(StringsR.string.book_tab_reviews)
-            }
-            val icon = when (tab) {
-                ChaptersTab.Chapters -> Icons.AutoMirrored.Outlined.List
-                ChaptersTab.Related -> Icons.Outlined.Explore
-                ChaptersTab.Reviews -> Icons.Outlined.StarBorder
-            }
-            NavigationBarItem(
-                selected = selected == tab,
-                onClick = { onSelect(tab) },
-                icon = {
-                    BadgedBox(
-                        badge = {
-                            // Счётчик только у глав: это реальное число из базы.
-                            if (tab == ChaptersTab.Chapters && chapterCount > 0) {
-                                Badge { Text(text = chapterCount.toString()) }
-                            }
-                        }
-                    ) {
-                        Icon(imageVector = icon, contentDescription = null)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            ChaptersTab.entries.forEach { tab ->
+                val isSelected = selected == tab
+                val label = when (tab) {
+                    ChaptersTab.Chapters -> stringResource(StringsR.string.book_tab_chapters)
+                    ChaptersTab.Related -> stringResource(StringsR.string.book_tab_related)
+                    ChaptersTab.Reviews -> stringResource(StringsR.string.book_tab_reviews)
+                }
+                val icon = when (tab) {
+                    ChaptersTab.Chapters -> Icons.AutoMirrored.Outlined.List
+                    ChaptersTab.Related -> Icons.Outlined.Explore
+                    ChaptersTab.Reviews -> Icons.Outlined.StarBorder
+                }
+                val badge: String? = when (tab) {
+                    ChaptersTab.Chapters -> when {
+                        chapterCount <= 0 -> null
+                        chapterCount > 999 -> "999+"
+                        else -> chapterCount.toString()
                     }
-                },
-                label = { Text(text = label, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-            )
+                    ChaptersTab.Related -> null
+                    ChaptersTab.Reviews -> reviewsCount
+                }
+                Box(modifier = Modifier.weight(1f)) {
+                    Surface(
+                        onClick = { onSelect(tab) },
+                        shape = RoundedCornerShape(50),
+                        color = if (isSelected) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.surfaceContainerHigh,
+                        contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary
+                        else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxSize(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center,
+                        ) {
+                            Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(20.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = label,
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                    }
+                    if (badge != null) {
+                        Surface(
+                            shape = RoundedCornerShape(50),
+                            color = MaterialTheme.colorScheme.tertiary,
+                            modifier = Modifier
+                                .align(Alignment.TopStart)
+                                .offset(x = 6.dp, y = (-6).dp),
+                        ) {
+                            Text(
+                                text = badge,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onTertiary,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 1.dp),
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
+}
+
+/** Счётчик на вкладке «Отзывы»: число из загруженной страницы, с «+», если страниц больше. */
+internal fun reviewsBadgeText(state: BookReviewsUiState): String? {
+    val loaded = state as? BookReviewsUiState.Loaded ?: return null
+    if (loaded.reviews.isEmpty()) return null
+    return if (loaded.hasNext) "${loaded.reviews.size}+" else loaded.reviews.size.toString()
 }
 
 /** Вкладка «Похожие»: результат поиска в источнике по жанру книги. */

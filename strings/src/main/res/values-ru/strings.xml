@@ -1576,6 +1576,10 @@
     <string name="book_stat_read">Прочитано</string>
     <string name="book_stat_saved">Сохранено</string>
     <string name="book_stat_rating">Рейтинг</string>
+    <string name="book_add_to_library">В библиотеку</string>
+    <string name="book_in_library">В библиотеке</string>
+    <string name="book_read_more">Нажмите, чтобы читать дальше…</string>
+    <string name="book_action_download">Скачать</string>
     <string name="book_synopsis">Описание</string>
     <string name="book_action_start">Читать</string>
     <string name="book_action_continue">Продолжить</string>

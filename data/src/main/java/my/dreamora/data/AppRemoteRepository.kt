@@ -18,7 +18,7 @@ class AppRemoteRepository @Inject constructor(
 ) {
 
     private val lastReleaseUrl =
-        "https://api.github.com/repos/HnDK0/NoveLA/releases/latest"
+        "https://api.github.com/repos/Stlucifer15t/NoveLA-modern-/releases/latest"
     suspend fun getLastAppVersion(
     ): Response<RemoteAppVersion> = withContext(Dispatchers.IO) {
         return@withContext my.dreamora.network.tryConnect {

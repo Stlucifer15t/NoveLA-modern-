@@ -33,8 +33,6 @@ import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.CloudDownload
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.DeleteSweep
-import androidx.compose.material.icons.outlined.Favorite
-import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.PublishedWithChanges
 import androidx.compose.material.icons.outlined.SelectAll
 import androidx.compose.material.icons.outlined.Translate
@@ -252,13 +250,6 @@ internal fun ChaptersScreen(
                             }
                         },
                         actions = {
-                            IconButton(onClick = onLibraryToggle) {
-                                Icon(
-                                    if (state.book.value.inLibrary) Icons.Outlined.Favorite else Icons.Outlined.FavoriteBorder,
-                                    stringResource(R.string.open_the_web_view),
-                                    tint = MaterialTheme.colorScheme.error
-                                )
-                            }
                             IconButton(onClick = { showBottomSheet = !showBottomSheet }) {
                                 Icon(
                                     Icons.Filled.FilterList,
@@ -376,6 +367,8 @@ internal fun ChaptersScreen(
                 onGlobalSearchClick = onGlobalSearchClick,
                 bookCategory = state.book.value.category,
                 onCategoryClick = { showCategoryPicker = true },
+                inLibrary = state.book.value.inLibrary,
+                onLibraryToggle = onLibraryToggle,
                 scraper = scraper,
                 tab = selectedTab,
                 canDownload = !state.isLocalSource.value,
@@ -472,6 +465,7 @@ internal fun ChaptersScreen(
             if (!state.isInSelectionMode.value) ChaptersTabBar(
                 selected = selectedTab,
                 chapterCount = state.chapters.size,
+                reviewsCount = reviewsBadgeText(state.reviews.value),
                 onSelect = { selectedTab = it },
             )
             }
