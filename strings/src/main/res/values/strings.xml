@@ -1220,4 +1220,12 @@
     <string name="book_review_pinned">Pinned</string>
     <string name="book_review_edited">Edited</string>
     <string name="book_review_replies">Replies: %1$d</string>
+    <string name="for_you_engine_for_you">Picked for you</string>
+    <string name="for_you_engine_because_you_read">Because you read %1$s</string>
+    <string name="for_you_engine_trending">Trending in your genres</string>
+    <string name="for_you_engine_authors">From authors you like</string>
+    <string name="for_you_engine_top_rated">Top rated for you</string>
+    <string name="for_you_engine_new">New for you</string>
+    <string name="for_you_engine_discover">Discover new sources</string>
+    <string name="for_you_engine_similar">Similar titles</string>
 </resources>

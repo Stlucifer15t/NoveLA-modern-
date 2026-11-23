@@ -100,6 +100,11 @@ data class ForYouHit(
 data class ForYouRail(
     val genre: DreamoraGenre?,
     val books: List<ForYouBook>,
+    /** Engine rails: the section title string, and its argument (the book it is based on). */
+    val titleRes: Int? = null,
+    val titleArg: String? = null,
+    /** Engine rails do not expand: "Show more" would only load catalog pages. */
+    val expandable: Boolean = true,
 )
 
 /** Where one source's pager stands. Empty terms means "read its front page". */

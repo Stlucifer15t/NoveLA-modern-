@@ -1609,4 +1609,12 @@
     <string name="book_review_pinned">Закреплён</string>
     <string name="book_review_edited">Изменён</string>
     <string name="book_review_replies">Ответов: %1$d</string>
+    <string name="for_you_engine_for_you">Подборка для вас</string>
+    <string name="for_you_engine_because_you_read">Потому что вы читаете «%1$s»</string>
+    <string name="for_you_engine_trending">Популярное в ваших жанрах</string>
+    <string name="for_you_engine_authors">От авторов, которые вам нравятся</string>
+    <string name="for_you_engine_top_rated">Лучшие по оценкам для вас</string>
+    <string name="for_you_engine_new">Новое для вас</string>
+    <string name="for_you_engine_discover">Откройте новые источники</string>
+    <string name="for_you_engine_similar">Похожие</string>
 </resources>
