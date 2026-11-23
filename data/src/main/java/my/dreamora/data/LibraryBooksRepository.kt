@@ -81,9 +81,6 @@ class LibraryBooksRepository @Inject constructor(
     suspend fun updateCategory(bookUrl: String, category: String) =
         libraryDao.updateCategory(bookUrl, category)
 
-    suspend fun updateReadingStatus(bookUrl: String, status: String) =
-        libraryDao.updateReadingStatus(bookUrl, status)
-
     suspend fun toggleCompleted(bookUrl: String) =
         libraryDao.toggleCompleted(bookUrl)
 

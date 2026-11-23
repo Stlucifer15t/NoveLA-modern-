@@ -48,7 +48,4 @@ data class Book(
     // Тип контента книги: "NOVEL", "MANGA", "COMIC" и т.п. Пустая строка = NOVEL
     // (дефолт для всех источников, не заполняющих contentType).
     val contentType: String = "",
-    // Статус, который выбрал читатель: "" — авто (читаю / прочитано по данным),
-    // "PLAN_TO_READ", "ON_HOLD", "DROPPED". Хранится именем TrackedStatus.
-    val readingStatus: String = "",
 ) : Parcelable

@@ -12,11 +12,7 @@ package my.dreamora.core.foryou.recommendation.model
 enum class TrackedStatus {
     READING,
     COMPLETED,
-    PLAN_TO_READ,
-    /** The reader parked it. Gives no taste signal either way. */
-    ON_HOLD,
-    /** The reader stopped. Counts as a negative signal, as removing it from the library would. */
-    DROPPED,
+    PLAN_TO_READ
 }
 
 /**

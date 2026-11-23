@@ -82,7 +82,6 @@ class DiscoveryManager @Inject constructor(
                 tagsString = old?.tagsString,
                 status = old?.status,
                 synopsis = book.description.ifBlank { old?.synopsis }?.take(500),
-                author = book.author?.takeIf { it.isNotBlank() } ?: old?.author,
                 source = source,
             )
         }

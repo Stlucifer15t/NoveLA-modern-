@@ -58,8 +58,6 @@ internal data class ChaptersScreenState(
         // Тип контента книги: "" — новелла (дефолт источников без content_type),
         // иначе "novel"/"manga"/"video".
         val contentType: String = "",
-        // Статус чтения, выбранный читателем ("" — авто).
-        val readingStatus: String = "",
     ) {
         constructor(book: Book) : this(
             title = book.title,
@@ -70,7 +68,6 @@ internal data class ChaptersScreenState(
             coverImageUrl = book.coverImageUrl,
             description = book.description,
             category = book.category,
-            readingStatus = book.readingStatus,
             contentType = book.contentType,
         )
     }

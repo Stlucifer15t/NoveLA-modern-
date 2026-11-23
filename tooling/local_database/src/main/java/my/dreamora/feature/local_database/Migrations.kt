@@ -435,10 +435,6 @@ internal fun databaseMigrations() = arrayOf(
         // или источник без томов; значение заполняется при обновлении списка глав.
         it.addColumnIfNotExists("Chapter", "volume", "TEXT")
     },
-    migration(36) {
-        // Статус чтения, выбранный читателем (пусто = определяется по данным).
-        it.addColumnIfNotExists("Book", "readingStatus", "TEXT NOT NULL DEFAULT ''")
-    },
 )
 
 internal fun migration(vi: Int, migrate: (SupportSQLiteDatabase) -> Unit) =

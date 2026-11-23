@@ -157,7 +157,7 @@ interface AppDatabase {
         NetworkBudgetEntity::class,
         DiscoveryChainEntity::class
     ],
-    version = 37,
+    version = 36,
     exportSchema = true,
     // v36 adds only new For You tables; Room generates the SQL and checks it against 36.json.
     autoMigrations = [AutoMigration(from = 35, to = 36)]

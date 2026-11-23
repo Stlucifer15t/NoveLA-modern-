@@ -794,13 +794,6 @@ internal class ChaptersViewModel @Inject constructor(
         }
     }
 
-    /** Статус чтения, выбранный читателем: "" — авто, иначе имя TrackedStatus. */
-    fun updateBookReadingStatus(status: String) {
-        viewModelScope.launch {
-            libraryDao.updateReadingStatus(bookUrl, status)
-        }
-    }
-
     /**
      * «Починить книгу»: принудительно сбрасывает кэш-признаки списка глав
      * (chaptersListHash + chaptersLastPage) и запускает ПОЛНЫЙ репарс глав.
