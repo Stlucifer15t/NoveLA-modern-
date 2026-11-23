@@ -810,6 +810,7 @@ object CompatRepoParsers {
                     }.filter { it.isNotEmpty() }
                     if (codes.isNotEmpty()) return codes.joinToString(",")
                 }
+                else -> Unit // objects and null are not language values
             }
         }
         return ""
