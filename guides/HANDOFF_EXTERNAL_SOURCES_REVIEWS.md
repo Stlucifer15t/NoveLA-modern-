@@ -13,11 +13,8 @@ reviews, so the app's Reviews tab shows real reviews.
 
 ## Facts to start from
 
-- Fork default branch: `v2`. The app currently loads
-  `https://raw.githubusercontent.com/HnDK0/external-sources/refs/heads/main/index.yaml`.
-  The fork has no `main` branch yet. Confirm with the owner which branch the app
-  should load, then update `AppPreferences.kt` (L678) and `ExtensionsScreenState.kt`
-  (L16) in the app repo to match.
+- The app loads `https://raw.githubusercontent.com/Stlucifer15t/external-sources/refs/heads/main/index.yaml`.
+  The fork's `main` exists and is the branch the app uses. The fork's default branch is `v2`.
 - Upstream `main` head at the time of writing: `ed336ec151fb8b9880bacfdc3359f985e71917fd`.
 - Review-capable scripts in `en/`: `webnovel.lua`, `novelfire.lua`, `royal_road.lua`,
   `scribblehub.lua`, `freewebnovel.lua`. Only the first three are known to publish

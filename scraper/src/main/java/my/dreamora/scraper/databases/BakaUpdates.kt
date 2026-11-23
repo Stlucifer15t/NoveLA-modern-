@@ -22,7 +22,7 @@ class BakaUpdates(
     override val id = "baka_updates"
     override val nameStrId = R.string.database_name_baka_updates
     override val baseUrl = "https://www.mangaupdates.com/"
-    override val iconUrl = "https://raw.githubusercontent.com/HnDK0/external-sources/main/icons/manga-updates.png"
+    override val iconUrl = "https://raw.githubusercontent.com/Stlucifer15t/external-sources/main/icons/manga-updates.png"
 
     private fun String.removeNovelTag() = this.removeSuffix("(Novel)").trim()
 

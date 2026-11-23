@@ -13,7 +13,7 @@ data class ExtensionsScreenState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val showRepositoryDialog: Boolean = false,
-    val repositoryUrl: String = "https://raw.githubusercontent.com/HnDK0/external-sources/refs/heads/main/index.yaml",
+    val repositoryUrl: String = "https://raw.githubusercontent.com/Stlucifer15t/external-sources/refs/heads/main/index.yaml",
     val showLuaEditor: Boolean = false,
     val luaEditorExtensionId: String? = null,
     val luaEditorTitle: String = "",

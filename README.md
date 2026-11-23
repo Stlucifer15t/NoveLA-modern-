@@ -90,7 +90,7 @@ Or run the **CI** workflow and download the APK from the run.
 ## Adding sources
 
 - **Lua plugins (native):** Extensions → ⚙️ → repository URL
-  (`HnDK0/external-sources` by default).
+  (`Stlucifer15t/external-sources` by default).
 - **Legado bookSource JSON:** Extensions → *Third-party extension repos* → paste the
   repo or file URL → Install. The source appears in the Finder immediately.
 - **Mihon/LNReader/Mangayomi/CloudStream:** same flow — the entry is fetched and kept,
