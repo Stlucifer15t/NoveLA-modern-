@@ -117,6 +117,8 @@ internal fun ChaptersScreenHeader(
     onCategoryClick: () -> Unit,
     inLibrary: Boolean,
     onLibraryToggle: () -> Unit,
+    readingStatus: String,
+    onStatusClick: () -> Unit,
     coverReferer: String? = null,
 ) {
     val coverImageModel = bookState.coverImageUrl?.let {
@@ -275,6 +277,23 @@ internal fun ChaptersScreenHeader(
                                 text = categoryLabel,
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onTertiaryContainer,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                            modifier = Modifier.clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                                onClick = onStatusClick,
+                            ),
+                        ) {
+                            Text(
+                                text = readingStatusLabel(readingStatus),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                             )
                         }
@@ -566,6 +585,16 @@ private fun SynopsisCard(
         }
     }
 }
+
+@Composable
+private fun readingStatusLabel(status: String): String = stringResource(
+    when (status) {
+        "PLAN_TO_READ" -> StringsR.string.reading_status_plan
+        "ON_HOLD" -> StringsR.string.reading_status_on_hold
+        "DROPPED" -> StringsR.string.reading_status_dropped
+        else -> StringsR.string.reading_status_auto
+    }
+)
 
 @Composable
 private fun MetaLine(icon: ImageVector, text: String) {

@@ -65,6 +65,8 @@ internal fun ChaptersScreenBody(
     onCategoryClick: () -> Unit,
     inLibrary: Boolean,
     onLibraryToggle: () -> Unit,
+    readingStatus: String,
+    onStatusClick: () -> Unit,
     scraper: Scraper,
     tab: ChaptersTab,
     canDownload: Boolean,
@@ -202,6 +204,8 @@ internal fun ChaptersScreenBody(
                     onCategoryClick = onCategoryClick,
                     inLibrary = inLibrary,
                     onLibraryToggle = onLibraryToggle,
+                    readingStatus = readingStatus,
+                    onStatusClick = onStatusClick,
                 )
             }
 

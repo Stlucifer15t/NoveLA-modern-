@@ -68,6 +68,9 @@ interface LibraryDao {
     @Query("UPDATE Book SET category = :category WHERE url == :bookUrl")
     suspend fun updateCategory(bookUrl: String, category: String)
 
+    @Query("UPDATE Book SET readingStatus = :status WHERE url == :bookUrl")
+    suspend fun updateReadingStatus(bookUrl: String, status: String)
+
     @Query("UPDATE Book SET completed = 1 - completed WHERE url == :bookUrl")
     suspend fun toggleCompleted(bookUrl: String)
 

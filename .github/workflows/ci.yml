@@ -188,26 +188,6 @@ jobs:
           echo "=== which module was changed recently, for context ==="
           git log --oneline -3
 
-      - name: Publish the Room schema JSON (needed for the next AutoMigration)
-        # Room writes tooling/local_database/schemas on compile. A migration needs the previous
-        # version's file in the repo, and that file only exists in this run. Push it to an
-        # orphan branch so it can be read with git.
-        if: success()
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        run: |
-          SRC=tooling/local_database/schemas
-          [ -d "$SRC" ] || exit 0
-          rm -rf /tmp/schemapub && mkdir -p /tmp/schemapub
-          cp -r "$SRC"/. /tmp/schemapub/
-          cd /tmp/schemapub
-          git init -q -b ci-schemas
-          git config user.name "ci-schemas"
-          git config user.email "ci-schemas@users.noreply.github.com"
-          git add -A
-          git commit -qm "room schemas ${GITHUB_SHA:0:7} [skip ci]"
-          git push -f "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:refs/heads/ci-schemas
-
       - name: Publish the raw build log to the ci-log branch
         # Runner logs and artifacts are not reachable from every environment, and the
         # Checks API caps annotations at 50 per run — so on failure the raw log is
