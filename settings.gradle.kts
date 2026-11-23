@@ -21,7 +21,7 @@ dependencyResolutionManagement {
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
-rootProject.name = "Novela"
+rootProject.name = "Dreamora"
 include(":app")
 include(":scraper")
 include(":strings")
