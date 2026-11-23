@@ -103,6 +103,6 @@ jobs:
         if: steps.assemble.outcome == 'success'
         uses: actions/upload-artifact@v6
         with:
-          name: NoveLA-release-${{ github.sha }}
+          name: Dreamora-release-${{ github.sha }}
           path: ${{ env.APK }}
           if-no-files-found: warn

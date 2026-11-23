@@ -91,7 +91,7 @@ jobs:
         if: inputs.build_type == 'test'
         uses: actions/upload-artifact@v7
         with:
-          name: NoveLA-v${{ env.APP_VERSION }}-test
+          name: Dreamora-v${{ env.APP_VERSION }}-test
           path: release-artifacts/
           retention-days: 14
 
@@ -100,7 +100,7 @@ jobs:
         if: inputs.build_type == 'release'
         uses: softprops/action-gh-release@v3
         with:
-          name: NoveLA v${{ env.APP_VERSION }}
+          name: Dreamora v${{ env.APP_VERSION }}
           tag_name: v${{ env.APP_VERSION }}
           draft: true
           body: |

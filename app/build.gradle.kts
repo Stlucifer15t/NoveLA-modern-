@@ -45,10 +45,10 @@ android {
 
     defaultConfig {
         applicationId = "my.novela"
-        versionCode = 43
-        versionName = "1.6.5"
-        base.archivesName.set("NoveLA_v$versionName")
-        manifestPlaceholders["appLabel"] = "NoveLA"
+        versionCode = 44
+        versionName = "1.6.6"
+        base.archivesName.set("Dreamora_v$versionName")
+        manifestPlaceholders["appLabel"] = "Dreamora"
         ndk {
             abiFilters += listOf("arm64-v8a", "armeabi-v7a")
         }
@@ -88,7 +88,7 @@ android {
         named("debug") {
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
-            manifestPlaceholders["appLabel"] = "NoveLA Debug"
+            manifestPlaceholders["appLabel"] = "Dreamora Debug"
             // Signed with the bundled key when present, so side-loading a debug APK
             // does not conflict with the previously installed one.
             signingConfigs.asMap["bundled"]?.let { signingConfig = it }

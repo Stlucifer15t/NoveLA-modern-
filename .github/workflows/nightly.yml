@@ -139,7 +139,7 @@ jobs:
       - name: Create/update nightly release
         uses: softprops/action-gh-release@v3
         with:
-          name: NoveLA nightly v${{ env.APP_VERSION }} (${{ env.SHORT_SHA }})
+          name: Dreamora nightly v${{ env.APP_VERSION }} (${{ env.SHORT_SHA }})
           tag_name: nightly
           target_commitish: ${{ github.sha }}
           prerelease: true
