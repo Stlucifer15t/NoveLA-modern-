@@ -14,6 +14,7 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonObject
+import my.dreamora.extension_compat.js.bool
 import my.dreamora.extension_compat.js.obj
 import my.dreamora.extension_compat.js.str
 import my.dreamora.extension_compat.js.stringOrNull
@@ -44,11 +45,40 @@ class JsPluginRuntime private constructor(
         quickJs.evaluate<String?>(code, filename)
     }
 
-    /** Calls a host dispatcher such as `__lnDispatch(method, argsJson)` and returns its JSON text. */
+    /**
+     * Calls a host dispatcher such as `__lnDispatch(method, argsJson)` (an async JS function)
+     * and returns the JSON text it resolves to.
+     */
     suspend fun call(dispatcher: String, method: String, argsJson: String): String? =
-        withTimeout(CALL_TIMEOUT_MS) {
-            evaluate("$dispatcher(${jsString(method)}, ${jsString(argsJson)})", "$dispatcher.js")
+        promise("$dispatcher(${jsString(method)}, ${jsString(argsJson)})")
+
+    /** Like [call] for a host expression that returns a Promise, e.g. `__mgFilters()`. */
+    suspend fun callNoArgs(expression: String): String? = promise(expression)
+
+    /**
+     * Runs a Promise-returning expression to completion.
+     *
+     * quickjs-kt's evaluate() returns the value of the script, not the settled value of a
+     * Promise, so the expression is attached to a result slot (`__hostStart`) and the slot is
+     * polled (`__hostTake`). Each evaluate() runs pending JS jobs and joins async natives such
+     * as `__native_fetch`, so the chain advances between polls.
+     */
+    private suspend fun promise(expression: String): String? = withTimeout(CALL_TIMEOUT_MS) {
+        check(!closed) { "JS runtime is closed" }
+        val slot = "slot" + slotCounter.incrementAndGet()
+        evaluate("__hostStart(${jsString(slot)}, $expression)", "host.js")
+        var raw: String? = evaluate("__hostTake(${jsString(slot)})", "host.js")
+        while (raw == null) {
+            delay(POLL_MS)
+            raw = evaluate("__hostTake(${jsString(slot)})", "host.js")
         }
+        val result = Json.parseToJsonElement(raw).jsonObject
+        if (result.bool("ok") == true) {
+            result.str("value")
+        } else {
+            throw IllegalStateException(result.str("error") ?: "JavaScript error")
+        }
+    }
 
     suspend fun close() {
         mutex.withLock {
@@ -60,6 +90,8 @@ class JsPluginRuntime private constructor(
 
     companion object {
         const val CALL_TIMEOUT_MS = 60_000L
+        private const val POLL_MS = 5L
+        private val slotCounter = java.util.concurrent.atomic.AtomicLong()
 
         /**
          * Creates a runtime for the ecosystem described by [hostScript] (the plugin contract,

@@ -220,7 +220,7 @@ class MangayomiSourceAdapter(
 
     private suspend fun template(): List<JsonObject> {
         cachedTemplate?.let { return it }
-        val raw = runtime.evaluate("__mgFilters()", "filters.js")
+        val raw = runtime.callNoArgs("__mgFilters()")
             ?: throw IllegalStateException("the source returned no filter list")
         val list = (Json.parseToJsonElement(raw) as? JsonArray).orEmpty()
             .mapNotNull { it as? JsonObject }

@@ -455,6 +455,29 @@
     };
   }
 
+  // Result slots for async host calls. quickjs-kt returns the value of the script that
+  // ran, not the settled value of a Promise, so Kotlin starts a call with __hostStart
+  // and then polls __hostTake until the slot is filled.
+  g.__hostStart = function (slot, promise) {
+    var state = { done: false, ok: false, value: null, error: null };
+    g.__hostSlots = g.__hostSlots || {};
+    g.__hostSlots[slot] = state;
+    Promise.resolve(promise).then(
+      function (value) { state.value = value === undefined ? null : value; state.ok = true; state.done = true; },
+      function (err) {
+        state.error = String((err && err.message) || err);
+        state.done = true;
+      }
+    );
+    return null;
+  };
+  g.__hostTake = function (slot) {
+    var slots = g.__hostSlots || {};
+    var state = slots[slot];
+    if (!state || !state.done) return null;
+    delete slots[slot];
+    return JSON.stringify({ ok: state.ok, value: state.value, error: state.error });
+  };
   g.__hostRegister = function (name, exports) { modules[name] = exports; };
   g.__hostRequire = function (name) {
     if (Object.prototype.hasOwnProperty.call(modules, name)) return modules[name];
