@@ -669,6 +669,10 @@ open class LuaSourceAdapter(
         },
         // МОСТ: contentType — свойство источника (глобальная метка скрипта),
         // а не поле таблицы книги. Читаем её тем же способом, что и в extractMetadata.
+        // author: optional string. Пустая строка и отсутствие поля дают null.
+        author        = table.get("author").let { v ->
+            if (v.isstring()) v.tojstring().trim().takeIf { it.isNotEmpty() } else null
+        },
         contentType   = readContentType()
     )
 

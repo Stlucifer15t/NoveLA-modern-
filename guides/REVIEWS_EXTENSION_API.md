@@ -45,3 +45,10 @@ Rules:
 - The Reviews tab loads page 0 when opened and shows a "Load more" button while `hasNext` is true.
 - Spoiler reviews are hidden behind "Spoiler. Tap to show" on each card.
 - Reviews are never cached across books and never mixed with another book's reviews.
+
+## Optional `author` on book entries
+
+A catalog or search entry (and a book table, where `getBookInfo` exists) may include `author = "Name"`.
+Dreamora reads it as `BookResult.author`. An empty string or a missing field means "not provided";
+the app never guesses an author. For You uses it for the "From authors you like" rail. Sources that
+do not send it simply get no author rail.

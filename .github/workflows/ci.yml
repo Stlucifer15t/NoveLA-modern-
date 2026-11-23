@@ -264,6 +264,8 @@ jobs:
             ${{ runner.temp }}/build-output.log
             **/build/test-results/**
             **/build/reports/tests/**
+            # Room writes the schema JSON for the current DB version here; keep it for AutoMigration.
+            tooling/local_database/schemas/**
           retention-days: 14
           if-no-files-found: ignore
 
