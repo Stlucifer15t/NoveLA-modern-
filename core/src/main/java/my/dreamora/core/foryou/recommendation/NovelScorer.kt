@@ -6,6 +6,7 @@ package my.dreamora.core.foryou.recommendation
  */
 
 import my.dreamora.core.foryou.recommendation.model.NovelVector
+import my.dreamora.core.foryou.recommendation.model.AuthorAffinity
 import my.dreamora.core.foryou.recommendation.model.ScoreBreakdown
 import my.dreamora.core.foryou.recommendation.model.UserTasteProfile
 
@@ -193,13 +194,12 @@ class NovelScorer(
 
     companion object {
         /**
-         * Create a scorer with author data
+         * Create a scorer from the user's liked authors. The caller loads them from storage.
          */
-        suspend fun create(
+        fun create(
             userProfile: UserTasteProfile,
-            authorPreferenceManager: AuthorPreferenceManager
+            likedAuthors: List<AuthorAffinity>
         ): NovelScorer {
-            val likedAuthors = authorPreferenceManager.getLikedAuthors(50)
             val affinities = likedAuthors.associate {
                 it.authorNormalized to (it.affinityScore / 1000f)
             }
