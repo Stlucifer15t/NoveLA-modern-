@@ -1,5 +1,5 @@
 @echo off
-echo Installing NovelDokushaTT APK...
+echo Installing Dreamora APK...
 
 REM Add ADB to PATH
 set "ADB_PATH=%USERPROFILE%\AppData\Local\Android\Sdk\platform-tools"
@@ -20,7 +20,7 @@ if %errorlevel% equ 0 (
 
     REM Try to launch app
     echo Launching app...
-    adb shell monkey -p my.noveldokusha -c android.intent.category.LAUNCHER 1
+    adb shell monkey -p my.dreamora -c android.intent.category.LAUNCHER 1
 
     echo.
     echo Done! Check your emulator.

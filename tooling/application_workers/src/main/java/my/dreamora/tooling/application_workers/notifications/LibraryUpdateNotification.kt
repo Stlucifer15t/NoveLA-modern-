@@ -1,0 +1,222 @@
+package my.dreamora.tooling.application_workers.notifications
+
+import android.app.Notification
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
+import android.graphics.Bitmap
+import androidx.core.app.NotificationCompat
+import androidx.core.graphics.drawable.toBitmap
+import coil3.SingletonImageLoader
+import coil3.asDrawable
+import coil3.network.NetworkHeaders
+import coil3.network.httpHeaders
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import coil3.request.ImageRequest
+import coil3.request.SuccessResult
+import coil3.size.Size
+import dagger.hilt.android.qualifiers.ApplicationContext
+import my.dreamora.core.AppFileResolver
+import my.dreamora.core.utils.refererFor
+import my.dreamora.coreui.states.NotificationsCenter
+import my.dreamora.coreui.states.text
+import my.dreamora.coreui.states.title
+import my.dreamora.feature.local_database.tables.Book
+import my.dreamora.feature.local_database.tables.Chapter
+import my.dreamora.navigation.NavigationRoutes
+import my.dreamora.tooling.application_workers.R
+import my.dreamora.feature.local_database.BookMetadata
+import javax.inject.Inject
+
+internal class LibraryUpdateNotification @Inject constructor(
+    @ApplicationContext private val context: Context,
+    private val notificationsCenter: NotificationsCenter,
+    private val navigationRoutes: NavigationRoutes,
+    private val appFileResolver: AppFileResolver,
+) {
+
+    private val channelName = context.getString(R.string.notification_channel_name_library_update)
+    private val channelId = "Library update"
+    private val notificationId: Int = channelId.hashCode()
+
+    private val notifyNewChapters = object {
+        val channelName = context.getString(R.string.notification_channel_name_new_chapters)
+        val channelId = "New chapters"
+    }
+
+    private val notifyFailedUpdates = object {
+        val channelName = context.getString(R.string.notification_channel_name_failed_updates)
+        val channelId = "Failed updates"
+        val notificationId: Int = channelId.hashCode()
+    }
+
+    private lateinit var notificationBuilder: NotificationCompat.Builder
+
+    fun createForegroundNotification(): Notification {
+        return notificationsCenter.showNotification(
+            channelId = channelId,
+            channelName = channelName,
+            notificationId = notificationId,
+            importance = NotificationManager.IMPORTANCE_LOW
+        ) {
+            setStyle(NotificationCompat.BigTextStyle())
+            title = context.getString(R.string.updating_library_notice)
+        }.build()
+    }
+
+    fun closeNotification() {
+        notificationsCenter.close(notificationId = notificationId)
+    }
+
+    fun createEmptyUpdatingNotification(): Notification {
+        notificationBuilder = notificationsCenter.showNotification(
+            channelId = channelId,
+            channelName = channelName,
+            notificationId = notificationId,
+            importance = NotificationManager.IMPORTANCE_LOW
+        ) {
+            setStyle(NotificationCompat.BigTextStyle())
+            title = context.getString(R.string.updating_library_notice)
+        }
+        return notificationBuilder.build()
+    }
+
+    fun updateUpdatingNotification(
+        countingUpdated: Int,
+        countingTotal: Int,
+        books: Set<Book>
+    ) {
+        notificationsCenter.modifyNotification(notificationBuilder, notificationId) {
+            title = context.getString(R.string.updating_library, countingUpdated, countingTotal)
+            text = books.joinToString(separator = "\n") { "· " + it.title }
+            setProgress(countingTotal, countingUpdated, false)
+        }
+    }
+
+    suspend fun showNewChaptersNotification(
+        book: Book,
+        newChapters: List<Chapter>,
+        silent: Boolean
+    ) {
+        val chain = mutableListOf<Intent>().also {
+            it.add(
+                navigationRoutes.main(context)
+                    .setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
+            )
+            it.add(
+                navigationRoutes.chapters(
+                    context = context,
+                    bookMetadata = BookMetadata(
+                        coverImageUrl = book.coverImageUrl,
+                        description = book.description,
+                        title = book.title,
+                        url = book.url
+                    )
+                )
+            )
+            newChapters.firstOrNull()?.let { chapter ->
+                it.add(
+                    navigationRoutes.reader(
+                        context = context,
+                        bookUrl = book.url,
+                        chapterUrl = chapter.url,
+                        scrollToSpeakingItem = false
+                    )
+                )
+            }
+        }
+
+        val intentStack = PendingIntent.getActivities(
+            context,
+            book.url.hashCode(),
+            chain.toTypedArray(),
+            PendingIntent.FLAG_ONE_SHOT
+                    or PendingIntent.FLAG_IMMUTABLE
+                    or PendingIntent.FLAG_CANCEL_CURRENT
+        )
+
+        notificationsCenter.showNotification(
+            notificationId = book.url.hashCode(),
+            channelId = notifyNewChapters.channelId,
+            channelName = "New chapters",
+            importance = NotificationManager.IMPORTANCE_DEFAULT
+        )
+        {
+            title = book.title
+            val newText = newChapters.take(3).joinToString("\n") { "· " + it.title }
+            text = newText + if (newChapters.size > 3) "\n..." else ""
+            setStyle(NotificationCompat.BigTextStyle().bigText(text))
+            setGroup(book.url)
+            setSmallIcon(R.drawable.new_chapters_icon_notification)
+            setContentIntent(intentStack)
+            setAutoCancel(true)
+            setSilent(silent)
+        }
+
+        if (book.coverImageUrl.isBlank()) return
+
+        val imageLoader = SingletonImageLoader.get(context)
+        val localCover = appFileResolver.resolvedBookImagePath(book.url, book.coverImageUrl, isCover = true)
+        val referer = (localCover as? String)?.takeIf { it.startsWith("http://") || it.startsWith("https://") }?.let(::refererFor)
+        val request = ImageRequest.Builder(context)
+            .data(localCover)
+            .size(Size(512, 512))
+            .apply {
+                if (!referer.isNullOrEmpty()) {
+                    httpHeaders(
+                        NetworkHeaders.Builder()
+                            .set("Referer", referer)
+                            .build()
+                    )
+                }
+            }
+            .build()
+
+        val bitmap = try {
+            when (val result = withContext(Dispatchers.IO) { imageLoader.execute(request) }) {
+                is SuccessResult -> result.image.asDrawable(context.resources).toBitmap()
+                else -> null
+            }
+        } catch (_: Exception) { null }
+
+        if (bitmap != null) {
+            notificationsCenter.showNotification(
+                notificationId = book.url.hashCode(),
+                channelId = notifyNewChapters.channelId,
+                channelName = notifyNewChapters.channelName,
+                importance = NotificationManager.IMPORTANCE_DEFAULT
+            ) {
+                title = book.title
+                val newText = newChapters.take(3).joinToString("\n") {
+                    "· " + it.title
+                }
+                text = newText + if (newChapters.size > 3) "\n..." else ""
+                setStyle(NotificationCompat.BigTextStyle().bigText(text))
+                setGroup(book.url)
+                setSmallIcon(R.drawable.new_chapters_icon_notification)
+                setLargeIcon(bitmap)
+                setContentIntent(intentStack)
+                setAutoCancel(true)
+                setSilent(silent)
+            }
+        }
+    }
+
+    fun showFailedNotification(
+        books: Set<Book>,
+    ) {
+        notificationsCenter.showNotification(
+            notificationId = notifyFailedUpdates.notificationId,
+            channelId = notifyFailedUpdates.channelId,
+            channelName = notifyFailedUpdates.channelName,
+            importance = NotificationManager.IMPORTANCE_DEFAULT
+        ) {
+            title = context.getString(R.string.update_error)
+            text = books.joinToString("\n") { "· " + it.title }
+            setStyle(NotificationCompat.BigTextStyle().bigText(text))
+        }
+    }
+
+}

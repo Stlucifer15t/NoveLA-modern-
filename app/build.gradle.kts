@@ -1,8 +1,8 @@
 import java.util.Properties
 
 plugins {
-    alias(libs.plugins.noveldokusha.android.application)
-    alias(libs.plugins.noveldokusha.android.compose)
+    alias(libs.plugins.dreamora.android.application)
+    alias(libs.plugins.dreamora.android.compose)
     alias(libs.plugins.kotlin.parcelize)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.hilt)
@@ -44,11 +44,11 @@ android {
     }
 
     defaultConfig {
-        applicationId = "my.novela"
-        versionCode = 39
-        versionName = "1.6.1"
-        base.archivesName.set("NoveLA_v$versionName")
-        manifestPlaceholders["appLabel"] = "NoveLA"
+        applicationId = "my.dreamora"
+        versionCode = 46
+        versionName = "1.6.8"
+        base.archivesName.set("Dreamora_v$versionName")
+        manifestPlaceholders["appLabel"] = "Dreamora"
         ndk {
             abiFilters += listOf("arm64-v8a", "armeabi-v7a")
         }
@@ -59,11 +59,11 @@ android {
         buildConfigField("String", "GIT_COMMIT_HASH", "\"$gitCommitHash\"")
     }
 
-    // Repo-bundled signing key (keystore/novela-release.p12, empty passwords): every
+    // Repo-bundled signing key (keystore/dreamora-release.p12, empty passwords): every
     // machine and every CI run produces APKs signed by the SAME certificate, so a
     // build can be updated in place without the throwaway debug certificate changing
     // per machine. A real key from local.properties / custom.properties still wins.
-    val bundledKeystore = rootProject.file("keystore/novela-release.p12")
+    val bundledKeystore = rootProject.file("keystore/dreamora-release.p12")
     val hasBundledKeystore = bundledKeystore.exists()
     println("hasBundledKeystore: $hasBundledKeystore")
 
@@ -88,7 +88,7 @@ android {
         named("debug") {
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
-            manifestPlaceholders["appLabel"] = "NoveLA Debug"
+            manifestPlaceholders["appLabel"] = "Dreamora Debug"
             // Signed with the bundled key when present, so side-loading a debug APK
             // does not conflict with the previously installed one.
             signingConfigs.asMap["bundled"]?.let { signingConfig = it }
@@ -110,7 +110,7 @@ android {
         viewBinding = true
         buildConfig = true
     }
-    namespace = "my.noveldokusha"
+    namespace = "my.dreamora"
 }
 
 dependencies {

@@ -1,10 +1,10 @@
 plugins {
-    alias(libs.plugins.noveldokusha.android.library)
-    alias(libs.plugins.noveldokusha.android.compose)
+    alias(libs.plugins.dreamora.android.library)
+    alias(libs.plugins.dreamora.android.compose)
 }
 
 android {
-    namespace = "my.noveldokusha.tooling.novel_migration"
+    namespace = "my.dreamora.tooling.novel_migration"
 }
 
 dependencies {

@@ -1,9 +1,9 @@
 plugins {
-    alias(libs.plugins.noveldokusha.android.library.nohilt)
+    alias(libs.plugins.dreamora.android.library.nohilt)
 }
 
 android {
-    namespace = "my.noveldokusha.strings"
+    namespace = "my.dreamora.strings"
     androidResources {
         resourcePrefix = ""
     }

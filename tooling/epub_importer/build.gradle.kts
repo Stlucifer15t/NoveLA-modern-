@@ -1,10 +1,10 @@
 plugins {
-    alias(libs.plugins.noveldokusha.android.library)
-    alias(libs.plugins.noveldokusha.android.compose)
+    alias(libs.plugins.dreamora.android.library)
+    alias(libs.plugins.dreamora.android.compose)
 }
 
 android {
-    namespace = "my.noveldokusha.tooling.epub_importer"
+    namespace = "my.dreamora.tooling.epub_importer"
 }
 
 dependencies {

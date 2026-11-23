@@ -1,4 +1,4 @@
-import my.noveldokusha.features.reader.ui.manualHighlightDragDelta
+import my.dreamora.features.reader.ui.manualHighlightDragDelta
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

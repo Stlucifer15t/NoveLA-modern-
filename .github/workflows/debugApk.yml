@@ -64,6 +64,6 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v7
         with:
-          name: NoveLA-debug-${{ github.sha }}
+          name: Dreamora-debug-${{ github.sha }}
           path: release-artifacts/
           retention-days: 30

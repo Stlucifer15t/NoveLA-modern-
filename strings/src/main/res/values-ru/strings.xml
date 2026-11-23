@@ -1,6 +1,6 @@
 <resources>
 
-    <string name="app_name">NoveLA</string>
+    <string name="app_name">Dreamora</string>
 
     <string name="title_library">Библиотека</string>
 
@@ -1490,7 +1490,7 @@
     <string name="stats_days_active">Дней с чтением</string>
     <string name="title_feeds">Лента</string>
     <string name="feeds_title">Лента</string>
-    <string name="feeds_subtitle">Новые главы источников из вашей библиотеки.</string>
+    <string name="feeds_subtitle">Новые главы, которые нашла проверка обновлений на ваших источниках.</string>
     <string name="feeds_check">Проверить обновления</string>
     <string name="feeds_empty_title">Пока ничего нового</string>
     <string name="feeds_empty_message">Библиотеку сверяют с источниками, когда запускается обновление. Нажмите «Проверить», чтобы спросить прямо сейчас.</string>
@@ -1499,7 +1499,7 @@
     <string name="feeds_filter_all">Все</string>
     <string name="feeds_checking_now">Спрашиваем у источников новые главы…</string>
     <string name="feeds_open_library">Открыть библиотеку</string>
-    <string name="feeds_note">В строке — главы, которые есть на полке и которые на этом устройстве не открывали. «Проверить» запускает обновление библиотеки прямо сейчас. Приложение проверяет само с интервалом из Настройки → Библиотека (от 6 часов до 2 суток) и присылает уведомление, когда появляется новая глава.</string>
+    <string name="feeds_note">Здесь только главы, которые нашла проверка обновлений. Тайтл уходит из ленты, когда вы его открываете. «Проверить» запускает обновление библиотеки сейчас. Приложение проверяет само с интервалом из Настройки → Библиотека (от 6 часов до 2 суток) и присылает уведомление, когда появляется новая глава.</string>
     <string name="feeds_new_chapter">1 новая глава</string>
     <string name="feeds_new_chapters">%1$d новых глав</string>
     <string name="feeds_new_episode">1 новая серия</string>
@@ -1513,9 +1513,9 @@
     <string name="for_you_undo">Отменить</string>
     <string name="chapters_notify_new">Уведомлять о новых главах</string>
     <string name="library_test_notification">Тестовое уведомление</string>
-    <string name="library_test_notification_title">Проверка NoveLA</string>
+    <string name="library_test_notification_title">Проверка Dreamora</string>
     <string name="library_test_notification_text">Уведомления о новых главах работают на этом устройстве.</string>
-    <string name="library_test_notification_blocked">Уведомления для NoveLA выключены. Включите их в настройках системы.</string>
+    <string name="library_test_notification_blocked">Уведомления для Dreamora выключены. Включите их в настройках системы.</string>
     <string name="video_load_preparing">Загрузка… %1$.1f с</string>
     <string name="video_load_buffering">Буферизация… %1$.1f с</string>
     <string name="video_load_ready">Готово за %1$.1f с</string>
@@ -1542,5 +1542,58 @@
     <string name="stats_total">Всего</string>
     <string name="stats_hours_short">%1$d ч</string>
     <string name="stats_reading_note">Время чтения измеряется, пока глава открыта в читалке, начиная с этой версии. Ничего не оценивается.</string>
-    <string name="stats_share_text">Статистика чтения NoveLA: сегодня %1$s, за неделю %2$s, прочитано глав: %3$d.</string>
+    <string name="stats_share_text">Статистика чтения Dreamora: сегодня %1$s, за неделю %2$s, прочитано глав: %3$d.</string>
+    <string name="settings_group_appearance">Оформление</string>
+    <string name="settings_group_appearance_hint">Тема, тёмный режим и язык приложения</string>
+    <string name="settings_group_reading">Чтение</string>
+    <string name="settings_group_reading_hint">Шрифт, интервалы и поведение экрана в читалке</string>
+    <string name="settings_group_library">Библиотека</string>
+    <string name="settings_group_library_hint">Правила автообновления и откуда приходят новые версии</string>
+    <string name="settings_group_data">Данные и память</string>
+    <string name="settings_group_data_hint">Кэш книг, изображений, манги и видео, и их очистка</string>
+    <string name="settings_group_backup">Резервные копии</string>
+    <string name="settings_group_backup_hint">Ручные копии, автокопии по расписанию и логи</string>
+    <string name="settings_group_translation">Перевод</string>
+    <string name="settings_group_translation_hint">Провайдер LLM, промпты и правила очистки regex</string>
+    <string name="settings_group_network">Сеть</string>
+    <string name="settings_group_network_hint">User-Agent, обход Cloudflare и задержки запросов</string>
+    <string name="settings_group_about">О приложении</string>
+    <string name="settings_group_about_hint">Помощь, благодарности и текущая версия</string>
+    <string name="settings_nothing_matches_title">Ничего не найдено</string>
+    <string name="settings_nothing_matches_message">Попробуйте название раздела, например «Оформление», «Чтение» или «Резервные копии».</string>
+    <string name="settings_library_updates">Обновления библиотеки</string>
+    <string name="action_search_settings">Поиск в настройках</string>
+    <string name="menu_section_menu">Меню</string>
+    <string name="menu_section_about">О приложении</string>
+    <string name="greeting_morning">Доброе утро</string>
+    <string name="greeting_afternoon">Добрый день</string>
+    <string name="greeting_evening">Добрый вечер</string>
+    <string name="greeting_night">Доброй ночи</string>
+    <string name="book_tab_chapters">Главы</string>
+    <string name="book_tab_related">Похожие</string>
+    <string name="book_tab_reviews">Отзывы</string>
+    <string name="book_stat_chapters">Глав</string>
+    <string name="book_stat_read">Прочитано</string>
+    <string name="book_stat_saved">Сохранено</string>
+    <string name="book_stat_rating">Рейтинг</string>
+    <string name="book_synopsis">Описание</string>
+    <string name="book_action_start">Читать</string>
+    <string name="book_action_continue">Продолжить</string>
+    <string name="book_related_query">Поиск «%1$s» на %2$s</string>
+    <string name="book_related_no_genre">У этой книги нет жанра, по которому можно искать.</string>
+    <string name="book_related_failed">Источник не ответил. Попробуйте позже.</string>
+    <string name="book_related_empty">По этому запросу в источнике пока ничего больше нет.</string>
+    <string name="book_related_retry">Повторить</string>
+    <string name="book_reviews_unsupported_title">Отзывы недоступны</string>
+    <string name="book_reviews_unsupported_message">Этот источник не публикует отзывы. Они появятся здесь, когда расширение для этого источника их поддержит.</string>
+    <string name="book_reviews_empty_title">Отзывов пока нет</string>
+    <string name="book_reviews_empty_message">У этого источника пока нет отзывов к этой книге.</string>
+    <string name="book_reviews_failed">Не удалось загрузить отзывы.</string>
+    <string name="book_reviews_retry">Повторить</string>
+    <string name="book_reviews_load_more">Загрузить ещё</string>
+    <string name="book_reviews_load_more_failed">Не удалось загрузить ещё отзывы.</string>
+    <string name="book_review_spoiler_hidden">Спойлер. Нажмите, чтобы открыть</string>
+    <string name="book_review_pinned">Закреплён</string>
+    <string name="book_review_edited">Изменён</string>
+    <string name="book_review_replies">Ответов: %1$d</string>
 </resources>

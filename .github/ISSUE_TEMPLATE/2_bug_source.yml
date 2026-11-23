@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        ⭐️ **If NoveLA helps you read your favorite novels, don't forget to star the repo!**
+        ⭐️ **If Dreamora helps you read your favorite novels, don't forget to star the repo!**
 
   - type: input
     id: source_name

@@ -1,9 +1,9 @@
 plugins {
-    alias(libs.plugins.noveldokusha.android.library)
+    alias(libs.plugins.dreamora.android.library)
 }
 
 android {
-    namespace = "my.noveldokusha.navigation"
+    namespace = "my.dreamora.navigation"
 }
 
 dependencies {

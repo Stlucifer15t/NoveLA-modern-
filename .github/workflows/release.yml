@@ -59,7 +59,7 @@ jobs:
           ./gradlew :app:assembleRelease --stacktrace --console=plain 2>&1 | tee /tmp/release-output.log
 
       - name: Verify the certificate is the bundled one
-        # The whole point of keystore/novela-release.p12 is that a build from any machine
+        # The whole point of keystore/dreamora-release.p12 is that a build from any machine
         # can update an existing install. A silent fallback to the debug certificate would
         # make the artifact uninstallable-over-every-other, so this is checked, not assumed.
         if: steps.assemble.outcome == 'success'
@@ -70,13 +70,13 @@ jobs:
           BUILD_TOOLS=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -n1)
           OUT=$("$BUILD_TOOLS/apksigner" verify --print-certs "$APK")
           echo "$OUT" | head -20
-          WANT=$(openssl pkcs12 -in keystore/novela-release.p12 -passin pass: -nokeys \
+          WANT=$(openssl pkcs12 -in keystore/dreamora-release.p12 -passin pass: -nokeys \
             | openssl x509 -noout -fingerprint -sha256 | cut -d= -f2 | tr -d ':')
           GOT=$(echo "$OUT" | sed -n 's/^V3.0 (APK Signature Scheme v3) Signer #1 certificate SHA-256 digest: //p')
           echo "bundled key: $WANT"
           echo "apk signer : $GOT"
           if [ -n "$GOT" ] && [ "$GOT" != "$WANT" ]; then
-            echo "::error file=keystore/novela-release.p12::release APK is signed with a different certificate than the bundled key"
+            echo "::error file=keystore/dreamora-release.p12::release APK is signed with a different certificate than the bundled key"
             exit 1
           fi
 
@@ -103,6 +103,6 @@ jobs:
         if: steps.assemble.outcome == 'success'
         uses: actions/upload-artifact@v6
         with:
-          name: NoveLA-release-${{ github.sha }}
+          name: Dreamora-release-${{ github.sha }}
           path: ${{ env.APK }}
           if-no-files-found: warn

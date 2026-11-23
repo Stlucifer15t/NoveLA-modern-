@@ -1,6 +1,6 @@
-# NoveLA Modern — UI Redesign Audit & Feature Preservation Checklist
+# Dreamora Modern — UI Redesign Audit & Feature Preservation Checklist
 
-Redesign scope: presentation layer only. The NoveLA engine (scraping, sources,
+Redesign scope: presentation layer only. The Dreamora engine (scraping, sources,
 database, networking, translation, plugins, reader engine) is untouched.
 
 ---
@@ -9,13 +9,13 @@ database, networking, translation, plugins, reader engine) is untouched.
 
 **There is no Navigation Compose graph.** Navigation is Intent-based, one Activity
 per screen. Arguments travel as Intent extras whose key is the property name
-(`core/src/main/java/my/noveldokusha/core/utils/IntentExtraDelegates.kt`).
+(`core/src/main/java/my/dreamora/core/utils/IntentExtraDelegates.kt`).
 
-- `navigation/src/main/java/my/noveldokusha/navigation/Navigation.kt` — `NavigationRoutes`
+- `navigation/src/main/java/my/dreamora/navigation/Navigation.kt` — `NavigationRoutes`
   interface, 11 `fun` returning `Intent`, plus `NavigationRouteViewModel`.
-- `app/src/main/java/my/noveldokusha/AppNavigationRoutes.kt` — the only implementation.
+- `app/src/main/java/my/dreamora/AppNavigationRoutes.kt` — the only implementation.
 
-**App shell:** `app/src/main/java/my/noveldokusha/features/main/MainActivity.kt`.
+**App shell:** `app/src/main/java/my/dreamora/features/main/MainActivity.kt`.
 Four tabs (Library, Finder, History, Settings) are **all kept in composition at once**
 and switched by animating `graphicsLayer { alpha }` + `zIndex`, with a
 `pointerInput` blocker on inactive layers. `activePageIndex` is `rememberSaveable`.
@@ -32,8 +32,8 @@ Two structural facts that constrain the redesign:
    directly by UI code. They are not UI models; do not rename them.
 
 Note: databaseExplorer sources live on disk under a misspelled directory
-(`features/databaseExplorer/src/main/java/my/noveldoksuha/`) while the package is
-`my.noveldokusha.databaseexplorer`. Cosmetic; left alone.
+(`features/databaseExplorer/src/main/java/my/dreamora/`) while the package is
+`my.dreamora.databaseexplorer`. Cosmetic; left alone.
 
 ---
 
@@ -127,11 +127,11 @@ redesign changed how things look, not what they do.
 
 Presentation only — no business logic:
 
-- `coreui/src/main/java/my/noveldokusha/coreui/theme/**` (tokens, typography, colors)
-- `coreui/src/main/java/my/noveldokusha/coreui/components/**`
+- `coreui/src/main/java/my/dreamora/coreui/theme/**` (tokens, typography, colors)
+- `coreui/src/main/java/my/dreamora/coreui/components/**`
 - `features/*/src/main/java/**/ui/**`
 - Screen composables listed in the inventory above
-- `app/src/main/java/my/noveldokusha/features/main/MainActivity.kt` (shell only)
+- `app/src/main/java/my/dreamora/features/main/MainActivity.kt` (shell only)
 
 ## 5. Files that must NOT be touched
 
@@ -232,8 +232,8 @@ has, so neither produced an APK for a branch build. First run of `release.yml`, 
 
 | Artifact | Size |
 |---|---|
-| `NoveLA-ci-debug-…` | 40 278 101 B |
-| `NoveLA-release-…` | 8 290 817 B |
+| `Dreamora-ci-debug-…` | 40 278 101 B |
+| `Dreamora-release-…` | 8 290 817 B |
 
 So the release APK is 4.9× smaller than the debug one and is the build to judge smoothness
 with. What this does *not* prove: that R8 keeps the runtime-loaded extension paths intact —
@@ -402,3 +402,16 @@ density row would move nothing).
 Still not claimed: no per-book genre ranking (sources expose genres per *book* only, one request
 each — the rail shows what the sources returned for the searched words, in source order), and no
 similarity scoring of any kind.
+
+## 9. Book page (Novery layout, app theme)
+
+Source of the layout: the Novery book page. Only the layout is borrowed, not code.
+
+- Header: cover on the left with title, source, status, last update, rating and category beside it. Below: a stats card with Chapters, Read, Saved and Rating, then a primary action (Continue or Start reading, which opens the last-read chapter) and Download next 100 chapters.
+- Synopsis: titled section with expand and collapse, the translate, scroll-to-last-read and go-to-chapter actions on the same row. Genres sit below as chips.
+- Bottom navigation: Chapters (with a real chapter count badge), Related and Reviews. Back on Related or Reviews returns to Chapters.
+- Stats are real data only. Read and Saved come from the local database. Saved counts chapters that have a stored body or download size. Rating comes from the source and shows a dash when the source gives none.
+- Related runs a search on the book's source using its first genre and drops the book itself from the results. A book without a genre, or a source without search, shows a plain message.
+- Reviews: optional. A source shows reviews only when its extension defines `getBookReviews` (see `guides/REVIEWS_EXTENSION_API.md`). Otherwise the tab says the source does not publish reviews. Pages load on demand, with Load more and spoilers hidden until tapped.
+- Colours all come from the app theme (surface, surfaceContainer, primary, outlineVariant). No white or cream surfaces.
+

@@ -3,7 +3,7 @@
 
 	<application>
 		<activity
-			android:name="my.noveldokusha.extensions.CompatRepositoriesActivity"
+			android:name="my.dreamora.extensions.CompatRepositoriesActivity"
 			android:exported="false" />
 	</application>
 

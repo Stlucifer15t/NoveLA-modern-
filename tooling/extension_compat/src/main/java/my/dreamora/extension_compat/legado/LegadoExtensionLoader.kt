@@ -1,0 +1,109 @@
+package my.dreamora.extension_compat.legado
+
+import my.dreamora.extension_compat.core.CompatEcosystem
+import my.dreamora.extension_compat.core.CompatException
+import my.dreamora.extension_compat.core.CompatExtensionLoader
+import my.dreamora.extension_compat.core.CompatInstallRecord
+import my.dreamora.network.NetworkClient
+import my.dreamora.scraper.SourceInterface
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import javax.inject.Inject
+import javax.inject.Singleton
+
+/**
+ * Legado bookSource loader: the payload is one bookSource JSON or an array.
+ * One record may hold an array — each bookSource becomes its own source.
+ */
+@Singleton
+class LegadoExtensionLoader @Inject constructor(
+    private val networkClient: NetworkClient,
+) : CompatExtensionLoader {
+
+    override val ecosystem = CompatEcosystem.LEGADO
+
+    private val json = Json {
+        ignoreUnknownKeys = true
+        isLenient = true
+        coerceInputValues = true
+    }
+
+    override suspend fun load(record: CompatInstallRecord, payload: ByteArray): List<SourceInterface> {
+        val text = String(payload, Charsets.UTF_8)
+        val sources = parseBookSources(text)
+        if (sources.isEmpty()) {
+            throw CompatException("No bookSource found in payload for ${record.id}", operation = "load")
+        }
+        return sources.mapIndexed { index, bs ->
+            val srcId = if (sources.size == 1) {
+                record.id
+            } else {
+                "${record.id}#${bs.bookSourceUrl.ifBlank { bs.bookSourceName }}#$index"
+            }
+            LegadoSourceAdapter(
+                bookSource = bs,
+                networkClient = networkClient,
+                id = srcId,
+            )
+        }
+    }
+
+    fun parseBookSources(text: String): List<LegadoBookSource> {
+        val trimmed = text.trim()
+        if (trimmed.isEmpty()) return emptyList()
+        return when (trimmed.first()) {
+            '[' -> try {
+                json.decodeFromString(ListSerializer(LegadoBookSource.serializer()), trimmed)
+            } catch (e: Exception) {
+                parseLooseArray(trimmed)
+            }
+            '{' -> listOf(
+                try {
+                    json.decodeFromString(LegadoBookSource.serializer(), trimmed)
+                } catch (e: Exception) {
+                    parseLooseObject(trimmed) ?: throw CompatException(
+                        "Invalid bookSource JSON: ${e.message}", operation = "load",
+                    )
+                },
+            )
+            else -> emptyList()
+        }
+    }
+
+    private fun parseLooseArray(text: String): List<LegadoBookSource> {
+        return try {
+            val arr = json.parseToJsonElement(text)
+            (arr as? JsonArray)?.mapNotNull { el ->
+                try {
+                    json.decodeFromJsonElement(LegadoBookSource.serializer(), el)
+                } catch (e: Exception) {
+                    null
+                }
+            } ?: emptyList()
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    private fun parseLooseObject(text: String): LegadoBookSource? {
+        return try {
+            val obj = json.parseToJsonElement(text) as? JsonObject ?: return null
+            for (key in listOf("bookSources", "data", "sources")) {
+                val inner = obj[key] as? JsonArray ?: continue
+                val parsed = inner.mapNotNull {
+                    try {
+                        json.decodeFromJsonElement(LegadoBookSource.serializer(), it)
+                    } catch (e: Exception) {
+                        null
+                    }
+                }
+                if (parsed.isNotEmpty()) return parsed.first()
+            }
+            null
+        } catch (e: Exception) {
+            null
+        }
+    }
+}

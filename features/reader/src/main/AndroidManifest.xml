@@ -5,21 +5,21 @@
 
 	<application>
 		<activity
-			android:name="my.noveldokusha.features.reader.ReaderActivity"
+			android:name="my.dreamora.features.reader.ReaderActivity"
 			android:configChanges="orientation|screenSize|keyboardHidden" />
 		<activity
-			android:name="my.noveldokusha.features.reader.manga.MangaReaderActivity"
+			android:name="my.dreamora.features.reader.manga.MangaReaderActivity"
 			android:exported="false"
 			android:configChanges="orientation|screenSize|keyboardHidden" />
 		<activity
-			android:name="my.noveldokusha.features.reader.video.VideoPlayerActivity"
+			android:name="my.dreamora.features.reader.video.VideoPlayerActivity"
 			android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden"
 			android:exported="false"
 			android:supportsPictureInPicture="true"
 			android:launchMode="singleTask" />
 
 		<service
-			android:name="my.noveldokusha.features.reader.services.NarratorMediaControlsService"
+			android:name="my.dreamora.features.reader.services.NarratorMediaControlsService"
 			android:exported="false"
 			android:foregroundServiceType="mediaPlayback"
 			>
@@ -29,7 +29,7 @@
 		</service>
 
 		<service
-			android:name="my.noveldokusha.features.reader.services.FloatingTtsService"
+			android:name="my.dreamora.features.reader.services.FloatingTtsService"
 			android:exported="false"
 			android:foregroundServiceType="specialUse"
 			>
@@ -40,14 +40,14 @@
 
 		<!-- Офлайн-видео (Task 14): тип dataSync — по доке media3. -->
 		<service
-			android:name="my.noveldokusha.features.reader.video.VideoDownloadService"
+			android:name="my.dreamora.features.reader.video.VideoDownloadService"
 			android:exported="false"
 			android:foregroundServiceType="dataSync" />
 
 		<!-- Кнопки уведомлений видео-загрузок; intent-filter не нужен —
 		     PendingIntent указывает компонент явно. -->
 		<receiver
-			android:name="my.noveldokusha.features.reader.video.VideoDownloadNotificationReceiver"
+			android:name="my.dreamora.features.reader.video.VideoDownloadNotificationReceiver"
 			android:exported="false" />
 
 		<receiver

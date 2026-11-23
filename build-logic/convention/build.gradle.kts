@@ -5,7 +5,7 @@ plugins {
     `kotlin-dsl`
 }
 
-group = "my.noveldokusha.convention.plugin"
+group = "my.dreamora.convention.plugin"
 
 java {
     sourceCompatibility = JavaVersion.VERSION_21
@@ -34,24 +34,24 @@ tasks {
 gradlePlugin {
     plugins {
         register("androidApplication") {
-            id = "noveldokusha.android.application"
+            id = "dreamora.android.application"
             implementationClass =
-                "NoveldokushaAndroidApplicationBestPracticesConventionPlugin" // :)
+                "DreamoraAndroidApplicationBestPracticesConventionPlugin" // :)
         }
         register("androidLibrary") {
-            id = "noveldokusha.android.library"
+            id = "dreamora.android.library"
             implementationClass =
-                "NoveldokushaAndroidLibraryBestPracticesConventionPlugin" // ;)
+                "DreamoraAndroidLibraryBestPracticesConventionPlugin" // ;)
         }
         register("androidLibraryNoHilt") {
-            id = "noveldokusha.android.library.nohilt"
+            id = "dreamora.android.library.nohilt"
             implementationClass =
-                "NoveldokushaAndroidLibraryConventionPlugin"
+                "DreamoraAndroidLibraryConventionPlugin"
         }
         register("androidCompose") {
-            id = "noveldokusha.android.compose"
+            id = "dreamora.android.compose"
             implementationClass =
-                "NoveldokushaAndroidComposeBestPracticesConventionPlugin" // :)
+                "DreamoraAndroidComposeBestPracticesConventionPlugin" // :)
         }
     }
 }

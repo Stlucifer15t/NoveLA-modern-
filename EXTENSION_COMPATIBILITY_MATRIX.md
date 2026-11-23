@@ -1,4 +1,4 @@
-# NoveLA Extension Compatibility Matrix
+# Dreamora Extension Compatibility Matrix
 
 ## Target Ecosystems Overview
 
@@ -197,13 +197,13 @@
 2. Create `CloudStreamExtensionLoader` for `.cs3`/JAR loading
 3. Implement `CloudStreamSourceAdapter` for video-only sources
 3. Map `MainAPI` → `SourceInterface` (video content type)
-4. Integrate `ExtractorApi` with NoveLA's video player
+4. Integrate `ExtractorApi` with Dreamora's video player
 
 ---
 
 ## Unified Interface Mapping
 
-| NoveLA `SourceInterface` | Tachiyomi `KeiSource` | Legado Rules | LNReader `PluginBase` | Mangayomi `ExtensionService` | CloudStream `MainAPI` |
+| Dreamora `SourceInterface` | Tachiyomi `KeiSource` | Legado Rules | LNReader `PluginBase` | Mangayomi `ExtensionService` | CloudStream `MainAPI` |
 |--------------------------|----------------------|--------------|----------------------|------------------------------|----------------------|
 | `getCatalogList` | `getPopularManga` | `exploreUrl` + `ruleExplore` | `popularNovels` | `getPopular` | `getMainPage` |
 | `getCatalogSearch` | `getSearchMangaList` | `searchUrl` + `ruleSearch` | `searchNovels` | `search` | `search` |
@@ -342,7 +342,7 @@ cloudstream = { module = "com.lagradost:cloudstream3", version.ref = "cloudstrea
 
 Multi-repository subscription layer over third-party **index JSON** files. It is a
 separate concern from the per-ecosystem runtimes below: adding a repository never
-requires a new parser in NoveLA, only a new file in `core/`.
+requires a new parser in Dreamora, only a new file in `core/`.
 
 ### Implemented
 

@@ -1,0 +1,26 @@
+package my.dreamora.coreui
+
+import androidx.compose.runtime.State
+import androidx.compose.runtime.derivedStateOf
+import kotlinx.coroutines.CoroutineScope
+import my.dreamora.coreui.theme.AppTheme
+import my.dreamora.coreui.theme.DarkMode
+import my.dreamora.core.appPreferences.AppPreferences
+import javax.inject.Inject
+import javax.inject.Singleton
+
+@Singleton
+class AppThemeProvider @Inject constructor(
+    private val appPreferences: AppPreferences
+) {
+
+    fun currentAppTheme(stateCoroutineScope: CoroutineScope): State<AppTheme> = derivedStateOf {
+        val raw = appPreferences.APP_THEME.state(stateCoroutineScope).value
+        runCatching { enumValueOf<AppTheme>(raw) }.getOrDefault(AppTheme.DEFAULT)
+    }
+
+    fun currentDarkMode(stateCoroutineScope: CoroutineScope): State<DarkMode> = derivedStateOf {
+        val raw = appPreferences.THEME_DARK_MODE.state(stateCoroutineScope).value
+        runCatching { enumValueOf<DarkMode>(raw) }.getOrDefault(DarkMode.SYSTEM)
+    }
+}

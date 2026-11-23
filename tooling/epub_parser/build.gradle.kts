@@ -1,10 +1,10 @@
 plugins {
-    alias(libs.plugins.noveldokusha.android.library.nohilt)
+    alias(libs.plugins.dreamora.android.library.nohilt)
     alias(libs.plugins.kotlin.parcelize)
 }
 
 android {
-    namespace = "my.noveldokusha.tooling.epub_parser"
+    namespace = "my.dreamora.tooling.epub_parser"
 }
 
 dependencies {

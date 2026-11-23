@@ -1,6 +1,6 @@
 # Signing key
 
-`novela-release.p12` is a self-generated RSA-2048 key (PKCS#12, alias `novela`) that
+`dreamora-release.p12` is a self-generated RSA-2048 key (PKCS#12, alias `novela`) that
 signs **every** build of this fork — debug and release alike — with the same
 certificate. Both the store password and the key password are intentionally empty:
 `app/build.gradle.kts` picks the keystore up automatically, so no local
@@ -8,7 +8,7 @@ certificate. Both the store password and the key password are intentionally empt
 installed build can be updated in place instead of being uninstalled first.
 
 ```
-storeFile     = keystore/novela-release.p12
+storeFile     = keystore/dreamora-release.p12
 storeType     = PKCS12
 storePassword = (empty)
 keyAlias      = novela
@@ -24,7 +24,7 @@ openssl req -x509 -new -key key.pem -sha256 -days 10000 \
   -addext "keyUsage=digitalSignature" -addext "basicConstraints=critical,CA:FALSE" \
   -out cert.pem
 openssl pkcs12 -export -name novela -inkey key.pem -in cert.pem \
-  -out novela-release.p12 -passout pass: -keypbe AES-256-CBC -certpbe AES-256-CBC
+  -out dreamora-release.p12 -passout pass: -keypbe AES-256-CBC -certpbe AES-256-CBC
 ```
 
 Certificate SHA-256 fingerprint (compare it against an APK with

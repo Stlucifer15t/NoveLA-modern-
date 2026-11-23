@@ -24,17 +24,17 @@
 
 -keep class org.luaj.vm2.** { *; }
 
--keep class my.noveldokusha.scraper.LuaEngine$* { *; }
--keep class my.noveldokusha.scraper.LuaSourceAdapter { *; }
--keep class my.noveldokusha.scraper.LuaSourceAdapterConfigurable { *; }
--keep interface my.noveldokusha.scraper.SourceInterface** { *; }
+-keep class my.dreamora.scraper.LuaEngine$* { *; }
+-keep class my.dreamora.scraper.LuaSourceAdapter { *; }
+-keep class my.dreamora.scraper.LuaSourceAdapterConfigurable { *; }
+-keep interface my.dreamora.scraper.SourceInterface** { *; }
 
 # =============================================================================
 # МОДЕЛИ ДАННЫХ — цели Gson/SnakeYAML-рефлексии (имена полей должны сохраниться)
 # =============================================================================
 
--keep class my.noveldokusha.scraper.domain.** { *; }
--keep class my.noveldokusha.scraper.configs.** { *; }
+-keep class my.dreamora.scraper.domain.** { *; }
+-keep class my.dreamora.scraper.configs.** { *; }
 
 # core сериализуется через kotlinx.serialization (покрыто правилами ниже),
 # тотальный keep всего пакета убран — иначе R8 не сожмёт/не обфусцирует core.
@@ -96,12 +96,12 @@
     public static *** i(...);
 }
 
--keep class my.noveldokusha.logging.FileTree { *; }
+-keep class my.dreamora.logging.FileTree { *; }
 
 # =============================================================================
 # TRANSLATION MANAGERS — регистрируются по имени/рефлексией
 # =============================================================================
 
--keep class my.noveldokusha.text_translator.TranslationManagerComposite { *; }
--keep class my.noveldokusha.text_translator.TranslationManagerGemini { *; }
--keep class my.noveldokusha.text_translator.TranslationManagerGoogleFree { *; }
+-keep class my.dreamora.text_translator.TranslationManagerComposite { *; }
+-keep class my.dreamora.text_translator.TranslationManagerGemini { *; }
+-keep class my.dreamora.text_translator.TranslationManagerGoogleFree { *; }

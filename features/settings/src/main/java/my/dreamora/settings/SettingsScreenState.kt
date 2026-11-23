@@ -1,0 +1,86 @@
+package my.dreamora.settings
+
+import my.dreamora.core.appPreferences.AppLanguage
+import my.dreamora.core.appPreferences.AppLanguageProvider
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
+import my.dreamora.core.domain.RemoteAppVersion
+import my.dreamora.coreui.theme.AppTheme
+import my.dreamora.coreui.theme.DarkMode
+import my.dreamora.core.appPreferences.NovelPromptData
+
+enum class CleanConfirmationType { DATABASE, IMAGES_FOLDER, NOVEL_CACHE, MANGA_CACHE, OFFLINE_VIDEO }
+
+data class SettingsScreenState(
+    // The "More" hub's counters. -1 means "still reading the database", which the UI
+    // renders as an ellipsis rather than a confident zero.
+    val stats: MutableState<ReadingStats> = mutableStateOf(
+        ReadingStats(libraryBooks = -1, chaptersRead = -1, streakDays = -1)
+    ),
+    val databaseSize: MutableState<String>,
+    val imageFolderSize: MutableState<String>,
+    val isCleaningDatabase: State<Boolean>,
+    val isCleaningImages: State<Boolean>,
+    val currentAppTheme: State<AppTheme>,
+    val currentDarkMode: State<DarkMode>,
+    val currentLanguage: MutableState<String>,
+    val updateAppSetting: UpdateApp,
+    val libraryAutoUpdate: LibraryAutoUpdate,
+    val massAddDelayMs: State<Long>,
+    val downloadDelayMs: State<Long>,
+    val geminiApiKey: State<String>,
+    val geminiModel: State<String>,
+    val translationProvider: State<String>,
+    val translationGlobalMode: State<Boolean>,
+    val hasGlobalPair: State<Boolean>,
+    val googlePaApiKeys: State<String>,
+    val scraperUserAgent: MutableState<String>,
+    val cloudflareBypassEnabled: MutableState<Boolean>,
+    val cloudflareChallengeTimeoutSeconds: MutableState<Int>,
+    // OpenAI-compatible
+    val openAiBaseUrl: State<String>,
+    val openAiApiKeys: State<String>,
+    val openAiModel: State<String>,
+    // Unified prompt manager (Gemini + OpenAI)
+    val activeSystemPrompt: State<String>,
+    val promptPresets: State<List<Pair<String, String>>>,
+    val promptUseEnglishLocale: State<Boolean>,
+    // LLM batch / token settings (Gemini + OpenAI only)
+    val llmBatchSize: State<Int>,
+    val llmMaxOutputTokens: State<Int>,
+    // Per-novel prompt overrides
+    val translationNovelPrompts: State<Map<String, NovelPromptData>>,
+    // Auto Backup
+    val autoBackupEnabled: MutableState<Boolean>,
+    val autoBackupDirectoryUri: State<String>,
+    val autoBackupDirectoryDisplayName: State<String>,
+    val autoBackupMaxCount: State<Int>,
+    val autoBackupIntervalMinutes: State<Long>,
+    val autoBackupIncludeImages: State<Boolean>,
+    val autoBackupIncludeSettings: State<Boolean>,
+    val autoBackupIncludePlugins: State<Boolean>,
+    val autoBackupLastTimestamp: State<Long>,
+    // Chapter cache
+    val novelCacheSize: MutableState<String>,
+    val mangaCacheSize: MutableState<String>,
+    val offlineVideoSize: MutableState<String>,
+    val isCleaningNovelCache: State<Boolean>,
+    val isCleaningMangaCache: State<Boolean>,
+    val isCleaningOfflineVideo: State<Boolean>,
+    val cleanConfirmationType: MutableState<CleanConfirmationType?>,
+    val appVersion: String = "",
+) {
+    data class UpdateApp(
+        val currentAppVersion: String,
+        val appUpdateCheckerEnabled: MutableState<Boolean>,
+        val showNewVersionDialog: MutableState<RemoteAppVersion?>,
+        val checkingForNewVersion: MutableState<Boolean>,
+    )
+
+    data class LibraryAutoUpdate(
+        val autoUpdateEnabled: MutableState<Boolean>,
+        val autoUpdateIntervalHours: MutableState<Int>,
+        val onSendTestNotification: () -> Unit,
+    )
+}
