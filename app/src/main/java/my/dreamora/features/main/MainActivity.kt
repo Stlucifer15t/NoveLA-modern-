@@ -83,6 +83,7 @@ import my.dreamora.navigation.NavigationRoutes
 import my.dreamora.tooling.epub_importer.BookImportService
 import my.dreamora.historyexplorer.HistoryScreen
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.zIndex
 import my.dreamora.coreui.theme.DreamoraMotion
@@ -219,11 +220,7 @@ open class MainActivity : BaseActivity() {
                                 .fillMaxSize()
                                 .graphicsLayer { alpha = libraryAlpha }
                                 .zIndex(if (activePageIndex == 0) 1f else 0f)
-                                .then(
-                                    if (activePageIndex != 0) Modifier.pointerInput(Unit) {
-                                        awaitPointerEventScope { while (true) { awaitPointerEvent() } }
-                                    } else Modifier
-                                )
+                                .consumePointersWhile(activePageIndex != 0)
                         ) {
                             LibraryScreen()
                         }
@@ -233,11 +230,7 @@ open class MainActivity : BaseActivity() {
                                 .fillMaxSize()
                                 .graphicsLayer { alpha = forYouAlpha }
                                 .zIndex(if (activePageIndex == 1) 1f else 0f)
-                                .then(
-                                    if (activePageIndex != 1) Modifier.pointerInput(Unit) {
-                                        awaitPointerEventScope { while (true) { awaitPointerEvent() } }
-                                    } else Modifier
-                                )
+                                .consumePointersWhile(activePageIndex != 1)
                         ) {
                             DreamoraForYouScreen(
                                 state = forYouViewModel.state,
@@ -272,11 +265,7 @@ open class MainActivity : BaseActivity() {
                                 .fillMaxSize()
                                 .graphicsLayer { alpha = feedsAlpha }
                                 .zIndex(if (activePageIndex == 2) 1f else 0f)
-                                .then(
-                                    if (activePageIndex != 2) Modifier.pointerInput(Unit) {
-                                        awaitPointerEventScope { while (true) { awaitPointerEvent() } }
-                                    } else Modifier
-                                )
+                                .consumePointersWhile(activePageIndex != 2)
                         ) {
                             DreamoraFeedsScreen(
                                 state = feedsState,
@@ -297,11 +286,7 @@ open class MainActivity : BaseActivity() {
                                 .graphicsLayer { alpha = finderAlpha }
                                 
                         .zIndex(if (activePageIndex == 3) 1f else 0f)
-                                .then(
-                                    if (activePageIndex != 3) Modifier.pointerInput(Unit) {
-                                        awaitPointerEventScope { while (true) { awaitPointerEvent() } }
-                                    } else Modifier
-                                )
+                                .consumePointersWhile(activePageIndex != 3)
                         ) {
                             CatalogExplorerScreen()
                         }
@@ -312,11 +297,7 @@ open class MainActivity : BaseActivity() {
                                 .graphicsLayer { alpha = historyAlpha }
                                 
                         .zIndex(if (activePageIndex == 4) 1f else 0f)
-                                .then(
-                                    if (activePageIndex != 4) Modifier.pointerInput(Unit) {
-                                        awaitPointerEventScope { while (true) { awaitPointerEvent() } }
-                                    } else Modifier
-                                )
+                                .consumePointersWhile(activePageIndex != 4)
                         ) {
                             HistoryScreen()
                         }
@@ -327,11 +308,7 @@ open class MainActivity : BaseActivity() {
                                 .graphicsLayer { alpha = settingsAlpha }
                                 
                         .zIndex(if (activePageIndex == 5) 1f else 0f)
-                                .then(
-                                    if (activePageIndex != 5) Modifier.pointerInput(Unit) {
-                                        awaitPointerEventScope { while (true) { awaitPointerEvent() } }
-                                    } else Modifier
-                                )
+                                .consumePointersWhile(activePageIndex != 5)
                         ) {
                             SettingsScreen(
                                 navigationRoutes = navigationRoutes,
@@ -502,3 +479,19 @@ open class MainActivity : BaseActivity() {
         }
     }
 }
+
+/**
+ * An inactive tab stays composed, so its scroll position and loaded data survive a switch, but it
+ * must not take taps. Its wrapper consumes pointer events in the Initial pass, before the tab's own
+ * children (buttons, cards, menu rows) see them. Without this, a tap on empty space in the visible
+ * tab reached the hidden Settings tab underneath and opened one of its rows.
+ */
+private fun Modifier.consumePointersWhile(inactive: Boolean): Modifier =
+    if (!inactive) this else pointerInput(Unit) {
+        awaitPointerEventScope {
+            while (true) {
+                val event = awaitPointerEvent(PointerEventPass.Initial)
+                event.changes.forEach { it.consume() }
+            }
+        }
+    }
