@@ -257,6 +257,7 @@ fun DreamoraForYouScreen(
             val topRated = remember(state.books) { state.books.highestRated() }
             val views = remember(state.rails, topRated, state.books.size) {
                 buildList {
+                    state.engineRails.forEach { add(it) }
                     state.rails.forEach { add(it) }
                     if (topRated.size >= 2) {
                         add(ForYouRail(genre = null, books = topRated))
@@ -902,9 +903,10 @@ private fun ForYouRailBlock(
     val palette = MaterialTheme.colorScheme
     val genre = rail.genre
     val accent = railAccent(genre)
-    val title = genre?.let { stringResource(R.string.for_you_rail_best_in, stringResource(it.labelRes)) }
+    val title = rail.titleRes?.let { stringResource(it, rail.titleArg.orEmpty()) }
+        ?: genre?.let { stringResource(R.string.for_you_rail_best_in, stringResource(it.labelRes)) }
         ?: stringResource(R.string.for_you_highest_rated)
-    val note = if (genre == null) {
+    val note = if (genre == null && rail.titleRes == null) {
         stringResource(R.string.for_you_highest_rated_note, totalBooks)
     } else {
         stringResource(R.string.for_you_rail_note, rail.books.size)
@@ -947,12 +949,14 @@ private fun ForYouRailBlock(
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            DreamoraTileIconButton(
-                contentDescription = stringResource(R.string.for_you_rail_expand, title),
-                onClick = onExpand,
-                accent = palette.surfaceVariant,
-            ) {
-                Icon(Icons.AutoMirrored.Rounded.ArrowForward, null, modifier = Modifier.size(18.dp))
+            if (rail.expandable) {
+                DreamoraTileIconButton(
+                    contentDescription = stringResource(R.string.for_you_rail_expand, title),
+                    onClick = onExpand,
+                    accent = palette.surfaceVariant,
+                ) {
+                    Icon(Icons.AutoMirrored.Rounded.ArrowForward, null, modifier = Modifier.size(18.dp))
+                }
             }
         }
 
