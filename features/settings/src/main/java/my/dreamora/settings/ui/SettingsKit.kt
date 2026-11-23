@@ -44,8 +44,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import my.dreamora.coreui.theme.DreamoraMotion
+import my.dreamora.coreui.components.DreamoraIconTile
 import my.dreamora.coreui.theme.DreamoraRadius
 import my.dreamora.coreui.theme.DreamoraSpacing
 import my.dreamora.coreui.theme.DreamoraTheme
@@ -99,7 +101,6 @@ data class SettingsGroupSpec(
     val summary: String,
     val icon: ImageVector,
     val keywords: List<String>,
-    val accent: Color,
     val content: @Composable () -> Unit,
 )
 
@@ -107,7 +108,6 @@ data class SettingsGroupSpec(
 fun SettingsGroupCard(
     title: String,
     icon: ImageVector,
-    accent: Color,
     modifier: Modifier = Modifier,
     summary: String? = null,
     visible: Boolean = true,
@@ -139,10 +139,9 @@ fun SettingsGroupCard(
                     // the whole box is the tap target once it opens a screen of its own
                     if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier,
                 ),
-            shape = DreamoraRadius.cardShape,
-            color = DreamoraTheme.colors.elevatedSurface,
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.surfaceContainer,
             tonalElevation = 0.dp,
-            border = androidx.compose.foundation.BorderStroke(1.dp, DreamoraTheme.colors.hairline),
         ) {
             Column {
                 if (showHeader) Row(
@@ -156,7 +155,7 @@ fun SettingsGroupCard(
                         ),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    GroupIcon(icon = icon, accent = accent)
+                    DreamoraIconTile(icon = icon)
                     Spacer(Modifier.width(DreamoraSpacing.md))
                     Column(
                         modifier = Modifier
@@ -171,7 +170,7 @@ fun SettingsGroupCard(
                     ) {
                         Text(
                             text = title,
-                            style = MaterialTheme.typography.titleMedium,
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
@@ -195,7 +194,7 @@ fun SettingsGroupCard(
                             .padding(horizontal = DreamoraSpacing.md)
                             .fillMaxWidth()
                             .height(1.dp)
-                            .background(DreamoraTheme.colors.hairline),
+                            .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
                     )
                     if (!showHeader) Spacer(Modifier.height(DreamoraSpacing.xs))
                     content()
@@ -207,88 +206,44 @@ fun SettingsGroupCard(
 }
 
 /**
- * The top of a settings group screen: a soft accent wash, a large icon tile, the group's name
- * and what is inside. The app bar above it carries only the back arrow, so the name is said once.
+ * The top of a settings group screen: the group's icon on a primary tile, its name and what is
+ * inside. The app bar above it carries only the back arrow, so the name is said once.
  */
 @Composable
 fun SettingsGroupHero(
     icon: ImageVector,
     title: String,
     summary: String?,
-    accent: Color,
     modifier: Modifier = Modifier,
 ) {
-    Box(
+    Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        accent.copy(alpha = if (DreamoraTheme.colors.isLight) 0.16f else 0.22f),
-                        Color.Transparent,
-                    ),
-                ),
-            )
             .padding(horizontal = DreamoraSpacing.screenH)
-            .padding(top = DreamoraSpacing.xs, bottom = DreamoraSpacing.lg),
+            .padding(top = DreamoraSpacing.xs, bottom = DreamoraSpacing.md),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.md),
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.md),
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(56.dp)
-                    .clip(RoundedCornerShape(DreamoraRadius.lg))
-                    .background(accent.copy(alpha = 0.18f)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = accent,
-                    modifier = Modifier.size(28.dp),
-                )
-            }
-            Column(modifier = Modifier.weight(1f)) {
+        DreamoraIconTile(icon = icon, size = 52.dp)
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.SemiBold),
+                color = MaterialTheme.colorScheme.onBackground,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            if (!summary.isNullOrBlank()) {
+                Spacer(Modifier.height(DreamoraSpacing.xxs))
                 Text(
-                    text = title,
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.onBackground,
+                    text = summary,
+                    style = DreamoraType.bookMeta,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
-                if (!summary.isNullOrBlank()) {
-                    Spacer(Modifier.height(DreamoraSpacing.xxs))
-                    Text(
-                        text = summary,
-                        style = DreamoraType.bookMeta,
-                        color = DreamoraTheme.colors.textMuted,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
             }
         }
-    }
-}
-
-/** The colored circle around a group icon — the expressive accent of the card. */
-@Composable
-private fun GroupIcon(icon: ImageVector, accent: Color) {
-    Box(
-        modifier = Modifier
-            .size(30.dp)
-            .clip(CircleShape)
-            .background(accent.copy(alpha = if (DreamoraTheme.colors.isLight) 0.16f else 0.24f)),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = accent,
-            modifier = Modifier.size(17.dp),
-        )
     }
 }
 

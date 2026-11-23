@@ -57,8 +57,6 @@ data class ForYouUiState(
     val boundSourceId: String = "",
     val genres: List<DreamoraGenre> = emptyList(),
     val reading: ForYouReading? = null,
-    /** The most recently read books, newest first — the "Continue" row. Real history rows only. */
-    val continueRows: List<ForYouReading> = emptyList(),
     /** The last card hidden with a long-press; the screen shows it with an Undo action. */
     val lastHidden: ForYouBook? = null,
     /** Bumps on every hide, so the snackbar re-appears even for the same title. */
@@ -147,7 +145,6 @@ class ForYouViewModel @Inject constructor(
                 historyTitles = rows.map { it.bookTitle }
                 _state.value = _state.value.copy(
                     reading = rows.firstOrNull()?.toReading(),
-                    continueRows = rows.take(10).map { it.toReading() },
                 )
             }
         }

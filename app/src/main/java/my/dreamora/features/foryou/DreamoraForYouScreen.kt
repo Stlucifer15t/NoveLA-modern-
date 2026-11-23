@@ -237,19 +237,11 @@ fun DreamoraForYouScreen(
                 }
             }
 
-            if (state.continueRows.isEmpty()) {
-                ForYouReadingCard(
-                    reading = state.reading,
-                    onOpenBook = onOpenBook,
-                    modifier = Modifier.padding(horizontal = DreamoraSpacing.screenH),
-                )
-            } else {
-                ForYouContinueRow(
-                    rows = state.continueRows,
-                    onOpenBook = onOpenBook,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
+            ForYouReadingCard(
+                reading = state.reading,
+                onOpenBook = onOpenBook,
+                modifier = Modifier.padding(horizontal = DreamoraSpacing.screenH),
+            )
 
             // One scroll container for the rails and the pool. Two nested ones — a rail scroller
             // above a grid that scrolls — fight over the fling, and that fight is most of what
@@ -527,56 +519,6 @@ private fun rememberLongPressHide(book: ForYouBook, onHide: ((ForYouBook) -> Uni
             }
         }
         action
-    }
-}
-
-/**
- * The "Continue" row: the shelf's recently read books, newest first, each with the source's
- * own chapter count. Only real history rows; nothing here is invented to fill the row.
- */
-@Composable
-private fun ForYouContinueRow(
-    rows: List<ForYouReading>,
-    onOpenBook: (BookMetadata) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(modifier = modifier) {
-        Text(
-            text = stringResource(R.string.for_you_continue_title),
-            style = DreamoraType.sectionTitle,
-            color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.padding(horizontal = DreamoraSpacing.screenH, vertical = DreamoraSpacing.sm),
-        )
-        LazyRow(
-            contentPadding = PaddingValues(horizontal = DreamoraSpacing.screenH),
-            horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.md),
-        ) {
-            items(items = rows, key = { it.bookUrl }) { row ->
-                val cover = rememberResolvedBookImagePath(
-                    bookUrl = row.bookUrl,
-                    imagePath = row.coverUrl,
-                )
-                DreamoraBookCard(
-                    title = row.title,
-                    coverModel = cover,
-                    subtitle = if (row.chaptersTotal > 0) {
-                        stringResource(R.string.for_you_continue_progress, row.chaptersRead, row.chaptersTotal)
-                    } else {
-                        null
-                    },
-                    modifier = Modifier.width(DreamoraSize.railCardWidth),
-                    onClick = {
-                        onOpenBook(
-                            BookMetadata(
-                                title = row.title,
-                                url = row.bookUrl,
-                                coverImageUrl = row.coverUrl,
-                            )
-                        )
-                    },
-                )
-            }
-        }
     }
 }
 

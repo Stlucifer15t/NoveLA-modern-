@@ -1508,8 +1508,6 @@
     <string name="feeds_all_read">Непрочитанного нет</string>
     <string name="feeds_empty_filter_title">Такого на полке пока нет</string>
     <string name="table_of_contents">Оглавление</string>
-    <string name="for_you_continue_title">Продолжить</string>
-    <string name="for_you_continue_progress">%1$d / %2$d</string>
     <string name="for_you_hidden_notice">Скрыто: %1$s</string>
     <string name="for_you_undo">Отменить</string>
     <string name="chapters_notify_new">Уведомлять о новых главах</string>
@@ -1617,4 +1615,10 @@
     <string name="for_you_engine_new">Новое для вас</string>
     <string name="for_you_engine_discover">Откройте новые источники</string>
     <string name="for_you_engine_similar">Похожие</string>
+    <string name="compat_show_adult">Показывать 18+</string>
+    <string name="compat_adult_hidden">Скрыто источников 18+: %1$d. Включите «Показывать 18+», чтобы увидеть их.</string>
+    <string name="compat_no_matches">Нет источников по этому фильтру.</string>
+    <string name="compat_stored_not_runnable">Сохранено. Эта сборка пока не запускает источники %1$s.</string>
+    <string name="settings_sources_adult_title">Показывать источники 18+</string>
+    <string name="settings_sources_adult_hint">Источники, которые репозиторий помечает как 18+, скрыты в каталоге расширений и в списке установленных, пока эта опция выключена.</string>
 </resources>

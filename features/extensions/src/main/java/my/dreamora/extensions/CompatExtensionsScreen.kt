@@ -30,6 +30,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
@@ -188,13 +189,24 @@ fun DreamoraCompatRepositoriesScreen(
                         viewModel = viewModel,
                     )
                 }
+                // An empty catalog used to be a blank gap; say why it is empty.
+                if (state.entries.isEmpty()) {
+                    item(key = "compat_no_matches") {
+                        Text(
+                            text = stringResource(StringsR.string.compat_no_matches),
+                            style = DreamoraType.bookMeta,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(vertical = DreamoraSpacing.md),
+                        )
+                    }
+                }
             }
 
-            if (state.installed.isNotEmpty()) {
+            if (state.visibleInstalled.isNotEmpty()) {
                 item(key = "compat_installed_label") {
-                    SectionLabel(stringResource(StringsR.string.compat_installed_section, state.installed.size))
+                    SectionLabel(stringResource(StringsR.string.compat_installed_section, state.visibleInstalled.size))
                 }
-                items(items = state.installed, key = { "installed_" + it.id }) { record ->
+                items(items = state.visibleInstalled, key = { "installed_" + it.id }) { record ->
                     InstalledRow(
                         record = record,
                         loadError = state.loadInfos.firstOrNull { it.record.id == record.id }?.loadError,
@@ -450,7 +462,10 @@ private fun CatalogToolbar(
                 },
             )
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(
+            modifier = Modifier.horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
             FilterChip(
                 selected = state.filterEcosystem == null,
                 onClick = { viewModel.onEvent(CompatExtensionsEvent.OnFilterEcosystem(null)) },
@@ -466,9 +481,14 @@ private fun CatalogToolbar(
                             )
                         )
                     },
-                    label = { Text(ecosystem.displayName, fontSize = 11.sp) },
+                    label = { Text(ecosystem.displayName, fontSize = 11.sp, maxLines = 1) },
                 )
             }
+            FilterChip(
+                selected = state.showAdult,
+                onClick = { viewModel.onEvent(CompatExtensionsEvent.OnShowAdult(!state.showAdult)) },
+                label = { Text(stringResource(StringsR.string.compat_show_adult), fontSize = 11.sp, maxLines = 1) },
+            )
         }
         Text(
             text = if (state.truncated) {
@@ -479,6 +499,13 @@ private fun CatalogToolbar(
             style = DreamoraType.bookMeta,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        if (state.hiddenAdult > 0) {
+            Text(
+                text = stringResource(StringsR.string.compat_adult_hidden, state.hiddenAdult),
+                style = DreamoraType.bookMeta,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 
@@ -678,7 +705,14 @@ private fun InstalledRow(
                 )
             }
         }
-        loadError?.let {
+        // A stored source whose ecosystem has no runtime in this build says so in plain words;
+        // the loader's English diagnostic is only for sources that do run.
+        val status = if (!CompatRuntime.isRunnable(record.ecosystem)) {
+            stringResource(StringsR.string.compat_stored_not_runnable, record.ecosystem.displayName)
+        } else {
+            loadError
+        }
+        status?.let {
             Text(
                 text = it,
                 fontSize = 10.sp,
