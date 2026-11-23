@@ -57,7 +57,7 @@ class MangayomiSourceAdapter(
     private val titleByUrl = BoundedCache<String, String>(2048)
 
     @Volatile
-    private var cachedTemplate: List<JsonObject>? = None
+    private var cachedTemplate: List<JsonObject>? = null
 
     override val nameStrId: Int = 0
     override val catalogUrl: String = baseUrl
