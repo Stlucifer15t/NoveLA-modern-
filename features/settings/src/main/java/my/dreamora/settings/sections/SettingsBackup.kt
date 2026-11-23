@@ -29,7 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import my.dreamora.coreui.components.SlimListItem
+import my.dreamora.settings.ui.SettingsRow
 import my.dreamora.coreui.theme.colorAccent
 import my.dreamora.coreui.theme.textPadding
 import my.dreamora.settings.R
@@ -67,7 +67,7 @@ internal fun SettingsBackup(
             modifier = Modifier.textPadding(),
             color = colorAccent()
         )
-        SlimListItem(
+        SettingsRow(
             headlineContent = {
                 Text(text = stringResource(R.string.backup_data))
             },
@@ -79,7 +79,7 @@ internal fun SettingsBackup(
             },
             modifier = Modifier.clickable { onBackupData() }
         )
-        SlimListItem(
+        SettingsRow(
             headlineContent = {
                 Text(text = stringResource(R.string.restore_data))
             },
@@ -105,7 +105,7 @@ internal fun SettingsBackup(
         )
 
         // Enable/Disable
-        SlimListItem(
+        SettingsRow(
             headlineContent = {
                 Text(text = stringResource(R.string.auto_backup_switch))
             },
@@ -124,7 +124,7 @@ internal fun SettingsBackup(
         )
 
         // Directory selection
-        SlimListItem(
+        SettingsRow(
             headlineContent = {
                 Text(text = stringResource(R.string.auto_backup_directory))
             },
@@ -145,7 +145,7 @@ internal fun SettingsBackup(
         )
 
         // Max count
-        SlimListItem(
+        SettingsRow(
             headlineContent = {
                 Text(text = stringResource(R.string.auto_backup_max_count))
             },
@@ -163,7 +163,7 @@ internal fun SettingsBackup(
         )
 
         // Interval
-        SlimListItem(
+        SettingsRow(
             headlineContent = {
                 Text(text = stringResource(R.string.auto_backup_interval))
             },
@@ -181,7 +181,7 @@ internal fun SettingsBackup(
         )
 
         // Last backup time
-        SlimListItem(
+        SettingsRow(
             headlineContent = {
                 Text(text = stringResource(R.string.auto_backup_last_time))
             },
@@ -201,7 +201,7 @@ internal fun SettingsBackup(
         )
 
         // Include images
-        SlimListItem(
+        SettingsRow(
             headlineContent = {
                 Text(text = stringResource(R.string.auto_backup_include_images))
             },
@@ -220,7 +220,7 @@ internal fun SettingsBackup(
         )
 
         // Include settings
-        SlimListItem(
+        SettingsRow(
             headlineContent = {
                 Text(text = stringResource(R.string.auto_backup_include_settings))
             },
@@ -239,7 +239,7 @@ internal fun SettingsBackup(
         )
 
         // Include plugins
-        SlimListItem(
+        SettingsRow(
             headlineContent = {
                 Text(text = stringResource(R.string.auto_backup_include_plugins))
             },

@@ -1508,8 +1508,6 @@
     <string name="feeds_all_read">Непрочитанного нет</string>
     <string name="feeds_empty_filter_title">Такого на полке пока нет</string>
     <string name="table_of_contents">Оглавление</string>
-    <string name="for_you_continue_title">Продолжить</string>
-    <string name="for_you_continue_progress">%1$d / %2$d</string>
     <string name="for_you_hidden_notice">Скрыто: %1$s</string>
     <string name="for_you_undo">Отменить</string>
     <string name="chapters_notify_new">Уведомлять о новых главах</string>
@@ -1549,6 +1547,8 @@
     <string name="settings_group_reading">Чтение</string>
     <string name="settings_group_reading_hint">Шрифт, интервалы и поведение экрана в читалке</string>
     <string name="settings_group_library">Библиотека</string>
+    <string name="settings_group_sources">Источники</string>
+    <string name="settings_group_sources_hint">Репозитории расширений и показ источников 18+</string>
     <string name="settings_group_library_hint">Правила автообновления и откуда приходят новые версии</string>
     <string name="settings_group_data">Данные и память</string>
     <string name="settings_group_data_hint">Кэш книг, изображений, манги и видео, и их очистка</string>
@@ -1609,4 +1609,18 @@
     <string name="book_review_pinned">Закреплён</string>
     <string name="book_review_edited">Изменён</string>
     <string name="book_review_replies">Ответов: %1$d</string>
+    <string name="for_you_engine_for_you">Подборка для вас</string>
+    <string name="for_you_engine_because_you_read">Потому что вы читаете «%1$s»</string>
+    <string name="for_you_engine_trending">Популярное в ваших жанрах</string>
+    <string name="for_you_engine_authors">От авторов, которые вам нравятся</string>
+    <string name="for_you_engine_top_rated">Лучшие по оценкам для вас</string>
+    <string name="for_you_engine_new">Новое для вас</string>
+    <string name="for_you_engine_discover">Откройте новые источники</string>
+    <string name="for_you_engine_similar">Похожие</string>
+    <string name="compat_show_adult">Показывать 18+</string>
+    <string name="compat_adult_hidden">Скрыто источников 18+: %1$d. Включите «Показывать 18+», чтобы увидеть их.</string>
+    <string name="compat_no_matches">Нет источников по этому фильтру.</string>
+    <string name="compat_stored_not_runnable">Сохранено. Эта сборка пока не запускает источники %1$s.</string>
+    <string name="settings_sources_adult_title">Показывать источники 18+</string>
+    <string name="settings_sources_adult_hint">Источники, которые репозиторий помечает как 18+, не показываются в каталоге, поиске и «Для вас», пока эта опция выключена. Установленные остаются в списке установленных с отметкой 18+.</string>
 </resources>

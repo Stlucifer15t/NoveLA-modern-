@@ -20,7 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import my.dreamora.coreui.components.SlimListItem
+import my.dreamora.settings.ui.SettingsRow
 import my.dreamora.coreui.theme.colorAccent
 import my.dreamora.coreui.theme.InternalTheme
 import my.dreamora.coreui.theme.textPadding
@@ -45,7 +45,7 @@ fun LibraryAutoUpdate(
             modifier = Modifier.textPadding(),
             color = colorAccent()
         )
-        SlimListItem(
+        SettingsRow(
             modifier = Modifier.clickable {
                 state.autoUpdateEnabled.value = !state.autoUpdateEnabled.value
             },
@@ -69,7 +69,7 @@ fun LibraryAutoUpdate(
             }
         )
         // Library update interval options
-        SlimListItem(
+        SettingsRow(
             headlineContent = {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     libraryUpdateTimes.forEach {
@@ -86,7 +86,7 @@ fun LibraryAutoUpdate(
             }
         )
         // Проверка канала: тот же канал, что у настоящих уведомлений о главах.
-        SlimListItem(
+        SettingsRow(
             modifier = Modifier.clickable { state.onSendTestNotification() },
             headlineContent = {
                 Text(text = stringResource(StringsR.string.library_test_notification))

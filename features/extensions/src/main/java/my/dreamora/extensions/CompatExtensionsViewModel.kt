@@ -1,5 +1,7 @@
 package my.dreamora.extensions
 
+import my.dreamora.core.appPreferences.AppPreferences
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -35,6 +37,7 @@ import javax.inject.Inject
 class CompatExtensionsViewModel @Inject constructor(
     private val manager: CompatRepositoryManager,
     provider: CompatSourceProviderImpl,
+    private val appPreferences: AppPreferences,
 ) : ViewModel() {
 
     private val local = MutableStateFlow(CompatExtensionsLocal())
@@ -61,33 +64,50 @@ class CompatExtensionsViewModel @Inject constructor(
         repoSnapshot,
         runtimeSnapshot,
         local,
-    ) { (repos, entriesByRepo), runtime, view ->
+        appPreferences.EXTENSIONS_SHOW_ADULT.flow(),
+    ) { (repos, entriesByRepo), runtime, view, showAdult ->
         val selectedId = view.filterRepoId ?: repos.firstOrNull { it.enabled }?.id ?: repos.firstOrNull()?.id
         val all = if (entriesByRepo.isEmpty()) {
             repos.map { it.id to emptyList<CompatRepoEntry>() }.toMap()
         } else {
             entriesByRepo
         }
-        val pool = selectedId?.let { all[it] } ?: all.values.flatten()
+        // A language filter asks "where are the Legado sources?", so it searches every subscription.
+        // Without one, the list shows the repository the reader selected.
+        val pool = if (view.filterEcosystem != null) {
+            all.values.flatten()
+        } else {
+            selectedId?.let { all[it] } ?: all.values.flatten()
+        }
+        val byEcosystem = pool.filter { view.filterEcosystem == null || it.ecosystem == view.filterEcosystem }
+        val hiddenAdult = if (showAdult) 0 else byEcosystem.count { it.nsfw }
         val query = view.searchQuery.trim().lowercase()
-        val filtered = pool
-            .filter { view.filterEcosystem == null || it.ecosystem == view.filterEcosystem }
+        val filtered = byEcosystem
+            .filter { showAdult || !it.nsfw }
             .filter { query.isEmpty() || it.matches(query) }
             .sortedWith(
                 compareByDescending<CompatRepoEntry> { CompatRuntime.isRunnable(it.ecosystem) }
                     .thenBy { it.name.lowercase() }
             )
+        // Installed sources are always listed, 18+ ones included: the reader installed them on
+        // purpose. The 18+ switch only decides which sources the browsing screens offer.
+        val visibleInstalled = runtime.records.filter { record ->
+            view.filterEcosystem == null || record.ecosystem == view.filterEcosystem
+        }
 
         val installedById = runtime.records.associateBy { it.id }
         CompatExtensionsState(
             repositories = repos,
             busyRepos = runtime.busy,
             installed = runtime.records,
+            visibleInstalled = visibleInstalled,
             loadInfos = runtime.infos,
             selectedRepoId = selectedId,
             entries = filtered.take(MAX_VISIBLE_ENTRIES),
             truncated = filtered.size > MAX_VISIBLE_ENTRIES,
             totalCount = pool.size,
+            hiddenAdult = hiddenAdult,
+            showAdult = showAdult,
             installStates = filtered.associate { entry ->
                 entry.key to installStateOf(entry, installedById)
             },
@@ -153,6 +173,10 @@ class CompatExtensionsViewModel @Inject constructor(
 
             is CompatExtensionsEvent.OnFilterEcosystem ->
                 local.update { it.copy(filterEcosystem = event.ecosystem) }
+
+            is CompatExtensionsEvent.OnShowAdult -> {
+                appPreferences.EXTENSIONS_SHOW_ADULT.value = event.show
+            }
 
             is CompatExtensionsEvent.OnSearchQuery ->
                 local.update { it.copy(searchQuery = event.query) }
@@ -294,6 +318,8 @@ private data class CompatExtensionsLocal(
 data class CompatExtensionsState(
     val repositories: List<CompatRepository> = emptyList(),
     val installed: List<CompatInstallRecord> = emptyList(),
+    /** [installed] after the ecosystem filter: what the installed list shows. 18+ sources stay listed. */
+    val visibleInstalled: List<CompatInstallRecord> = emptyList(),
     val loadInfos: List<CompatSourceInfo> = emptyList(),
     val busyRepos: Set<String> = emptySet(),
     val selectedRepoId: String? = null,
@@ -303,6 +329,10 @@ data class CompatExtensionsState(
     val truncated: Boolean = false,
     val searchQuery: String = "",
     val filterEcosystem: CompatEcosystem? = null,
+    /** 18+ sources are listed only when the reader has turned them on. */
+    val showAdult: Boolean = false,
+    /** How many catalog entries the 18+ filter is hiding right now. */
+    val hiddenAdult: Int = 0,
     val showAddRepo: Boolean = false,
     val addRepoUrl: String = "",
     val feedback: String? = null,
@@ -329,6 +359,7 @@ sealed interface CompatExtensionsEvent {
     data class OnToggleRepo(val repoId: String, val enabled: Boolean) : CompatExtensionsEvent
     data class OnSelectRepo(val repoId: String?) : CompatExtensionsEvent
     data class OnFilterEcosystem(val ecosystem: CompatEcosystem?) : CompatExtensionsEvent
+    data class OnShowAdult(val show: Boolean) : CompatExtensionsEvent
     data class OnSearchQuery(val query: String) : CompatExtensionsEvent
     data class OnInstall(val entry: CompatRepoEntry) : CompatExtensionsEvent
     data class OnInstallAll(val repoId: String) : CompatExtensionsEvent

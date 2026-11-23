@@ -706,6 +706,11 @@ class AppPreferences @Inject constructor(
     val LIBRARY_SHOW_SPICY = object : Preference<Boolean>("LIBRARY_SHOW_SPICY") {
         override var value by SharedPreference_Boolean(name, preferences, false)
     }
+    // 18+ sources (Mihon nsfw, Legado 18+ group) are hidden from the extension catalog and the
+    // installed list unless the reader opts in. Off by default, like the Spicy shelf.
+    val EXTENSIONS_SHOW_ADULT = object : Preference<Boolean>("EXTENSIONS_SHOW_ADULT") {
+        override var value by SharedPreference_Boolean(name, preferences, false)
+    }
     val LIBRARY_SORT_CONFIG = object : Preference<SortConfig>("LIBRARY_SORT_CONFIG") {
         override var value by SharedPreference_Serializable(
             name,

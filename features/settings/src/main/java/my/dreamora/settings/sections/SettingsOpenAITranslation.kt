@@ -35,7 +35,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
-import my.dreamora.coreui.components.SlimListItem
+import my.dreamora.settings.ui.SettingsRow
 import my.dreamora.settings.R
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -81,7 +81,7 @@ internal fun SettingsOpenAITranslation(
         HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
 
         // ── Base URL ──────────────────────────────────────────────────────────
-        SlimListItem(
+        SettingsRow(
             headlineContent = {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Row(
@@ -130,7 +130,7 @@ internal fun SettingsOpenAITranslation(
         )
 
         // ── API Keys ──────────────────────────────────────────────────────────
-        SlimListItem(
+        SettingsRow(
             headlineContent = {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Row(
@@ -178,7 +178,7 @@ internal fun SettingsOpenAITranslation(
         )
 
         // ── Model ─────────────────────────────────────────────────────────────
-        SlimListItem(
+        SettingsRow(
             headlineContent = {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(

@@ -31,6 +31,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import my.dreamora.coreui.theme.DreamoraRadius
@@ -346,22 +347,22 @@ fun DreamoraStatCard(
 ) {
     Surface(
         modifier = modifier,
-        shape = DreamoraRadius.cardShape,
-        color = DreamoraTheme.colors.elevatedSurface,
-        border = androidx.compose.foundation.BorderStroke(1.dp, DreamoraTheme.colors.hairline),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceContainer,
     ) {
-        Column(modifier = Modifier.padding(horizontal = DreamoraSpacing.sm, vertical = DreamoraSpacing.md)) {
+        Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 14.dp)) {
             Text(
                 text = value,
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold),
                 color = accent,
                 maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
             Spacer(Modifier.height(2.dp))
             Text(
                 text = label,
-                style = MaterialTheme.typography.labelSmall,
-                color = DreamoraTheme.colors.textMuted,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -433,15 +434,6 @@ fun DreamoraGreetingHeader(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        accent.copy(alpha = 0.14f),
-                        accent.copy(alpha = 0.05f),
-                        Color.Transparent,
-                    ),
-                )
-            )
     ) {
         Row(
             modifier = Modifier
@@ -534,7 +526,6 @@ fun DreamoraMenuCard(
     icon: ImageVector,
     title: String,
     subtitle: String?,
-    accent: Color,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     badge: String? = null,
@@ -543,45 +534,38 @@ fun DreamoraMenuCard(
         onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = DreamoraSpacing.screenH, vertical = DreamoraSpacing.xxs),
-        shape = DreamoraRadius.cardShape,
-        color = DreamoraTheme.colors.elevatedSurface,
-        border = androidx.compose.foundation.BorderStroke(1.dp, DreamoraTheme.colors.hairline),
+            .padding(horizontal = DreamoraSpacing.screenH, vertical = 4.dp),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceContainer,
     ) {
         Row(
-            modifier = Modifier.padding(DreamoraSpacing.md),
+            modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.md),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            DreamoraCircleIcon(accent = accent) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    modifier = Modifier.size(22.dp),
-                    tint = accent,
-                )
-            }
+            DreamoraIconTile(icon = icon)
             Column(modifier = Modifier.weight(1f)) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.xs),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Text(
                         text = title,
-                        style = MaterialTheme.typography.titleSmall,
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
                         color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false),
                     )
                     if (!badge.isNullOrBlank()) {
                         Text(
                             text = badge,
                             modifier = Modifier
                                 .clip(DreamoraRadius.badgeShape)
-                                .background(accent)
+                                .background(MaterialTheme.colorScheme.primary)
                                 .padding(horizontal = 6.dp, vertical = 1.dp),
                             style = MaterialTheme.typography.labelSmall,
-                            color = androidx.compose.ui.graphics.Color.White,
+                            color = MaterialTheme.colorScheme.onPrimary,
                         )
                     }
                 }
@@ -589,8 +573,8 @@ fun DreamoraMenuCard(
                     Spacer(Modifier.height(2.dp))
                     Text(
                         text = subtitle,
-                        style = DreamoraType.bookMeta,
-                        color = DreamoraTheme.colors.textMuted,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -600,8 +584,34 @@ fun DreamoraMenuCard(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = null,
                 modifier = Modifier.size(20.dp),
-                tint = DreamoraTheme.colors.textMuted.copy(alpha = 0.7f),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+    }
+}
+
+/**
+ * The rounded tile behind a settings or menu icon. One tone for every row: the icon carries
+ * the meaning, the tile only frames it, so colour is not used as decoration.
+ */
+@Composable
+fun DreamoraIconTile(
+    icon: ImageVector,
+    modifier: Modifier = Modifier,
+    size: Dp = 40.dp,
+) {
+    Box(
+        modifier = modifier
+            .size(size)
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.primaryContainer),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            modifier = Modifier.size(20.dp),
+            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+        )
     }
 }

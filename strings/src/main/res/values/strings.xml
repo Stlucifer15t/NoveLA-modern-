@@ -1047,6 +1047,8 @@
 
     <!-- One-line hints under each settings group screen title -->
     <string name="settings_group_appearance_hint">Theme, dark mode and the app language</string>
+    <string name="settings_group_sources">Sources</string>
+    <string name="settings_group_sources_hint">Extension repositories and whether 18+ sources are shown</string>
     <string name="settings_group_library_hint">Auto-update rules and where new versions come from</string>
     <string name="settings_group_data_hint">Book, image, manga and video caches, and clearing them</string>
     <string name="settings_group_backup_hint">Manual backups, scheduled auto-backups and logs</string>
@@ -1142,8 +1144,6 @@
     <string name="feeds_new_episodes">%1$d new episodes</string>
     <string name="feeds_all_read">Nothing unread</string>
     <string name="feeds_empty_filter_title">Nothing of this kind on the shelf</string>
-    <string name="for_you_continue_title">Continue</string>
-    <string name="for_you_continue_progress">%1$d / %2$d</string>
     <string name="for_you_hidden_notice">Hidden: %1$s</string>
     <string name="for_you_undo">Undo</string>
     <string name="chapters_notify_new">Notify about new chapters</string>
@@ -1220,4 +1220,18 @@
     <string name="book_review_pinned">Pinned</string>
     <string name="book_review_edited">Edited</string>
     <string name="book_review_replies">Replies: %1$d</string>
+    <string name="for_you_engine_for_you">Picked for you</string>
+    <string name="for_you_engine_because_you_read">Because you read %1$s</string>
+    <string name="for_you_engine_trending">Trending in your genres</string>
+    <string name="for_you_engine_authors">From authors you like</string>
+    <string name="for_you_engine_top_rated">Top rated for you</string>
+    <string name="for_you_engine_new">New for you</string>
+    <string name="for_you_engine_discover">Discover new sources</string>
+    <string name="for_you_engine_similar">Similar titles</string>
+    <string name="compat_show_adult">Show 18+</string>
+    <string name="compat_adult_hidden">%1$d sources marked 18+ are hidden. Turn on “Show 18+” to list them.</string>
+    <string name="compat_no_matches">No sources match this filter.</string>
+    <string name="compat_stored_not_runnable">Saved. This build cannot run %1$s sources yet.</string>
+    <string name="settings_sources_adult_title">Show 18+ sources</string>
+    <string name="settings_sources_adult_hint">Sources marked 18+ stay out of browsing (catalog, search and For You) until this is on. Ones you installed stay in the installed list, marked 18+.</string>
 </resources>

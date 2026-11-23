@@ -26,7 +26,7 @@ data class CompatRuntimeInfo(
 
 object CompatRuntime {
 
-    private val READY = setOf(CompatEcosystem.LEGADO)
+    private val READY = setOf(CompatEcosystem.LEGADO, CompatEcosystem.LNREADER, CompatEcosystem.MANGAYOMI)
 
     val runnableEcosystems: Set<CompatEcosystem> get() = READY
 
@@ -57,18 +57,18 @@ object CompatRuntime {
         )
 
         CompatEcosystem.LNREADER -> CompatRuntimeInfo(
-            state = CompatRuntimeState.RUNTIME_NOT_BUNDLED,
-            badge = "js runtime",
-            detail = "LNReader plugins are JavaScript run against a QuickJS host with " +
-                "Client/Document/Cheerio globals. The .js file is stored in the compat library; " +
-                "it becomes a source once that runtime is bundled.",
+            state = CompatRuntimeState.READY,
+            badge = "ready",
+            detail = "LNReader plugins run in a QuickJS runtime with the LNReader host " +
+                "(@libs/fetch, storage, cheerio, dayjs). Installed plugins appear in Finder.",
         )
 
         CompatEcosystem.MANGAYOMI -> CompatRuntimeInfo(
-            state = CompatRuntimeState.RUNTIME_NOT_BUNDLED,
-            badge = "js runtime",
-            detail = "Mangayomi sources are QuickJS/D4rt scripts. Code is stored; execution " +
-                "needs the Client/MBridge runtime, which is not part of this build.",
+            state = CompatRuntimeState.READY,
+            badge = "ready",
+            detail = "Mangayomi JavaScript sources run in a QuickJS runtime with the Client, " +
+                "Document and MProvider globals. Dart sources and video sources are not " +
+                "supported in this build and say so when installed.",
         )
 
         CompatEcosystem.CLOUDSTREAM -> CompatRuntimeInfo(

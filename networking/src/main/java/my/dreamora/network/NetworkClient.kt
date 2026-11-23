@@ -117,6 +117,9 @@ class ScraperNetworkClient @Inject constructor(
                 if (appInternalState.isDebugMode) {
                     okhttpLoggingInterceptor?.let { addInterceptor(it) }
                 }
+                // Headers an extension asked for on its images. Runs before the UA interceptor
+                // so an extension that sets its own User-Agent for images keeps it.
+                addInterceptor(ImageRequestHeadersInterceptor())
                 addInterceptor(UserAgentInterceptor(appPreferences))
                 addInterceptor(DecodeResponseInterceptor())
                 addInterceptor(ServerErrorRetryInterceptor())

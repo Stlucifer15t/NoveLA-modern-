@@ -55,6 +55,10 @@ keystore_base64.txt
 /node_modules
 package-lock.json
 package.json
+# JS host library build inputs (see tooling/extension_compat/js-runtime/README.md)
+!tooling/extension_compat/js-runtime/package.json
+!tooling/extension_compat/js-runtime/package-lock.json
+tooling/extension_compat/js-runtime/node_modules/
 repomix.config.json
 /.codegraph
 /.opencode

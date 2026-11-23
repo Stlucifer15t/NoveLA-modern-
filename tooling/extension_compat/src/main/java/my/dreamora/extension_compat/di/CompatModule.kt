@@ -12,6 +12,8 @@ import my.dreamora.extension_compat.core.CompatLoaders
 import my.dreamora.extension_compat.core.CompatSourceProviderImpl
 import my.dreamora.extension_compat.core.CompatStorage
 import my.dreamora.extension_compat.legado.LegadoExtensionLoader
+import my.dreamora.extension_compat.lnreader.LnReaderExtensionLoader
+import my.dreamora.extension_compat.mangayomi.MangayomiExtensionLoader
 import my.dreamora.extension_compat.tachiyomi.TachiyomiExtensionLoader
 import my.dreamora.scraper.CompatSourceProvider
 import java.io.File
@@ -64,6 +66,8 @@ object CompatProviderModule {
     @Singleton
     fun provideLoaders(
         legado: LegadoExtensionLoader,
+        lnReader: LnReaderExtensionLoader,
+        mangayomi: MangayomiExtensionLoader,
         tachiyomi: TachiyomiExtensionLoader,
-    ): CompatLoaders = CompatLoaders(listOf(legado, tachiyomi))
+    ): CompatLoaders = CompatLoaders(listOf(legado, lnReader, mangayomi, tachiyomi))
 }

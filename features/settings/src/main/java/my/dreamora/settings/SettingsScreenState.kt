@@ -38,6 +38,8 @@ data class SettingsScreenState(
     val scraperUserAgent: MutableState<String>,
     val cloudflareBypassEnabled: MutableState<Boolean>,
     val cloudflareChallengeTimeoutSeconds: MutableState<Int>,
+    // 18+ extension sources: hidden unless enabled
+    val extensionsShowAdult: MutableState<Boolean>,
     // OpenAI-compatible
     val openAiBaseUrl: State<String>,
     val openAiApiKeys: State<String>,

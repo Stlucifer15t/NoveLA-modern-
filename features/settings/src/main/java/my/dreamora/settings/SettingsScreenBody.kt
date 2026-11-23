@@ -19,6 +19,7 @@ import my.dreamora.settings.sections.SettingsStats
 import my.dreamora.settings.ui.hint
 import my.dreamora.settings.ui.label
 import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.outlined.Extension
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.SettingsBackupRestore
@@ -93,6 +94,7 @@ import my.dreamora.settings.sections.SettingsNovelPromptsDialog
 import my.dreamora.settings.sections.SettingsNetwork
 import my.dreamora.settings.sections.SettingsTheme
 import my.dreamora.settings.sections.SettingsRegexCleanup
+import my.dreamora.settings.sections.SettingsSources
 import my.dreamora.settings.sections.SettingsSupport
 import my.dreamora.settings.sections.SettingsAbout
 
@@ -183,7 +185,8 @@ internal fun SettingsScreenBody(
         if (expanded || q.isEmpty()) return true
         return spec.title.lowercase().contains(q) ||
             spec.summary.lowercase().contains(q) ||
-            spec.keywords.any { it.contains(q) || q.contains(it) }
+            // a blank keyword would match every query (q.contains("") is always true)
+            spec.keywords.any { it.isNotBlank() && (it.contains(q) || q.contains(it)) }
     }
 
     val specs = listOf(
@@ -193,7 +196,6 @@ internal fun SettingsScreenBody(
             summary = SettingsGroup.Appearance.hint(),
             icon = Icons.Outlined.Palette,
             keywords = listOf("theme", "dark", "amoled", "language", "color", "font"),
-            accent = palette.primary,
             content = {
                 SettingsTheme(
                     currentAppTheme = state.currentAppTheme.value,
@@ -217,7 +219,6 @@ internal fun SettingsScreenBody(
                 "reading", "reader", "font", "size", "line height", "spacing", "justify",
                 "hyphen", "screen on", "full screen", "tap", "select", "preload", "prefetch",
             ),
-            accent = palette.secondary,
             content = {
                 // Same preference states the reader panel writes — this screen is another
                 // door into them, not a second copy.
@@ -233,7 +234,6 @@ internal fun SettingsScreenBody(
                 "layout", "grid", "list", "columns", "for you", "library",
                 "read chapters", "grey",
             ),
-            accent = palette.primary,
             content = {
                 // The tabs read these while the screen is open, so tapping "3" has already
                 // changed the tab — there is nothing left to apply.
@@ -246,7 +246,6 @@ internal fun SettingsScreenBody(
             summary = SettingsGroup.Stats.hint(),
             icon = Icons.Outlined.Insights,
             keywords = listOf("stats", "statistics", "streak", "chapters", "episodes", "reading"),
-            accent = palette.tertiary,
             content = {
                 SettingsStats(stats = state.stats.value)
             },
@@ -256,8 +255,9 @@ internal fun SettingsScreenBody(
             title = SettingsGroup.Library.label(),
             summary = SettingsGroup.Library.hint(),
             icon = Icons.Outlined.Update,
-            keywords = listOf("library", "auto update", "update", "version", "nightly"),
-            accent = palette.tertiary,
+            keywords = listOf(
+                "library", "auto update", "update", "version", "nightly",
+            ),
             content = {
                 LibraryAutoUpdate(state = state.libraryAutoUpdate)
                 HorizontalDivider(color = DreamoraTheme.colors.hairline)
@@ -268,12 +268,24 @@ internal fun SettingsScreenBody(
             },
         ),
         SettingsGroupSpec(
+            group = SettingsGroup.Sources,
+            title = SettingsGroup.Sources.label(),
+            summary = SettingsGroup.Sources.hint(),
+            icon = Icons.Outlined.Extension,
+            keywords = listOf(
+                "18+", "adult", "nsfw", "mature", "sources", "extensions", "hide", "show",
+                "18", "источники", "расширения", "скрыть", "показать",
+            ),
+            content = {
+                SettingsSources(showAdult = state.extensionsShowAdult)
+            },
+        ),
+        SettingsGroupSpec(
             group = SettingsGroup.Storage,
             title = SettingsGroup.Storage.label(),
             summary = SettingsGroup.Storage.hint(),
             icon = Icons.Outlined.Storage,
             keywords = listOf("storage", "cache", "database", "clean", "size", "images", "video", "manga"),
-            accent = palette.secondary,
             content = {
                 SettingsData(
                     databaseSize = state.databaseSize.value,
@@ -300,7 +312,6 @@ internal fun SettingsScreenBody(
             summary = SettingsGroup.Backup.hint(),
             icon = Icons.Outlined.SettingsBackupRestore,
             keywords = listOf("backup", "restore", "export", "import", "logs", "directory"),
-            accent = palette.error,
             content = {
                 SettingsBackup(
                     onBackupData = onBackupData,
@@ -333,7 +344,6 @@ internal fun SettingsScreenBody(
                 "translate", "translation", "gemini", "openai", "prompt", "api key",
                 "model", "regex", "cleanup", "batch",
             ),
-            accent = palette.primary,
             content = {
                 SettingsGeminiTranslation(
                     translationProvider = state.translationProvider.value,
@@ -377,7 +387,6 @@ internal fun SettingsScreenBody(
             summary = SettingsGroup.Network.hint(),
             icon = Icons.Outlined.Public,
             keywords = listOf("network", "user agent", "cloudflare", "timeout", "delay", "mass add"),
-            accent = palette.tertiary,
             content = {
                 val context = LocalContext.current
                 SettingsNetwork(
@@ -398,7 +407,6 @@ internal fun SettingsScreenBody(
             summary = SettingsGroup.Support.hint(),
             icon = Icons.Outlined.FavoriteBorder,
             keywords = listOf("support", "about", "donate", "telegram", "github", "credits", "version", "logs"),
-            accent = palette.error,
             content = {
                 SettingsSupport(onExportLogs = onExportLogs)
                 HorizontalDivider(color = DreamoraTheme.colors.hairline)
@@ -425,12 +433,10 @@ internal fun SettingsScreenBody(
                     icon = spec.icon,
                     title = spec.title,
                     summary = spec.summary,
-                    accent = spec.accent,
                 )
                 SettingsGroupCard(
                     title = spec.title,
                     icon = spec.icon,
-                    accent = spec.accent,
                     summary = null,
                     expanded = true,
                     showHeader = false,
@@ -538,7 +544,6 @@ internal fun SettingsScreenBody(
                     icon = spec.icon,
                     title = spec.title,
                     subtitle = spec.summary,
-                    accent = spec.accent,
                     onClick = { onOpenGroup(spec.group) },
                 )
             }
@@ -549,7 +554,6 @@ internal fun SettingsScreenBody(
                 icon = aboutSpec.icon,
                 title = aboutSpec.title,
                 subtitle = aboutSpec.summary,
-                accent = aboutSpec.accent,
                 onClick = { onOpenGroup(aboutSpec.group) },
             )
         }
@@ -671,6 +675,7 @@ private fun Preview() {
                     scraperUserAgent = remember { mutableStateOf("") },
                     cloudflareBypassEnabled = remember { mutableStateOf(true) },
                     cloudflareChallengeTimeoutSeconds = remember { mutableStateOf(120) },
+                    extensionsShowAdult = remember { mutableStateOf(false) },
                     openAiBaseUrl = remember { derivedStateOf { "" } },
                     openAiApiKeys = remember { derivedStateOf { "" } },
                     openAiModel = remember { derivedStateOf { "gpt-4o-mini" } },

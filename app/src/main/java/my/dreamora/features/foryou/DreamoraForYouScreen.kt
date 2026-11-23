@@ -237,19 +237,11 @@ fun DreamoraForYouScreen(
                 }
             }
 
-            if (state.continueRows.isEmpty()) {
-                ForYouReadingCard(
-                    reading = state.reading,
-                    onOpenBook = onOpenBook,
-                    modifier = Modifier.padding(horizontal = DreamoraSpacing.screenH),
-                )
-            } else {
-                ForYouContinueRow(
-                    rows = state.continueRows,
-                    onOpenBook = onOpenBook,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
+            ForYouReadingCard(
+                reading = state.reading,
+                onOpenBook = onOpenBook,
+                modifier = Modifier.padding(horizontal = DreamoraSpacing.screenH),
+            )
 
             // One scroll container for the rails and the pool. Two nested ones — a rail scroller
             // above a grid that scrolls — fight over the fling, and that fight is most of what
@@ -257,6 +249,7 @@ fun DreamoraForYouScreen(
             val topRated = remember(state.books) { state.books.highestRated() }
             val views = remember(state.rails, topRated, state.books.size) {
                 buildList {
+                    state.engineRails.forEach { add(it) }
                     state.rails.forEach { add(it) }
                     if (topRated.size >= 2) {
                         add(ForYouRail(genre = null, books = topRated))
@@ -526,56 +519,6 @@ private fun rememberLongPressHide(book: ForYouBook, onHide: ((ForYouBook) -> Uni
             }
         }
         action
-    }
-}
-
-/**
- * The "Continue" row: the shelf's recently read books, newest first, each with the source's
- * own chapter count. Only real history rows; nothing here is invented to fill the row.
- */
-@Composable
-private fun ForYouContinueRow(
-    rows: List<ForYouReading>,
-    onOpenBook: (BookMetadata) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(modifier = modifier) {
-        Text(
-            text = stringResource(R.string.for_you_continue_title),
-            style = DreamoraType.sectionTitle,
-            color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.padding(horizontal = DreamoraSpacing.screenH, vertical = DreamoraSpacing.sm),
-        )
-        LazyRow(
-            contentPadding = PaddingValues(horizontal = DreamoraSpacing.screenH),
-            horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.md),
-        ) {
-            items(items = rows, key = { it.bookUrl }) { row ->
-                val cover = rememberResolvedBookImagePath(
-                    bookUrl = row.bookUrl,
-                    imagePath = row.coverUrl,
-                )
-                DreamoraBookCard(
-                    title = row.title,
-                    coverModel = cover,
-                    subtitle = if (row.chaptersTotal > 0) {
-                        stringResource(R.string.for_you_continue_progress, row.chaptersRead, row.chaptersTotal)
-                    } else {
-                        null
-                    },
-                    modifier = Modifier.width(DreamoraSize.railCardWidth),
-                    onClick = {
-                        onOpenBook(
-                            BookMetadata(
-                                title = row.title,
-                                url = row.bookUrl,
-                                coverImageUrl = row.coverUrl,
-                            )
-                        )
-                    },
-                )
-            }
-        }
     }
 }
 
@@ -902,9 +845,10 @@ private fun ForYouRailBlock(
     val palette = MaterialTheme.colorScheme
     val genre = rail.genre
     val accent = railAccent(genre)
-    val title = genre?.let { stringResource(R.string.for_you_rail_best_in, stringResource(it.labelRes)) }
+    val title = rail.titleRes?.let { stringResource(it, rail.titleArg.orEmpty()) }
+        ?: genre?.let { stringResource(R.string.for_you_rail_best_in, stringResource(it.labelRes)) }
         ?: stringResource(R.string.for_you_highest_rated)
-    val note = if (genre == null) {
+    val note = if (genre == null && rail.titleRes == null) {
         stringResource(R.string.for_you_highest_rated_note, totalBooks)
     } else {
         stringResource(R.string.for_you_rail_note, rail.books.size)
@@ -947,12 +891,14 @@ private fun ForYouRailBlock(
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            DreamoraTileIconButton(
-                contentDescription = stringResource(R.string.for_you_rail_expand, title),
-                onClick = onExpand,
-                accent = palette.surfaceVariant,
-            ) {
-                Icon(Icons.AutoMirrored.Rounded.ArrowForward, null, modifier = Modifier.size(18.dp))
+            if (rail.expandable) {
+                DreamoraTileIconButton(
+                    contentDescription = stringResource(R.string.for_you_rail_expand, title),
+                    onClick = onExpand,
+                    accent = palette.surfaceVariant,
+                ) {
+                    Icon(Icons.AutoMirrored.Rounded.ArrowForward, null, modifier = Modifier.size(18.dp))
+                }
             }
         }
 

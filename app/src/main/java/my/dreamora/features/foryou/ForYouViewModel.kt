@@ -10,6 +10,14 @@ import kotlinx.coroutines.launch
 import my.dreamora.core.appPreferences.AppPreferences
 import my.dreamora.core.appPreferences.ListLayoutMode
 import my.dreamora.core.foryou.DreamoraGenre
+import my.dreamora.core.foryou.recommendation.model.RecommendationGroup
+import my.dreamora.core.foryou.recommendation.model.RecommendationType
+import my.dreamora.data.recommendation.RecommendationConfig
+import my.dreamora.data.recommendation.RecommendationEngine
+import my.dreamora.feature.local_database.BookMetadata
+import my.dreamora.R
+import timber.log.Timber
+import java.util.Locale
 import my.dreamora.feature.local_database.DAOs.LibraryDao
 import my.dreamora.feature.local_database.DAOs.ReadingHistoryDao
 import my.dreamora.scraper.SourceInterface
@@ -34,6 +42,8 @@ data class ForYouReading(
 data class ForYouUiState(
     val type: ForYouContentType = ForYouContentType.Novel,
     val books: List<ForYouBook> = emptyList(),
+    /** Sections from the recommendation engine (Novery-style), above the catalog rails. */
+    val engineRails: List<ForYouRail> = emptyList(),
     val loading: Boolean = false,
     val loadingMore: Boolean = false,
     val canLoadMore: Boolean = false,
@@ -47,8 +57,6 @@ data class ForYouUiState(
     val boundSourceId: String = "",
     val genres: List<DreamoraGenre> = emptyList(),
     val reading: ForYouReading? = null,
-    /** The most recently read books, newest first — the "Continue" row. Real history rows only. */
-    val continueRows: List<ForYouReading> = emptyList(),
     /** The last card hidden with a long-press; the screen shows it with an Undo action. */
     val lastHidden: ForYouBook? = null,
     /** Bumps on every hide, so the snackbar re-appears even for the same title. */
@@ -86,8 +94,11 @@ class ForYouViewModel @Inject constructor(
     private val engine: ForYouEngine,
     private val provisioner: ForYouSourceProvisioner,
     private val libraryDao: LibraryDao,
+    private val recommendations: RecommendationEngine,
     readingHistoryDao: ReadingHistoryDao,
 ) : ViewModel() {
+
+    private var engineJob: Job? = null
 
     private val _state = mutableStateOf(ForYouUiState())
     val state: ForYouUiState get() = _state.value
@@ -134,7 +145,6 @@ class ForYouViewModel @Inject constructor(
                 historyTitles = rows.map { it.bookTitle }
                 _state.value = _state.value.copy(
                     reading = rows.firstOrNull()?.toReading(),
-                    continueRows = rows.take(10).map { it.toReading() },
                 )
             }
         }
@@ -215,6 +225,7 @@ class ForYouViewModel @Inject constructor(
                 error = null,
                 books = emptyList(),
                 rails = emptyList(),
+                engineRails = emptyList(),
                 pool = emptyList(),
                 sourcesOfThisType = resolved.all.size,
                 sources = resolved.all.map { ForYouSourceOption(it.id, engine.sourceName(it)) },
@@ -225,6 +236,7 @@ class ForYouViewModel @Inject constructor(
                 empty = if (resolved.active.isEmpty()) ForYouEmpty.NoSourcesOfType else null,
                 canLoadMore = false,
             )
+            loadEngineRails()
             if (resolved.active.isEmpty()) {
                 // Nothing to read for this type. The picker still shows what is installed for
                 // the others, and the empty state says which way to go.
@@ -233,6 +245,71 @@ class ForYouViewModel @Inject constructor(
             }
             applyStep(resolved, replace = true)
         }
+    }
+
+    /**
+     * The Novery-style sections (Picked for you, Because you read, Best in …) from the
+     * recommendation engine, limited to the sources of the current tab. Replaced on every refresh.
+     */
+    private fun loadEngineRails() {
+        engineJob?.cancel()
+        engineJob = viewModelScope.launch {
+            val current = _state.value.sources
+            if (current.isEmpty()) return@launch
+            val groups = try {
+                recommendations.generateRecommendations(
+                    RecommendationConfig(
+                        allowedSources = current.mapTo(HashSet()) { it.id },
+                        sourceNames = current.associate { it.id to it.name },
+                    )
+                )
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Timber.w(e, "For You engine sections failed")
+                emptyList()
+            }
+            _state.value = _state.value.copy(
+                engineRails = groups.mapNotNull { it.toRail(current) },
+            )
+        }
+    }
+
+    private fun RecommendationGroup.toRail(sources: List<ForYouSourceOption>): ForYouRail? {
+        val books = recommendations.map { rec ->
+            ForYouBook(
+                metadata = BookMetadata(
+                    title = rec.title,
+                    url = rec.bookUrl,
+                    coverImageUrl = rec.coverUrl,
+                    // The engine keeps ratings on 0..1000; the cards show 0..10 like every source.
+                    rating = rec.rating?.let { String.format(Locale.ROOT, "%.1f", it / 100.0) }.orEmpty(),
+                ),
+                sourceName = sources.firstOrNull { it.id == rec.sourceId }?.name ?: rec.sourceId,
+                inLibrary = false,
+                matchedHistoryTitle = null,
+            )
+        }
+        if (books.isEmpty()) return null
+        val byWork = sourceBookTitle?.takeIf { it.isNotBlank() }
+        val titleRes = when (type) {
+            RecommendationType.FOR_YOU -> R.string.for_you_engine_for_you
+            RecommendationType.BECAUSE_YOU_READ ->
+                if (byWork != null) R.string.for_you_engine_because_you_read else R.string.for_you_engine_similar
+            RecommendationType.TRENDING_IN_YOUR_GENRES -> R.string.for_you_engine_trending
+            RecommendationType.FROM_AUTHORS_YOU_LIKE -> R.string.for_you_engine_authors
+            RecommendationType.TOP_RATED_FOR_YOU -> R.string.for_you_engine_top_rated
+            RecommendationType.NEW_FOR_YOU -> R.string.for_you_engine_new
+            RecommendationType.DISCOVER_NEW_SOURCE -> R.string.for_you_engine_discover
+            RecommendationType.SIMILAR_TO -> R.string.for_you_engine_similar
+        }
+        return ForYouRail(
+            genre = null,
+            books = books,
+            titleRes = titleRes,
+            titleArg = if (titleRes == R.string.for_you_engine_because_you_read) byWork else null,
+            expandable = false,
+        )
     }
 
     fun loadMore() {

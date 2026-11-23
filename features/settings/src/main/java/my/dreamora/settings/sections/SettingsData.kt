@@ -16,7 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import my.dreamora.coreui.components.SlimListItem
+import my.dreamora.settings.ui.SettingsRow
 import my.dreamora.coreui.theme.colorAccent
 import my.dreamora.coreui.theme.textPadding
 import my.dreamora.settings.R
@@ -46,7 +46,7 @@ internal fun SettingsData(
             modifier = Modifier.textPadding(),
             color = colorAccent()
         )
-        SlimListItem(
+        SettingsRow(
             headlineContent = {
                 Text(text = stringResource(R.string.clean_database))
             },
@@ -67,7 +67,7 @@ internal fun SettingsData(
             },
             modifier = Modifier.clickable(enabled = !isCleaningDatabase) { onRequestCleanDatabase() }
         )
-        SlimListItem(
+        SettingsRow(
             headlineContent = {
                 Text(text = stringResource(R.string.clean_images_folder))
             },
@@ -88,7 +88,7 @@ internal fun SettingsData(
             },
             modifier = Modifier.clickable(enabled = !isCleaningImages) { onRequestCleanImageFolder() }
         )
-        SlimListItem(
+        SettingsRow(
             headlineContent = {
                 Text(text = stringResource(R.string.clean_novel_cache))
             },
@@ -109,7 +109,7 @@ internal fun SettingsData(
             },
             modifier = Modifier.clickable(enabled = !isCleaningNovelCache) { onRequestCleanNovelCache() }
         )
-        SlimListItem(
+        SettingsRow(
             headlineContent = {
                 Text(text = stringResource(R.string.clean_manga_cache))
             },
@@ -130,7 +130,7 @@ internal fun SettingsData(
             },
             modifier = Modifier.clickable(enabled = !isCleaningMangaCache) { onRequestCleanMangaCache() }
         )
-        SlimListItem(
+        SettingsRow(
             headlineContent = {
                 Text(text = stringResource(R.string.clean_offline_video))
             },

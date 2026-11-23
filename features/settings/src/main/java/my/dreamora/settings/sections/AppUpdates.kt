@@ -15,7 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import my.dreamora.coreui.components.SlimListItem
+import my.dreamora.settings.ui.SettingsRow
 import my.dreamora.coreui.theme.colorAccent
 import my.dreamora.coreui.theme.debouncedClickable
 import my.dreamora.coreui.theme.textPadding
@@ -36,7 +36,7 @@ internal fun AppUpdates(
             modifier = Modifier.textPadding(),
             color = colorAccent()
         )
-        SlimListItem(
+        SettingsRow(
             modifier = Modifier.clickable {
                 state.appUpdateCheckerEnabled.value = !state.appUpdateCheckerEnabled.value
             },
@@ -59,7 +59,7 @@ internal fun AppUpdates(
                 )
             }
         )
-        SlimListItem(
+        SettingsRow(
             headlineContent = {
                 Text(text = stringResource(R.string.check_for_app_updates_now))
             },

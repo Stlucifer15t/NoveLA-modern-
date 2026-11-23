@@ -1,5 +1,6 @@
 package my.dreamora.extension_compat.core
 
+import my.dreamora.core.appPreferences.AppPreferences
 import my.dreamora.scraper.CompatSourceProvider
 import my.dreamora.scraper.SourceInterface
 import kotlinx.coroutines.CompletableDeferred
@@ -63,9 +64,17 @@ class CompatSourceProviderImpl @Inject constructor(
     private val storage: CompatStorage,
     private val diagnostics: CompatDiagnostics,
     private val loaderSet: CompatLoaders,
+    private val appPreferences: AppPreferences,
 ) : CompatSourceProvider {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    /** Every loaded source with its repository's 18+ mark, before the adult filter. */
+    private var loadedWithAdultFlag: List<Pair<SourceInterface, Boolean>> = emptyList()
+
+    /** Off by default: 18+ sources are not handed to the rest of the app until the reader opts in. */
+    @Volatile
+    private var showAdult = false
 
     private val _sourcesFlow = MutableStateFlow<List<SourceInterface>>(emptyList())
     override val sourcesFlow: StateFlow<List<SourceInterface>> = _sourcesFlow.asStateFlow()
@@ -91,6 +100,15 @@ class CompatSourceProviderImpl @Inject constructor(
                 reloadInternal()
             }
         }
+        // The 18+ switch in Settings: re-publish the visible sources at once, no reload needed.
+        scope.launch {
+            appPreferences.EXTENSIONS_SHOW_ADULT.flow().collect { show ->
+                reloadMutex.withLock {
+                    showAdult = show
+                    publish(loadedWithAdultFlag)
+                }
+            }
+        }
     }
 
     override suspend fun awaitLoaded() = loadedSignal.await()
@@ -113,7 +131,7 @@ class CompatSourceProviderImpl @Inject constructor(
 
     private suspend fun doReload() {
         val records = storage.records.value.filter { it.enabled }
-        val loaded = mutableListOf<SourceInterface>()
+        val loaded = mutableListOf<Pair<SourceInterface, Boolean>>()
         val infos = mutableListOf<CompatSourceInfo>()
 
         for (record in records) {
@@ -162,7 +180,7 @@ class CompatSourceProviderImpl @Inject constructor(
                 }
                 else -> {
                     val sources = result.getOrThrow()
-                    loaded += sources
+                    loaded += sources.map { it to record.nsfw }
                     infos += CompatSourceInfo(
                         record = record,
                         loadedSources = sources.size,
@@ -173,8 +191,8 @@ class CompatSourceProviderImpl @Inject constructor(
             }
         }
 
-        _sourcesFlow.value = loaded
-        _loadedSourcesFlow.value = loaded
+        loadedWithAdultFlag = loaded
+        publish(loaded)
         _infos.value = infos
         val okCount = infos.count { it.loadError == null }
         diagnostics.setReportLine(
@@ -182,6 +200,16 @@ class CompatSourceProviderImpl @Inject constructor(
             "loaded ${loaded.size} sources from ${records.size} records ($okCount ok, ${records.size - okCount} failed)",
         )
         if (!loadedSignal.isCompleted) loadedSignal.complete(Unit)
+    }
+
+    /**
+     * Discovery (catalog, search, For You) gets only the visible sources: 18+ ones are left out
+     * while [showAdult] is off. [loadedSourcesFlow] stays complete so data operations on
+     * already-saved books (export, backup, chapter reads) keep working.
+     */
+    private fun publish(all: List<Pair<SourceInterface, Boolean>>) {
+        _sourcesFlow.value = all.filter { showAdult || !it.second }.map { it.first }
+        _loadedSourcesFlow.value = all.map { it.first }
     }
 
     private fun capabilitiesOf(sources: List<SourceInterface>): Set<CompatCapability> {
