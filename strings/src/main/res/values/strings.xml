@@ -1196,6 +1196,8 @@
     <string name="reading_status_auto">Automatic</string>
     <string name="reading_status_plan">Plan to read</string>
     <string name="reading_status_on_hold">On hold</string>
+    <string name="reading_status_reading">Reading</string>
+    <string name="reading_status_completed">Completed</string>
     <string name="reading_status_dropped">Dropped</string>
     <string name="book_synopsis">Synopsis</string>
     <string name="book_action_start">Start reading</string>

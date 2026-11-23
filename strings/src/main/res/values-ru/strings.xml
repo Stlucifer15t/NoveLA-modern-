@@ -1585,6 +1585,8 @@
     <string name="reading_status_auto">Автоматически</string>
     <string name="reading_status_plan">В планах</string>
     <string name="reading_status_on_hold">Отложено</string>
+    <string name="reading_status_reading">Читаю</string>
+    <string name="reading_status_completed">Прочитано</string>
     <string name="reading_status_dropped">Брошено</string>
     <string name="book_synopsis">Описание</string>
     <string name="book_action_start">Читать</string>

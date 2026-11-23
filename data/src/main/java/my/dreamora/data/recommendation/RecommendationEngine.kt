@@ -154,11 +154,12 @@ class RecommendationEngine @Inject constructor(
         libraryBooksRepository.getBooksInLibraryWithContextFlow.first()
             .filter { it.book.inLibrary }
             .map { ctx ->
-                // An explicit choice from the reader wins, except that "completed" is never explicit.
+                // The shelf "Completed" category always means completed. Otherwise an explicit
+                // choice from the reader wins, and "" (automatic) falls back to the reading data.
                 val chosen = TrackedStatus.entries.firstOrNull { it.name == ctx.book.readingStatus }
                 val status = when {
                     ctx.book.completed -> TrackedStatus.COMPLETED
-                    chosen != null && chosen != TrackedStatus.COMPLETED && chosen != TrackedStatus.READING -> chosen
+                    chosen != null -> chosen
                     ctx.chaptersReadCount > 0 -> TrackedStatus.READING
                     else -> TrackedStatus.PLAN_TO_READ
                 }

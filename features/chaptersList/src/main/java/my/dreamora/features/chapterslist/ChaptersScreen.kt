@@ -510,8 +510,10 @@ internal fun ChaptersScreen(
     if (showStatusPicker) {
         val options = listOf(
             "" to stringResource(StringsR.string.reading_status_auto),
+            "READING" to stringResource(StringsR.string.reading_status_reading),
             "PLAN_TO_READ" to stringResource(StringsR.string.reading_status_plan),
             "ON_HOLD" to stringResource(StringsR.string.reading_status_on_hold),
+            "COMPLETED" to stringResource(StringsR.string.reading_status_completed),
             "DROPPED" to stringResource(StringsR.string.reading_status_dropped),
         )
         AlertDialog(

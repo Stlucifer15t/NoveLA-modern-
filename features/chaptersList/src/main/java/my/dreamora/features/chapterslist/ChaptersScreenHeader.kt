@@ -589,8 +589,10 @@ private fun SynopsisCard(
 @Composable
 private fun readingStatusLabel(status: String): String = stringResource(
     when (status) {
+        "READING" -> StringsR.string.reading_status_reading
         "PLAN_TO_READ" -> StringsR.string.reading_status_plan
         "ON_HOLD" -> StringsR.string.reading_status_on_hold
+        "COMPLETED" -> StringsR.string.reading_status_completed
         "DROPPED" -> StringsR.string.reading_status_dropped
         else -> StringsR.string.reading_status_auto
     }
