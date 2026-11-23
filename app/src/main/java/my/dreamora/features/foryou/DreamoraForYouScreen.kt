@@ -44,7 +44,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Extension
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material.icons.outlined.Close
-import androidx.compose.material.icons.outlined.Fullscreen
+import androidx.compose.material.icons.outlined.Star
+import androidx.compose.material.icons.automirrored.outlined.Label
+import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.outlined.Update
 import androidx.compose.material3.IconButton
 import androidx.compose.ui.graphics.Color
@@ -328,6 +330,7 @@ fun DreamoraForYouScreen(
                 onHide(book)
                 expanded = null
             },
+            onLoadMore = onLoadMore,
             onDismiss = { expanded = null },
         )
     }
@@ -899,7 +902,7 @@ private fun ForYouRailBlock(
     val palette = MaterialTheme.colorScheme
     val genre = rail.genre
     val accent = railAccent(genre)
-    val title = genre?.let { stringResource(it.labelRes) }
+    val title = genre?.let { stringResource(R.string.for_you_rail_best_in, stringResource(it.labelRes)) }
         ?: stringResource(R.string.for_you_highest_rated)
     val note = if (genre == null) {
         stringResource(R.string.for_you_highest_rated_note, totalBooks)
@@ -913,19 +916,19 @@ private fun ForYouRailBlock(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.sm),
         ) {
-            // A tinted chip rather than an icon per genre: there are no forty genre glyphs in
-            // this app, and a wrong icon reads as broken faster than a neutral one.
+            // Novery's section header: a 40 dp tinted tile with an icon, then the title and note.
             Box(
                 modifier = Modifier
-                    .size(28.dp)
-                    .clip(RoundedCornerShape(DreamoraRadius.sm))
-                    .background(accent.copy(alpha = 0.16f)),
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(accent.copy(alpha = 0.12f)),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(
-                    text = title.take(1).ifEmpty { "★" },
-                    style = DreamoraType.badge,
-                    color = accent,
+                Icon(
+                    imageVector = if (genre == null) Icons.Outlined.Star else Icons.AutoMirrored.Outlined.Label,
+                    contentDescription = null,
+                    tint = accent,
+                    modifier = Modifier.size(20.dp),
                 )
             }
             Column(modifier = Modifier.weight(1f)) {
@@ -949,7 +952,7 @@ private fun ForYouRailBlock(
                 onClick = onExpand,
                 accent = palette.surfaceVariant,
             ) {
-                Icon(Icons.Outlined.Fullscreen, null, modifier = Modifier.size(18.dp))
+                Icon(Icons.AutoMirrored.Rounded.ArrowForward, null, modifier = Modifier.size(18.dp))
             }
         }
 
@@ -983,10 +986,11 @@ private fun ForYouExpandedRail(
     state: ForYouUiState,
     onOpenBook: (BookMetadata) -> Unit,
     onHide: (ForYouBook) -> Unit,
+    onLoadMore: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     val palette = MaterialTheme.colorScheme
-    val title = rail.genre?.let { stringResource(it.labelRes) }
+    val title = rail.genre?.let { stringResource(R.string.for_you_rail_best_in, stringResource(it.labelRes)) }
         ?: stringResource(R.string.for_you_highest_rated)
     Dialog(
         onDismissRequest = onDismiss,
@@ -1055,6 +1059,27 @@ private fun ForYouExpandedRail(
                                 .animateItem(),
                         ) {
                             ForYouBookCell(book = book, onOpenBook = onOpenBook, onHide = onHide)
+                        }
+                    }
+                    // Show more asks every source for its next page, the same call the pool uses.
+                    if (state.canLoadMore) {
+                        item(key = "expanded_show_more", span = { GridItemSpan(maxLineSpan) }) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.Center,
+                            ) {
+                                Button(
+                                    onClick = onLoadMore,
+                                    enabled = !state.loadingMore,
+                                ) {
+                                    Text(
+                                        text = stringResource(
+                                            if (state.loadingMore) R.string.for_you_loading_more
+                                            else R.string.for_you_load_more
+                                        ),
+                                    )
+                                }
+                            }
                         }
                     }
                 }

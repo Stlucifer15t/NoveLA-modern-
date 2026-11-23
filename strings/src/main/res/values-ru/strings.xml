@@ -1459,6 +1459,7 @@
     <string name="for_you_rail_note">%1$d названий из этого запроса</string>
     <string name="for_you_rail_expand">Показать все «%1$s»</string>
     <string name="for_you_rail_items">%1$d названий</string>
+    <string name="for_you_rail_best_in">Лучшее в «%1$s»</string>
     <string name="settings_group_layout">Раскладка</string>
     <string name="settings_group_layout_hint">Сетка или список, и сколько колонок в каждой закладке</string>
     <string name="settings_group_stats">Статистика чтения</string>
