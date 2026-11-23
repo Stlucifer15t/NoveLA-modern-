@@ -28,12 +28,14 @@ import my.dreamora.extension_compat.js.obj
 import my.dreamora.extension_compat.js.parseEpochSeconds
 import my.dreamora.extension_compat.js.str
 import my.dreamora.extension_compat.js.stringOrNull
+import my.dreamora.network.ImageRequestHeaders
 import my.dreamora.scraper.ActiveFilters
 import my.dreamora.scraper.LuaFilter
 import my.dreamora.scraper.LuaFilterOption
 import my.dreamora.scraper.SourceInterface
 import my.dreamora.scraper.domain.BookResult
 import my.dreamora.scraper.domain.ChapterResult
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.jsoup.nodes.Document
 import timber.log.Timber
 
@@ -55,6 +57,9 @@ class MangayomiSourceAdapter(
 
     private val detailByUrl = BoundedCache<String, JsonObject>(64)
     private val titleByUrl = BoundedCache<String, String>(2048)
+
+    /** The source's `getHeaders(url)` per image host: most sources return the same headers for a host. */
+    private val imageHeadersByHost = BoundedCache<String, Map<String, String>>(32)
 
     @Volatile
     private var cachedTemplate: List<JsonObject>? = null
@@ -119,7 +124,7 @@ class MangayomiSourceAdapter(
         details(bookUrl) { it.str("name") }
 
     override suspend fun getBookCoverImageUrl(bookUrl: String): Response<String?> =
-        details(bookUrl) { detail -> detail.str("imageUrl")?.let { absoluteUrl(baseUrl, it) } }
+        details(bookUrl) { detail -> imageUrlFor(detail.str("imageUrl")).takeIf { it.isNotEmpty() } }
 
     override suspend fun getBookGenres(bookUrl: String): Response<List<String>> =
         details(bookUrl) { detail ->
@@ -139,7 +144,7 @@ class MangayomiSourceAdapter(
             ) as? JsonArray ?: return null
             pages.mapNotNull { page ->
                 val url = page.stringOrNull() ?: (page as? JsonObject)?.str("url")
-                url?.takeIf { it.isNotBlank() }?.let { absoluteUrl(baseUrl, it) }
+                url?.takeIf { it.isNotBlank() }?.let { imageUrlFor(it).takeIf { u -> u.isNotEmpty() } }
             }
         } catch (e: CancellationException) {
             throw e
@@ -181,7 +186,7 @@ class MangayomiSourceAdapter(
             BookResult(
                 title = obj.str("name")?.takeIf { it.isNotBlank() } ?: link,
                 url = absoluteUrl(baseUrl, link),
-                coverImageUrl = obj.str("imageUrl").orEmpty(),
+                coverImageUrl = imageUrlFor(obj.str("imageUrl")),
             )
         }
         val hasNext = result.bool("hasNextPage") ?: false
@@ -195,7 +200,7 @@ class MangayomiSourceAdapter(
         Response.Error(e.message ?: "$method failed", e)
     }
 
-    private suspend fun <T> details(bookUrl: String, map: (JsonObject) -> T): Response<T> = try {
+    private suspend fun <T> details(bookUrl: String, map: suspend (JsonObject) -> T): Response<T> = try {
         Response.Success(map(detailOf(bookUrl)))
     } catch (e: TimeoutCancellationException) {
         Response.Error("Book details timed out", e)
@@ -204,6 +209,37 @@ class MangayomiSourceAdapter(
     } catch (e: Exception) {
         Timber.e(e, "Mangayomi details failed [$name]")
         Response.Error(e.message ?: "Book details failed", e)
+    }
+
+    /**
+     * Absolute URL of an image the source named (cover, page), or "" when there is none.
+     * The source's own headers for the image are registered so the request carries them.
+     */
+    private suspend fun imageUrlFor(raw: String?): String {
+        val text = raw?.trim().orEmpty()
+        if (text.isEmpty()) return ""
+        val url = absoluteUrl(baseUrl, text)
+        ImageRequestHeaders.remember(url, imageHeadersFor(url))
+        return url
+    }
+
+    private suspend fun imageHeadersFor(url: String): Map<String, String> {
+        val host = url.toHttpUrlOrNull()?.host ?: return emptyMap()
+        imageHeadersByHost.get(host)?.let { return it }
+        val headers = try {
+            val declared = invoke("getHeaders", buildJsonArray { add(JsonPrimitive(url)) }) as? JsonObject
+            declared?.entries
+                ?.mapNotNull { (name, value) -> value.stringOrNull()?.let { name to it } }
+                ?.toMap()
+                ?: emptyMap()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.w(e, "Mangayomi getHeaders failed [$name]")
+            emptyMap()
+        }
+        imageHeadersByHost.put(host, headers)
+        return headers
     }
 
     private suspend fun detailOf(bookUrl: String): JsonObject {

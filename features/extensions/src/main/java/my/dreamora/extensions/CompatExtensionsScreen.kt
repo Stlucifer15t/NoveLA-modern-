@@ -680,6 +680,7 @@ private fun InstalledRow(
                             append(" · ")
                             append(record.baseUrl.removePrefix("https://").removePrefix("http://"))
                         }
+                        if (record.nsfw) append(" · 18+")
                     },
                     fontSize = 10.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,

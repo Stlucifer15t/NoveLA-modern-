@@ -54,7 +54,48 @@
     async post(url, headers, body) {
       return doRequest('POST', url, headers, body);
     }
+    async head(url, headers) {
+      return doRequest('HEAD', url, headers, undefined);
+    }
   }
+
+  // ── SharedPreferences ────────────────────────────────────────────────────
+  // Per-source preferences. A value the user has not changed falls back to the default the
+  // source declares in getSourcePreferences(), as in the Mangayomi app. Sources such as
+  // asurascans read their base URL this way, so without the default they build "undefined/...".
+  function declaredDefault(key) {
+    var instance = g.__mgInstance;
+    if (!instance || typeof instance.getSourcePreferences !== 'function') return undefined;
+    var declared = instance.getSourcePreferences() || [];
+    for (var i = 0; i < declared.length; i++) {
+      var pref = declared[i];
+      if (!pref || pref.key !== key) continue;
+      if (pref.listPreference) {
+        var list = pref.listPreference;
+        var index = list.valueIndex === undefined ? 0 : list.valueIndex;
+        return list.entryValues ? list.entryValues[index] : undefined;
+      }
+      if (pref.multiSelectListPreference) return pref.multiSelectListPreference.values;
+      var inner = pref.editTextPreference || pref.switchPreferenceCompat || pref.checkBoxPreference;
+      return inner ? inner.value : undefined;
+    }
+    return undefined;
+  }
+
+  function SharedPreferences() {}
+  SharedPreferences.prototype.get = function (key) {
+    var raw = g.__native_storage_get('pref:' + String(key));
+    if (raw !== null && raw !== undefined) return JSON.parse(raw);
+    return declaredDefault(String(key));
+  };
+  SharedPreferences.prototype.set = function (key, value) {
+    g.__native_storage_set('pref:' + String(key), value === undefined ? null : JSON.stringify(value));
+  };
+  SharedPreferences.prototype.remove = function (key) {
+    g.__native_storage_set('pref:' + String(key), null);
+  };
+  SharedPreferences.prototype.delete = SharedPreferences.prototype.remove;
+  g.SharedPreferences = SharedPreferences;
 
   // ── DOM (Document / Element over cheerio) ────────────────────────────────
   function wrapAll($, selection) {
@@ -81,6 +122,20 @@
     get nextElementSibling() { var n = this._s.next(); return n.length ? new Element(this._$, n) : null; }
     get previousElementSibling() { var p = this._s.prev(); return p.length ? new Element(this._$, p) : null; }
     attr(name) { var v = this._s.attr(name); return v === undefined ? '' : v; }
+    // Mangayomi's Element properties. Lazy-loaded images keep the real URL in a data-* attribute.
+    get getSrc() {
+      var names = ['src', 'data-src', 'data-lazy-src', 'data-original', 'data-lazy'];
+      for (var i = 0; i < names.length; i++) {
+        var v = this._s.attr(names[i]);
+        if (v) return v.trim();
+      }
+      var srcset = this._s.attr('srcset') || this._s.attr('data-srcset');
+      if (srcset) return srcset.split(',')[0].trim().split(' ')[0];
+      return '';
+    }
+    get src() { return this.getSrc; }
+    get getHref() { return this.attr('href'); }
+    get href() { return this.attr('href'); }
     hasAttr(name) { return this._s.attr(name) !== undefined; }
     selectFirst(selector) { var s = this._s.find(selector).first(); return s.length ? new Element(this._$, s) : null; }
     select(selector) { return wrapAll(this._$, this._s.find(selector)); }
@@ -217,7 +272,10 @@
     var instance = g.__mgInstance;
     if (!instance) throw new Error('Mangayomi source is not loaded');
     var fn = instance[method];
-    if (typeof fn !== 'function') throw new Error('Source does not implement ' + method + '()');
+    if (typeof fn !== 'function') {
+      if (method === 'getHeaders') return '{}';
+      throw new Error('Source does not implement ' + method + '()');
+    }
     var args = JSON.parse(argsJson);
     if (method === 'search') {
       // args = [query, page, overrides]

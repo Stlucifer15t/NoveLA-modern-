@@ -8,6 +8,8 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
 import my.dreamora.extension_compat.core.CompatEcosystem
 import my.dreamora.extension_compat.core.CompatException
 import my.dreamora.extension_compat.core.CompatExtensionLoader
@@ -75,6 +77,7 @@ class LnReaderExtensionLoader @Inject constructor(
             filters = meta.filters,
             hasSearch = meta.hasSearch,
             hasPages = meta.hasPages,
+            imageHeaders = meta.imageHeaders,
         )
         loaded.put(record.id, Loaded(key, adapter))?.let { previous ->
             closer.launch { previous.source.close() }
@@ -99,6 +102,8 @@ class LnReaderExtensionLoader @Inject constructor(
         val filters: JsonObject?,
         val hasSearch: Boolean,
         val hasPages: Boolean,
+        /** `imageRequestInit.headers` of the plugin: sent with its images (covers, pictures). */
+        val imageHeaders: Map<String, String>,
     )
 
     /** Evaluates the plugin and reads the fields the app needs. Throws on a broken plugin. */
@@ -112,6 +117,10 @@ class LnReaderExtensionLoader @Inject constructor(
             filters = obj.obj("filters"),
             hasSearch = obj.bool("hasSearch") ?: false,
             hasPages = obj.bool("hasPages") ?: false,
+            imageHeaders = obj.obj("imageHeaders")?.entries
+                ?.mapNotNull { (name, value) -> (value as? JsonPrimitive)?.contentOrNull?.let { name to it } }
+                ?.toMap()
+                ?: emptyMap(),
         )
     }
 }

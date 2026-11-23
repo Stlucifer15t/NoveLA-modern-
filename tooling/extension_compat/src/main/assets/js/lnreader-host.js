@@ -6,7 +6,7 @@
  * `@libs/isAbsoluteUrl`, `@/types/*` and npm packages (cheerio, htmlparser2, dayjs).
  * This file provides those modules and the entry points that JsPluginRuntime.kt calls:
  *
- *   __lnLoad(code)                 -> JSON {id, name, site, version, filters, hasSearch, hasPages}
+ *   __lnLoad(code)                 -> JSON {id, name, site, version, filters, hasSearch, hasPages, imageHeaders}
  *   __lnDispatch(method, argsJson) -> Promise<JSON text of the result>
  */
 (function (g) {
@@ -131,6 +131,11 @@
       filters: plugin.filters === undefined ? null : plugin.filters,
       hasSearch: typeof plugin.searchNovels === 'function',
       hasPages: typeof plugin.parsePage === 'function',
+      // Headers LNReader sends with the plugin's images (covers, chapter pictures). Sites often
+      // refuse images without the site as Referer, so the app must send these too.
+      imageHeaders: plugin.imageRequestInit && plugin.imageRequestInit.headers
+        ? plugin.imageRequestInit.headers
+        : null,
     });
   };
 

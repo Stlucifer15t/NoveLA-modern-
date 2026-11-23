@@ -11,6 +11,7 @@ import my.dreamora.extension_compat.js.asObjectOrEmpty
 import my.dreamora.extension_compat.js.int
 import my.dreamora.extension_compat.js.parseEpochSeconds
 import my.dreamora.extension_compat.js.str
+import my.dreamora.network.ImageRequestHeaders
 import my.dreamora.extension_compat.js.stringOrNull
 import my.dreamora.scraper.ActiveFilters
 import my.dreamora.scraper.LuaFilter
@@ -32,6 +33,7 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonObject
+import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import timber.log.Timber
 
@@ -48,6 +50,8 @@ class LnReaderSourceAdapter(
     filters: JsonObject?,
     private val hasSearch: Boolean,
     private val hasPages: Boolean,
+    /** The plugin's `imageRequestInit.headers`, sent with every cover it returns. */
+    private val imageHeaders: Map<String, String> = emptyMap(),
 ) : SourceInterface.FilterableCatalog {
 
     private val filterDefs: List<FilterDef> = parseFilterDefs(filters)
@@ -131,7 +135,7 @@ class LnReaderSourceAdapter(
         details(bookUrl) { it.str("name") }
 
     override suspend fun getBookCoverImageUrl(bookUrl: String): Response<String?> =
-        details(bookUrl) { novel -> novel.str("cover")?.let { absoluteUrl(baseUrl, it) } }
+        details(bookUrl) { novel -> coverUrl(novel.str("cover")).takeIf { it.isNotEmpty() } }
 
     override suspend fun getBookGenres(bookUrl: String): Response<List<String>> =
         details(bookUrl) { novel ->
@@ -143,10 +147,12 @@ class LnReaderSourceAdapter(
 
     override suspend fun getChapterText(doc: Document): String? = try {
         val path = pathFor(doc.location())
-        invoke(
+        val html = invoke(
             "parseChapter",
             buildJsonArray { add(JsonPrimitive(path)) },
         ).stringOrNull()?.takeIf { it.isNotBlank() }
+        if (html != null) rememberChapterImages(html, doc.location())
+        html
     } catch (e: CancellationException) {
         throw e
     } catch (e: Exception) {
@@ -212,7 +218,7 @@ class LnReaderSourceAdapter(
             BookResult(
                 title = obj.str("name")?.takeIf { it.isNotBlank() } ?: path,
                 url = urlFor(path),
-                coverImageUrl = obj.str("cover").orEmpty(),
+                coverImageUrl = coverUrl(obj.str("cover")),
             )
         }
     }
@@ -228,6 +234,34 @@ class LnReaderSourceAdapter(
                 uploaded = parseEpochSeconds(obj.str("releaseTime")),
             )
         }
+    }
+
+    /**
+     * Absolute cover URL, or "" when the plugin gave none. Plugins return covers relative to
+     * the site as often as absolute, and a relative URL cannot be loaded. The plugin's image
+     * headers are registered for the URL so the image request carries them.
+     */
+    /**
+     * Pictures inside a chapter body are fetched by the reader with the same headers the plugin
+     * declared for its images (usually Referer: site). Resolved against the chapter URL, as a
+     * browser would resolve them.
+     */
+    private fun rememberChapterImages(html: String, chapterUrl: String) {
+        if (imageHeaders.isEmpty()) return
+        Jsoup.parseBodyFragment(html, chapterUrl).select("img[src]").forEach { img ->
+            val src = img.attr("src").trim()
+            if (src.isNotEmpty() && !src.startsWith("data:")) {
+                ImageRequestHeaders.remember(absoluteUrl(chapterUrl, src), imageHeaders)
+            }
+        }
+    }
+
+    private fun coverUrl(raw: String?): String {
+        val text = raw?.trim().orEmpty()
+        if (text.isEmpty()) return ""
+        val url = absoluteUrl(baseUrl, text)
+        ImageRequestHeaders.remember(url, imageHeaders)
+        return url
     }
 
     private fun urlFor(path: String): String {

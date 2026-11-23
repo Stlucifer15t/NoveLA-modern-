@@ -406,6 +406,59 @@
     return out;
   }
 
+  // FormData: text fields only (plugins build login and search forms with it). It is sent
+  // as multipart/form-data, the encoding the native fetch uses for a FormData body.
+  function FormData() { this._entries = []; }
+  FormData.prototype.append = function (name, value) { this._entries.push([String(name), String(value)]); };
+  FormData.prototype.set = function (name, value) {
+    var key = String(name);
+    var out = [];
+    var placed = false;
+    for (var i = 0; i < this._entries.length; i++) {
+      if (this._entries[i][0] === key) {
+        if (!placed) out.push([key, String(value)]);
+        placed = true;
+      } else {
+        out.push(this._entries[i]);
+      }
+    }
+    if (!placed) out.push([key, String(value)]);
+    this._entries = out;
+  };
+  FormData.prototype.get = function (name) {
+    for (var i = 0; i < this._entries.length; i++) if (this._entries[i][0] === String(name)) return this._entries[i][1];
+    return null;
+  };
+  FormData.prototype.getAll = function (name) {
+    var out = [];
+    for (var i = 0; i < this._entries.length; i++) if (this._entries[i][0] === String(name)) out.push(this._entries[i][1]);
+    return out;
+  };
+  FormData.prototype.has = function (name) { return this.get(name) !== null; };
+  FormData.prototype.delete = function (name) {
+    this._entries = this._entries.filter(function (p) { return p[0] !== String(name); });
+  };
+  FormData.prototype.forEach = function (callback, thisArg) {
+    for (var i = 0; i < this._entries.length; i++) callback.call(thisArg, this._entries[i][1], this._entries[i][0], this);
+  };
+  FormData.prototype.entries = function () { return this._entries.map(function (p) { return [p[0], p[1]]; })[Symbol.iterator](); };
+  FormData.prototype.keys = function () { return this._entries.map(function (p) { return p[0]; })[Symbol.iterator](); };
+  FormData.prototype.values = function () { return this._entries.map(function (p) { return p[1]; })[Symbol.iterator](); };
+  FormData.prototype[Symbol.iterator] = FormData.prototype.entries;
+  g.FormData = FormData;
+
+  function multipartOf(form) {
+    var boundary = '----DreamoraFormBoundary' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+    var body = '';
+    for (var i = 0; i < form._entries.length; i++) {
+      var name = form._entries[i][0].replace(/"/g, '%22').replace(/\r?\n/g, ' ');
+      body += '--' + boundary + '\r\nContent-Disposition: form-data; name="' + name + '"\r\n\r\n' +
+        form._entries[i][1] + '\r\n';
+    }
+    body += '--' + boundary + '--\r\n';
+    return { body: body, contentType: 'multipart/form-data; boundary=' + boundary };
+  }
+
   g.fetch = function (input, init) {
     var url = typeof input === 'string' ? input : String(input && input.url !== undefined ? input.url : input);
     var options = init || {};
@@ -422,6 +475,10 @@
       } else if (body instanceof URLSearchParams) {
         request.body = body.toString();
         if (request.headers['Content-Type'] === undefined) request.headers['Content-Type'] = 'application/x-www-form-urlencoded;charset=UTF-8';
+      } else if (body instanceof FormData) {
+        var multipart = multipartOf(body);
+        request.body = multipart.body;
+        if (request.headers['Content-Type'] === undefined) request.headers['Content-Type'] = multipart.contentType;
       } else {
         request.body = String(body);
       }
@@ -489,5 +546,7 @@
   g.__hostRegister('htmlparser2', libs.htmlparser2);
   g.__hostRegister('domhandler', libs.domhandler);
   g.__hostRegister('dayjs', libs.dayjs);
+  // LNReader's @libs/aes: the plugins use gcm(key, iv).decrypt(bytes).
+  g.__hostRegister('@libs/aes', libs.aes);
   g.__decodeBase64 = function (base64, charset) { return g.__native_decode(base64, charset); };
 })(globalThis);

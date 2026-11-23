@@ -89,8 +89,10 @@ class CompatExtensionsViewModel @Inject constructor(
                 compareByDescending<CompatRepoEntry> { CompatRuntime.isRunnable(it.ecosystem) }
                     .thenBy { it.name.lowercase() }
             )
+        // Installed sources are always listed, 18+ ones included: the reader installed them on
+        // purpose. The 18+ switch only decides which sources the browsing screens offer.
         val visibleInstalled = runtime.records.filter { record ->
-            (showAdult || !record.nsfw) && (view.filterEcosystem == null || record.ecosystem == view.filterEcosystem)
+            view.filterEcosystem == null || record.ecosystem == view.filterEcosystem
         }
 
         val installedById = runtime.records.associateBy { it.id }
@@ -316,7 +318,7 @@ private data class CompatExtensionsLocal(
 data class CompatExtensionsState(
     val repositories: List<CompatRepository> = emptyList(),
     val installed: List<CompatInstallRecord> = emptyList(),
-    /** [installed] after the 18+ and ecosystem filters: what the list shows. */
+    /** [installed] after the ecosystem filter: what the installed list shows. 18+ sources stay listed. */
     val visibleInstalled: List<CompatInstallRecord> = emptyList(),
     val loadInfos: List<CompatSourceInfo> = emptyList(),
     val busyRepos: Set<String> = emptySet(),

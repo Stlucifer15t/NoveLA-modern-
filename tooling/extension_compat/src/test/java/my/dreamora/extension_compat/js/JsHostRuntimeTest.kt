@@ -3,9 +3,11 @@ package my.dreamora.extension_compat.js
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import my.dreamora.core.Response
 import my.dreamora.extension_compat.lnreader.LnReaderSourceAdapter
 import my.dreamora.extension_compat.mangayomi.MangayomiSourceAdapter
+import my.dreamora.network.ImageRequestHeaders
 import my.dreamora.scraper.ActiveFilters
 import my.dreamora.scraper.LuaFilter
 import org.jsoup.Jsoup
@@ -27,9 +29,11 @@ class JsHostRuntimeTest {
     /** Serves [body] for every request and records the URLs asked for. */
     private class CannedHttp(var body: String = "") : JsHttp {
         val urls = mutableListOf<String>()
+        val requests = mutableListOf<JsHttpRequest>()
 
         override suspend fun execute(request: JsHttpRequest): JsHttpResponse {
             urls += request.url
+            requests += request
             return JsHttpResponse(
                 status = 200,
                 url = request.url,
@@ -48,6 +52,7 @@ class JsHostRuntimeTest {
         class Sample {
           constructor() {
             this.id = 'sample'; this.name = 'Sample Site'; this.site = 'https://sample.test'; this.version = '1.0.0';
+            this.imageRequestInit = { headers: { Referer: this.site } };
             this.filters = {
               genre: { type: FilterTypes.Picker, label: 'Genre', value: 'all',
                        options: [{ label: 'All', value: 'all' }, { label: 'Fantasy', value: 'fantasy' }] },
@@ -65,6 +70,13 @@ class JsHostRuntimeTest {
           }
           async parseChapter(path) { return '<p>Chapter body ' + dayjs('2024-01-02').format('YYYY') + '</p>'; }
           async searchNovels(term, page) { return [{ name: 'Found ' + term, path: '/novel/9' }]; }
+          async submitForm() {
+            const form = new FormData();
+            form.append('q', 'hello world');
+            form.append('page', '2');
+            const res = await fetchApi('https://sample.test/submit', { method: 'POST', body: form });
+            return await res.text();
+          }
         }
         module.exports = { default: new Sample() };
     """.trimIndent()
@@ -73,6 +85,16 @@ class JsHostRuntimeTest {
         const mangayomiSources = [{ name: "Mg Sample", baseUrl: "https://m.test", lang: "en", isManga: false, itemType: 2, version: "1" }];
         class DefaultExtension extends MProvider {
           constructor() { super(); this.base = this.source.baseUrl; }
+          getSourcePreferences() {
+            return [{ key: "base", editTextPreference: { title: "Base", value: "https://pref.test" } }];
+          }
+          getHeaders(url) { return { Referer: this.source.baseUrl }; }
+          async prefBase() { return new SharedPreferences().get("base"); }
+          async elementLinks() {
+            const doc = new Document('<a href="/x"><img data-src="/lazy.jpg"></a>');
+            return [doc.selectFirst("a").getHref, doc.selectFirst("img").getSrc];
+          }
+          async getPageList(url) { return [{ url: "/p/1.jpg" }, "/p/2.jpg"]; }
           async getPopular(page) {
             const res = await new Client().get(this.base + "/popular?page=" + page, {});
             const doc = new Document(res.body);
@@ -108,9 +130,13 @@ class JsHostRuntimeTest {
         try {
             val meta = runtime.evaluate("__lnLoad(${jsString(lnPlugin)})", "plugin.js")
             assertNotNull(meta)
+            // The plugin's imageRequestInit.headers travel in the metadata, as the loader reads them.
+            assertTrue(meta!!.contains("\"imageHeaders\":{\"Referer\":\"https://sample.test\"}"))
             assertTrue(meta!!.contains("\"hasSearch\":true"))
             // The loader hands the plugin's own filter definitions to the adapter.
             val pluginFilters = Json.parseToJsonElement(meta!!).jsonObject["filters"]?.jsonObject
+            val imageHeaders = Json.parseToJsonElement(meta).jsonObject["imageHeaders"]?.jsonObject
+                ?.mapValues { it.value.jsonPrimitive.content } ?: emptyMap()
 
             val adapter = LnReaderSourceAdapter(
                 id = "lnreader:sample",
@@ -120,6 +146,7 @@ class JsHostRuntimeTest {
                 filters = pluginFilters,
                 hasSearch = true,
                 hasPages = false,
+                imageHeaders = imageHeaders,
             )
 
             http.body = """<div class="novel"><a href="/novel/1">First</a><img src="/c1.jpg"></div>""" +
@@ -129,6 +156,9 @@ class JsHostRuntimeTest {
             val items = (popular as Response.Success).data.list
             assertEquals(listOf("First", "Second"), items.map { it.title })
             assertEquals("https://sample.test/novel/1", items[0].url)
+            // A relative cover becomes absolute, and the plugin's image headers are registered for it.
+            assertEquals("https://sample.test/c1.jpg", items[0].coverImageUrl)
+            assertEquals(mapOf("Referer" to "https://sample.test"), ImageRequestHeaders.headersFor(items[0].coverImageUrl))
 
             val filters = adapter.getFilterList()
             assertTrue(filters is Response.Success)
@@ -180,6 +210,13 @@ class JsHostRuntimeTest {
             assertEquals(listOf("Manga One"), items.map { it.title })
             assertEquals("https://m.test/m/1", items[0].url)
             assertEquals("https://m.test/popular?page=1", http.urls.last())
+            // Covers are absolute, and the source's own getHeaders(url) is registered for them.
+            assertEquals("https://m.test/m1.jpg", items[0].coverImageUrl)
+            assertEquals(mapOf("Referer" to "https://m.test"), ImageRequestHeaders.headersFor("https://m.test/m1.jpg"))
+            // SharedPreferences falls back to the default the source declares.
+            assertEquals("\"https://pref.test\"", runtime.call("__mgDispatch", "prefBase", "[]"))
+            // Element.getHref and getSrc are properties in Mangayomi sources; lazy images use data-src.
+            assertEquals("[\"/x\",\"/lazy.jpg\"]", runtime.call("__mgDispatch", "elementLinks", "[]"))
 
             val filters = adapter.getFilterList()
             assertTrue(filters is Response.Success)
@@ -212,10 +249,67 @@ class JsHostRuntimeTest {
 
             val status = adapter.getBookStatus(detailUrl)
             assertEquals("Ongoing", (status as Response.Success).data)
+            val cover = adapter.getBookCoverImageUrl(detailUrl)
+            assertEquals("https://m.test/cover.jpg", (cover as Response.Success).data)
 
             val doc = Jsoup.parse("<html></html>", "https://m.test/ch/1")
             assertEquals("<p>Novel text for Ch1</p>", adapter.getChapterText(doc))
             assertEquals(null, adapter.getChapterPages(doc))
+
+            // Manga pages: absolute URLs, each with the source's headers registered for the image.
+            val mangaAdapter = MangayomiSourceAdapter(
+                id = "mangayomi:sample-manga",
+                name = "Mg Sample",
+                baseUrl = "https://m.test",
+                contentType = "manga",
+                runtime = runtime,
+            )
+            val pages = mangaAdapter.getChapterPages(Jsoup.parse("<html></html>", "https://m.test/ch/2"))
+            assertEquals(listOf("https://m.test/p/1.jpg", "https://m.test/p/2.jpg"), pages)
+            assertEquals(mapOf("Referer" to "https://m.test"), ImageRequestHeaders.headersFor("https://m.test/p/2.jpg"))
+        } finally {
+            runtime.close()
+        }
+    }
+
+    @Test
+    fun formDataIsSentAsMultipart() = runBlocking {
+        val http = CannedHttp(body = "ok")
+        val runtime = JsPluginRuntime.create(http, MemoryJsStorage(), scripts, scripts.lnReader, "lnreader")
+        try {
+            runtime.evaluate("__lnLoad(${jsString(lnPlugin)})", "plugin.js")
+            val result = runtime.call("__lnDispatch", "submitForm", "[]")
+            assertEquals("\"ok\"", result)
+            val sent = http.requests.single()
+            assertEquals("POST", sent.method)
+            val contentType = sent.headers["Content-Type"].orEmpty()
+            assertTrue("not multipart: $contentType", contentType.startsWith("multipart/form-data; boundary="))
+            val boundary = contentType.substringAfter("boundary=")
+            val body = sent.body.orEmpty()
+            assertTrue(body.contains("Content-Disposition: form-data; name=\"q\"\r\n\r\nhello world\r\n"))
+            assertTrue(body.endsWith("--$boundary--\r\n"))
+        } finally {
+            runtime.close()
+        }
+    }
+
+    @Test
+    fun aesGcmIsAvailableToLnReaderPlugins() = runBlocking {
+        val runtime = JsPluginRuntime.create(CannedHttp(), MemoryJsStorage(), scripts, scripts.lnReader, "lnreader")
+        try {
+            val result = runtime.evaluate(
+                """
+                (function () {
+                  var gcm = __hostRequire('@libs/aes').gcm;
+                  var key = new Uint8Array(16); for (var i = 0; i < 16; i++) key[i] = i + 1;
+                  var iv = new Uint8Array(12); for (var j = 0; j < 12; j++) iv[j] = j + 7;
+                  var sealed = gcm(key, iv).encrypt(new TextEncoder().encode('hello novel'));
+                  return new TextDecoder().decode(gcm(key, iv).decrypt(sealed));
+                })()
+                """.trimIndent(),
+                "aes.js",
+            )
+            assertEquals("hello novel", result)
         } finally {
             runtime.close()
         }

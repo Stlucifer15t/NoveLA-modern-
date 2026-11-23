@@ -1233,5 +1233,5 @@
     <string name="compat_no_matches">No sources match this filter.</string>
     <string name="compat_stored_not_runnable">Saved. This build cannot run %1$s sources yet.</string>
     <string name="settings_sources_adult_title">Show 18+ sources</string>
-    <string name="settings_sources_adult_hint">Sources marked 18+ by their repository stay hidden in the extension catalog and the installed list until this is on.</string>
+    <string name="settings_sources_adult_hint">Sources marked 18+ stay out of browsing (catalog, search and For You) until this is on. Ones you installed stay in the installed list, marked 18+.</string>
 </resources>

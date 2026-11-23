@@ -45,8 +45,8 @@ android {
 
     defaultConfig {
         applicationId = "my.dreamora"
-        versionCode = 65
-        versionName = "1.6.27"
+        versionCode = 66
+        versionName = "1.6.28"
         base.archivesName.set("Dreamora_v$versionName")
         manifestPlaceholders["appLabel"] = "Dreamora"
         ndk {
