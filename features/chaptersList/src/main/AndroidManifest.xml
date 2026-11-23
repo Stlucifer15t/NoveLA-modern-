@@ -3,7 +3,7 @@
 
 	<application>
 		<activity
-			android:name="my.noveldokusha.features.chapterslist.ChaptersActivity"
+			android:name="my.dreamora.features.chapterslist.ChaptersActivity"
 			android:configChanges="orientation|screenSize|keyboardHidden" />
 	</application>
 </manifest>

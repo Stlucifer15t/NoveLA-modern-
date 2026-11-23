@@ -1,5 +1,5 @@
 plugins {
-    alias(libs.plugins.noveldokusha.android.library)
+    alias(libs.plugins.dreamora.android.library)
     alias(libs.plugins.kotlin.serialization)
     // CompatModule (Hilt @InstallIn + @IntoSet bindings) needs the annotation
     // processor in THIS module: without it the generated factories never exist,
@@ -9,7 +9,7 @@ plugins {
 }
 
 android {
-    namespace = "my.noveldokusha.extension_compat"
+    namespace = "my.dreamora.extension_compat"
 
     packaging {
         resources {

@@ -30,7 +30,7 @@ def process_apk(path, fileName):
         print(f"Skipping APK with unexpected name format: {fileName}")
         return
     name, version, flavour = match.groups()
-    newFileName = f"NovelDokusha_v{version}_{flavour}.apk"
+    newFileName = f"Dreamora_v{version}_{flavour}.apk"
     newFileNamePath = os.path.join(path, newFileName)
 
     shutil.move(fileNamePath, newFileNamePath)

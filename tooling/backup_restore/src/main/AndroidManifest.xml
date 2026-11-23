@@ -3,7 +3,7 @@
 
 	<application>
 		<service
-			android:name="my.noveldokusha.tooling.backup_restore.RestoreDataService"
+			android:name="my.dreamora.tooling.backup_restore.RestoreDataService"
 			android:exported="false"
 			android:foregroundServiceType="dataSync"
 			/>

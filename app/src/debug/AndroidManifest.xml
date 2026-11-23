@@ -2,10 +2,10 @@
 
     <application>
         <activity
-            android:name="my.noveldokusha.ui.DebugGoToReader"
+            android:name="my.dreamora.ui.DebugGoToReader"
             android:exported="true" />
         <activity
-            android:name="my.noveldokusha.ui.DebugGoToChapters"
+            android:name="my.dreamora.ui.DebugGoToChapters"
             android:exported="true" />
     </application>
 </manifest>

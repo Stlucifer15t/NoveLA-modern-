@@ -9,13 +9,13 @@ database, networking, translation, plugins, reader engine) is untouched.
 
 **There is no Navigation Compose graph.** Navigation is Intent-based, one Activity
 per screen. Arguments travel as Intent extras whose key is the property name
-(`core/src/main/java/my/noveldokusha/core/utils/IntentExtraDelegates.kt`).
+(`core/src/main/java/my/dreamora/core/utils/IntentExtraDelegates.kt`).
 
-- `navigation/src/main/java/my/noveldokusha/navigation/Navigation.kt` — `NavigationRoutes`
+- `navigation/src/main/java/my/dreamora/navigation/Navigation.kt` — `NavigationRoutes`
   interface, 11 `fun` returning `Intent`, plus `NavigationRouteViewModel`.
-- `app/src/main/java/my/noveldokusha/AppNavigationRoutes.kt` — the only implementation.
+- `app/src/main/java/my/dreamora/AppNavigationRoutes.kt` — the only implementation.
 
-**App shell:** `app/src/main/java/my/noveldokusha/features/main/MainActivity.kt`.
+**App shell:** `app/src/main/java/my/dreamora/features/main/MainActivity.kt`.
 Four tabs (Library, Finder, History, Settings) are **all kept in composition at once**
 and switched by animating `graphicsLayer { alpha }` + `zIndex`, with a
 `pointerInput` blocker on inactive layers. `activePageIndex` is `rememberSaveable`.
@@ -32,8 +32,8 @@ Two structural facts that constrain the redesign:
    directly by UI code. They are not UI models; do not rename them.
 
 Note: databaseExplorer sources live on disk under a misspelled directory
-(`features/databaseExplorer/src/main/java/my/noveldoksuha/`) while the package is
-`my.noveldokusha.databaseexplorer`. Cosmetic; left alone.
+(`features/databaseExplorer/src/main/java/my/dreamora/`) while the package is
+`my.dreamora.databaseexplorer`. Cosmetic; left alone.
 
 ---
 
@@ -127,11 +127,11 @@ redesign changed how things look, not what they do.
 
 Presentation only — no business logic:
 
-- `coreui/src/main/java/my/noveldokusha/coreui/theme/**` (tokens, typography, colors)
-- `coreui/src/main/java/my/noveldokusha/coreui/components/**`
+- `coreui/src/main/java/my/dreamora/coreui/theme/**` (tokens, typography, colors)
+- `coreui/src/main/java/my/dreamora/coreui/components/**`
 - `features/*/src/main/java/**/ui/**`
 - Screen composables listed in the inventory above
-- `app/src/main/java/my/noveldokusha/features/main/MainActivity.kt` (shell only)
+- `app/src/main/java/my/dreamora/features/main/MainActivity.kt` (shell only)
 
 ## 5. Files that must NOT be touched
 

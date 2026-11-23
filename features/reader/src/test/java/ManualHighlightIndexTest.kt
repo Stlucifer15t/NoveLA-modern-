@@ -1,8 +1,8 @@
-import my.noveldokusha.features.reader.domain.ReaderItem
-import my.noveldokusha.features.reader.domain.ImgEntry
-import my.noveldokusha.features.reader.domain.firstHighlightItemIndexAtOrAfter
-import my.noveldokusha.features.reader.domain.nextHighlightItemIndex
-import my.noveldokusha.features.reader.domain.previousHighlightItemIndex
+import my.dreamora.features.reader.domain.ReaderItem
+import my.dreamora.features.reader.domain.ImgEntry
+import my.dreamora.features.reader.domain.firstHighlightItemIndexAtOrAfter
+import my.dreamora.features.reader.domain.nextHighlightItemIndex
+import my.dreamora.features.reader.domain.previousHighlightItemIndex
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test

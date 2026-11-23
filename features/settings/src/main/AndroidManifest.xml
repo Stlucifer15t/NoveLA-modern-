@@ -3,13 +3,13 @@
 
 	<application>
 		<activity
-			android:name="my.noveldokusha.settings.RegexRulesActivity"
+			android:name="my.dreamora.settings.RegexRulesActivity"
 			android:exported="false" />
 		<activity
-			android:name="my.noveldokusha.settings.SettingsGroupActivity"
+			android:name="my.dreamora.settings.SettingsGroupActivity"
 			android:exported="false" />
 		<activity
-			android:name="my.noveldokusha.settings.NovelaOnboardingActivity"
+			android:name="my.dreamora.settings.NovelaOnboardingActivity"
 			android:exported="false" />
 	</application>
 

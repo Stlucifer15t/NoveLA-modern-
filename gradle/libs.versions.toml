@@ -208,9 +208,9 @@ kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref =
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 
-noveldokusha-android-application = { id = "noveldokusha.android.application", version = "unspecified" }
-noveldokusha-android-library = { id = "noveldokusha.android.library", version = "unspecified" }
-noveldokusha-android-library-nohilt = { id = "noveldokusha.android.library.nohilt", version = "unspecified" }
-noveldokusha-android-compose = { id = "noveldokusha.android.compose", version = "unspecified" }
+dreamora-android-application = { id = "dreamora.android.application", version = "unspecified" }
+dreamora-android-library = { id = "dreamora.android.library", version = "unspecified" }
+dreamora-android-library-nohilt = { id = "dreamora.android.library.nohilt", version = "unspecified" }
+dreamora-android-compose = { id = "dreamora.android.compose", version = "unspecified" }
 
 [bundles]

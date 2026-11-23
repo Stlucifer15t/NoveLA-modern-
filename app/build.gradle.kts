@@ -1,8 +1,8 @@
 import java.util.Properties
 
 plugins {
-    alias(libs.plugins.noveldokusha.android.application)
-    alias(libs.plugins.noveldokusha.android.compose)
+    alias(libs.plugins.dreamora.android.application)
+    alias(libs.plugins.dreamora.android.compose)
     alias(libs.plugins.kotlin.parcelize)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.hilt)
@@ -44,7 +44,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "my.novela"
+        applicationId = "my.dreamora"
         versionCode = 44
         versionName = "1.6.6"
         base.archivesName.set("Dreamora_v$versionName")
@@ -110,7 +110,7 @@ android {
         viewBinding = true
         buildConfig = true
     }
-    namespace = "my.noveldokusha"
+    namespace = "my.dreamora"
 }
 
 dependencies {

@@ -72,7 +72,7 @@
 		</provider>
 
 		<service
-			android:name="my.noveldokusha.data.DownloadForegroundService"
+			android:name="my.dreamora.data.DownloadForegroundService"
 			android:exported="false"
 			android:foregroundServiceType="dataSync">
 		</service>
@@ -87,20 +87,20 @@
 		</service>
 
 		<receiver
-			android:name="my.noveldokusha.data.DownloadNotificationReceiver"
+			android:name="my.dreamora.data.DownloadNotificationReceiver"
 			android:exported="false">
 			<intent-filter>
-				<action android:name="my.noveldokusha.action.DOWNLOAD_PAUSE" />
-				<action android:name="my.noveldokusha.action.DOWNLOAD_RESUME" />
-				<action android:name="my.noveldokusha.action.DOWNLOAD_CANCEL" />
+				<action android:name="my.dreamora.action.DOWNLOAD_PAUSE" />
+				<action android:name="my.dreamora.action.DOWNLOAD_RESUME" />
+				<action android:name="my.dreamora.action.DOWNLOAD_CANCEL" />
 			</intent-filter>
 		</receiver>
 
 		<receiver
-			android:name="my.noveldokusha.tooling.application_workers.BookExportNotificationReceiver"
+			android:name="my.dreamora.tooling.application_workers.BookExportNotificationReceiver"
 			android:exported="false">
 			<intent-filter>
-				<action android:name="my.noveldokusha.action.CANCEL_BOOK_EXPORT" />
+				<action android:name="my.dreamora.action.CANCEL_BOOK_EXPORT" />
 			</intent-filter>
 		</receiver>
 

@@ -1,7 +1,7 @@
-import my.noveldokusha.features.reader.domain.ReaderItem
-import my.noveldokusha.features.reader.domain.indexOfReaderItemBinarySearch
-import my.noveldokusha.features.reader.domain.indexOfReaderItemLinearSearch
-import my.noveldokusha.features.reader.domain.ImgEntry
+import my.dreamora.features.reader.domain.ReaderItem
+import my.dreamora.features.reader.domain.indexOfReaderItemBinarySearch
+import my.dreamora.features.reader.domain.indexOfReaderItemLinearSearch
+import my.dreamora.features.reader.domain.ImgEntry
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

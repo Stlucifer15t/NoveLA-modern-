@@ -1,10 +1,10 @@
 plugins {
-    alias(libs.plugins.noveldokusha.android.library)
+    alias(libs.plugins.dreamora.android.library)
     alias(libs.plugins.kotlin.parcelize)
 }
 
 android {
-    namespace = "my.noveldokusha.tooling.local_database"
+    namespace = "my.dreamora.tooling.local_database"
 
     testOptions {
         unitTests {

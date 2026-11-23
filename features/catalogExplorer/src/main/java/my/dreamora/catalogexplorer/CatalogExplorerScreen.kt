@@ -1,0 +1,470 @@
+package my.dreamora.catalogexplorer
+
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.Alignment
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.AltRoute
+import androidx.compose.material.icons.automirrored.outlined.AltRoute
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AddLink
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.Explore
+import androidx.compose.material.icons.outlined.Extension
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import my.dreamora.strings.R
+import my.dreamora.strings.R as StringsR
+import androidx.compose.ui.zIndex
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import my.dreamora.coreui.components.ChipOption
+import my.dreamora.coreui.components.NovelaScreenHeader
+import my.dreamora.coreui.theme.NovelaMotion
+import my.dreamora.coreui.theme.NovelaRadius
+import my.dreamora.coreui.theme.NovelaSpacing
+import my.dreamora.coreui.components.LanguageFilterChips
+import my.dreamora.navigation.NavigationRouteViewModel
+import my.dreamora.coreui.components.AddByUrlDialog
+import my.dreamora.extensions.ExtensionsScreen
+import my.dreamora.extensions.ExtensionsManagerViewModel
+import my.dreamora.extensions.ExtensionsScreenEvent
+import my.dreamora.extensions.PluginTranslationSettingsDialog
+import my.dreamora.tooling.novel_migration.ui.MigrationTabContent
+import androidx.compose.material3.FilterChip
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CatalogExplorerScreen(
+    navigationRouteViewModel: NavigationRouteViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+) {
+    val viewModel: CatalogExplorerViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val availableLanguages by viewModel.availableLanguages.collectAsStateWithLifecycle()
+
+    val extensionsViewModel = hiltViewModel<ExtensionsManagerViewModel>()
+    val extensionsState by extensionsViewModel.state.collectAsStateWithLifecycle()
+    val pluginEnabledMap by extensionsViewModel.pluginEnabledMap.collectAsStateWithLifecycle()
+
+// Map of catalog.id → extensionId for installed plugins: a Lua source's catalog
+// carries metadata.id = extension.id or "lua_${extension.id}".
+    val translationSettingsExtensionIds = remember(extensionsState.extensions) {
+        extensionsState.extensions
+            .filter { it.installed }
+            .flatMap { ext -> listOf(ext.id to ext.id, "lua_${ext.id}" to ext.id) }
+            .toMap()
+    }
+
+    val context = LocalContext.current
+    var extensionsChipsVisible by rememberSaveable { mutableStateOf(false) }
+
+    val importLuaLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        context.contentResolver.openInputStream(uri)?.use { input ->
+            val code = input.bufferedReader().readText()
+            val fileName = uri.lastPathSegment?.substringAfterLast('/') ?: "local.lua"
+            extensionsViewModel.importLuaFromText(fileName, code)
+        }
+    }
+
+// Stable lambda: it only forwards the event to the VM, without capturing
+// recomposing state, which keeps CatalogList skippable (P2).
+    val onTranslationSettingsClick: (String) -> Unit = remember {
+        { extensionId: String ->
+            extensionsViewModel.onEvent(ExtensionsScreenEvent.OnExtensionConfigure(extensionId))
+        }
+    }
+
+    val onDatabaseClick = remember(context) {
+        { database: my.dreamora.scraper.DatabaseInterface ->
+            navigationRouteViewModel.databaseSearch(
+                context,
+                databaseBaseUrl = database.baseUrl
+            ).let(context::startActivity)
+        }
+    }
+
+    val onSourceClick = remember(context) {
+        { source: my.dreamora.scraper.SourceInterface ->
+            navigationRouteViewModel.sourceCatalog(
+                context,
+                sourceBaseUrl = source.baseUrl
+            ).let(context::startActivity)
+        }
+    }
+
+    val onGlobalSearchClick = remember(context) {
+        {
+            navigationRouteViewModel.globalSearch(
+                context,
+                text = ""
+            ).let(context::startActivity)
+        }
+    }
+
+    val onMigrationSourceClick = remember(context) {
+        { source: my.dreamora.scraper.SourceInterface.Catalog ->
+            navigationRouteViewModel.massMigration(
+                context,
+                sourceBaseUrl = source.baseUrl
+            ).let(context::startActivity)
+        }
+    }
+
+    val onUnknownSourceClick = remember(context) {
+        {
+            navigationRouteViewModel.massMigration(
+                context,
+                sourceBaseUrl = null
+            ).let(context::startActivity)
+        }
+    }
+
+    Scaffold(
+        topBar = {
+            Column {
+                NovelaScreenHeader(
+                    title = stringResource(R.string.title_finder),
+                    subtitle = stringResource(R.string.title_browse),
+                    actions = {
+                        // Show different actions based on selected tab
+                        when (uiState.selectedTabIndex) {
+                            0 -> BrowseTabActions(
+                                onAddByUrlClick = { viewModel.setShowAddByUrlDialog(true) },
+                                onGlobalSearchClick = onGlobalSearchClick,
+                                onToggleLanguageChips = viewModel::toggleLanguageChips,
+                            )
+                            1 -> ExtensionsTabActions(
+                                onRefresh = { extensionsViewModel.onEvent(ExtensionsScreenEvent.OnRefresh) },
+                                onShowRepositoryDialog = { extensionsViewModel.onEvent(ExtensionsScreenEvent.OnShowRepositoryDialog) },
+                                onToggleLanguageChips = { extensionsChipsVisible = !extensionsChipsVisible },
+                                onImportLua = { importLuaLauncher.launch(arrayOf("text/*", "application/octet-stream", "application/x-lua")) },
+                            )
+                            2 -> MigrationTabActions(
+                                onHistoryClick = {
+                                    navigationRouteViewModel.migrationHistory(context).let(context::startActivity)
+                                },
+                                onGlobalSearchClick = onGlobalSearchClick,
+                            )
+                        }
+                    }
+                )
+
+                // Tab row with icons — segmented pill control
+                val selectedColor = MaterialTheme.colorScheme.onPrimary
+                val unselectedColor = MaterialTheme.colorScheme.onSurfaceVariant
+                val tabTitles = listOf(
+                    R.string.title_browse to Icons.Outlined.Explore,
+                    R.string.title_extensions to Icons.Outlined.Extension,
+                    R.string.migration_tab to Icons.AutoMirrored.Outlined.AltRoute,
+                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = NovelaSpacing.screenH, vertical = NovelaSpacing.xs)
+                        .clip(NovelaRadius.chipShape)
+                        .background(MaterialTheme.colorScheme.surfaceContainer)
+                        .padding(NovelaSpacing.xxs),
+                    horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.xxs),
+                ) {
+                    tabTitles.forEachIndexed { index, (titleRes, icon) ->
+                        val isSelected = uiState.selectedTabIndex == index
+                        val bg by animateColorAsState(
+                            targetValue = if (isSelected) MaterialTheme.colorScheme.primary
+                            else Color.Transparent,
+                            animationSpec = tween(NovelaMotion.STANDARD, easing = NovelaMotion.StandardEasing),
+                            label = "tabBg$index",
+                        )
+                        Row(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(40.dp)
+                                .clip(NovelaRadius.chipShape)
+                                .background(bg)
+                                .clickable { viewModel.setTabIndex(index) }
+                                .padding(horizontal = NovelaSpacing.sm),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center,
+                        ) {
+                            Icon(
+                                icon, null, Modifier.size(17.dp),
+                                tint = if (isSelected) selectedColor else unselectedColor
+                            )
+                            Spacer(Modifier.width(NovelaSpacing.xs))
+                            Text(
+                                stringResource(titleRes),
+                                modifier = Modifier.weight(1f, fill = false),
+                                color = if (isSelected) selectedColor else unselectedColor,
+                                style = MaterialTheme.typography.labelLarge,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                    }
+                }
+
+                // Language filter chips row
+                if (uiState.selectedTabIndex == 0) {
+                    Column {
+                        LanguageFilterChips(
+                            selected = uiState.selectedLanguages,
+                            all = availableLanguages.map { ChipOption(id = it.code, label = it.name) },
+                            onToggle = viewModel::toggleSourceLanguage,
+                            onClearAll = viewModel::clearLanguageFilter,
+                            visible = uiState.showLanguageChips,
+                        )
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                        ) {
+                            val contentTypeOptions = listOf(
+                                "" to stringResource(StringsR.string.all_categories),
+                                "manga" to stringResource(StringsR.string.content_type_manga),
+                                "novel" to stringResource(StringsR.string.content_type_novel),
+                                "video" to stringResource(StringsR.string.content_type_video),
+                            )
+                            contentTypeOptions.forEach { (value, label) ->
+                                FilterChip(
+                                    selected = uiState.selectedContentType == value,
+                                    onClick = { viewModel.toggleContentType(value) },
+                                    label = { Text(label) },
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    LanguageFilterChips(
+                        selected = extensionsState.selectedLanguages,
+                        all = extensionsState.availableLanguages.map { ChipOption(id = it.code, label = it.name, count = it.count) },
+                        onToggle = { code -> extensionsViewModel.onEvent(ExtensionsScreenEvent.OnLanguageFilterToggle(code)) },
+                        onClearAll = { extensionsViewModel.onEvent(ExtensionsScreenEvent.OnLanguageFilterClear(null)) },
+                        visible = extensionsChipsVisible,
+                    )
+                }
+            }
+        },
+        content = { innerPadding ->
+            when (uiState.selectedTabIndex) {
+                0 -> {
+                    // Browse tab content
+                    val filteredSources = remember(uiState.sourcesList, uiState.selectedLanguages, uiState.selectedContentType) {
+                        uiState.sourcesList.filter { item ->
+// languageTag == null means the source language is unknown (a Legado
+// bookSource has no language field). Do not hide such a source:
+// a language filter must not turn into "the source disappeared".
+                            val langOk = uiState.selectedLanguages.isEmpty() ||
+                                item.catalog.isLocalSource ||
+                                item.catalog.languageTag == null ||
+                                item.catalog.languageTag in uiState.selectedLanguages
+                            val typeOk = uiState.selectedContentType.isEmpty() || item.catalog.contentType == uiState.selectedContentType || (uiState.selectedContentType == "novel" && item.catalog.contentType.isEmpty())
+                            langOk && typeOk
+                        }
+                    }
+                    CatalogList(
+                        innerPadding = innerPadding,
+                        databasesList = uiState.databaseList,
+                        sourcesList = filteredSources,
+                        onDatabaseClick = onDatabaseClick,
+                        onSourceClick = onSourceClick,
+                        onSourceSetPinned = viewModel::onSourceSetPinned,
+                        translationSettingsExtensionIds = translationSettingsExtensionIds,
+                        onTranslationSettingsClick = onTranslationSettingsClick,
+                        pluginEnabledMap = pluginEnabledMap,
+                    )
+                }
+                1 -> {
+                    // Extensions tab content
+                    ExtensionsScreen(
+                        innerPadding = innerPadding,
+                        onBackPressed = null,
+                        showExtensionsLanguageFilter = false,
+                        onExtensionsLanguageFilterDismiss = { },
+                        onRefresh = {
+                            // Extensions screen handles its own refresh
+                        },
+                        onImportLua = { importLuaLauncher.launch(arrayOf("text/*", "application/octet-stream", "application/x-lua")) }
+                    )
+                }
+                2 -> {
+                    // Migration tab content
+                    MigrationTabContent(
+                        innerPadding = innerPadding,
+                        onSourceClick = onMigrationSourceClick,
+                        onUnknownSourceClick = onUnknownSourceClick,
+                        onHistoryClick = {
+                            navigationRouteViewModel.migrationHistory(context).let(context::startActivity)
+                        },
+                        onGlobalSearchClick = onGlobalSearchClick,
+                    )
+                }
+            }
+        }
+    )
+
+// Plugin translation settings dialog — rendered at screen level, outside tabs.
+    extensionsState.translationSettingsExtensionId?.let { extensionId ->
+        PluginTranslationSettingsDialog(
+            extensionId = extensionId,
+            viewModel = extensionsViewModel,
+            onDismiss = { extensionsViewModel.onEvent(ExtensionsScreenEvent.OnTranslationSettingsDismiss) },
+        )
+    }
+
+    // Add by URL dialog
+    if (uiState.showAddByUrlDialog) {
+        AddByUrlDialog(
+            onDismiss = { viewModel.setShowAddByUrlDialog(false) },
+            onConfirm = { urls ->
+                viewModel.addNovelsByUrls(urls)
+                viewModel.setShowAddByUrlDialog(false)
+            },
+            isUrlSupported = viewModel.scraperRepository.scraper::isUrlSupported
+        )
+    }
+}
+
+@Composable
+private fun BrowseTabActions(
+    onAddByUrlClick: () -> Unit,
+    onGlobalSearchClick: () -> Unit,
+    onToggleLanguageChips: () -> Unit,
+) {
+    Row {
+        IconButton(onClick = onAddByUrlClick) {
+            Icon(
+                Icons.Filled.AddLink,
+                contentDescription = stringResource(R.string.add_by_url)
+            )
+        }
+        IconButton(onClick = onGlobalSearchClick) {
+            Icon(
+                imageVector = Icons.Filled.Search,
+                contentDescription = stringResource(R.string.search)
+            )
+        }
+
+        // Language filter toggle button
+        IconButton(onClick = onToggleLanguageChips) {
+            Icon(
+                painter = painterResource(id = my.dreamora.coreui.R.drawable.ic_baseline_languages_24),
+                contentDescription = stringResource(R.string.languages),
+                modifier = Modifier.size(24.dp),
+                tint = MaterialTheme.colorScheme.onSurface
+            )
+        }
+    }
+}
+
+@Composable
+private fun MigrationTabActions(
+    onHistoryClick: () -> Unit,
+    onGlobalSearchClick: () -> Unit,
+) {
+    Row {
+        IconButton(onClick = onHistoryClick) {
+            Icon(
+                imageVector = Icons.Default.History,
+                contentDescription = stringResource(R.string.migration_history),
+                tint = MaterialTheme.colorScheme.onSurface
+            )
+        }
+        IconButton(onClick = onGlobalSearchClick) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.AltRoute,
+                contentDescription = stringResource(R.string.search),
+                tint = MaterialTheme.colorScheme.onSurface
+            )
+        }
+    }
+}
+
+@Composable
+    private fun ExtensionsTabActions(
+        onRefresh: () -> Unit,
+        onShowRepositoryDialog: () -> Unit,
+        onToggleLanguageChips: () -> Unit,
+        onImportLua: () -> Unit,
+    ) {
+        Row {
+            // Import local Lua source
+            IconButton(onClick = onImportLua) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = stringResource(R.string.import_lua),
+                    tint = MaterialTheme.colorScheme.onSurface
+                )
+            }
+
+            // Refresh button
+            IconButton(onClick = onRefresh) {
+                Icon(
+                    imageVector = Icons.Default.Refresh,
+                    contentDescription = stringResource(R.string.refresh),
+                    tint = MaterialTheme.colorScheme.onSurface
+                )
+            }
+
+            // Repository settings button
+            IconButton(onClick = onShowRepositoryDialog) {
+                Icon(
+                    imageVector = Icons.Default.Settings,
+                    contentDescription = stringResource(R.string.repository_settings),
+                    tint = MaterialTheme.colorScheme.onSurface
+                )
+            }
+
+            // Language filter toggle button
+            IconButton(onClick = onToggleLanguageChips) {
+                Icon(
+                    painter = painterResource(id = my.dreamora.coreui.R.drawable.ic_baseline_languages_24),
+                    contentDescription = stringResource(R.string.languages),
+                    modifier = Modifier.size(24.dp),
+                    tint = MaterialTheme.colorScheme.onSurface
+                )
+            }
+        }
+}

@@ -1,0 +1,8 @@
+package my.dreamora.core
+
+interface AppInternalState {
+    val isDebugMode: Boolean
+    val versionCode: Int
+    val versionName: String
+    val gitCommitHash: String
+}

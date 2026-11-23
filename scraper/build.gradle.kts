@@ -1,6 +1,6 @@
 plugins {
-    alias(libs.plugins.noveldokusha.android.library)
-    alias(libs.plugins.noveldokusha.android.compose)
+    alias(libs.plugins.dreamora.android.library)
+    alias(libs.plugins.dreamora.android.compose)
     alias(libs.plugins.kotlin.parcelize)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.hilt)
@@ -8,7 +8,7 @@ plugins {
 }
 
 android {
-    namespace = "my.noveldokusha.scraper"
+    namespace = "my.dreamora.scraper"
 }
 
 dependencies {

@@ -92,8 +92,8 @@ jobs:
         run: |
           set -o pipefail
           ./gradlew :scraper:testDebugUnitTest \
-            --tests 'my.noveldokusha.scraper.LuaSourceAdapterReviewsTest' \
-            --tests 'my.noveldokusha.scraper.LuaSourceAdapterBookStatusTest' \
+            --tests 'my.dreamora.scraper.LuaSourceAdapterReviewsTest' \
+            --tests 'my.dreamora.scraper.LuaSourceAdapterBookStatusTest' \
             --stacktrace --console=plain 2>&1 | tee -a "$RUNNER_TEMP/build-output.log"
 
       - name: Assemble debug APK

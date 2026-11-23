@@ -1,12 +1,12 @@
 plugins {
-    alias(libs.plugins.noveldokusha.android.library)
-    alias(libs.plugins.noveldokusha.android.compose)
+    alias(libs.plugins.dreamora.android.library)
+    alias(libs.plugins.dreamora.android.compose)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
 }
 
 android {
-    namespace = "my.noveldokusha.tooling.local_source"
+    namespace = "my.dreamora.tooling.local_source"
 }
 
 dependencies {
