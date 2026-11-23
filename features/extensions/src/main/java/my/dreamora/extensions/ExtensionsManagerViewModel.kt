@@ -198,11 +198,14 @@ loadCachedExtensions()        // sets cachedAvailableExtensions + lastFetchTime
 // Persist to the cache so the next start loads instantly
                 saveCachedExtensions(allExt)
 
-                val langList = allExt.groupBy { it.language }
-                    .map { (code, list) ->
-                        ExtensionLanguage(code, getLanguageDisplayName(code), list.size)
-                    }
-                    .sortedBy { it.name }
+                val langList = allExt.flatMap { ext ->
+                    ext.language.split(",").map { it.trim() }.filter { it.isNotEmpty() }.map { code -> code to ext }
+                }
+                .groupBy { it.first }
+                .map { (code, list) ->
+                    ExtensionLanguage(code, getLanguageDisplayName(code), list.size)
+                }
+                .sortedBy { it.name }
 
                 _state.update {
                     it.copy(
@@ -262,11 +265,14 @@ loadCachedExtensions()        // sets cachedAvailableExtensions + lastFetchTime
                     contentType = cached.contentType
                 )
             }
-            val langs = list.groupBy { it.language }
-                .map { (code, group) ->
-                    ExtensionLanguage(code, getLanguageDisplayName(code), group.size)
-                }
-                .sortedBy { it.name }
+            val langs = list.flatMap { ext ->
+                ext.language.split(",").map { it.trim() }.filter { it.isNotEmpty() }.map { code -> code to ext }
+            }
+            .groupBy { it.first }
+            .map { (code, group) ->
+                ExtensionLanguage(code, getLanguageDisplayName(code), group.size)
+            }
+            .sortedBy { it.name }
             list to langs
         } ?: return
 
@@ -399,6 +405,23 @@ version  = extInfo.remoteVersion, // use the new version!
         return regex.find(code)?.groupValues?.getOrNull(1)?.trim().orEmpty().ifBlank { fallback }
     }
 
+    /** Reads `key` as either a quoted string ("en,es") or a Lua table ({"en","es"}).
+     * Returns comma-separated codes (e.g. "en,es"). */
+    private fun luaLanguages(code: String, key: String, fallback: String = "en"): String {
+        // Try Lua table format: key = {"en", "es"}
+        val tableRegex = Regex("""(?m)^\s*$key\s*=\s*\{\s*["']([^"']+)["']""")
+        val first = tableRegex.find(code)?.groupValues?.getOrNull(1)?.trim()
+        if (first.isNotBlank()) {
+            // Collect all quoted strings in the table
+            val all = Regex("""["']([^"']+)["']""").findAll(code.substringAfter(tableRegex.find(code)!!.value))
+                .map { it.groupValues[1] }
+                .filter { it.isNotBlank() }
+            if (all.isNotEmpty()) return all.joinToString(",")
+        }
+        // Fall back to quoted string format: key = "en,es"
+        return luaField(code, key, fallback)
+    }
+
     private suspend fun settingsMap(extensionId: String): Map<String, Any>? {
         val raw = extensionManager.getExtensionSettings(extensionId) ?: return null
         if (raw.isBlank() || raw == "{}") return null
@@ -472,7 +495,7 @@ version  = extInfo.remoteVersion, // use the new version!
 
             val name = luaField(finalCode, "name", baseId)
             val version = luaField(finalCode, "version", "1.0.0")
-            val language = luaField(finalCode, "language", "en")
+            val language = luaLanguages(finalCode, "language", "en")
             val icon = luaField(finalCode, "icon")
             val contentType = luaField(finalCode, "content_type", "novel")
 

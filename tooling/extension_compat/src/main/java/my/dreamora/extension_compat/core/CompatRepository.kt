@@ -75,7 +75,7 @@ data class CompatRepoEntry(
     val ecosystem: CompatEcosystem,
     val version: String = "",
     val versionCode: Long = 0,
-    /** ISO 639-1, or "" when the repository does not declare a language. */
+    /** ISO 639-1 codes, comma-separated (e.g. "en,es,fr"). Single value when only one language. */
     val language: String = "",
     /** Source home URL — Dreamora matches book URLs against it. */
     val baseUrl: String = "",
