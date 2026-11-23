@@ -14,7 +14,11 @@ import my.dreamora.feature.local_database.DAOs.ChapterTranslationDao
 import my.dreamora.feature.local_database.DAOs.DownloadedPageChaptersDao
 import my.dreamora.feature.local_database.DAOs.DownloadTaskDao
 import my.dreamora.feature.local_database.DAOs.LibraryDao
+import my.dreamora.feature.local_database.DAOs.AuthorPreferenceDao
+import my.dreamora.feature.local_database.DAOs.NetworkBudgetDao
 import my.dreamora.feature.local_database.DAOs.NovelMigrationDao
+import my.dreamora.feature.local_database.DAOs.RecommendationDao
+import my.dreamora.feature.local_database.DAOs.UserFilterDao
 import my.dreamora.feature.local_database.DAOs.ReadingHistoryDao
 import javax.inject.Singleton
 
@@ -73,6 +77,22 @@ abstract class LocalDatabaseModule {
         @Provides
         @Singleton
         fun provideReadingHistoryDao(database: AppDatabase): ReadingHistoryDao = database.readingHistoryDao()
+
+        @Provides
+        @Singleton
+        fun provideAuthorPreferenceDao(database: AppDatabase): AuthorPreferenceDao = database.authorPreferenceDao()
+
+        @Provides
+        @Singleton
+        fun provideRecommendationDao(database: AppDatabase): RecommendationDao = database.recommendationDao()
+
+        @Provides
+        @Singleton
+        fun provideUserFilterDao(database: AppDatabase): UserFilterDao = database.userFilterDao()
+
+        @Provides
+        @Singleton
+        fun provideNetworkBudgetDao(database: AppDatabase): NetworkBudgetDao = database.networkBudgetDao()
 
     }
 }

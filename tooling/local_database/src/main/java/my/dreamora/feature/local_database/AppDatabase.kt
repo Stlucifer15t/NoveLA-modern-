@@ -1,6 +1,7 @@
 package my.dreamora.feature.local_database
 
 import android.content.Context
+import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -15,21 +16,33 @@ import my.dreamora.feature.local_database.DAOs.ChapterPagesDao
 import my.dreamora.feature.local_database.DAOs.ChapterTranslationDao
 import my.dreamora.feature.local_database.DAOs.DownloadTaskDao
 import my.dreamora.feature.local_database.DAOs.DownloadedPageChaptersDao
+import my.dreamora.feature.local_database.DAOs.AuthorPreferenceDao
 import my.dreamora.feature.local_database.DAOs.ExtensionDao
 import my.dreamora.feature.local_database.DAOs.LibraryDao
+import my.dreamora.feature.local_database.DAOs.NetworkBudgetDao
 import my.dreamora.feature.local_database.DAOs.NovelMigrationDao
+import my.dreamora.feature.local_database.DAOs.RecommendationDao
+import my.dreamora.feature.local_database.DAOs.UserFilterDao
 import my.dreamora.feature.local_database.DAOs.ReadingHistoryDao
+import my.dreamora.feature.local_database.tables.AuthorPreferenceEntity
 import my.dreamora.feature.local_database.tables.Book
 import my.dreamora.feature.local_database.tables.BookTranslation
 import my.dreamora.feature.local_database.tables.Chapter
 import my.dreamora.feature.local_database.tables.ChapterBody
 import my.dreamora.feature.local_database.tables.ChapterPages
 import my.dreamora.feature.local_database.tables.ChapterTranslation
+import my.dreamora.feature.local_database.tables.BlockedAuthorEntity
+import my.dreamora.feature.local_database.tables.DiscoveredNovelEntity
+import my.dreamora.feature.local_database.tables.DiscoveryChainEntity
 import my.dreamora.feature.local_database.tables.DownloadTaskEntity
 import my.dreamora.feature.local_database.tables.DownloadedPageChapter
 import my.dreamora.feature.local_database.tables.Extension
+import my.dreamora.feature.local_database.tables.HiddenNovelEntity
 import my.dreamora.feature.local_database.tables.MigrationRecord
+import my.dreamora.feature.local_database.tables.NetworkBudgetEntity
 import my.dreamora.feature.local_database.tables.ReadingHistory
+import my.dreamora.feature.local_database.tables.UserPreferenceEntity
+import my.dreamora.feature.local_database.tables.UserTagFilterEntity
 import java.io.InputStream
 
 
@@ -45,6 +58,10 @@ interface AppDatabase {
     fun extensionDao(): ExtensionDao
     fun novelMigrationDao(): NovelMigrationDao
     fun readingHistoryDao(): ReadingHistoryDao
+    fun authorPreferenceDao(): AuthorPreferenceDao
+    fun recommendationDao(): RecommendationDao
+    fun userFilterDao(): UserFilterDao
+    fun networkBudgetDao(): NetworkBudgetDao
     val name: String
 
     fun closeDatabase()
@@ -130,10 +147,20 @@ interface AppDatabase {
         DownloadedPageChapter::class,
         Extension::class,
         MigrationRecord::class,
-        ReadingHistory::class
+        ReadingHistory::class,
+        AuthorPreferenceEntity::class,
+        DiscoveredNovelEntity::class,
+        UserPreferenceEntity::class,
+        UserTagFilterEntity::class,
+        HiddenNovelEntity::class,
+        BlockedAuthorEntity::class,
+        NetworkBudgetEntity::class,
+        DiscoveryChainEntity::class
     ],
-    version = 35,
-    exportSchema = true
+    version = 36,
+    exportSchema = true,
+    // v36 adds only new For You tables; Room generates the SQL and checks it against 36.json.
+    autoMigrations = [AutoMigration(from = 35, to = 36)]
 )
 internal abstract class AppRoomDatabase : RoomDatabase(), AppDatabase {
     abstract override fun libraryDao(): LibraryDao
@@ -147,6 +174,10 @@ internal abstract class AppRoomDatabase : RoomDatabase(), AppDatabase {
     abstract override fun extensionDao(): ExtensionDao
     abstract override fun novelMigrationDao(): NovelMigrationDao
     abstract override fun readingHistoryDao(): ReadingHistoryDao
+    abstract override fun authorPreferenceDao(): AuthorPreferenceDao
+    abstract override fun recommendationDao(): RecommendationDao
+    abstract override fun userFilterDao(): UserFilterDao
+    abstract override fun networkBudgetDao(): NetworkBudgetDao
     override lateinit var name: String
 
     override suspend fun <T> transaction(block: suspend () -> T): T = withTransaction(block)
