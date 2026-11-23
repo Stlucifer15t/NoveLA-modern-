@@ -411,7 +411,7 @@ version  = extInfo.remoteVersion, // use the new version!
         // Try Lua table format: key = {"en", "es"}
         val tableRegex = Regex("""(?m)^\s*$key\s*=\s*\{\s*["']([^"']+)["']""")
         val first = tableRegex.find(code)?.groupValues?.getOrNull(1)?.trim()
-        if (first.isNotBlank()) {
+        if (!first.isNullOrBlank()) {
             // Collect all quoted strings in the table
             val all = Regex("""["']([^"']+)["']""").findAll(code.substringAfter(tableRegex.find(code)!!.value))
                 .map { it.groupValues[1] }
