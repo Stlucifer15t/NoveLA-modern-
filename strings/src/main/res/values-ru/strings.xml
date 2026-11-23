@@ -1581,6 +1581,11 @@
     <string name="book_in_library">В библиотеке</string>
     <string name="book_read_more">Нажмите, чтобы читать дальше…</string>
     <string name="book_action_download">Скачать</string>
+    <string name="reading_status_title">Статус чтения</string>
+    <string name="reading_status_auto">Автоматически</string>
+    <string name="reading_status_plan">В планах</string>
+    <string name="reading_status_on_hold">Отложено</string>
+    <string name="reading_status_dropped">Брошено</string>
     <string name="book_synopsis">Описание</string>
     <string name="book_action_start">Читать</string>
     <string name="book_action_continue">Продолжить</string>

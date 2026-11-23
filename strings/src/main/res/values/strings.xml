@@ -1192,6 +1192,11 @@
     <string name="book_in_library">In Library</string>
     <string name="book_read_more">Tap to read more…</string>
     <string name="book_action_download">Download</string>
+    <string name="reading_status_title">Reading status</string>
+    <string name="reading_status_auto">Automatic</string>
+    <string name="reading_status_plan">Plan to read</string>
+    <string name="reading_status_on_hold">On hold</string>
+    <string name="reading_status_dropped">Dropped</string>
     <string name="book_synopsis">Synopsis</string>
     <string name="book_action_start">Start reading</string>
     <string name="book_action_continue">Continue reading</string>

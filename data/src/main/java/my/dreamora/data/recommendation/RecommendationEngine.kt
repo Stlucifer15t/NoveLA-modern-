@@ -154,8 +154,11 @@ class RecommendationEngine @Inject constructor(
         libraryBooksRepository.getBooksInLibraryWithContextFlow.first()
             .filter { it.book.inLibrary }
             .map { ctx ->
+                // An explicit choice from the reader wins, except that "completed" is never explicit.
+                val chosen = TrackedStatus.entries.firstOrNull { it.name == ctx.book.readingStatus }
                 val status = when {
                     ctx.book.completed -> TrackedStatus.COMPLETED
+                    chosen != null && chosen != TrackedStatus.COMPLETED && chosen != TrackedStatus.READING -> chosen
                     ctx.chaptersReadCount > 0 -> TrackedStatus.READING
                     else -> TrackedStatus.PLAN_TO_READ
                 }
@@ -165,7 +168,7 @@ class RecommendationEngine @Inject constructor(
                         url = ctx.book.url,
                         title = ctx.book.title,
                         tags = ctx.book.genres.split(",").map { it.trim() }.filter { it.isNotEmpty() },
-                        author = null,
+                        author = recommendationDao.getDiscoveredNovel(ctx.book.url)?.author?.takeIf { it.isNotBlank() },
                         status = status,
                         chaptersRead = ctx.chaptersReadCount,
                         chapterCount = ctx.chaptersCount,
@@ -195,7 +198,7 @@ class RecommendationEngine @Inject constructor(
         name = entry.tracked.title,
         providerName = "",
         rawTags = entry.tracked.tags,
-        author = null,
+        author = entry.tracked.author,
         rating = null,
         chapterCount = entry.tracked.chapterCount,
         isCompleted = entry.tracked.status == TrackedStatus.COMPLETED,
