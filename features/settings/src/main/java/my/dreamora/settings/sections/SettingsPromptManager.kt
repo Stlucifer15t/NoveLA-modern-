@@ -36,7 +36,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import my.dreamora.coreui.components.SlimListItem
+import my.dreamora.settings.ui.SettingsRow
 import my.dreamora.coreui.theme.colorAccent
 import my.dreamora.coreui.theme.textPadding
 import my.dreamora.settings.R
@@ -78,7 +78,7 @@ internal fun SettingsPromptManager(
     )
 
     // ── System Prompt field ───────────────────────────────────────────────────
-    SlimListItem(
+    SettingsRow(
         headlineContent = {
             // Top padding so the OutlinedTextField label is not clipped by the animation
             Column(
@@ -220,7 +220,7 @@ internal fun SettingsPromptManager(
     )
 
     // ── English locale toggle ─────────────────────────────────────────────────
-    SlimListItem(
+    SettingsRow(
         headlineContent = {
             Column(modifier = Modifier.fillMaxWidth()) {
                 Row(

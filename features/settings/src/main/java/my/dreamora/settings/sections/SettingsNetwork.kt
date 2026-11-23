@@ -33,7 +33,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
-import my.dreamora.coreui.components.SlimListItem
+import my.dreamora.settings.ui.SettingsRow
 import my.dreamora.coreui.theme.colorAccent
 import my.dreamora.coreui.theme.textPadding
 import my.dreamora.network.interceptors.UAPresets
@@ -63,7 +63,7 @@ internal fun SettingsNetwork(
 
         // User-Agent setting
         var showUserAgentDialog by remember { mutableStateOf(false) }
-        SlimListItem(
+        SettingsRow(
             headlineContent = {
                 Text(text = stringResource(R.string.scraper_user_agent))
             },
@@ -168,7 +168,7 @@ internal fun SettingsNetwork(
         }
 
         // Cloudflare bypass toggle
-        SlimListItem(
+        SettingsRow(
             headlineContent = {
                 Text(text = stringResource(R.string.cloudflare_bypass))
             },
@@ -190,7 +190,7 @@ internal fun SettingsNetwork(
         )
 
         // Download delay setting
-        SlimListItem(
+        SettingsRow(
             headlineContent = {
                 Text(text = stringResource(R.string.download_delay))
             },
@@ -222,7 +222,7 @@ internal fun SettingsNetwork(
         )
 
         // Add delay setting
-        SlimListItem(
+        SettingsRow(
             headlineContent = {
                 Text(text = stringResource(R.string.add_delay))
             },
@@ -263,7 +263,7 @@ internal fun SettingsNetwork(
             onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
         }
         
-        SlimListItem(
+        SettingsRow(
             headlineContent = {
                 Text(text = stringResource(R.string.battery_optimization))
             },

@@ -45,7 +45,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import my.dreamora.coreui.components.SlimListItem
+import my.dreamora.settings.ui.SettingsRow
 import my.dreamora.coreui.theme.colorAccent
 import my.dreamora.coreui.theme.textPadding
 import my.dreamora.settings.R
@@ -118,7 +118,7 @@ internal fun SettingsGeminiTranslation(
         )
 
         // ── Translation mode: per-novel / global ──────────────────────────
-        SlimListItem(
+        SettingsRow(
             headlineContent = {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -193,7 +193,7 @@ internal fun SettingsGeminiTranslation(
         ) {
             Column {
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
-                SlimListItem(
+                SettingsRow(
                     headlineContent = {
                         Column(modifier = Modifier.fillMaxWidth()) {
                             Row(
@@ -240,7 +240,7 @@ internal fun SettingsGeminiTranslation(
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
 
                 // API Key
-                SlimListItem(
+                SettingsRow(
                     headlineContent = {
                         Column(modifier = Modifier.fillMaxWidth()) {
                             Row(
@@ -278,7 +278,7 @@ internal fun SettingsGeminiTranslation(
                 )
 
                 // Model
-                SlimListItem(
+                SettingsRow(
                     headlineContent = {
                         Column(modifier = Modifier.fillMaxWidth()) {
                             Text(
@@ -501,7 +501,7 @@ internal fun SettingsLlmBatchOptions(
         HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
 
         // ── Batch size ────────────────────────────────────────────────────────
-        SlimListItem(
+        SettingsRow(
             headlineContent = {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
@@ -547,7 +547,7 @@ internal fun SettingsLlmBatchOptions(
         )
 
         // ── Max output tokens ─────────────────────────────────────────────────
-        SlimListItem(
+        SettingsRow(
             headlineContent = {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(

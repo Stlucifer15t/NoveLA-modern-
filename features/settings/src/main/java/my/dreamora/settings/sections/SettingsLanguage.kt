@@ -26,7 +26,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import my.dreamora.core.appPreferences.AppLanguage
 import my.dreamora.core.appPreferences.AppLanguageProvider
-import my.dreamora.coreui.components.SlimListItem
+import my.dreamora.settings.ui.SettingsRow
 import my.dreamora.coreui.theme.colorAccent
 import my.dreamora.coreui.theme.textPadding
 import my.dreamora.settings.R
@@ -45,7 +45,7 @@ internal fun SettingsLanguage(
             modifier = Modifier.textPadding(),
             color = colorAccent()
         )
-        SlimListItem(
+        SettingsRow(
             onClick = { showDialog = true },
             headlineContent = {
                 Text(currentLanguage.getDisplayName())

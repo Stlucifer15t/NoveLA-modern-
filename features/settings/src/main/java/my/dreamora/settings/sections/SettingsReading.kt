@@ -20,7 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import my.dreamora.coreui.components.PillSlider
-import my.dreamora.coreui.components.SlimListItem
+import my.dreamora.settings.ui.SettingsRow
 import my.dreamora.coreui.theme.colorAccent
 import my.dreamora.coreui.theme.textPadding
 import my.dreamora.settings.R
@@ -148,7 +148,7 @@ internal fun SettingsReading(reading: ReadingPreferences) {
 
         // Prefetch is a step, not a slider: the useful range is a handful of integers, and a
         // continuous control invites a number that only spends mobile data.
-        SlimListItem(
+        SettingsRow(
             headlineContent = { Text(stringResource(R.string.reading_preload_pages)) },
             supportingContent = {
                 Column {
@@ -187,7 +187,7 @@ private fun ToggleRow(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
 ) {
-    SlimListItem(
+    SettingsRow(
         headlineContent = { Text(title) },
         supportingContent = summary?.let { { Text(it) } },
         leadingContent = {

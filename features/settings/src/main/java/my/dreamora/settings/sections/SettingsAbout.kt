@@ -18,7 +18,7 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
-import my.dreamora.coreui.components.SlimListItem
+import my.dreamora.settings.ui.SettingsRow
 import my.dreamora.coreui.theme.colorAccent
 import my.dreamora.coreui.theme.textPadding
 import my.dreamora.settings.R
@@ -41,7 +41,7 @@ internal fun SettingsAbout(
         color = colorAccent()
     )
 
-    SlimListItem(
+    SettingsRow(
         headlineContent = {
             Text(text = stringResource(R.string.version_format, appVersion))
         },
@@ -57,7 +57,7 @@ internal fun SettingsAbout(
         )
     )
 
-    SlimListItem(
+    SettingsRow(
         headlineContent = {
             Text(text = stringResource(R.string.github_repository))
         },
@@ -69,7 +69,7 @@ internal fun SettingsAbout(
         }
     )
 
-    SlimListItem(
+    SettingsRow(
         headlineContent = {
             Text(text = stringResource(R.string.report_issue))
         },

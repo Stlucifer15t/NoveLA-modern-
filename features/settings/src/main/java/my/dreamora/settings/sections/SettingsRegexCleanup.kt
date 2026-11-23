@@ -10,7 +10,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import my.dreamora.coreui.components.SlimListItem
+import my.dreamora.settings.ui.SettingsRow
 import my.dreamora.coreui.theme.colorAccent
 import my.dreamora.coreui.theme.textPadding
 import my.dreamora.settings.R
@@ -29,7 +29,7 @@ fun SettingsRegexCleanup(
             color = colorAccent()
         )
         // Navigate to Regex Cleanup Settings
-        SlimListItem(
+        SettingsRow(
             modifier = Modifier
                 .clickable { onNavigateToRegexCleanup() },
             headlineContent = {

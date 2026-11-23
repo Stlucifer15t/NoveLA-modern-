@@ -184,7 +184,8 @@ internal fun SettingsScreenBody(
         if (expanded || q.isEmpty()) return true
         return spec.title.lowercase().contains(q) ||
             spec.summary.lowercase().contains(q) ||
-            spec.keywords.any { it.contains(q) || q.contains(it) }
+            // a blank keyword would match every query (q.contains("") is always true)
+            spec.keywords.any { it.isNotBlank() && (it.contains(q) || q.contains(it)) }
     }
 
     val specs = listOf(

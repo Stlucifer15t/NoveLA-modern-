@@ -22,7 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import my.dreamora.core.appPreferences.ListLayoutMode
-import my.dreamora.coreui.components.SlimListItem
+import my.dreamora.settings.ui.SettingsRow
 import my.dreamora.coreui.theme.colorAccent
 import my.dreamora.coreui.theme.textPadding
 import my.dreamora.settings.LayoutPreferences
@@ -85,7 +85,7 @@ internal fun SettingsLayout(layout: LayoutPreferences) {
             onSelect = layout::setBooksGridColumns,
         )
 
-        SlimListItem(
+        SettingsRow(
             modifier = Modifier.textPadding(),
             headlineContent = { Text(stringResource(R.string.layout_grey_read)) },
             supportingContent = {
