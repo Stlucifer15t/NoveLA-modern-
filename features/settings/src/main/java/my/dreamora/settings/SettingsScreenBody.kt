@@ -19,6 +19,7 @@ import my.dreamora.settings.sections.SettingsStats
 import my.dreamora.settings.ui.hint
 import my.dreamora.settings.ui.label
 import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.outlined.Extension
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.SettingsBackupRestore
@@ -256,7 +257,6 @@ internal fun SettingsScreenBody(
             icon = Icons.Outlined.Update,
             keywords = listOf(
                 "library", "auto update", "update", "version", "nightly",
-                "18+", "adult", "nsfw", "mature", "sources", "extensions", "hide",
             ),
             content = {
                 LibraryAutoUpdate(state = state.libraryAutoUpdate)
@@ -265,7 +265,18 @@ internal fun SettingsScreenBody(
                     state = state.updateAppSetting,
                     onCheckForUpdatesManual = onCheckForUpdatesManual,
                 )
-                HorizontalDivider(color = DreamoraTheme.colors.hairline)
+            },
+        ),
+        SettingsGroupSpec(
+            group = SettingsGroup.Sources,
+            title = SettingsGroup.Sources.label(),
+            summary = SettingsGroup.Sources.hint(),
+            icon = Icons.Outlined.Extension,
+            keywords = listOf(
+                "18+", "adult", "nsfw", "mature", "sources", "extensions", "hide", "show",
+                "18", "источники", "расширения", "скрыть", "показать",
+            ),
+            content = {
                 SettingsSources(showAdult = state.extensionsShowAdult)
             },
         ),

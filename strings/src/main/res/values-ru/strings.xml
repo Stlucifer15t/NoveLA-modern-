@@ -1547,6 +1547,8 @@
     <string name="settings_group_reading">Чтение</string>
     <string name="settings_group_reading_hint">Шрифт, интервалы и поведение экрана в читалке</string>
     <string name="settings_group_library">Библиотека</string>
+    <string name="settings_group_sources">Источники</string>
+    <string name="settings_group_sources_hint">Репозитории расширений и показ источников 18+</string>
     <string name="settings_group_library_hint">Правила автообновления и откуда приходят новые версии</string>
     <string name="settings_group_data">Данные и память</string>
     <string name="settings_group_data_hint">Кэш книг, изображений, манги и видео, и их очистка</string>

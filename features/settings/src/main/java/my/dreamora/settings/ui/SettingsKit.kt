@@ -81,6 +81,7 @@ enum class SettingsGroup {
     Layout,
     Stats,
     Library,
+    Sources,
     Storage,
     Backup,
     Translation,
@@ -426,6 +427,7 @@ fun SettingsGroup.label(): String = stringResource(
         SettingsGroup.Layout -> my.dreamora.strings.R.string.settings_group_layout
         SettingsGroup.Stats -> my.dreamora.strings.R.string.settings_group_stats
         SettingsGroup.Library -> my.dreamora.strings.R.string.settings_group_library
+        SettingsGroup.Sources -> my.dreamora.strings.R.string.settings_group_sources
         SettingsGroup.Storage -> my.dreamora.strings.R.string.settings_group_data
         SettingsGroup.Backup -> my.dreamora.strings.R.string.settings_group_backup
         SettingsGroup.Translation -> my.dreamora.strings.R.string.settings_group_translation
@@ -443,6 +445,7 @@ fun SettingsGroup.hint(): String = stringResource(
         SettingsGroup.Layout -> my.dreamora.strings.R.string.settings_group_layout_hint
         SettingsGroup.Stats -> my.dreamora.strings.R.string.settings_group_stats_hint
         SettingsGroup.Library -> my.dreamora.strings.R.string.settings_group_library_hint
+        SettingsGroup.Sources -> my.dreamora.strings.R.string.settings_group_sources_hint
         SettingsGroup.Storage -> my.dreamora.strings.R.string.settings_group_data_hint
         SettingsGroup.Backup -> my.dreamora.strings.R.string.settings_group_backup_hint
         SettingsGroup.Translation -> my.dreamora.strings.R.string.settings_group_translation_hint
