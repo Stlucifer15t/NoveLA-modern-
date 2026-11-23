@@ -45,7 +45,7 @@ class JsHostRuntimeTest {
 
     private val lnPlugin = """
         const cheerio = require('cheerio');
-        const { fetchText } = require('@libs/fetch');
+        const { fetchText, fetchApi } = require('@libs/fetch');
         const { FilterTypes } = require('@libs/filterInputs');
         const { NovelStatus } = require('@libs/novelStatus');
         const dayjs = require('dayjs');
