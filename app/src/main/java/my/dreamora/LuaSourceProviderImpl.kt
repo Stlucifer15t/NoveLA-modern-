@@ -1,4 +1,4 @@
-package my.noveldokusha.scraper
+package my.dreamora.scraper
 
 import android.content.Context
 import com.google.gson.Gson
@@ -16,8 +16,8 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import my.noveldokusha.core.ExtensionManager
-import my.noveldokusha.core.atomicWrite
+import my.dreamora.core.ExtensionManager
+import my.dreamora.core.atomicWrite
 import timber.log.Timber
 import java.io.File
 import javax.inject.Inject
@@ -85,7 +85,7 @@ class LuaSourceProviderImpl @Inject constructor(
                     nameStrId = it.nameStrId.toIntOrNull() ?: 0,
                     baseUrl = it.baseUrl,
                     language = it.language?.split(",").map { it.trim() }.firstNotNullOfOrNull { code ->
-                        my.noveldokusha.core.LanguageCode.entries.find { it.iso639_1 == code }
+                        my.dreamora.core.LanguageCode.entries.find { it.iso639_1 == code }
                     },
                     iconUrl = it.iconUrl,
                 )
