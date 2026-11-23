@@ -31,7 +31,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import my.dreamora.coreui.BaseActivity
-import my.dreamora.coreui.theme.NovelaSpacing
+import my.dreamora.coreui.theme.DreamoraSpacing
 import my.dreamora.coreui.theme.Theme
 import my.dreamora.navigation.NavigationRoutes
 import my.dreamora.settings.ui.SettingsGroup
@@ -116,10 +116,10 @@ private fun Screen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(
-                            start = NovelaSpacing.xs,
-                            end = NovelaSpacing.screenH,
-                            top = NovelaSpacing.sm,
-                            bottom = NovelaSpacing.xs,
+                            start = DreamoraSpacing.xs,
+                            end = DreamoraSpacing.screenH,
+                            top = DreamoraSpacing.sm,
+                            bottom = DreamoraSpacing.xs,
                         ),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {

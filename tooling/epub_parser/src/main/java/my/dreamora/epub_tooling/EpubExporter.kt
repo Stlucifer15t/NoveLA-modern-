@@ -93,7 +93,7 @@ private fun textToParagraphs(html: String): List<String> = html
  * Обложка (если переданы байты) кладётся в images/cover.<ext> и объявляется
  * в манифесте с properties="cover-image" + <meta name="cover"> — это стандарт
  * EPUB3. Отдельной cover.xhtml НЕТ: ридеры, строящие список глав из spine,
- * показали бы её лишней «главой» (NoveLA-ридер приклеивает её к первой главе).
+ * показали бы её лишней «главой» (Dreamora-ридер приклеивает её к первой главе).
  * Описание книги, если есть, попадает в <dc:description>.
  *
  * Обёртка над [exportStreaming]: список глав уже целиком в памяти — для

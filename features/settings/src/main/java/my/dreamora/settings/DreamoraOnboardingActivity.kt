@@ -42,12 +42,12 @@ import javax.inject.Inject
 import my.dreamora.core.appPreferences.AppPreferences
 import my.dreamora.coreui.BaseActivity
 import androidx.compose.material.icons.outlined.Check
-import my.dreamora.coreui.components.NovelaFilterChip
-import my.dreamora.coreui.theme.NovelaSpacing
-import my.dreamora.coreui.theme.NovelaType
+import my.dreamora.coreui.components.DreamoraFilterChip
+import my.dreamora.coreui.theme.DreamoraSpacing
+import my.dreamora.coreui.theme.DreamoraType
 import my.dreamora.coreui.theme.Theme
 import my.dreamora.coreui.theme.colorAccent
-import my.dreamora.core.foryou.NovelaGenre
+import my.dreamora.core.foryou.DreamoraGenre
 
 /**
  * The first-open genre sheet. One screen, one question, and both exits are valid: "Skip" is
@@ -58,14 +58,14 @@ import my.dreamora.core.foryou.NovelaGenre
  * MainActivity starts it once, guarded by the preference this screen writes on the way out.
  */
 @AndroidEntryPoint
-class NovelaOnboardingActivity : BaseActivity() {
+class DreamoraOnboardingActivity : BaseActivity() {
 
     @Inject
     lateinit var appPreferences: AppPreferences
 
     companion object {
         fun createIntent(context: Context): Intent =
-            Intent(context, NovelaOnboardingActivity::class.java)
+            Intent(context, DreamoraOnboardingActivity::class.java)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -73,7 +73,7 @@ class NovelaOnboardingActivity : BaseActivity() {
         val initial = appPreferences.FOR_YOU_GENRES.value.toList()
         setContent {
             Theme(themeProvider = themeProvider) {
-                NovelaOnboardingScreen(
+                DreamoraOnboardingScreen(
                     initialSlugs = initial,
                     onContinue = { slugs ->
                         appPreferences.FOR_YOU_GENRES.value = slugs.toSet()
@@ -88,7 +88,7 @@ class NovelaOnboardingActivity : BaseActivity() {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun NovelaOnboardingScreen(
+fun DreamoraOnboardingScreen(
     initialSlugs: List<String>,
     onContinue: (List<String>) -> Unit,
 ) {
@@ -102,10 +102,10 @@ fun NovelaOnboardingScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(
-                            start = NovelaSpacing.xs,
-                            end = NovelaSpacing.screenH,
-                            top = NovelaSpacing.sm,
-                            bottom = NovelaSpacing.xs,
+                            start = DreamoraSpacing.xs,
+                            end = DreamoraSpacing.screenH,
+                            top = DreamoraSpacing.sm,
+                            bottom = DreamoraSpacing.xs,
                         ),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -137,8 +137,8 @@ fun NovelaOnboardingScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .systemBarsPadding()
-                    .padding(horizontal = NovelaSpacing.screenH)
-                    .padding(bottom = NovelaSpacing.lg),
+                    .padding(horizontal = DreamoraSpacing.screenH)
+                    .padding(bottom = DreamoraSpacing.lg),
             ) {
                 Text(
                     text = stringResource(
@@ -155,10 +155,10 @@ fun NovelaOnboardingScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = NovelaSpacing.screenH),
-            verticalArrangement = Arrangement.spacedBy(NovelaSpacing.md),
+                .padding(horizontal = DreamoraSpacing.screenH),
+            verticalArrangement = Arrangement.spacedBy(DreamoraSpacing.md),
         ) {
-            Spacer(modifier = Modifier.height(NovelaSpacing.xs))
+            Spacer(modifier = Modifier.height(DreamoraSpacing.xs))
             Text(
                 text = stringResource(R.string.onboarding_headline),
                 style = MaterialTheme.typography.headlineSmall,
@@ -166,16 +166,16 @@ fun NovelaOnboardingScreen(
             )
             Text(
                 text = stringResource(R.string.onboarding_genres),
-                style = NovelaType.sectionAction,
+                style = DreamoraType.sectionAction,
                 color = colorAccent(),
             )
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.sm),
-                verticalArrangement = Arrangement.spacedBy(NovelaSpacing.sm),
+                horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.sm),
+                verticalArrangement = Arrangement.spacedBy(DreamoraSpacing.sm),
             ) {
-                NovelaGenre.entries.forEach { genre ->
-                    NovelaFilterChip(
+                DreamoraGenre.entries.forEach { genre ->
+                    DreamoraFilterChip(
                         label = stringResource(genre.labelRes),
                         selected = genre.slug in selected,
                         leadingIcon = if (genre.slug in selected) Icons.Outlined.Check else null,
@@ -193,7 +193,7 @@ fun NovelaOnboardingScreen(
                 textAlign = TextAlign.Start,
                 modifier = Modifier.fillMaxWidth(),
             )
-            Spacer(modifier = Modifier.height(NovelaSpacing.huge))
+            Spacer(modifier = Modifier.height(DreamoraSpacing.huge))
         }
     }
 }

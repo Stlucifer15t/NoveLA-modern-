@@ -9,7 +9,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import my.dreamora.core.appPreferences.AppPreferences
 import my.dreamora.core.appPreferences.ListLayoutMode
-import my.dreamora.core.foryou.NovelaGenre
+import my.dreamora.core.foryou.DreamoraGenre
 import my.dreamora.feature.local_database.DAOs.LibraryDao
 import my.dreamora.feature.local_database.DAOs.ReadingHistoryDao
 import my.dreamora.scraper.SourceInterface
@@ -45,7 +45,7 @@ data class ForYouUiState(
     /** Every installed source of the current type, as the binding picker lists them. */
     val sources: List<ForYouSourceOption> = emptyList(),
     val boundSourceId: String = "",
-    val genres: List<NovelaGenre> = emptyList(),
+    val genres: List<DreamoraGenre> = emptyList(),
     val reading: ForYouReading? = null,
     /** The most recently read books, newest first — the "Continue" row. Real history rows only. */
     val continueRows: List<ForYouReading> = emptyList(),
@@ -108,7 +108,7 @@ class ForYouViewModel @Inject constructor(
 
     init {
         _state.value = _state.value.copy(
-            genres = NovelaGenre.fromSlugs(appPreferences.FOR_YOU_GENRES.value),
+            genres = DreamoraGenre.fromSlugs(appPreferences.FOR_YOU_GENRES.value),
         )
         viewModelScope.launch {
             engine.sourcesFlow().collect { list ->
@@ -145,7 +145,7 @@ class ForYouViewModel @Inject constructor(
         }
         viewModelScope.launch {
             appPreferences.FOR_YOU_GENRES.flow().collect { slugs ->
-                val genres = NovelaGenre.fromSlugs(slugs)
+                val genres = DreamoraGenre.fromSlugs(slugs)
                 if (genres != _state.value.genres) {
                     _state.value = _state.value.copy(genres = genres)
                     if (activated) refresh()

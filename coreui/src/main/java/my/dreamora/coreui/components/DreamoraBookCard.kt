@@ -40,12 +40,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import my.dreamora.coreui.R
-import my.dreamora.coreui.theme.NovelaMotion
-import my.dreamora.coreui.theme.NovelaRadius
-import my.dreamora.coreui.theme.NovelaSize
-import my.dreamora.coreui.theme.NovelaSpacing
-import my.dreamora.coreui.theme.NovelaTheme
-import my.dreamora.coreui.theme.NovelaType
+import my.dreamora.coreui.theme.DreamoraMotion
+import my.dreamora.coreui.theme.DreamoraRadius
+import my.dreamora.coreui.theme.DreamoraSize
+import my.dreamora.coreui.theme.DreamoraSpacing
+import my.dreamora.coreui.theme.DreamoraTheme
+import my.dreamora.coreui.theme.DreamoraType
 
 /**
  * The redesigned book card.
@@ -61,7 +61,7 @@ import my.dreamora.coreui.theme.NovelaType
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun NovelaBookCard(
+fun DreamoraBookCard(
     title: String,
     coverModel: Any?,
     modifier: Modifier = Modifier,
@@ -69,7 +69,7 @@ fun NovelaBookCard(
     unreadCount: Int? = null,
     isSelected: Boolean = false,
     isSelectionMode: Boolean = false,
-    cornerRadius: androidx.compose.ui.unit.Dp = NovelaRadius.cover,
+    cornerRadius: androidx.compose.ui.unit.Dp = DreamoraRadius.cover,
     onClick: () -> Unit,
     onLongClick: () -> Unit = {},
 ) {
@@ -98,12 +98,12 @@ fun NovelaBookCard(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .aspectRatio(NovelaSize.COVER_ASPECT)
+                .aspectRatio(DreamoraSize.COVER_ASPECT)
                 .clip(RoundedCornerShape(cornerRadius))
                 .background(MaterialTheme.colorScheme.surfaceContainer)
                 .border(
                     width = 0.5.dp,
-                    color = NovelaTheme.colors.hairline,
+                    color = DreamoraTheme.colors.hairline,
                     shape = RoundedCornerShape(cornerRadius),
                 ),
         ) {
@@ -130,7 +130,7 @@ fun NovelaBookCard(
                     count = unreadCount,
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
-                        .padding(NovelaSpacing.xs),
+                        .padding(DreamoraSpacing.xs),
                 )
             }
 
@@ -139,9 +139,9 @@ fun NovelaBookCard(
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopStart)
-                        .padding(NovelaSpacing.xs)
+                        .padding(DreamoraSpacing.xs)
                         .size(24.dp)
-                        .clip(RoundedCornerShape(NovelaRadius.sm))
+                        .clip(RoundedCornerShape(DreamoraRadius.sm))
                         .background(
                             if (isSelected) MaterialTheme.colorScheme.primary
                             else Color.Black.copy(alpha = 0.35f)
@@ -169,11 +169,11 @@ fun NovelaBookCard(
             }
         }
 
-        Spacer(Modifier.height(NovelaSpacing.sm))
+        Spacer(Modifier.height(DreamoraSpacing.sm))
 
         Text(
             text = title,
-            style = NovelaType.bookTitle,
+            style = DreamoraType.bookTitle,
             color = MaterialTheme.colorScheme.onSurface,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
@@ -183,8 +183,8 @@ fun NovelaBookCard(
             Spacer(Modifier.height(2.dp))
             Text(
                 text = subtitle,
-                style = NovelaType.bookMeta,
-                color = NovelaTheme.colors.textMuted,
+                style = DreamoraType.bookMeta,
+                color = DreamoraTheme.colors.textMuted,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -198,7 +198,7 @@ fun NovelaBookCard(
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun NovelaBookRow(
+fun DreamoraBookRow(
     title: String,
     coverModel: Any?,
     modifier: Modifier = Modifier,
@@ -211,7 +211,7 @@ fun NovelaBookRow(
     val pressed by interaction.collectIsPressedAsState()
     val scale by animateFloatAsState(
         targetValue = if (pressed) 0.98f else 1f,
-        animationSpec = tween(NovelaMotion.INSTANT),
+        animationSpec = tween(DreamoraMotion.INSTANT),
         label = "rowPress",
     )
 
@@ -219,23 +219,23 @@ fun NovelaBookRow(
         modifier = modifier
             .fillMaxWidth()
             .scale(scale)
-            .clip(NovelaRadius.cardShape)
+            .clip(DreamoraRadius.cardShape)
             .combinedClickable(
                 interactionSource = interaction,
                 indication = null,
                 onClick = onClick,
                 onLongClick = onLongClick,
             )
-            .padding(vertical = NovelaSpacing.sm),
+            .padding(vertical = DreamoraSpacing.sm),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
             modifier = Modifier
-                .width(NovelaSize.carouselCoverWidth)
-                .aspectRatio(NovelaSize.COVER_ASPECT)
-                .clip(NovelaRadius.coverShape)
+                .width(DreamoraSize.carouselCoverWidth)
+                .aspectRatio(DreamoraSize.COVER_ASPECT)
+                .clip(DreamoraRadius.coverShape)
                 .background(MaterialTheme.colorScheme.surfaceContainer)
-                .border(0.5.dp, NovelaTheme.colors.hairline, NovelaRadius.coverShape),
+                .border(0.5.dp, DreamoraTheme.colors.hairline, DreamoraRadius.coverShape),
         ) {
             ImageView(
                 imageModel = coverModel,
@@ -245,7 +245,7 @@ fun NovelaBookRow(
             )
         }
 
-        Spacer(Modifier.width(NovelaSpacing.md))
+        Spacer(Modifier.width(DreamoraSpacing.md))
 
         Column(
             modifier = Modifier.weight(1f),
@@ -262,14 +262,14 @@ fun NovelaBookRow(
                 Spacer(Modifier.height(2.dp))
                 Text(
                     text = subtitle,
-                    style = NovelaType.bookMeta,
-                    color = NovelaTheme.colors.textMuted,
+                    style = DreamoraType.bookMeta,
+                    color = DreamoraTheme.colors.textMuted,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
             }
             if (progress != null && progress > 0f) {
-                Spacer(Modifier.height(NovelaSpacing.sm))
+                Spacer(Modifier.height(DreamoraSpacing.sm))
                 ProgressBar(progress = progress.coerceIn(0f, 1f))
             }
         }
@@ -283,15 +283,15 @@ private fun UnreadPill(
 ) {
     Box(
         modifier = modifier
-            .clip(NovelaRadius.chipShape)
-            .background(NovelaTheme.colors.badgeBackground)
+            .clip(DreamoraRadius.chipShape)
+            .background(DreamoraTheme.colors.badgeBackground)
             .padding(horizontal = 6.dp, vertical = 2.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text = if (count > 99) "99+" else count.toString(),
-            style = NovelaType.badge,
-            color = NovelaTheme.colors.badgeText,
+            style = DreamoraType.badge,
+            color = DreamoraTheme.colors.badgeText,
         )
     }
 }
@@ -302,14 +302,14 @@ private fun ProgressBar(progress: Float) {
         Modifier
             .fillMaxWidth()
             .height(3.dp)
-            .clip(NovelaRadius.chipShape)
+            .clip(DreamoraRadius.chipShape)
             .background(MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Box(
             Modifier
                 .fillMaxWidth(progress)
                 .height(3.dp)
-                .clip(NovelaRadius.chipShape)
+                .clip(DreamoraRadius.chipShape)
                 .background(MaterialTheme.colorScheme.primary)
         )
     }
@@ -325,8 +325,8 @@ fun RankBadge(
 ) {
     Text(
         text = rank.toString(),
-        style = NovelaType.rank,
-        color = if (rank <= 3) MaterialTheme.colorScheme.primary else NovelaTheme.colors.textMuted,
+        style = DreamoraType.rank,
+        color = if (rank <= 3) MaterialTheme.colorScheme.primary else DreamoraTheme.colors.textMuted,
         modifier = modifier.width(20.dp),
     )
 }

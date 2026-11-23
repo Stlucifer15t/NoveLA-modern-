@@ -33,10 +33,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import my.dreamora.coreui.theme.NovelaRadius
-import my.dreamora.coreui.theme.NovelaSpacing
-import my.dreamora.coreui.theme.NovelaTheme
-import my.dreamora.coreui.theme.NovelaType
+import my.dreamora.coreui.theme.DreamoraRadius
+import my.dreamora.coreui.theme.DreamoraSpacing
+import my.dreamora.coreui.theme.DreamoraTheme
+import my.dreamora.coreui.theme.DreamoraType
 
 /**
  * The "tile" language: a gradient-wrapped box with a raised icon chip, a name, and a
@@ -61,7 +61,7 @@ fun novelaTileAccent(seed: String): Color {
 /** Diagonal wash of [accent] over the surface, stronger at the top-left. */
 @Composable
 fun Modifier.novelaTileBackground(accent: Color): Modifier {
-    val light = NovelaTheme.colors.isLight
+    val light = DreamoraTheme.colors.isLight
     return this.background(
         Brush.linearGradient(
             colors = listOf(
@@ -75,7 +75,7 @@ fun Modifier.novelaTileBackground(accent: Color): Modifier {
 
 /** The rounded square an icon or image sits in — the card's focal point. */
 @Composable
-fun NovelaIconChip(
+fun DreamoraIconChip(
     accent: Color,
     modifier: Modifier = Modifier,
     size: androidx.compose.ui.unit.Dp = 44.dp,
@@ -84,16 +84,16 @@ fun NovelaIconChip(
     Box(
         modifier = modifier
             .size(size)
-            .clip(NovelaTile.chipShape)
+            .clip(DreamoraTile.chipShape)
             .background(accent.copy(alpha = 0.18f))
-            .border(1.dp, accent.copy(alpha = 0.35f), NovelaTile.chipShape)
+            .border(1.dp, accent.copy(alpha = 0.35f), DreamoraTile.chipShape)
             .padding(6.dp),
         contentAlignment = Alignment.Center,
     ) { content() }
 }
 
 @Composable
-fun NovelaTileCard(
+fun DreamoraTileCard(
     accent: Color,
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
@@ -104,24 +104,24 @@ fun NovelaTileCard(
         onClick = { onClick?.invoke() },
         modifier = modifier
             .fillMaxWidth()
-            .clip(NovelaRadius.cardShape)
+            .clip(DreamoraRadius.cardShape)
             .novelaTileBackground(accent),
-        shape = NovelaRadius.cardShape,
-        color = NovelaTheme.colors.elevatedSurface,
-        border = androidx.compose.foundation.BorderStroke(1.dp, NovelaTheme.colors.hairline),
+        shape = DreamoraRadius.cardShape,
+        color = DreamoraTheme.colors.elevatedSurface,
+        border = androidx.compose.foundation.BorderStroke(1.dp, DreamoraTheme.colors.hairline),
     ) {
         Box {
             Column(
-                modifier = Modifier.padding(NovelaSpacing.md),
-                verticalArrangement = Arrangement.spacedBy(NovelaSpacing.xs),
+                modifier = Modifier.padding(DreamoraSpacing.md),
+                verticalArrangement = Arrangement.spacedBy(DreamoraSpacing.xs),
                 content = content,
             )
             overlay?.let {
                 Row(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .padding(NovelaSpacing.xxs),
-                    horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.xxs),
+                        .padding(DreamoraSpacing.xxs),
+                    horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.xxs),
                     verticalAlignment = Alignment.CenterVertically,
                     content = { it() },
                 )
@@ -132,7 +132,7 @@ fun NovelaTileCard(
 
 /** Title block used above a tile grid: label on the left, count/action on the right. */
 @Composable
-fun NovelaTileSectionHeader(
+fun DreamoraTileSectionHeader(
     title: String,
     modifier: Modifier = Modifier,
     count: Int? = null,
@@ -141,13 +141,13 @@ fun NovelaTileSectionHeader(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = NovelaSpacing.screenH)
-            .padding(top = NovelaSpacing.md, bottom = NovelaSpacing.xs),
+            .padding(horizontal = DreamoraSpacing.screenH)
+            .padding(top = DreamoraSpacing.md, bottom = DreamoraSpacing.xs),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             text = if (count != null) "$title · $count" else title,
-            style = NovelaType.sectionTitle,
+            style = DreamoraType.sectionTitle,
             color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier.weight(1f),
             maxLines = 1,
@@ -159,7 +159,7 @@ fun NovelaTileSectionHeader(
 
 /** A small tinted fact label: "Novel", "en", "57 genres". */
 @Composable
-fun NovelaTileBadge(
+fun DreamoraTileBadge(
     text: String,
     accent: Color,
     modifier: Modifier = Modifier,
@@ -167,9 +167,9 @@ fun NovelaTileBadge(
     Text(
         text = text,
         modifier = modifier
-            .clip(NovelaRadius.badgeShape)
+            .clip(DreamoraRadius.badgeShape)
             .background(accent.copy(alpha = 0.16f))
-            .padding(horizontal = NovelaSpacing.xs, vertical = 1.dp),
+            .padding(horizontal = DreamoraSpacing.xs, vertical = 1.dp),
         style = MaterialTheme.typography.labelSmall,
         color = accent,
         maxLines = 1,
@@ -182,7 +182,7 @@ fun NovelaTileBadge(
  * count pill. The "Browse / Discover novels from your sources / 10 sources" block.
  */
 @Composable
-fun NovelaHeroHeader(
+fun DreamoraHeroHeader(
     title: String,
     subtitle: String?,
     accent: Color,
@@ -193,12 +193,12 @@ fun NovelaHeroHeader(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = NovelaSpacing.screenH, vertical = NovelaSpacing.sm),
+            .padding(horizontal = DreamoraSpacing.screenH, vertical = DreamoraSpacing.sm),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.md),
+        horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.md),
     ) {
         if (icon != null) {
-            NovelaIconChip(accent = accent) { icon() }
+            DreamoraIconChip(accent = accent) { icon() }
         }
         Column(modifier = Modifier.weight(1f)) {
             Text(
@@ -212,8 +212,8 @@ fun NovelaHeroHeader(
                 Spacer(Modifier.height(2.dp))
                 Text(
                     text = subtitle,
-                    style = NovelaType.bookMeta,
-                    color = NovelaTheme.colors.textMuted,
+                    style = DreamoraType.bookMeta,
+                    color = DreamoraTheme.colors.textMuted,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -225,7 +225,7 @@ fun NovelaHeroHeader(
 
 /** The count pill that sits at the end of a hero header. */
 @Composable
-fun NovelaHeroPill(
+fun DreamoraHeroPill(
     value: String,
     label: String,
     accent: Color,
@@ -233,10 +233,10 @@ fun NovelaHeroPill(
 ) {
     Column(
         modifier = modifier
-            .clip(NovelaRadius.chipShape)
+            .clip(DreamoraRadius.chipShape)
             .background(accent.copy(alpha = 0.16f))
-            .border(1.dp, accent.copy(alpha = 0.30f), NovelaRadius.chipShape)
-            .padding(horizontal = NovelaSpacing.md, vertical = NovelaSpacing.xs),
+            .border(1.dp, accent.copy(alpha = 0.30f), DreamoraRadius.chipShape)
+            .padding(horizontal = DreamoraSpacing.md, vertical = DreamoraSpacing.xs),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
@@ -247,16 +247,16 @@ fun NovelaHeroPill(
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
-            color = NovelaTheme.colors.textMuted,
+            color = DreamoraTheme.colors.textMuted,
             maxLines = 1,
         )
     }
 }
 
 /** Shared shapes for the tile language, kept here so tiles and chips agree. */
-object NovelaTile {
+object DreamoraTile {
     /** The icon chip: a squircle between a badge and a card corner. */
-    val chipShape = RoundedCornerShape(NovelaRadius.md)
+    val chipShape = RoundedCornerShape(DreamoraRadius.md)
 }
 
 /**
@@ -264,7 +264,7 @@ object NovelaTile {
  * accent. Used where a card needs a verb ("Install", "Update") instead of a chevron.
  */
 @Composable
-fun NovelaTileActionButton(
+fun DreamoraTileActionButton(
     label: String,
     onClick: () -> Unit,
     accent: Color,
@@ -276,13 +276,13 @@ fun NovelaTileActionButton(
         onClick = onClick,
         enabled = enabled,
         modifier = modifier,
-        shape = NovelaRadius.chipShape,
+        shape = DreamoraRadius.chipShape,
         color = accent.copy(alpha = if (enabled) 0.16f else 0.08f),
-        contentColor = if (enabled) accent else NovelaTheme.colors.textMuted,
+        contentColor = if (enabled) accent else DreamoraTheme.colors.textMuted,
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = NovelaSpacing.sm, vertical = 6.dp),
-            horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.xxs),
+            modifier = Modifier.padding(horizontal = DreamoraSpacing.sm, vertical = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.xxs),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             icon()
@@ -296,9 +296,9 @@ fun NovelaTileActionButton(
     }
 }
 
-/** The compact round sibling of [NovelaTileActionButton], for icon-only verbs. */
+/** The compact round sibling of [DreamoraTileActionButton], for icon-only verbs. */
 @Composable
-fun NovelaTileIconButton(
+fun DreamoraTileIconButton(
     contentDescription: String?,
     onClick: () -> Unit,
     accent: Color,
@@ -319,9 +319,9 @@ fun NovelaTileIconButton(
     }
 }
 
-/** A circle for an icon, as used by the row groups (the tile language uses [NovelaIconChip]). */
+/** A circle for an icon, as used by the row groups (the tile language uses [DreamoraIconChip]). */
 @Composable
-fun NovelaCircleIcon(
+fun DreamoraCircleIcon(
     accent: Color,
     modifier: Modifier = Modifier,
     size: androidx.compose.ui.unit.Dp = 40.dp,
@@ -338,7 +338,7 @@ fun NovelaCircleIcon(
 
 /** One number + its label, for the little summary row under a hero header. */
 @Composable
-fun NovelaStatCard(
+fun DreamoraStatCard(
     value: String,
     label: String,
     accent: Color,
@@ -346,11 +346,11 @@ fun NovelaStatCard(
 ) {
     Surface(
         modifier = modifier,
-        shape = NovelaRadius.cardShape,
-        color = NovelaTheme.colors.elevatedSurface,
-        border = androidx.compose.foundation.BorderStroke(1.dp, NovelaTheme.colors.hairline),
+        shape = DreamoraRadius.cardShape,
+        color = DreamoraTheme.colors.elevatedSurface,
+        border = androidx.compose.foundation.BorderStroke(1.dp, DreamoraTheme.colors.hairline),
     ) {
-        Column(modifier = Modifier.padding(horizontal = NovelaSpacing.sm, vertical = NovelaSpacing.md)) {
+        Column(modifier = Modifier.padding(horizontal = DreamoraSpacing.sm, vertical = DreamoraSpacing.md)) {
             Text(
                 text = value,
                 style = MaterialTheme.typography.titleMedium,
@@ -361,7 +361,7 @@ fun NovelaStatCard(
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelSmall,
-                color = NovelaTheme.colors.textMuted,
+                color = DreamoraTheme.colors.textMuted,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -374,29 +374,29 @@ fun NovelaStatCard(
  * by hairlines instead of floating as individual cards, so a group reads as one object.
  */
 @Composable
-fun NovelaCardGroup(
+fun DreamoraCardGroup(
     modifier: Modifier = Modifier,
     content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit,
 ) {
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = NovelaSpacing.screenH, vertical = NovelaSpacing.xxs),
-        shape = NovelaRadius.cardShape,
-        color = NovelaTheme.colors.elevatedSurface,
-        border = androidx.compose.foundation.BorderStroke(1.dp, NovelaTheme.colors.hairline),
+            .padding(horizontal = DreamoraSpacing.screenH, vertical = DreamoraSpacing.xxs),
+        shape = DreamoraRadius.cardShape,
+        color = DreamoraTheme.colors.elevatedSurface,
+        border = androidx.compose.foundation.BorderStroke(1.dp, DreamoraTheme.colors.hairline),
     ) {
         Column(content = content)
     }
 }
 
-/** The hairline between two rows of a [NovelaCardGroup]. */
+/** The hairline between two rows of a [DreamoraCardGroup]. */
 @Composable
-fun NovelaCardGroupDivider(modifier: Modifier = Modifier) {
+fun DreamoraCardGroupDivider(modifier: Modifier = Modifier) {
     androidx.compose.material3.HorizontalDivider(
-        modifier = modifier.padding(start = NovelaSpacing.lg),
+        modifier = modifier.padding(start = DreamoraSpacing.lg),
         thickness = 0.5.dp,
-        color = NovelaTheme.colors.hairline,
+        color = DreamoraTheme.colors.hairline,
     )
 }
 
@@ -423,7 +423,7 @@ fun novelaGreeting(): String {
  * status, with room for a trailing badge. No app bar — the greeting is the title.
  */
 @Composable
-fun NovelaGreetingHeader(
+fun DreamoraGreetingHeader(
     greeting: String,
     subtitle: String?,
     accent: Color,
@@ -446,10 +446,10 @@ fun NovelaGreetingHeader(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = NovelaSpacing.screenH)
-                .padding(top = NovelaSpacing.lg, bottom = NovelaSpacing.xl),
+                .padding(horizontal = DreamoraSpacing.screenH)
+                .padding(top = DreamoraSpacing.lg, bottom = DreamoraSpacing.xl),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.md),
+            horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.md),
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
@@ -463,7 +463,7 @@ fun NovelaGreetingHeader(
                     Spacer(Modifier.height(2.dp))
                     Text(
                         text = subtitle,
-                        style = NovelaType.bookMeta,
+                        style = DreamoraType.bookMeta,
                         color = accent,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
@@ -477,20 +477,20 @@ fun NovelaGreetingHeader(
 
 /** The streak badge: only ever shown for a number this app can actually compute. */
 @Composable
-fun NovelaStreakPill(
+fun DreamoraStreakPill(
     days: Int,
     accent: Color,
     modifier: Modifier = Modifier,
 ) {
     Surface(
         modifier = modifier,
-        shape = NovelaRadius.chipShape,
+        shape = DreamoraRadius.chipShape,
         color = accent.copy(alpha = 0.14f),
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = NovelaSpacing.md, vertical = NovelaSpacing.xs),
+            modifier = Modifier.padding(horizontal = DreamoraSpacing.md, vertical = DreamoraSpacing.xs),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.xxs),
+            horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.xxs),
         ) {
             Icon(
                 imageVector = Icons.Rounded.LocalFireDepartment,
@@ -507,9 +507,9 @@ fun NovelaStreakPill(
     }
 }
 
-/** Label above a block of [NovelaMenuCard]s. */
+/** Label above a block of [DreamoraMenuCard]s. */
 @Composable
-fun NovelaMenuSectionLabel(
+fun DreamoraMenuSectionLabel(
     text: String,
     modifier: Modifier = Modifier,
 ) {
@@ -517,8 +517,8 @@ fun NovelaMenuSectionLabel(
         text = text,
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = NovelaSpacing.screenH)
-            .padding(top = NovelaSpacing.md, bottom = NovelaSpacing.xs),
+            .padding(horizontal = DreamoraSpacing.screenH)
+            .padding(top = DreamoraSpacing.md, bottom = DreamoraSpacing.xs),
         style = MaterialTheme.typography.titleMedium,
         color = MaterialTheme.colorScheme.onBackground,
     )
@@ -530,7 +530,7 @@ fun NovelaMenuSectionLabel(
  * reads as a list of settings, and this screen is navigation, not settings.
  */
 @Composable
-fun NovelaMenuCard(
+fun DreamoraMenuCard(
     icon: ImageVector,
     title: String,
     subtitle: String?,
@@ -543,17 +543,17 @@ fun NovelaMenuCard(
         onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = NovelaSpacing.screenH, vertical = NovelaSpacing.xxs),
-        shape = NovelaRadius.cardShape,
-        color = NovelaTheme.colors.elevatedSurface,
-        border = androidx.compose.foundation.BorderStroke(1.dp, NovelaTheme.colors.hairline),
+            .padding(horizontal = DreamoraSpacing.screenH, vertical = DreamoraSpacing.xxs),
+        shape = DreamoraRadius.cardShape,
+        color = DreamoraTheme.colors.elevatedSurface,
+        border = androidx.compose.foundation.BorderStroke(1.dp, DreamoraTheme.colors.hairline),
     ) {
         Row(
-            modifier = Modifier.padding(NovelaSpacing.md),
+            modifier = Modifier.padding(DreamoraSpacing.md),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.md),
+            horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.md),
         ) {
-            NovelaCircleIcon(accent = accent) {
+            DreamoraCircleIcon(accent = accent) {
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
@@ -564,7 +564,7 @@ fun NovelaMenuCard(
             Column(modifier = Modifier.weight(1f)) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.xs),
+                    horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.xs),
                 ) {
                     Text(
                         text = title,
@@ -577,7 +577,7 @@ fun NovelaMenuCard(
                         Text(
                             text = badge,
                             modifier = Modifier
-                                .clip(NovelaRadius.badgeShape)
+                                .clip(DreamoraRadius.badgeShape)
                                 .background(accent)
                                 .padding(horizontal = 6.dp, vertical = 1.dp),
                             style = MaterialTheme.typography.labelSmall,
@@ -589,8 +589,8 @@ fun NovelaMenuCard(
                     Spacer(Modifier.height(2.dp))
                     Text(
                         text = subtitle,
-                        style = NovelaType.bookMeta,
-                        color = NovelaTheme.colors.textMuted,
+                        style = DreamoraType.bookMeta,
+                        color = DreamoraTheme.colors.textMuted,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -600,7 +600,7 @@ fun NovelaMenuCard(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = null,
                 modifier = Modifier.size(20.dp),
-                tint = NovelaTheme.colors.textMuted.copy(alpha = 0.7f),
+                tint = DreamoraTheme.colors.textMuted.copy(alpha = 0.7f),
             )
         }
     }

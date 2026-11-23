@@ -629,7 +629,7 @@ internal class SettingsViewModel @Inject constructor(
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
             putExtra(Intent.EXTRA_STREAM, uri)
-            putExtra(Intent.EXTRA_SUBJECT, "NoveLA logs")
+            putExtra(Intent.EXTRA_SUBJECT, "Dreamora logs")
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
         context.startActivity(

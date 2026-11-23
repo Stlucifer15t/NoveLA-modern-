@@ -13,7 +13,7 @@ import my.dreamora.strings.R
  * the chosen label's words are used as query terms, and the ranking is keyword matching on
  * titles, not a similarity score we cannot compute.
  */
-enum class NovelaGenre(
+enum class DreamoraGenre(
     val slug: String,
     @param:StringRes val labelRes: Int,
     val terms: List<String>,
@@ -33,7 +33,7 @@ enum class NovelaGenre(
     ;
 
     companion object {
-        fun fromSlugs(slugs: Collection<String>): List<NovelaGenre> =
+        fun fromSlugs(slugs: Collection<String>): List<DreamoraGenre> =
             entries.filter { it.slug in slugs }
     }
 }

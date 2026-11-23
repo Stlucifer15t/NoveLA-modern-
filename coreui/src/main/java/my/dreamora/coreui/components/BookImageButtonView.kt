@@ -46,7 +46,7 @@ import androidx.compose.ui.unit.sp
 import my.dreamora.core.appPreferences.SourceStripPosition
 import my.dreamora.coreui.AppTestTags
 import my.dreamora.coreui.R
-import my.dreamora.coreui.theme.NovelaRadius
+import my.dreamora.coreui.theme.DreamoraRadius
 import my.dreamora.coreui.theme.InternalTheme
 import my.dreamora.coreui.theme.PreviewThemes
 
@@ -82,7 +82,7 @@ fun BookImageButtonView(
         Box(
             Modifier
                 .padding(2.dp)
-                .clip(NovelaRadius.coverShape)
+                .clip(DreamoraRadius.coverShape)
                 .fillMaxWidth()
                 .aspectRatio(1 / 1.45f)
         ) {

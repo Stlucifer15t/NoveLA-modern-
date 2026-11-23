@@ -4,7 +4,7 @@ import androidx.annotation.StringRes
 import my.dreamora.reader.R
 
 /**
- * Режимы чтения — порт tachiyomisy ReadingMode, адаптированный под NoveLA
+ * Режимы чтения — порт tachiyomisy ReadingMode, адаптированный под Dreamora
  * (только страничные главы; labels вместо moko-ресурсов).
  *
  * Два режима: PAGED (постраничный, направление листания фиксировано R2L)

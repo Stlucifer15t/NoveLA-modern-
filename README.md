@@ -1,7 +1,7 @@
-# NoveLA (compat branch)
+# Dreamora (compat branch)
 
 Android novel reader (Kotlin, Jetpack Compose, Material 3) with a **compatibility
-layer for extension ecosystems that are not NoveLA's own Lua plugins**: Legado
+layer for extension ecosystems that are not Dreamora's own Lua plugins**: Legado
 `bookSource` JSON, Mihon/Tachiyomi/keiyoushi indexes, LNReader, Mangayomi and
 CloudStream.
 
@@ -46,7 +46,7 @@ disabled under `Reduced motion`. Scope and the preserved-feature checklist:
 
 ### 3. Signing key in the repo
 
-`keystore/novela-release.p12` — a self-generated key with empty passwords, used for
+`keystore/dreamora-release.p12` — a self-generated key with empty passwords, used for
 debug and release builds alike, so any machine or CI run produces APKs that install
 over each other. No `key.properties`, no per-machine keystore. Trade-offs and how to
 override it with a private key: [keystore/README.md](keystore/README.md).
@@ -55,7 +55,7 @@ override it with a private key: [keystore/README.md](keystore/README.md).
 
 | Workflow | When | Output |
 |---|---|---|
-| [`CI`](.github/workflows/ci.yml) | every push and PR | module compiles, unit tests (fatal), **debug APK signed by the repository key** — the step compares the APK's certificate fingerprint with `keystore/novela-release.p12` and fails on a mismatch |
+| [`CI`](.github/workflows/ci.yml) | every push and PR | module compiles, unit tests (fatal), **debug APK signed by the repository key** — the step compares the APK's certificate fingerprint with `keystore/dreamora-release.p12` and fails on a mismatch |
 | [`Debug APK`](.github/workflows/debugApk.yml) | manual | debug APK for a chosen branch/SHA |
 | [`Nightly Build`](.github/workflows/nightly.yml) | push to `default` | release APK + R8 mapping on the `nightly` GitHub release |
 | [`Build & Publish`](.github/workflows/buildRelease.yml) | manual | draft release |
@@ -66,7 +66,7 @@ override it with a private key: [keystore/README.md](keystore/README.md).
   longer hidden by the Finder's language filter.
 - `repo.json`-based Mihon repositories parse correctly even though `index.min.json` is
   now a stub for outdated clients; "Outdated App" rows are dropped instead of listed.
-- Legado payloads keep their **raw** JSON, so Legado fields NoveLA does not model
+- Legado payloads keep their **raw** JSON, so Legado fields Dreamora does not model
   (`customOrder`, `lastUpdateTime`, rule defaults) survive into the rule engine.
 - `CompatStorage` no longer touches the disk on the caller's thread during
   construction, and the repository catalog is served from a disk cache instead of

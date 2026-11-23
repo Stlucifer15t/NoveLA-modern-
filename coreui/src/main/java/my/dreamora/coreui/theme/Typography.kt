@@ -8,7 +8,7 @@ import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.sp
 
 /**
- * NoveLA type scale.
+ * Dreamora type scale.
  *
  * Sizes stay close to the Material 3 defaults so existing layouts keep their
  * measurements; what changes is weight, tracking and line height, which is what
@@ -71,7 +71,7 @@ val typography = Typography(
  * Book titles in a grid need to be bolder than [titleSmall] but smaller than
  * [titleMedium], which is exactly the gap this fills.
  */
-object NovelaType {
+object DreamoraType {
     /** Bold 2-line title under a book cover. */
     val bookTitle = base(13, 17, FontWeight.Bold, (-0.1f))
 

@@ -15,7 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
-import my.dreamora.coreui.components.NovelaScreenHeader
+import my.dreamora.coreui.components.DreamoraScreenHeader
 import my.dreamora.coreui.theme.LocalAppTheme
 import my.dreamora.coreui.theme.LocalIsDark
 import my.dreamora.tooling.backup_create.onBackupCreate
@@ -52,7 +52,7 @@ fun SettingsScreen(
     androidx.compose.runtime.key(appTheme, isDark) {
         Scaffold(
             topBar = {
-            NovelaScreenHeader(
+            DreamoraScreenHeader(
                 title = stringResource(id = R.string.title_settings),
             )
         },

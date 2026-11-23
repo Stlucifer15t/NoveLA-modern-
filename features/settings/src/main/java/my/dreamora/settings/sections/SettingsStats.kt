@@ -29,7 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import my.dreamora.coreui.theme.NovelaType
+import my.dreamora.coreui.theme.DreamoraType
 import my.dreamora.coreui.theme.colorAccent
 import my.dreamora.coreui.theme.textPadding
 import my.dreamora.settings.ReadingStats
@@ -126,7 +126,7 @@ internal fun SettingsStats(stats: ReadingStats) {
             text = stringResource(
                 if (showMovies) R.string.stats_note_movies else R.string.stats_note_books
             ),
-            style = NovelaType.bookMeta,
+            style = DreamoraType.bookMeta,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier
                 .textPadding()

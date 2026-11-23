@@ -74,7 +74,7 @@ internal class NarratorMediaControlsNotification @Inject constructor(
 
     private val channelName = context.getString(R.string.notification_channel_name_reader_narrator)
     private val channelId = "Reader narrator v2"
-    private val mediaTagDebug = "NoveLA_narratorMediaControls"
+    private val mediaTagDebug = "Dreamora_narratorMediaControls"
     val notificationId: Int = channelId.hashCode()
 
     private var mediaSession: MediaSessionCompat? = null

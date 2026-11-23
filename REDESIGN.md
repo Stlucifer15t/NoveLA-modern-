@@ -1,6 +1,6 @@
-# NoveLA Modern — UI Redesign Audit & Feature Preservation Checklist
+# Dreamora Modern — UI Redesign Audit & Feature Preservation Checklist
 
-Redesign scope: presentation layer only. The NoveLA engine (scraping, sources,
+Redesign scope: presentation layer only. The Dreamora engine (scraping, sources,
 database, networking, translation, plugins, reader engine) is untouched.
 
 ---
@@ -232,8 +232,8 @@ has, so neither produced an APK for a branch build. First run of `release.yml`, 
 
 | Artifact | Size |
 |---|---|
-| `NoveLA-ci-debug-…` | 40 278 101 B |
-| `NoveLA-release-…` | 8 290 817 B |
+| `Dreamora-ci-debug-…` | 40 278 101 B |
+| `Dreamora-release-…` | 8 290 817 B |
 
 So the release APK is 4.9× smaller than the debug one and is the build to judge smoothness
 with. What this does *not* prove: that R8 keeps the runtime-loaded extension paths intact —

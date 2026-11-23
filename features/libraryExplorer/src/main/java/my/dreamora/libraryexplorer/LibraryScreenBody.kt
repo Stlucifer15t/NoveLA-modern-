@@ -46,8 +46,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import my.dreamora.core.appPreferences.SourceStripPosition
 import my.dreamora.coreui.R
-import my.dreamora.coreui.components.NovelaFilterChip
-import my.dreamora.coreui.theme.NovelaSpacing
+import my.dreamora.coreui.components.DreamoraFilterChip
+import my.dreamora.coreui.theme.DreamoraSpacing
 import my.dreamora.core.domain.LibraryCategory
 import my.dreamora.feature.local_database.BookWithContext
 
@@ -103,14 +103,14 @@ internal fun LibraryScreenBody(
                 val totalCount = catCounts.values.sum()
 
                 FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.sm),
-                    verticalArrangement = Arrangement.spacedBy(NovelaSpacing.xs),
+                    horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.sm),
+                    verticalArrangement = Arrangement.spacedBy(DreamoraSpacing.xs),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = NovelaSpacing.screenH, vertical = NovelaSpacing.sm)
+                        .padding(horizontal = DreamoraSpacing.screenH, vertical = DreamoraSpacing.sm)
                 ) {
                     // "All" chip
-                    NovelaFilterChip(
+                    DreamoraFilterChip(
                         label = "${stringResource(R.string.all_categories)} ($totalCount)",
                         selected = selectedCategories.isEmpty(),
                         onClick = { viewModel.clearCategoryFilters() },
@@ -119,14 +119,14 @@ internal fun LibraryScreenBody(
                     allCategories.forEach { (category, label) ->
                         val count = catCounts[category] ?: 0
                         val isSelected = category in selectedCategories
-                        NovelaFilterChip(
+                        DreamoraFilterChip(
                             label = "$label ($count)",
                             selected = isSelected,
                             onClick = { viewModel.toggleCategory(category) },
                         )
                     }
                     // "+" chip
-                    NovelaFilterChip(
+                    DreamoraFilterChip(
                         label = stringResource(R.string.create_category),
                         selected = false,
                         onClick = onCreateCategory,
@@ -134,7 +134,7 @@ internal fun LibraryScreenBody(
                     )
                     // Delete chip (only when custom categories exist)
                     if (customCategories.isNotEmpty()) {
-                        NovelaFilterChip(
+                        DreamoraFilterChip(
                             label = stringResource(R.string.delete_category),
                             selected = false,
                             onClick = { showDeleteCategoryPicker = true },

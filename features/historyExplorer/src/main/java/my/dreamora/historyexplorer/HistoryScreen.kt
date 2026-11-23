@@ -53,8 +53,8 @@ import coil3.network.httpHeaders
 import coil3.request.ImageRequest
 import my.dreamora.core.rememberResolvedBookImagePath
 import my.dreamora.core.utils.refererFor
-import my.dreamora.coreui.components.NovelaEmptyState
-import my.dreamora.coreui.components.NovelaScreenHeader
+import my.dreamora.coreui.components.DreamoraEmptyState
+import my.dreamora.coreui.components.DreamoraScreenHeader
 import my.dreamora.feature.local_database.BookMetadata
 import my.dreamora.navigation.NavigationRouteViewModel
 import my.dreamora.strings.R as StringsR
@@ -73,7 +73,7 @@ fun HistoryScreen(
 
     Scaffold(
         topBar = {
-            NovelaScreenHeader(
+            DreamoraScreenHeader(
                 title = stringResource(id = StringsR.string.title_history),
                 actions = {
                     if (uiState is HistoryUiState.Content) {
@@ -123,7 +123,7 @@ fun HistoryScreen(
                         .padding(innerPadding),
                     contentAlignment = Alignment.Center
                 ) {
-                    NovelaEmptyState(
+                    DreamoraEmptyState(
                         icon = Icons.Filled.History,
                         title = stringResource(StringsR.string.no_history_yet),
                         message = "",

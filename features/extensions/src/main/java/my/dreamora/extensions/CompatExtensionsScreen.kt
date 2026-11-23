@@ -5,7 +5,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.Extension
-import my.dreamora.coreui.components.NovelaEmptyState
+import my.dreamora.coreui.components.DreamoraEmptyState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -21,8 +21,8 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.ui.res.stringResource
-import my.dreamora.coreui.theme.NovelaSpacing
-import my.dreamora.coreui.theme.NovelaType
+import my.dreamora.coreui.theme.DreamoraSpacing
+import my.dreamora.coreui.theme.DreamoraType
 import my.dreamora.strings.R as StringsR
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -92,7 +92,7 @@ import my.dreamora.coreui.R as CoreUiR
  * through a keyhole. As a screen it gets the whole window, a real app bar, and one list.
  */
 @Composable
-fun NovelaCompatRepositoriesScreen(
+fun DreamoraCompatRepositoriesScreen(
     onBack: () -> Unit,
     viewModel: CompatExtensionsViewModel = hiltViewModel(),
 ) {
@@ -107,9 +107,9 @@ fun NovelaCompatRepositoriesScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 4.dp, end = NovelaSpacing.lg, top = NovelaSpacing.sm, bottom = NovelaSpacing.sm),
+                .padding(start = 4.dp, end = DreamoraSpacing.lg, top = DreamoraSpacing.sm, bottom = DreamoraSpacing.sm),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.sm),
+            horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.sm),
         ) {
             IconButton(onClick = onBack) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(StringsR.string.action_back))
@@ -125,7 +125,7 @@ fun NovelaCompatRepositoriesScreen(
                 if (state.repositories.isEmpty() && state.installed.isEmpty()) {
                     Text(
                         text = stringResource(StringsR.string.compat_subtitle),
-                        style = NovelaType.bookMeta,
+                        style = DreamoraType.bookMeta,
                         color = palette.onSurfaceVariant,
                     )
                 } else {
@@ -135,7 +135,7 @@ fun NovelaCompatRepositoriesScreen(
                             state.repositories.size,
                             state.installed.size,
                         ),
-                        style = NovelaType.bookMeta,
+                        style = DreamoraType.bookMeta,
                         color = palette.onSurfaceVariant,
                     )
                 }
@@ -147,12 +147,12 @@ fun NovelaCompatRepositoriesScreen(
                 .weight(1f)
                 .fillMaxWidth()
                 .navigationBarsPadding(),
-            verticalArrangement = Arrangement.spacedBy(NovelaSpacing.sm),
+            verticalArrangement = Arrangement.spacedBy(DreamoraSpacing.sm),
             contentPadding = PaddingValues(
-                start = NovelaSpacing.lg,
-                end = NovelaSpacing.lg,
-                top = NovelaSpacing.md,
-                bottom = NovelaSpacing.huge,
+                start = DreamoraSpacing.lg,
+                end = DreamoraSpacing.lg,
+                top = DreamoraSpacing.md,
+                bottom = DreamoraSpacing.huge,
             ),
         ) {
             item(key = "compat_add") { AddRepoBlock(state = state, viewModel = viewModel) }
@@ -170,7 +170,7 @@ fun NovelaCompatRepositoriesScreen(
                         viewModel = viewModel,
                     )
                 }
-                item(key = "compat_divider") { HorizontalDivider(modifier = Modifier.padding(vertical = NovelaSpacing.xs)) }
+                item(key = "compat_divider") { HorizontalDivider(modifier = Modifier.padding(vertical = DreamoraSpacing.xs)) }
                 // Catalog rows are items of THIS list on purpose: a Mihon index can hold a
                 // thousand sources, and composing them all inside one block is what makes a
                 // scrolling list feel like it hangs.
@@ -205,7 +205,7 @@ fun NovelaCompatRepositoriesScreen(
 
             if (state.repositories.isEmpty() && state.installed.isEmpty()) {
                 item(key = "compat_empty") {
-                    NovelaEmptyState(
+                    DreamoraEmptyState(
                         icon = Icons.Outlined.Extension,
                         title = stringResource(StringsR.string.compat_empty_title),
                         message = stringResource(StringsR.string.compat_empty_message),
@@ -338,7 +338,7 @@ private fun RepositoryRow(
                 }
                 Text(
                     text = (repo.ecosystem?.displayName ?: unknownFormat) + " · " + sourcesStat + treeNote,
-                    style = NovelaType.bookMeta,
+                    style = DreamoraType.bookMeta,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
@@ -476,7 +476,7 @@ private fun CatalogToolbar(
             } else {
                 stringResource(StringsR.string.compat_sources_stat, state.entries.size)
             },
-            style = NovelaType.bookMeta,
+            style = DreamoraType.bookMeta,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
@@ -578,13 +578,13 @@ private fun CatalogRow(
                 if (runtime.state == CompatRuntimeState.READY) {
                     Text(
                         text = stringResource(StringsR.string.compat_state_installed),
-                        style = NovelaType.bookMeta,
+                        style = DreamoraType.bookMeta,
                         color = MaterialTheme.colorScheme.primary,
                     )
                 } else {
                     Text(
                         text = stringResource(StringsR.string.compat_state_stored),
-                        style = NovelaType.bookMeta,
+                        style = DreamoraType.bookMeta,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
@@ -743,7 +743,7 @@ fun CompatReposSummaryRow(
                     } else {
                         stringResource(StringsR.string.compat_summary_counts, repos, installed)
                     },
-                    style = NovelaType.bookMeta,
+                    style = DreamoraType.bookMeta,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,

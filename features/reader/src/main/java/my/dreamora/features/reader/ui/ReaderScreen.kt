@@ -99,8 +99,8 @@ import androidx.compose.ui.unit.dp
 import my.dreamora.core.appPreferences.AppPreferences
 import my.dreamora.coreui.theme.AppTheme
 import my.dreamora.coreui.theme.DarkMode
-import my.dreamora.coreui.theme.NovelaRadius
-import my.dreamora.coreui.theme.NovelaSpacing
+import my.dreamora.coreui.theme.DreamoraRadius
+import my.dreamora.coreui.theme.DreamoraSpacing
 import my.dreamora.coreui.theme.InternalTheme
 import my.dreamora.coreui.theme.rememberMutableStateOf
 import my.dreamora.features.reader.domain.ReaderItem
@@ -255,7 +255,7 @@ internal fun ReaderScreen(
                         // but reads as a card over the page instead of a slab.
                         Surface(
                             color = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.94f),
-                            shape = RoundedCornerShape(NovelaRadius.xl),
+                            shape = RoundedCornerShape(DreamoraRadius.xl),
                             shadowElevation = 8.dp,
                             tonalElevation = 0.dp,
                             border = androidx.compose.foundation.BorderStroke(
@@ -263,7 +263,7 @@ internal fun ReaderScreen(
                                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f),
                             ),
                             modifier = Modifier
-                                .padding(horizontal = NovelaSpacing.sm, vertical = NovelaSpacing.xs)
+                                .padding(horizontal = DreamoraSpacing.sm, vertical = DreamoraSpacing.xs)
                                 .animateContentSize(),
                         ) {
                         TopAppBar(
@@ -418,8 +418,8 @@ internal fun ReaderScreen(
 
                         BottomAppBar(
                             modifier = Modifier
-                                .padding(horizontal = NovelaSpacing.sm, vertical = NovelaSpacing.xs)
-                                .clip(RoundedCornerShape(NovelaRadius.xxl))
+                                .padding(horizontal = DreamoraSpacing.sm, vertical = DreamoraSpacing.xs)
+                                .clip(RoundedCornerShape(DreamoraRadius.xxl))
                                 .animateContentSize(),
                             containerColor = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.94f),
                         ) {

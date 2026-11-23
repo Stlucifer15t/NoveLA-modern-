@@ -45,11 +45,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import my.dreamora.coreui.theme.NovelaMotion
-import my.dreamora.coreui.theme.NovelaRadius
-import my.dreamora.coreui.theme.NovelaSpacing
-import my.dreamora.coreui.theme.NovelaTheme
-import my.dreamora.coreui.theme.NovelaType
+import my.dreamora.coreui.theme.DreamoraMotion
+import my.dreamora.coreui.theme.DreamoraRadius
+import my.dreamora.coreui.theme.DreamoraSpacing
+import my.dreamora.coreui.theme.DreamoraTheme
+import my.dreamora.coreui.theme.DreamoraType
 import my.dreamora.settings.ui.ExpressiveSwitch
 
 /**
@@ -119,12 +119,12 @@ fun SettingsGroupCard(
 ) {
     AnimatedVisibility(
         visible = visible,
-        enter = fadeIn(tween(NovelaMotion.STANDARD)) + expandVertically(
-            animationSpec = tween(NovelaMotion.EMPHASIZED, easing = NovelaMotion.EnterEasing),
+        enter = fadeIn(tween(DreamoraMotion.STANDARD)) + expandVertically(
+            animationSpec = tween(DreamoraMotion.EMPHASIZED, easing = DreamoraMotion.EnterEasing),
             expandFrom = Alignment.Top,
         ),
-        exit = fadeOut(tween(NovelaMotion.INSTANT)) + shrinkVertically(
-            animationSpec = tween(NovelaMotion.STANDARD, easing = NovelaMotion.ExitEasing),
+        exit = fadeOut(tween(DreamoraMotion.INSTANT)) + shrinkVertically(
+            animationSpec = tween(DreamoraMotion.STANDARD, easing = DreamoraMotion.ExitEasing),
         ),
         modifier = modifier,
     ) {
@@ -132,39 +132,39 @@ fun SettingsGroupCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(
-                    horizontal = NovelaSpacing.screenH,
-                    vertical = NovelaSpacing.xs,
+                    horizontal = DreamoraSpacing.screenH,
+                    vertical = DreamoraSpacing.xs,
                 )
                 .then(
                     // the whole box is the tap target once it opens a screen of its own
                     if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier,
                 ),
-            shape = NovelaRadius.cardShape,
-            color = NovelaTheme.colors.elevatedSurface,
+            shape = DreamoraRadius.cardShape,
+            color = DreamoraTheme.colors.elevatedSurface,
             tonalElevation = 0.dp,
-            border = androidx.compose.foundation.BorderStroke(1.dp, NovelaTheme.colors.hairline),
+            border = androidx.compose.foundation.BorderStroke(1.dp, DreamoraTheme.colors.hairline),
         ) {
             Column {
                 if (showHeader) Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(
-                            start = NovelaSpacing.md,
-                            end = NovelaSpacing.lg,
-                            top = NovelaSpacing.md,
-                            bottom = NovelaSpacing.xs,
+                            start = DreamoraSpacing.md,
+                            end = DreamoraSpacing.lg,
+                            top = DreamoraSpacing.md,
+                            bottom = DreamoraSpacing.xs,
                         ),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     GroupIcon(icon = icon, accent = accent)
-                    Spacer(Modifier.width(NovelaSpacing.md))
+                    Spacer(Modifier.width(DreamoraSpacing.md))
                     Column(
                         modifier = Modifier
                             .weight(1f)
                             .then(
                                 if (onClick != null) {
                                     Modifier
-                                        .clip(NovelaRadius.cardShape)
+                                        .clip(DreamoraRadius.cardShape)
                                         .clickable(onClick = onClick)
                                 } else Modifier,
                             ),
@@ -178,8 +178,8 @@ fun SettingsGroupCard(
                         if (!summary.isNullOrBlank()) {
                             Text(
                                 text = summary,
-                                style = NovelaType.bookMeta,
-                                color = NovelaTheme.colors.textMuted,
+                                style = DreamoraType.bookMeta,
+                                color = DreamoraTheme.colors.textMuted,
                                 maxLines = 2,
                                 overflow = TextOverflow.Ellipsis,
                             )
@@ -192,14 +192,14 @@ fun SettingsGroupCard(
                 if (expanded) {
                     if (showHeader) Box(
                         Modifier
-                            .padding(horizontal = NovelaSpacing.md)
+                            .padding(horizontal = DreamoraSpacing.md)
                             .fillMaxWidth()
                             .height(1.dp)
-                            .background(NovelaTheme.colors.hairline),
+                            .background(DreamoraTheme.colors.hairline),
                     )
-                    if (!showHeader) Spacer(Modifier.height(NovelaSpacing.xs))
+                    if (!showHeader) Spacer(Modifier.height(DreamoraSpacing.xs))
                     content()
-                    Spacer(Modifier.height(NovelaSpacing.sm))
+                    Spacer(Modifier.height(DreamoraSpacing.sm))
                 }
             }
         }
@@ -224,22 +224,22 @@ fun SettingsGroupHero(
             .background(
                 Brush.verticalGradient(
                     colors = listOf(
-                        accent.copy(alpha = if (NovelaTheme.colors.isLight) 0.16f else 0.22f),
+                        accent.copy(alpha = if (DreamoraTheme.colors.isLight) 0.16f else 0.22f),
                         Color.Transparent,
                     ),
                 ),
             )
-            .padding(horizontal = NovelaSpacing.screenH)
-            .padding(top = NovelaSpacing.xs, bottom = NovelaSpacing.lg),
+            .padding(horizontal = DreamoraSpacing.screenH)
+            .padding(top = DreamoraSpacing.xs, bottom = DreamoraSpacing.lg),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.md),
+            horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.md),
         ) {
             Box(
                 modifier = Modifier
                     .size(56.dp)
-                    .clip(RoundedCornerShape(NovelaRadius.lg))
+                    .clip(RoundedCornerShape(DreamoraRadius.lg))
                     .background(accent.copy(alpha = 0.18f)),
                 contentAlignment = Alignment.Center,
             ) {
@@ -259,11 +259,11 @@ fun SettingsGroupHero(
                     overflow = TextOverflow.Ellipsis,
                 )
                 if (!summary.isNullOrBlank()) {
-                    Spacer(Modifier.height(NovelaSpacing.xxs))
+                    Spacer(Modifier.height(DreamoraSpacing.xxs))
                     Text(
                         text = summary,
-                        style = NovelaType.bookMeta,
-                        color = NovelaTheme.colors.textMuted,
+                        style = DreamoraType.bookMeta,
+                        color = DreamoraTheme.colors.textMuted,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -280,7 +280,7 @@ private fun GroupIcon(icon: ImageVector, accent: Color) {
         modifier = Modifier
             .size(30.dp)
             .clip(CircleShape)
-            .background(accent.copy(alpha = if (NovelaTheme.colors.isLight) 0.16f else 0.24f)),
+            .background(accent.copy(alpha = if (DreamoraTheme.colors.isLight) 0.16f else 0.24f)),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
@@ -308,23 +308,23 @@ fun SettingsSearchField(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = NovelaSpacing.screenH, vertical = NovelaSpacing.xs),
-        shape = RoundedCornerShape(NovelaRadius.pill),
-        color = NovelaTheme.colors.elevatedSurface,
+            .padding(horizontal = DreamoraSpacing.screenH, vertical = DreamoraSpacing.xs),
+        shape = RoundedCornerShape(DreamoraRadius.pill),
+        color = DreamoraTheme.colors.elevatedSurface,
         border = androidx.compose.foundation.BorderStroke(
             1.dp,
-            if (query.isEmpty()) NovelaTheme.colors.hairline else MaterialTheme.colorScheme.primary,
+            if (query.isEmpty()) DreamoraTheme.colors.hairline else MaterialTheme.colorScheme.primary,
         ),
     ) {
         Column {
             Row(
-                modifier = Modifier.padding(start = NovelaSpacing.md, end = NovelaSpacing.xs),
+                modifier = Modifier.padding(start = DreamoraSpacing.md, end = DreamoraSpacing.xs),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
                     imageVector = if (query.isEmpty()) Icons.Outlined.Search else Icons.Filled.Search,
                     contentDescription = null,
-                    tint = NovelaTheme.colors.textMuted,
+                    tint = DreamoraTheme.colors.textMuted,
                     modifier = Modifier.size(18.dp),
                 )
                 androidx.compose.foundation.text.BasicTextField(
@@ -333,7 +333,7 @@ fun SettingsSearchField(
                     singleLine = true,
                     modifier = Modifier
                         .weight(1f)
-                        .padding(horizontal = NovelaSpacing.sm, vertical = 12.dp),
+                        .padding(horizontal = DreamoraSpacing.sm, vertical = 12.dp),
                     textStyle = MaterialTheme.typography.bodyMedium.copy(
                         color = MaterialTheme.colorScheme.onSurface,
                     ),
@@ -343,7 +343,7 @@ fun SettingsSearchField(
                                 Text(
                                     text = placeholder ?: stringResource(my.dreamora.strings.R.string.action_search_settings),
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = NovelaTheme.colors.textMuted,
+                                    color = DreamoraTheme.colors.textMuted,
                                 )
                             }
                             inner()
@@ -356,23 +356,23 @@ fun SettingsSearchField(
                             imageVector = Icons.Filled.Close,
                             contentDescription = stringResource(my.dreamora.strings.R.string.clear),
                             modifier = Modifier.size(16.dp),
-                            tint = NovelaTheme.colors.textMuted,
+                            tint = DreamoraTheme.colors.textMuted,
                         )
                     }
                 }
             }
             AnimatedVisibility(
                 visible = query.isEmpty() && suggestions.isNotEmpty(),
-                enter = fadeIn(tween(NovelaMotion.STANDARD)) + expandVertically(tween(NovelaMotion.STANDARD)),
-                exit = fadeOut(tween(NovelaMotion.INSTANT)) + shrinkVertically(tween(NovelaMotion.STANDARD)),
+                enter = fadeIn(tween(DreamoraMotion.STANDARD)) + expandVertically(tween(DreamoraMotion.STANDARD)),
+                exit = fadeOut(tween(DreamoraMotion.INSTANT)) + shrinkVertically(tween(DreamoraMotion.STANDARD)),
             ) {
                 Row(
                     modifier = Modifier.padding(
-                        start = NovelaSpacing.md,
-                        end = NovelaSpacing.md,
-                        bottom = NovelaSpacing.sm,
+                        start = DreamoraSpacing.md,
+                        end = DreamoraSpacing.md,
+                        bottom = DreamoraSpacing.sm,
                     ),
-                    horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.xs),
+                    horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.xs),
                 ) {
                     suggestions.take(4).forEach { label ->
                         SuggestionPill(label) { onQueryChange(label) }
@@ -387,13 +387,13 @@ fun SettingsSearchField(
 private fun SuggestionPill(label: String, onClick: () -> Unit) {
     Text(
         text = label,
-        style = NovelaType.badge,
+        style = DreamoraType.badge,
         color = MaterialTheme.colorScheme.primary,
         modifier = Modifier
-            .clip(RoundedCornerShape(NovelaRadius.pill))
+            .clip(RoundedCornerShape(DreamoraRadius.pill))
             .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.10f))
             .clickable(onClick = onClick)
-            .padding(horizontal = NovelaSpacing.sm, vertical = 5.dp),
+            .padding(horizontal = DreamoraSpacing.sm, vertical = 5.dp),
     )
 }
 
@@ -403,7 +403,7 @@ fun SettingsCaret(modifier: Modifier = Modifier) {
     Icon(
         imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
         contentDescription = null,
-        tint = NovelaTheme.colors.textMuted,
+        tint = DreamoraTheme.colors.textMuted,
         modifier = modifier.size(18.dp),
     )
 }
@@ -441,10 +441,10 @@ fun ExpressiveSwitch(
 
 /** Padding used by every section composable that draws its own rows inside a card. */
 val SettingsRowPadding = PaddingValues(
-    start = NovelaSpacing.md,
-    end = NovelaSpacing.lg,
-    top = NovelaSpacing.xs,
-    bottom = NovelaSpacing.xs,
+    start = DreamoraSpacing.md,
+    end = DreamoraSpacing.lg,
+    top = DreamoraSpacing.xs,
+    bottom = DreamoraSpacing.xs,
 )
 
 /** A section title inside a card — used where a group has two blocks of rows. */
@@ -452,12 +452,12 @@ val SettingsRowPadding = PaddingValues(
 fun SettingsInnerLabel(text: String, modifier: Modifier = Modifier) {
     Text(
         text = text.uppercase(),
-        style = NovelaType.badge,
-        color = NovelaTheme.colors.textMuted,
+        style = DreamoraType.badge,
+        color = DreamoraTheme.colors.textMuted,
         modifier = modifier.padding(
-            start = NovelaSpacing.md,
-            top = NovelaSpacing.sm,
-            bottom = NovelaSpacing.xxs,
+            start = DreamoraSpacing.md,
+            top = DreamoraSpacing.sm,
+            bottom = DreamoraSpacing.xxs,
         ),
     )
 }

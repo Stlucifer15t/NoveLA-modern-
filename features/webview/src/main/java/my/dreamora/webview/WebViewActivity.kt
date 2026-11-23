@@ -50,7 +50,7 @@ class WebViewActivity : ComponentActivity() {
     private var oldCfClearance: String = ""
     private var hasAutoClosed: Boolean = false  // ponytail: dedup guard for auto-close paths
     private lateinit var webView: WebView
-    private lateinit var translateBridge: NovelaTranslateBridge
+    private lateinit var translateBridge: DreamoraTranslateBridge
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -266,7 +266,7 @@ class WebViewActivity : ComponentActivity() {
                             )
                             // Микроокно (мс) между setActive(true) и исполнением start() в JS:
                             // гейт уже открыт, но перевод ещё не начался — вызов translateAsync
-                            // в этом окне пропустится (ограничение проектирования, см. NovelaTranslateBridge).
+                            // в этом окне пропустится (ограничение проектирования, см. DreamoraTranslateBridge).
                             translateBridge.setActive(true)
                             webView.evaluateJavascript("window.__novelaPageTranslator.start('$target')", null)
                         }
@@ -278,13 +278,13 @@ class WebViewActivity : ComponentActivity() {
 
         // Мост JS→Kotlin→JS регистрируется безусловно (в bypass-режиме он просто
         // не используется — JS-обвязка в onPageFinished не инъецируется, кнопка скрыта).
-        translateBridge = NovelaTranslateBridge(
+        translateBridge = DreamoraTranslateBridge(
             webView,
             translationManager,
             lifecycleScope,
             onError = { toasty.show("Translation failed") }
         )
-        webView.addJavascriptInterface(translateBridge, "NovelaTranslate")
+        webView.addJavascriptInterface(translateBridge, "DreamoraTranslate")
         webView.loadUrl(currentTargetUrl)
     }
 

@@ -130,7 +130,7 @@ fun onBackupCreate(): () -> Unit {
                             showDialog = false
                             val pattern = "yyyy-MM-dd_HH-mm"
                             val date = SimpleDateFormat(pattern, Locale.getDefault()).format(Date())
-                            val fileName = "NoveLA_backup_$date.zip"
+                            val fileName = "Dreamora_backup_$date.zip"
                             fileExplorer.launch(fileName)
                         },
                         modifier = Modifier

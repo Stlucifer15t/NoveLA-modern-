@@ -3,7 +3,7 @@ package my.dreamora.features.reader.manga
 /**
  * Модели tachiyomisy-style манга/манхва-читалки.
  *
- * Адаптация под NoveLA: одна глава = список URL страниц (getPageList),
+ * Адаптация под Dreamora: одна глава = список URL страниц (getPageList),
  * страницы грузятся через существующий PageImageLoader (кэш + офлайн).
  */
 

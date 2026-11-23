@@ -76,7 +76,7 @@ class DownloadForegroundService : android.app.Service() {
 
     private fun createNotification(): Notification {
         return NotificationCompat.Builder(this, BookDownloadNotification.CHANNEL_ID)
-            .setContentTitle("Novela")
+            .setContentTitle("Dreamora")
             .setContentText("Downloading...")
             .setSmallIcon(android.R.drawable.stat_sys_download)
             .setOngoing(true)
@@ -89,7 +89,7 @@ class DownloadForegroundService : android.app.Service() {
             val powerManager = getSystemService(Context.POWER_SERVICE) as? PowerManager
             wakeLock = powerManager?.newWakeLock(
                 PowerManager.PARTIAL_WAKE_LOCK,
-                "Novela:download_foreground"
+                "Dreamora:download_foreground"
             )?.apply {
                 acquire(10 * 60 * 1000L)
             }

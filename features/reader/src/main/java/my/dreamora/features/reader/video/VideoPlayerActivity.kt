@@ -456,7 +456,7 @@ class VideoPlayerActivity : ComponentActivity() {
             resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
         )
         setContent {
-            // Общая тема NoveLA (светлая/тёмная/AMOLED + edge-to-edge),
+            // Общая тема Dreamora (светлая/тёмная/AMOLED + edge-to-edge),
             // как у MangaReaderActivity/ChaptersActivity.
             Theme(themeProvider) {
                 val state by viewModel.state.collectAsStateWithLifecycle()

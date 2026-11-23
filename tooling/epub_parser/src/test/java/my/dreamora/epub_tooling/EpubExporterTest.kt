@@ -220,7 +220,7 @@ class EpubExporterTest {
         assertTrue(entries.containsKey("OEBPS/images/cover.jpg"))
         assertEquals(jpeg.toList(), rawEntries.getValue("OEBPS/images/cover.jpg").toList())
         // cover.xhtml отсутствует намеренно: ридеры, строящие список глав из
-        // spine, показали бы её лишней «главой» (NoveLA приклеивает к первой).
+        // spine, показали бы её лишней «главой» (Dreamora приклеивает к первой).
         assertFalse(entries.containsKey("OEBPS/cover.xhtml"))
 
         val opf = entries.getValue("OEBPS/content.opf")

@@ -61,10 +61,10 @@ import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import my.dreamora.coreui.components.ChipOption
-import my.dreamora.coreui.components.NovelaScreenHeader
-import my.dreamora.coreui.theme.NovelaMotion
-import my.dreamora.coreui.theme.NovelaRadius
-import my.dreamora.coreui.theme.NovelaSpacing
+import my.dreamora.coreui.components.DreamoraScreenHeader
+import my.dreamora.coreui.theme.DreamoraMotion
+import my.dreamora.coreui.theme.DreamoraRadius
+import my.dreamora.coreui.theme.DreamoraSpacing
 import my.dreamora.coreui.components.LanguageFilterChips
 import my.dreamora.navigation.NavigationRouteViewModel
 import my.dreamora.coreui.components.AddByUrlDialog
@@ -167,7 +167,7 @@ fun CatalogExplorerScreen(
     Scaffold(
         topBar = {
             Column {
-                NovelaScreenHeader(
+                DreamoraScreenHeader(
                     title = stringResource(R.string.title_finder),
                     subtitle = stringResource(R.string.title_browse),
                     actions = {
@@ -205,28 +205,28 @@ fun CatalogExplorerScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = NovelaSpacing.screenH, vertical = NovelaSpacing.xs)
-                        .clip(NovelaRadius.chipShape)
+                        .padding(horizontal = DreamoraSpacing.screenH, vertical = DreamoraSpacing.xs)
+                        .clip(DreamoraRadius.chipShape)
                         .background(MaterialTheme.colorScheme.surfaceContainer)
-                        .padding(NovelaSpacing.xxs),
-                    horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.xxs),
+                        .padding(DreamoraSpacing.xxs),
+                    horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.xxs),
                 ) {
                     tabTitles.forEachIndexed { index, (titleRes, icon) ->
                         val isSelected = uiState.selectedTabIndex == index
                         val bg by animateColorAsState(
                             targetValue = if (isSelected) MaterialTheme.colorScheme.primary
                             else Color.Transparent,
-                            animationSpec = tween(NovelaMotion.STANDARD, easing = NovelaMotion.StandardEasing),
+                            animationSpec = tween(DreamoraMotion.STANDARD, easing = DreamoraMotion.StandardEasing),
                             label = "tabBg$index",
                         )
                         Row(
                             modifier = Modifier
                                 .weight(1f)
                                 .height(40.dp)
-                                .clip(NovelaRadius.chipShape)
+                                .clip(DreamoraRadius.chipShape)
                                 .background(bg)
                                 .clickable { viewModel.setTabIndex(index) }
-                                .padding(horizontal = NovelaSpacing.sm),
+                                .padding(horizontal = DreamoraSpacing.sm),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.Center,
                         ) {
@@ -234,7 +234,7 @@ fun CatalogExplorerScreen(
                                 icon, null, Modifier.size(17.dp),
                                 tint = if (isSelected) selectedColor else unselectedColor
                             )
-                            Spacer(Modifier.width(NovelaSpacing.xs))
+                            Spacer(Modifier.width(DreamoraSpacing.xs))
                             Text(
                                 stringResource(titleRes),
                                 modifier = Modifier.weight(1f, fill = false),

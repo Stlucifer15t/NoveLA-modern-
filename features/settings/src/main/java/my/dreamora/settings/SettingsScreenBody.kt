@@ -6,12 +6,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.icons.outlined.MenuBook
-import my.dreamora.coreui.components.NovelaGreetingHeader
-import my.dreamora.coreui.components.NovelaMenuCard
-import my.dreamora.coreui.components.NovelaMenuSectionLabel
-import my.dreamora.coreui.components.NovelaStatCard
-import my.dreamora.coreui.components.NovelaStreakPill
-import my.dreamora.coreui.components.NovelaTileIconButton
+import my.dreamora.coreui.components.DreamoraGreetingHeader
+import my.dreamora.coreui.components.DreamoraMenuCard
+import my.dreamora.coreui.components.DreamoraMenuSectionLabel
+import my.dreamora.coreui.components.DreamoraStatCard
+import my.dreamora.coreui.components.DreamoraStreakPill
+import my.dreamora.coreui.components.DreamoraTileIconButton
 import my.dreamora.coreui.components.novelaGreeting
 import my.dreamora.settings.sections.SettingsLayout
 import my.dreamora.settings.sections.SettingsReading
@@ -29,9 +29,9 @@ import androidx.compose.material.icons.outlined.ViewModule
 import androidx.compose.material.icons.outlined.Update
 import androidx.compose.material.icons.outlined.Public
 import androidx.compose.runtime.saveable.rememberSaveable
-import my.dreamora.coreui.components.NovelaEmptyState
-import my.dreamora.coreui.theme.NovelaSpacing
-import my.dreamora.coreui.theme.NovelaTheme
+import my.dreamora.coreui.components.DreamoraEmptyState
+import my.dreamora.coreui.theme.DreamoraSpacing
+import my.dreamora.coreui.theme.DreamoraTheme
 import my.dreamora.settings.ui.SettingsGroup
 import my.dreamora.settings.ui.SettingsGroupCard
 import my.dreamora.settings.ui.SettingsGroupHero
@@ -201,7 +201,7 @@ internal fun SettingsScreenBody(
                     onAppThemeChange = onAppThemeSelected,
                     onDarkModeChange = onDarkModeSelected,
                 )
-                HorizontalDivider(color = NovelaTheme.colors.hairline)
+                HorizontalDivider(color = DreamoraTheme.colors.hairline)
                 SettingsLanguage(
                     currentLanguage = currentLanguageObj,
                     onLanguageChange = onLanguageChange,
@@ -260,7 +260,7 @@ internal fun SettingsScreenBody(
             accent = palette.tertiary,
             content = {
                 LibraryAutoUpdate(state = state.libraryAutoUpdate)
-                HorizontalDivider(color = NovelaTheme.colors.hairline)
+                HorizontalDivider(color = DreamoraTheme.colors.hairline)
                 AppUpdates(
                     state = state.updateAppSetting,
                     onCheckForUpdatesManual = onCheckForUpdatesManual,
@@ -367,7 +367,7 @@ internal fun SettingsScreenBody(
                     novelPromptCount = state.translationNovelPrompts.value.size,
                     onNovelPromptsClick = { showNovelPromptsDialog.value = true },
                 )
-                HorizontalDivider(color = NovelaTheme.colors.hairline)
+                HorizontalDivider(color = DreamoraTheme.colors.hairline)
                 SettingsRegexCleanup(onNavigateToRegexCleanup = onNavigateToRegexCleanup)
             },
         ),
@@ -401,7 +401,7 @@ internal fun SettingsScreenBody(
             accent = palette.error,
             content = {
                 SettingsSupport(onExportLogs = onExportLogs)
-                HorizontalDivider(color = NovelaTheme.colors.hairline)
+                HorizontalDivider(color = DreamoraTheme.colors.hairline)
                 SettingsAbout(appVersion = state.appVersion)
             },
         ),
@@ -417,8 +417,8 @@ internal fun SettingsScreenBody(
             modifier = modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
-                .padding(top = NovelaSpacing.sm),
-            verticalArrangement = Arrangement.spacedBy(NovelaSpacing.xs),
+                .padding(top = DreamoraSpacing.sm),
+            verticalArrangement = Arrangement.spacedBy(DreamoraSpacing.xs),
         ) {
             visibleSpecs.forEach { spec ->
                 SettingsGroupHero(
@@ -438,7 +438,7 @@ internal fun SettingsScreenBody(
                     spec.content()
                 }
             }
-            Spacer(modifier = Modifier.height(NovelaSpacing.navBarClearance))
+            Spacer(modifier = Modifier.height(DreamoraSpacing.navBarClearance))
         }
         return
     }
@@ -454,7 +454,7 @@ internal fun SettingsScreenBody(
             .verticalScroll(rememberScrollState()),
     ) {
         val stats = state.stats.value
-        NovelaGreetingHeader(
+        DreamoraGreetingHeader(
             greeting = novelaGreeting(),
             // The version lives in About, not under the greeting.
             subtitle = null,
@@ -462,12 +462,12 @@ internal fun SettingsScreenBody(
             trailing = {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.sm),
+                    horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.sm),
                 ) {
                     if (stats.streakDays > 0) {
-                        NovelaStreakPill(days = stats.streakDays, accent = palette.tertiary)
+                        DreamoraStreakPill(days = stats.streakDays, accent = palette.tertiary)
                     }
-                    NovelaTileIconButton(
+                    DreamoraTileIconButton(
                         accent = if (searchOpen) palette.primary else palette.surfaceVariant,
                         contentDescription = stringResource(
                             my.dreamora.strings.R.string.action_search_settings
@@ -486,23 +486,23 @@ internal fun SettingsScreenBody(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = NovelaSpacing.screenH),
-            horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.sm),
+                .padding(horizontal = DreamoraSpacing.screenH),
+            horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.sm),
         ) {
-            NovelaStatCard(
+            DreamoraStatCard(
                 value = stats.libraryBooks.displayCount(),
                 label = stringResource(my.dreamora.strings.R.string.stats_library),
                 accent = palette.primary,
                 modifier = Modifier.weight(1f),
             )
-            NovelaStatCard(
+            DreamoraStatCard(
                 value = stats.chaptersRead.displayCount(),
                 label = stringResource(my.dreamora.strings.R.string.stats_chapters_read),
                 accent = palette.tertiary,
                 modifier = Modifier.weight(1f),
             )
             // The cache line arrives as "12 MB" from the size scan the screen already runs.
-            NovelaStatCard(
+            DreamoraStatCard(
                 value = state.novelCacheSize.value.ifBlank { "…" },
                 label = stringResource(my.dreamora.strings.R.string.stats_cache),
                 accent = palette.secondary,
@@ -522,9 +522,9 @@ internal fun SettingsScreenBody(
                     SettingsGroup.Backup.label(),
                 ),
                 modifier = Modifier.padding(
-                    start = NovelaSpacing.screenH,
-                    end = NovelaSpacing.screenH,
-                    top = NovelaSpacing.sm,
+                    start = DreamoraSpacing.screenH,
+                    end = DreamoraSpacing.screenH,
+                    top = DreamoraSpacing.sm,
                 ),
             )
         }
@@ -532,9 +532,9 @@ internal fun SettingsScreenBody(
         val menuSpecs = visibleSpecs.filter { it.group != SettingsGroup.Support }
         val aboutSpec = visibleSpecs.firstOrNull { it.group == SettingsGroup.Support }
         if (menuSpecs.isNotEmpty()) {
-            NovelaMenuSectionLabel(stringResource(my.dreamora.strings.R.string.menu_section_menu))
+            DreamoraMenuSectionLabel(stringResource(my.dreamora.strings.R.string.menu_section_menu))
             menuSpecs.forEach { spec ->
-                NovelaMenuCard(
+                DreamoraMenuCard(
                     icon = spec.icon,
                     title = spec.title,
                     subtitle = spec.summary,
@@ -544,8 +544,8 @@ internal fun SettingsScreenBody(
             }
         }
         if (aboutSpec != null) {
-            NovelaMenuSectionLabel(stringResource(my.dreamora.strings.R.string.menu_section_about))
-            NovelaMenuCard(
+            DreamoraMenuSectionLabel(stringResource(my.dreamora.strings.R.string.menu_section_about))
+            DreamoraMenuCard(
                 icon = aboutSpec.icon,
                 title = aboutSpec.title,
                 subtitle = aboutSpec.summary,
@@ -554,14 +554,14 @@ internal fun SettingsScreenBody(
             )
         }
         if (visibleSpecs.isEmpty()) {
-            NovelaEmptyState(
+            DreamoraEmptyState(
                 icon = Icons.Outlined.Search,
                 title = stringResource(my.dreamora.strings.R.string.settings_nothing_matches_title),
                 message = stringResource(my.dreamora.strings.R.string.settings_nothing_matches_message),
-                modifier = Modifier.padding(top = NovelaSpacing.xl),
+                modifier = Modifier.padding(top = DreamoraSpacing.xl),
             )
         }
-        Spacer(modifier = Modifier.height(NovelaSpacing.navBarClearance))
+        Spacer(modifier = Modifier.height(DreamoraSpacing.navBarClearance))
     }
 
     if (showNovelPromptsDialog.value) {

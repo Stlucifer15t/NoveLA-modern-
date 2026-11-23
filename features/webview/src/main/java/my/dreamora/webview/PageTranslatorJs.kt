@@ -8,7 +8,7 @@ package my.dreamora.webview
  *    за динамически подгружаемым контентом (комментарии) через MutationObserver;
  *  - restore() — вернуть страницу в исходное состояние;
  *  - applyResult(batchId, jsonObj) — применить перевод батча (вызывается
- *    Kotlin-мостом NovelaTranslateBridge).
+ *    Kotlin-мостом DreamoraTranslateBridge).
  *
  * Ключевые решения контракта:
  *  - накопление батчей: min(8000 символов, 100 узлов) — в пределах лимита
@@ -85,7 +85,7 @@ val PAGE_TRANSLATOR_JS: String = """(function () {
   // span-ы (в отличие от WeakMap, который протухает на SPA-ререндере).
   function insideTranslatedSpan(el) {
     if (!el || !el.closest) { return false; }
-    return el.closest('span[data-novela-tr]') !== null;
+    return el.closest('span[data-dreamora-tr]') !== null;
   }
 
   function shouldSkip(node) {
@@ -138,7 +138,7 @@ val PAGE_TRANSLATOR_JS: String = """(function () {
       batch.sent = true;
       sentBatches[batch.id] = batch;
       inflight = batch;
-      window.NovelaTranslate.translateAsync(batch.id, batch.targetLang, JSON.stringify(batch.texts));
+      window.DreamoraTranslate.translateAsync(batch.id, batch.targetLang, JSON.stringify(batch.texts));
       scheduleTimeout();
       return;
     }
@@ -203,7 +203,7 @@ val PAGE_TRANSLATOR_JS: String = """(function () {
       var translated = result[original];
       if (typeof translated !== 'string' || translated.length === 0) { continue; }
       var span = document.createElement('span');
-      span.setAttribute('data-novela-tr', String(batch.id)); // маркер — только на span, без обёрток
+      span.setAttribute('data-dreamora-tr', String(batch.id)); // маркер — только на span, без обёрток
       span.setAttribute('data-original', original);          // браузер сам экранирует атрибут
       span.textContent = translated;                         // только textContent, никогда innerHTML
       parent.replaceChild(span, node);
@@ -231,7 +231,7 @@ val PAGE_TRANSLATOR_JS: String = """(function () {
     inflight = null;
     pendingNodes = [];
 
-    var spans = document.querySelectorAll('span[data-novela-tr]');
+    var spans = document.querySelectorAll('span[data-dreamora-tr]');
     for (var i = spans.length - 1; i >= 0; i--) {
       var span = spans[i];
       var parent = span.parentNode;

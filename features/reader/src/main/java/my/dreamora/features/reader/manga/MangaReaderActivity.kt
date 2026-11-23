@@ -241,7 +241,7 @@ internal class MangaReaderActivity : ComponentActivity() {
         viewModel.init(bookUrl, chapterUrl)
 
         setContent {
-            // Общая тема NoveLA (тёмная/светлая/AMOLED из настроек приложения),
+            // Общая тема Dreamora (тёмная/светлая/AMOLED из настроек приложения),
             // как у текстового ридера; enableEdgeToEdge — отсюда (Bug2).
             Theme(themeProvider) {
                 MangaReaderComposeContent()

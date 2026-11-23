@@ -77,7 +77,7 @@ data class CompatRepoEntry(
     val versionCode: Long = 0,
     /** ISO 639-1, or "" when the repository does not declare a language. */
     val language: String = "",
-    /** Source home URL — NoveLA matches book URLs against it. */
+    /** Source home URL — Dreamora matches book URLs against it. */
     val baseUrl: String = "",
     val payloadUrl: String = "",
     /** Key of the object in the cached index (Legado) when the payload is inline. */

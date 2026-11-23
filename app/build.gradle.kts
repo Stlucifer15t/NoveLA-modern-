@@ -45,8 +45,8 @@ android {
 
     defaultConfig {
         applicationId = "my.dreamora"
-        versionCode = 45
-        versionName = "1.6.7"
+        versionCode = 46
+        versionName = "1.6.8"
         base.archivesName.set("Dreamora_v$versionName")
         manifestPlaceholders["appLabel"] = "Dreamora"
         ndk {
@@ -59,11 +59,11 @@ android {
         buildConfigField("String", "GIT_COMMIT_HASH", "\"$gitCommitHash\"")
     }
 
-    // Repo-bundled signing key (keystore/novela-release.p12, empty passwords): every
+    // Repo-bundled signing key (keystore/dreamora-release.p12, empty passwords): every
     // machine and every CI run produces APKs signed by the SAME certificate, so a
     // build can be updated in place without the throwaway debug certificate changing
     // per machine. A real key from local.properties / custom.properties still wins.
-    val bundledKeystore = rootProject.file("keystore/novela-release.p12")
+    val bundledKeystore = rootProject.file("keystore/dreamora-release.p12")
     val hasBundledKeystore = bundledKeystore.exists()
     println("hasBundledKeystore: $hasBundledKeystore")
 

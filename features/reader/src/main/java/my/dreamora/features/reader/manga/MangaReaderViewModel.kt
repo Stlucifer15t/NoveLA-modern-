@@ -60,7 +60,7 @@ internal sealed interface MangaReaderEvent {
 }
 
 /**
- * MVI-логика манга/манхва-читалки (порт tachiyomisy, адаптация под NoveLA).
+ * MVI-логика манга/манхва-читалки (порт tachiyomisy, адаптация под Dreamora).
  *
  * Гонки init (Bug1a): `init` фиксирует `bookUrl` и целевой URL главы СИНХРОННО,
  * до запуска корутины загрузки. Повторный init игнорируется (идемпотентен).

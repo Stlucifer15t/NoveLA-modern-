@@ -29,7 +29,7 @@ import java.nio.charset.Charset
 import java.net.URLEncoder
 
 /**
- * Adapts a Legado bookSource to NoveLA's [SourceInterface.Catalog].
+ * Adapts a Legado bookSource to Dreamora's [SourceInterface.Catalog].
  *
  * Requests go through [NetworkClient] — Cloudflare interceptors and the
  * cookie jar apply just like for first-party Lua sources.

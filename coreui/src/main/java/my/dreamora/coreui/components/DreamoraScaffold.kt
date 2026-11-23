@@ -36,11 +36,11 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import my.dreamora.coreui.theme.NovelaMotion
-import my.dreamora.coreui.theme.NovelaRadius
-import my.dreamora.coreui.theme.NovelaSpacing
-import my.dreamora.coreui.theme.NovelaTheme
-import my.dreamora.coreui.theme.NovelaType
+import my.dreamora.coreui.theme.DreamoraMotion
+import my.dreamora.coreui.theme.DreamoraRadius
+import my.dreamora.coreui.theme.DreamoraSpacing
+import my.dreamora.coreui.theme.DreamoraTheme
+import my.dreamora.coreui.theme.DreamoraType
 
 /**
  * Large screen title with an optional subtitle and trailing action slot.
@@ -49,7 +49,7 @@ import my.dreamora.coreui.theme.NovelaType
  * line, no container fill, just type on the background so covers do the talking.
  */
 @Composable
-fun NovelaScreenHeader(
+fun DreamoraScreenHeader(
     title: String,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
@@ -62,10 +62,10 @@ fun NovelaScreenHeader(
             // title slides under the status bar clock.
             .statusBarsPadding()
             .padding(
-                start = NovelaSpacing.screenH,
-                end = NovelaSpacing.sm,
-                top = NovelaSpacing.md,
-                bottom = NovelaSpacing.sm,
+                start = DreamoraSpacing.screenH,
+                end = DreamoraSpacing.sm,
+                top = DreamoraSpacing.md,
+                bottom = DreamoraSpacing.sm,
             ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -81,8 +81,8 @@ fun NovelaScreenHeader(
                 Spacer(Modifier.height(2.dp))
                 Text(
                     text = subtitle,
-                    style = NovelaType.bookMeta,
-                    color = NovelaTheme.colors.textMuted,
+                    style = DreamoraType.bookMeta,
+                    color = DreamoraTheme.colors.textMuted,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -96,7 +96,7 @@ fun NovelaScreenHeader(
  * Section heading with an optional "See all"-style trailing label.
  */
 @Composable
-fun NovelaSectionHeader(
+fun DreamoraSectionHeader(
     title: String,
     modifier: Modifier = Modifier,
     actionLabel: String? = null,
@@ -105,12 +105,12 @@ fun NovelaSectionHeader(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = NovelaSpacing.screenH, vertical = NovelaSpacing.sm),
+            .padding(horizontal = DreamoraSpacing.screenH, vertical = DreamoraSpacing.sm),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             text = title,
-            style = NovelaType.sectionTitle,
+            style = DreamoraType.sectionTitle,
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f),
             maxLines = 1,
@@ -119,12 +119,12 @@ fun NovelaSectionHeader(
         if (actionLabel != null && onActionClick != null) {
             Text(
                 text = actionLabel,
-                style = NovelaType.sectionAction,
+                style = DreamoraType.sectionAction,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier
-                    .clip(NovelaRadius.chipShape)
+                    .clip(DreamoraRadius.chipShape)
                     .clickable(onClick = onActionClick)
-                    .padding(horizontal = NovelaSpacing.sm, vertical = NovelaSpacing.xs),
+                    .padding(horizontal = DreamoraSpacing.sm, vertical = DreamoraSpacing.xs),
             )
         }
     }
@@ -138,7 +138,7 @@ fun NovelaSectionHeader(
  * rather than snappy.
  */
 @Composable
-fun NovelaFilterChip(
+fun DreamoraFilterChip(
     label: String,
     selected: Boolean,
     onClick: () -> Unit,
@@ -147,27 +147,27 @@ fun NovelaFilterChip(
 ) {
     val background by animateColorAsState(
         targetValue = if (selected) MaterialTheme.colorScheme.primary else androidx.compose.ui.graphics.Color.Transparent,
-        animationSpec = tween(NovelaMotion.STANDARD, easing = NovelaMotion.StandardEasing),
+        animationSpec = tween(DreamoraMotion.STANDARD, easing = DreamoraMotion.StandardEasing),
         label = "chipBg",
     )
     val contentColor by animateColorAsState(
-        targetValue = if (selected) MaterialTheme.colorScheme.onPrimary else NovelaTheme.colors.textMuted,
-        animationSpec = tween(NovelaMotion.STANDARD, easing = NovelaMotion.StandardEasing),
+        targetValue = if (selected) MaterialTheme.colorScheme.onPrimary else DreamoraTheme.colors.textMuted,
+        animationSpec = tween(DreamoraMotion.STANDARD, easing = DreamoraMotion.StandardEasing),
         label = "chipFg",
     )
     val borderColor by animateColorAsState(
-        targetValue = if (selected) MaterialTheme.colorScheme.primary else NovelaTheme.colors.hairline,
-        animationSpec = tween(NovelaMotion.STANDARD, easing = NovelaMotion.StandardEasing),
+        targetValue = if (selected) MaterialTheme.colorScheme.primary else DreamoraTheme.colors.hairline,
+        animationSpec = tween(DreamoraMotion.STANDARD, easing = DreamoraMotion.StandardEasing),
         label = "chipBorder",
     )
 
     Row(
         modifier = modifier
-            .clip(NovelaRadius.chipShape)
+            .clip(DreamoraRadius.chipShape)
             .background(background)
-            .border(1.dp, borderColor, NovelaRadius.chipShape)
+            .border(1.dp, borderColor, DreamoraRadius.chipShape)
             .clickable(onClick = onClick)
-            .padding(horizontal = NovelaSpacing.md, vertical = 7.dp),
+            .padding(horizontal = DreamoraSpacing.md, vertical = 7.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,
     ) {
@@ -190,25 +190,25 @@ fun NovelaFilterChip(
 }
 
 /**
- * Horizontal row of [NovelaFilterChip]s with edge padding, used for
+ * Horizontal row of [DreamoraFilterChip]s with edge padding, used for
  * category/filter rails.
  */
 @Composable
-fun NovelaChipRow(
+fun DreamoraChipRow(
     items: List<String>,
     selectedIndex: Int,
     onSelect: (Int) -> Unit,
     modifier: Modifier = Modifier,
-    contentPadding: Dp = NovelaSpacing.screenH,
+    contentPadding: Dp = DreamoraSpacing.screenH,
 ) {
     LazyRow(
         modifier = modifier.fillMaxWidth(),
         contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = contentPadding),
-        horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.sm),
+        horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.sm),
     ) {
         items(items) { label ->
             val index = items.indexOf(label)
-            NovelaFilterChip(
+            DreamoraFilterChip(
                 label = label,
                 selected = index == selectedIndex,
                 onClick = { onSelect(index) },
@@ -223,21 +223,21 @@ fun NovelaChipRow(
  * spinning indicator competing with the content.
  */
 @Composable
-fun NovelaTopProgress(
+fun DreamoraTopProgress(
     visible: Boolean,
     modifier: Modifier = Modifier,
 ) {
     AnimatedVisibility(
         visible = visible,
-        enter = fadeIn(tween(NovelaMotion.INSTANT)) + expandVertically(tween(NovelaMotion.STANDARD)),
-        exit = fadeOut(tween(NovelaMotion.INSTANT)) + shrinkVertically(tween(NovelaMotion.STANDARD)),
+        enter = fadeIn(tween(DreamoraMotion.INSTANT)) + expandVertically(tween(DreamoraMotion.STANDARD)),
+        exit = fadeOut(tween(DreamoraMotion.INSTANT)) + shrinkVertically(tween(DreamoraMotion.STANDARD)),
         modifier = modifier,
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(2.dp)
-                .background(NovelaTheme.colors.accentSoft)
+                .background(DreamoraTheme.colors.accentSoft)
         ) {
             Box(
                 Modifier
@@ -254,7 +254,7 @@ fun NovelaTopProgress(
  * optional action. Used when a library category or search has no results.
  */
 @Composable
-fun NovelaEmptyState(
+fun DreamoraEmptyState(
     icon: ImageVector,
     title: String,
     message: String,
@@ -265,15 +265,15 @@ fun NovelaEmptyState(
     androidx.compose.foundation.layout.Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(NovelaSpacing.xxl),
+            .padding(DreamoraSpacing.xxl),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
         Box(
             modifier = Modifier
                 .size(64.dp)
-                .clip(RoundedCornerShape(NovelaRadius.xl))
-                .background(NovelaTheme.colors.accentSoft),
+                .clip(RoundedCornerShape(DreamoraRadius.xl))
+                .background(DreamoraTheme.colors.accentSoft),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
@@ -283,24 +283,24 @@ fun NovelaEmptyState(
                 modifier = Modifier.size(28.dp),
             )
         }
-        Spacer(Modifier.height(NovelaSpacing.lg))
+        Spacer(Modifier.height(DreamoraSpacing.lg))
         Text(
             text = title,
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface,
         )
         if (message.isNotBlank()) {
-            Spacer(Modifier.height(NovelaSpacing.xs))
+            Spacer(Modifier.height(DreamoraSpacing.xs))
             Text(
                 text = message,
                 style = MaterialTheme.typography.bodySmall,
-                color = NovelaTheme.colors.textMuted,
+                color = DreamoraTheme.colors.textMuted,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,
             )
         }
         if (actionLabel != null && onAction != null) {
-            Spacer(Modifier.height(NovelaSpacing.lg))
-            NovelaPrimaryButton(text = actionLabel, onClick = onAction)
+            Spacer(Modifier.height(DreamoraSpacing.lg))
+            DreamoraPrimaryButton(text = actionLabel, onClick = onAction)
         }
     }
 }
@@ -309,7 +309,7 @@ fun NovelaEmptyState(
  * Filled accent button with a subtle gradient and press feedback.
  */
 @Composable
-fun NovelaPrimaryButton(
+fun DreamoraPrimaryButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -317,7 +317,7 @@ fun NovelaPrimaryButton(
 ) {
     Box(
         modifier = modifier
-            .clip(NovelaRadius.buttonShape)
+            .clip(DreamoraRadius.buttonShape)
             .background(
                 if (enabled) {
                     androidx.compose.ui.graphics.Brush.horizontalGradient(
@@ -331,22 +331,22 @@ fun NovelaPrimaryButton(
                 }
             )
             .clickable(enabled = enabled, onClick = onClick)
-            .padding(horizontal = NovelaSpacing.xl, vertical = NovelaSpacing.md),
+            .padding(horizontal = DreamoraSpacing.xl, vertical = DreamoraSpacing.md),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text = text,
             style = MaterialTheme.typography.labelLarge,
-            color = if (enabled) MaterialTheme.colorScheme.onPrimary else NovelaTheme.colors.textMuted,
+            color = if (enabled) MaterialTheme.colorScheme.onPrimary else DreamoraTheme.colors.textMuted,
         )
     }
 }
 
 /**
- * Outline button for a secondary action next to [NovelaPrimaryButton].
+ * Outline button for a secondary action next to [DreamoraPrimaryButton].
  */
 @Composable
-fun NovelaSecondaryButton(
+fun DreamoraSecondaryButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -354,10 +354,10 @@ fun NovelaSecondaryButton(
 ) {
     Box(
         modifier = modifier
-            .clip(NovelaRadius.buttonShape)
-            .border(1.dp, NovelaTheme.colors.hairline, NovelaRadius.buttonShape)
+            .clip(DreamoraRadius.buttonShape)
+            .border(1.dp, DreamoraTheme.colors.hairline, DreamoraRadius.buttonShape)
             .clickable(enabled = enabled, onClick = onClick)
-            .padding(horizontal = NovelaSpacing.xl, vertical = NovelaSpacing.md),
+            .padding(horizontal = DreamoraSpacing.xl, vertical = DreamoraSpacing.md),
         contentAlignment = Alignment.Center,
     ) {
         Text(

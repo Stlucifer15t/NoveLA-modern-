@@ -31,7 +31,7 @@ class CompatRepositoriesActivity : BaseActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             Theme(themeProvider = themeProvider) {
-                NovelaCompatRepositoriesScreen(onBack = { finish() })
+                DreamoraCompatRepositoriesScreen(onBack = { finish() })
             }
         }
     }

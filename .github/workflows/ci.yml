@@ -57,9 +57,9 @@ jobs:
       - name: Check the signing key
         # Not fatal: a missing key only means the debug certificate is used instead.
         run: |
-          if [ -f keystore/novela-release.p12 ]; then
+          if [ -f keystore/dreamora-release.p12 ]; then
             echo "keystore: present"
-            openssl pkcs12 -in keystore/novela-release.p12 -passin pass: -nokeys -noout -info
+            openssl pkcs12 -in keystore/dreamora-release.p12 -passin pass: -nokeys -noout -info
           else
             echo "keystore: MISSING — falling back to the debug certificate"
           fi
@@ -112,13 +112,13 @@ jobs:
           BUILD_TOOLS=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -n1)
           OUT=$("$BUILD_TOOLS/apksigner" verify --print-certs "$APK")
           echo "$OUT" | head -20
-          WANT=$(openssl pkcs12 -in keystore/novela-release.p12 -passin pass: -nokeys \
+          WANT=$(openssl pkcs12 -in keystore/dreamora-release.p12 -passin pass: -nokeys \
             | openssl x509 -noout -fingerprint -sha256 | cut -d= -f2 | tr -d ':')
           GOT=$(echo "$OUT" | sed -n 's/^V3.0 (APK Signature Scheme v3) Signer #1 certificate SHA-256 digest: //p')
           echo "bundled key: $WANT"
           echo "apk signer : $GOT"
           if [ -n "$GOT" ] && [ "$GOT" != "$WANT" ]; then
-            echo "::error::debug APK is signed with a different certificate than keystore/novela-release.p12"
+            echo "::error::debug APK is signed with a different certificate than keystore/dreamora-release.p12"
             exit 1
           fi
 

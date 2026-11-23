@@ -16,7 +16,7 @@ import my.dreamora.features.reader.manga.viewer.ViewerNavigation
 /**
  * Конфигурация вебтун-вьюера — порт tachiyomisy WebtoonConfig.
  * Все настройки подписаны на AppPreferences (flow в [scope]).
- * Зум всей ленты (strip-zoom) в NoveLA не портирован — страницы
+ * Зум всей ленты (strip-zoom) в Dreamora не портирован — страницы
  * не принимают тачи (touchEnabled=false), как WebtoonSubsamplingImageView
  * в tachiyomisy (onTouchEvent всегда false).
  */

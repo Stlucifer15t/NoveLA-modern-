@@ -20,7 +20,7 @@ import androidx.compose.ui.graphics.luminance
  * Reader screens must NOT use these: the reader has its own neutral palette in
  * `BaseColorScheme` so long-form reading never inherits an accent tint.
  */
-data class NovelaColors(
+data class DreamoraColors(
     /** Very low-alpha accent used behind selected chips and active nav items. */
     val accentSoft: Color,
 
@@ -57,11 +57,11 @@ data class NovelaColors(
  * Called once per theme change inside `InternalTheme`.
  */
 @Composable
-fun rememberNovelaColors(): NovelaColors {
+fun rememberNovelaColors(): DreamoraColors {
     val scheme = MaterialTheme.colorScheme
     val isLight = scheme.background.luminance() > 0.5f || (!isSystemInDarkTheme() && scheme.background.luminance() > 0.35f)
 
-    return NovelaColors(
+    return DreamoraColors(
         accentSoft = scheme.primary.copy(alpha = if (isLight) 0.10f else 0.18f),
         accentLine = scheme.primary.copy(alpha = if (isLight) 0.30f else 0.45f),
         accentGradient = Brush.verticalGradient(
@@ -88,21 +88,21 @@ fun rememberNovelaColors(): NovelaColors {
 }
 
 /**
- * Access point inside composables: `NovelaTheme.colors.textMuted`.
+ * Access point inside composables: `DreamoraTheme.colors.textMuted`.
  * Falls back to a sensible default so previews and isolated components that are
  * rendered outside [InternalTheme] still compose instead of crashing.
  */
-object NovelaTheme {
-    val colors: NovelaColors
+object DreamoraTheme {
+    val colors: DreamoraColors
         @Composable
         @ReadOnlyComposable
         get() = LocalNovelaColors.current
 }
 
-val LocalNovelaColors = staticCompositionLocalOf<NovelaColors> {
+val LocalNovelaColors = staticCompositionLocalOf<DreamoraColors> {
     // Safe defaults so a composable rendered outside the theme (preview, dialog
     // window, isolated test) still works instead of throwing.
-    NovelaColors(
+    DreamoraColors(
         accentSoft = Color(0x1F0088FF),
         accentLine = Color(0x4D0088FF),
         accentGradient = Brush.verticalGradient(listOf(Color(0x290088FF), Color.Transparent)),

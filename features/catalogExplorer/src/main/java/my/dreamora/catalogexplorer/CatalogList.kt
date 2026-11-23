@@ -1,7 +1,7 @@
 package my.dreamora.catalogexplorer
 
-import my.dreamora.coreui.components.NovelaHeroPill
-import my.dreamora.coreui.components.NovelaHeroHeader
+import my.dreamora.coreui.components.DreamoraHeroPill
+import my.dreamora.coreui.components.DreamoraHeroHeader
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
@@ -45,16 +45,16 @@ import androidx.compose.ui.unit.dp
 import my.dreamora.core.getLanguageDisplayName
 import my.dreamora.coreui.components.AnimatedTransition
 import my.dreamora.coreui.components.ImageView
-import my.dreamora.coreui.components.NovelaIconChip
-import my.dreamora.coreui.components.NovelaTileBadge
-import my.dreamora.coreui.components.NovelaTileCard
-import my.dreamora.coreui.components.NovelaTileSectionHeader
+import my.dreamora.coreui.components.DreamoraIconChip
+import my.dreamora.coreui.components.DreamoraTileBadge
+import my.dreamora.coreui.components.DreamoraTileCard
+import my.dreamora.coreui.components.DreamoraTileSectionHeader
 import my.dreamora.coreui.components.novelaTileAccent
 import my.dreamora.coreui.theme.InternalTheme
-import my.dreamora.coreui.theme.NovelaRadius
-import my.dreamora.coreui.theme.NovelaSpacing
-import my.dreamora.coreui.theme.NovelaTheme
-import my.dreamora.coreui.theme.NovelaType
+import my.dreamora.coreui.theme.DreamoraRadius
+import my.dreamora.coreui.theme.DreamoraSpacing
+import my.dreamora.coreui.theme.DreamoraTheme
+import my.dreamora.coreui.theme.DreamoraType
 import my.dreamora.coreui.theme.PreviewThemes
 import my.dreamora.data.CatalogItem
 import my.dreamora.scraper.DatabaseInterface
@@ -88,11 +88,11 @@ internal fun CatalogList(
         modifier = Modifier
             .fillMaxSize()
             .padding(paddingValues = innerPadding),
-        horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.sm),
-        verticalArrangement = Arrangement.spacedBy(NovelaSpacing.sm),
+        horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.sm),
+        verticalArrangement = Arrangement.spacedBy(DreamoraSpacing.sm),
         contentPadding = PaddingValues(
-            start = NovelaSpacing.screenH,
-            end = NovelaSpacing.screenH,
+            start = DreamoraSpacing.screenH,
+            end = DreamoraSpacing.screenH,
             bottom = 200.dp,
         ),
     ) {
@@ -101,7 +101,7 @@ internal fun CatalogList(
         // tiles are one flick away rather than below a fixed header.
         item(span = { GridItemSpan(maxLineSpan) }, contentType = "hero") {
             val accent = MaterialTheme.colorScheme.primary
-            NovelaHeroHeader(
+            DreamoraHeroHeader(
                 title = stringResource(R.string.title_browse),
                 subtitle = stringResource(R.string.browse_hero_subtitle),
                 accent = accent,
@@ -114,7 +114,7 @@ internal fun CatalogList(
                     )
                 },
                 pill = {
-                    NovelaHeroPill(
+                    DreamoraHeroPill(
                         value = sourcesList.size.toString(),
                         label = stringResource(R.string.sources),
                         accent = accent,
@@ -125,7 +125,7 @@ internal fun CatalogList(
 
         if (databasesList.isNotEmpty()) {
             item(span = { GridItemSpan(maxLineSpan) }, contentType = "header") {
-                NovelaTileSectionHeader(
+                DreamoraTileSectionHeader(
                     title = stringResource(id = R.string.database),
                     count = databasesList.size,
                 )
@@ -136,20 +136,20 @@ internal fun CatalogList(
                 contentType = { _, _ -> "database" },
             ) { _, database ->
                 val accent = novelaTileAccent(database.baseUrl)
-                NovelaTileCard(
+                DreamoraTileCard(
                     accent = accent,
                     onClick = { onDatabaseClick(database) },
                 ) {
-                    NovelaIconChip(accent = accent) {
+                    DreamoraIconChip(accent = accent) {
                         ImageView(
                             imageModel = database.iconUrl,
                             modifier = Modifier
                                 .fillMaxSize()
-                                .clip(NovelaRadius.coverShape),
+                                .clip(DreamoraRadius.coverShape),
                             error = R.drawable.default_icon,
                         )
                     }
-                    Spacer(Modifier.height(NovelaSpacing.xxs))
+                    Spacer(Modifier.height(DreamoraSpacing.xxs))
                     Text(
                         text = stringResource(id = database.nameStrId),
                         style = MaterialTheme.typography.titleSmall,
@@ -158,15 +158,15 @@ internal fun CatalogList(
                     )
                     Text(
                         text = stringResource(R.string.english),
-                        style = NovelaType.bookMeta,
-                        color = NovelaTheme.colors.textMuted,
+                        style = DreamoraType.bookMeta,
+                        color = DreamoraTheme.colors.textMuted,
                     )
                 }
             }
         }
 
         item(span = { GridItemSpan(maxLineSpan) }, contentType = "header") {
-            NovelaTileSectionHeader(
+            DreamoraTileSectionHeader(
                 title = stringResource(id = R.string.sources),
                 count = ordered.size,
             )
@@ -209,7 +209,7 @@ private fun SourceTile(
         else -> StringsR.string.content_type_novel
     }
 
-    NovelaTileCard(
+    DreamoraTileCard(
         accent = accent,
         onClick = onOpen,
         // The actions live in the tile's top-right corner instead of a trailing column:
@@ -231,7 +231,7 @@ private fun SourceTile(
                         confirmButton = {
                             FilledTonalButton(
                                 onClick = { openConfig = false },
-                                shape = NovelaRadius.buttonShape,
+                                shape = DreamoraRadius.buttonShape,
                                 modifier = Modifier.fillMaxWidth(),
                             ) {
                                 Text(stringResource(R.string.close))
@@ -281,13 +281,13 @@ private fun SourceTile(
         },
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            NovelaIconChip(accent = accent) {
+            DreamoraIconChip(accent = accent) {
                 val iconResId = catalog.iconResId
                 ImageView(
                     imageModel = iconResId ?: catalog.iconUrl,
                     modifier = Modifier
                         .fillMaxSize()
-                        .clip(NovelaRadius.coverShape),
+                        .clip(DreamoraRadius.coverShape),
                     error = R.drawable.default_icon,
                 )
             }
@@ -302,13 +302,13 @@ private fun SourceTile(
             overflow = TextOverflow.Ellipsis,
         )
         Row(
-            horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.xs),
+            horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.xs),
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(top = NovelaSpacing.xxs),
+            modifier = Modifier.padding(top = DreamoraSpacing.xxs),
         ) {
-            NovelaTileBadge(text = stringResource(labelRes), accent = accent)
+            DreamoraTileBadge(text = stringResource(labelRes), accent = accent)
             catalog.languageTag?.let { tag ->
-                NovelaTileBadge(
+                DreamoraTileBadge(
                     text = getLanguageDisplayName(tag),
                     accent = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

@@ -34,7 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import my.dreamora.coreui.components.ImageView
-import my.dreamora.coreui.components.NovelaEmptyState
+import my.dreamora.coreui.components.DreamoraEmptyState
 import my.dreamora.coreui.theme.clickableNoIndicator
 import my.dreamora.feature.local_database.BookMetadata
 import my.dreamora.scraper.Scraper
@@ -122,13 +122,13 @@ internal fun ChaptersRelatedContent(
                 CircularProgressIndicator()
             }
 
-            RelatedBooksState.NoGenre -> NovelaEmptyState(
+            RelatedBooksState.NoGenre -> DreamoraEmptyState(
                 icon = Icons.Outlined.Explore,
                 title = title,
                 message = stringResource(StringsR.string.book_related_no_genre),
             )
 
-            RelatedBooksState.Failed -> NovelaEmptyState(
+            RelatedBooksState.Failed -> DreamoraEmptyState(
                 icon = Icons.Outlined.Explore,
                 title = title,
                 message = stringResource(StringsR.string.book_related_failed),
@@ -240,13 +240,13 @@ internal fun ChaptersReviewsContent(
                 CircularProgressIndicator()
             }
 
-            BookReviewsUiState.Unsupported -> NovelaEmptyState(
+            BookReviewsUiState.Unsupported -> DreamoraEmptyState(
                 icon = Icons.Outlined.StarBorder,
                 title = stringResource(StringsR.string.book_reviews_unsupported_title),
                 message = stringResource(StringsR.string.book_reviews_unsupported_message),
             )
 
-            BookReviewsUiState.Failed -> NovelaEmptyState(
+            BookReviewsUiState.Failed -> DreamoraEmptyState(
                 icon = Icons.Outlined.StarBorder,
                 title = stringResource(StringsR.string.book_tab_reviews),
                 message = stringResource(StringsR.string.book_reviews_failed),
@@ -255,7 +255,7 @@ internal fun ChaptersReviewsContent(
             )
 
             is BookReviewsUiState.Loaded -> if (state.reviews.isEmpty()) {
-                NovelaEmptyState(
+                DreamoraEmptyState(
                     icon = Icons.Outlined.StarBorder,
                     title = stringResource(StringsR.string.book_reviews_empty_title),
                     message = stringResource(StringsR.string.book_reviews_empty_message),

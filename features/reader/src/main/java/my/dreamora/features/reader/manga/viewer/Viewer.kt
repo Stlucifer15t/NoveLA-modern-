@@ -6,7 +6,7 @@ import android.view.View
 import my.dreamora.features.reader.manga.MangaChapter
 
 /**
- * Адаптация tachiyomisy Viewer под NoveLA: одна глава за раз,
+ * Адаптация tachiyomisy Viewer под Dreamora: одна глава за раз,
  * без ViewerChapters (переключение глав делает Activity).
  */
 internal interface Viewer {

@@ -75,7 +75,7 @@ class TachiyomiExtensionLoader @Inject constructor(
             )
         }
         // The class resolves — but without an adapter turning its suspend methods into
-        // NoveLA sources there is nothing to load it into. Keep the record, explain next.
+        // Dreamora sources there is nothing to load it into. Keep the record, explain next.
         val runtime = CompatRuntime.of(ecosystem)
         val suffix = declaredName?.let { " (declared as '$it')" }.orEmpty()
         throw CompatException(

@@ -72,18 +72,18 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import my.dreamora.R
 import my.dreamora.core.appPreferences.AppPreferences
-import my.dreamora.core.foryou.NovelaGenre
+import my.dreamora.core.foryou.DreamoraGenre
 import my.dreamora.core.rememberResolvedBookImagePath
 import my.dreamora.coreui.components.ImageView
-import my.dreamora.coreui.components.NovelaBookCard
-import my.dreamora.coreui.components.NovelaEmptyState
-import my.dreamora.coreui.components.NovelaFilterChip
-import my.dreamora.coreui.components.NovelaTileIconButton
+import my.dreamora.coreui.components.DreamoraBookCard
+import my.dreamora.coreui.components.DreamoraEmptyState
+import my.dreamora.coreui.components.DreamoraFilterChip
+import my.dreamora.coreui.components.DreamoraTileIconButton
 import my.dreamora.coreui.components.novelaGreeting
-import my.dreamora.coreui.theme.NovelaRadius
-import my.dreamora.coreui.theme.NovelaSize
-import my.dreamora.coreui.theme.NovelaSpacing
-import my.dreamora.coreui.theme.NovelaType
+import my.dreamora.coreui.theme.DreamoraRadius
+import my.dreamora.coreui.theme.DreamoraSize
+import my.dreamora.coreui.theme.DreamoraSpacing
+import my.dreamora.coreui.theme.DreamoraType
 import my.dreamora.feature.local_database.BookMetadata
 
 /**
@@ -97,7 +97,7 @@ import my.dreamora.feature.local_database.BookMetadata
  * worse than none.
  */
 @Composable
-fun NovelaForYouScreen(
+fun DreamoraForYouScreen(
     state: ForYouUiState,
     appPreferences: AppPreferences,
     onOpenBook: (BookMetadata) -> Unit,
@@ -136,15 +136,15 @@ fun NovelaForYouScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding()
-                .padding(bottom = NovelaSpacing.navBarClearance),
+                .padding(bottom = DreamoraSpacing.navBarClearance),
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = NovelaSpacing.screenH)
-                    .padding(top = NovelaSpacing.md, bottom = NovelaSpacing.sm),
+                    .padding(horizontal = DreamoraSpacing.screenH)
+                    .padding(top = DreamoraSpacing.md, bottom = DreamoraSpacing.sm),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.md),
+                horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.md),
             ) {
                 Box(
                     modifier = Modifier
@@ -171,19 +171,19 @@ fun NovelaForYouScreen(
                     )
                     Text(
                         text = stringResource(R.string.for_you_subtitle),
-                        style = NovelaType.bookMeta,
+                        style = DreamoraType.bookMeta,
                         color = palette.onSurfaceVariant,
                         maxLines = 2,
                     )
                 }
-                NovelaTileIconButton(
+                DreamoraTileIconButton(
                     contentDescription = stringResource(R.string.for_you_genres_title),
                     onClick = { showGenres = true },
                     accent = palette.surfaceVariant,
                 ) {
                     Icon(Icons.Outlined.Tune, null, modifier = Modifier.size(18.dp))
                 }
-                NovelaTileIconButton(
+                DreamoraTileIconButton(
                     contentDescription = stringResource(R.string.for_you_refresh),
                     onClick = onRefresh,
                     accent = if (state.loading) palette.primary else palette.surfaceVariant,
@@ -197,12 +197,12 @@ fun NovelaForYouScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = NovelaSpacing.screenH)
-                    .padding(bottom = NovelaSpacing.sm),
-                horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.sm),
+                    .padding(horizontal = DreamoraSpacing.screenH)
+                    .padding(bottom = DreamoraSpacing.sm),
+                horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.sm),
             ) {
                 ForYouContentType.entries.forEach { type ->
-                    NovelaFilterChip(
+                    DreamoraFilterChip(
                         label = stringResource(type.labelRes),
                         selected = type == state.type,
                         onClick = { onSetType(type) },
@@ -216,10 +216,10 @@ fun NovelaForYouScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = NovelaSpacing.screenH)
-                    .padding(bottom = NovelaSpacing.sm),
+                    .padding(horizontal = DreamoraSpacing.screenH)
+                    .padding(bottom = DreamoraSpacing.sm),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.sm),
+                horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.sm),
             ) {
                 Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
                     ForYouStatusPill(state = state)
@@ -239,7 +239,7 @@ fun NovelaForYouScreen(
                 ForYouReadingCard(
                     reading = state.reading,
                     onOpenBook = onOpenBook,
-                    modifier = Modifier.padding(horizontal = NovelaSpacing.screenH),
+                    modifier = Modifier.padding(horizontal = DreamoraSpacing.screenH),
                 )
             } else {
                 ForYouContinueRow(
@@ -265,7 +265,7 @@ fun NovelaForYouScreen(
             when {
                 state.books.isEmpty() && state.loading -> ForYouPlaceholders()
 
-                state.empty == ForYouEmpty.NoSourcesOfType -> NovelaEmptyState(
+                state.empty == ForYouEmpty.NoSourcesOfType -> DreamoraEmptyState(
                     icon = Icons.Outlined.Extension,
                     title = stringResource(R.string.for_you_no_sources_title),
                     message = stringResource(
@@ -274,10 +274,10 @@ fun NovelaForYouScreen(
                     ),
                     actionLabel = stringResource(R.string.for_you_open_extensions),
                     onAction = onOpenExtensions,
-                    modifier = Modifier.padding(horizontal = NovelaSpacing.screenH),
+                    modifier = Modifier.padding(horizontal = DreamoraSpacing.screenH),
                 )
 
-                state.books.isEmpty() -> NovelaEmptyState(
+                state.books.isEmpty() -> DreamoraEmptyState(
                     icon = Icons.Outlined.Update,
                     title = stringResource(R.string.for_you_no_answer_title),
                     // The failure text is appended rather than hidden: "the tab is empty and I do
@@ -288,7 +288,7 @@ fun NovelaForYouScreen(
                     ) + state.error?.let { "\n\n" + it }.orEmpty(),
                     actionLabel = stringResource(R.string.for_you_refresh),
                     onAction = onRefresh,
-                    modifier = Modifier.padding(horizontal = NovelaSpacing.screenH),
+                    modifier = Modifier.padding(horizontal = DreamoraSpacing.screenH),
                 )
 
                 else -> PullToRefreshBox(
@@ -314,7 +314,7 @@ fun NovelaForYouScreen(
             hostState = snackbar,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = NovelaSpacing.navBarClearance),
+                .padding(bottom = DreamoraSpacing.navBarClearance),
         )
     }
 
@@ -374,13 +374,13 @@ private fun ForYouStatusPill(state: ForYouUiState) {
         else -> stringResource(R.string.for_you_status_getting_started)
     }
     Surface(
-        shape = NovelaRadius.chipShape,
+        shape = DreamoraRadius.chipShape,
         color = palette.surfaceVariant,
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = NovelaSpacing.md, vertical = NovelaSpacing.xxs),
+            modifier = Modifier.padding(horizontal = DreamoraSpacing.md, vertical = DreamoraSpacing.xxs),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.xs),
+            horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.xs),
         ) {
             Box(
                 modifier = Modifier
@@ -396,7 +396,7 @@ private fun ForYouStatusPill(state: ForYouUiState) {
             )
             Text(
                 text = text,
-                style = NovelaType.bookMeta,
+                style = DreamoraType.bookMeta,
                 color = palette.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -419,15 +419,15 @@ private fun ForYouReadingCard(
     val palette = MaterialTheme.colorScheme
     Surface(
         modifier = modifier.fillMaxWidth(),
-        shape = NovelaRadius.cardShape,
+        shape = DreamoraRadius.cardShape,
         color = palette.surfaceVariant.copy(alpha = 0.7f),
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(NovelaSpacing.md),
+                .padding(DreamoraSpacing.md),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.md),
+            horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.md),
         ) {
             if (reading == null) {
                 Text(
@@ -444,8 +444,8 @@ private fun ForYouReadingCard(
             Box(
                 modifier = Modifier
                     .width(52.dp)
-                    .aspectRatio(NovelaSize.COVER_ASPECT)
-                    .clip(RoundedCornerShape(NovelaRadius.cover))
+                    .aspectRatio(DreamoraSize.COVER_ASPECT)
+                    .clip(RoundedCornerShape(DreamoraRadius.cover))
                     .clickable {
                         onOpenBook(
                             BookMetadata(
@@ -477,10 +477,10 @@ private fun ForYouReadingCard(
             ) {
                 Text(
                     text = stringResource(R.string.for_you_because_you_read),
-                    style = NovelaType.bookMeta,
+                    style = DreamoraType.bookMeta,
                     color = palette.primary,
                 )
-                Spacer(modifier = Modifier.height(NovelaSpacing.xxs))
+                Spacer(modifier = Modifier.height(DreamoraSpacing.xxs))
                 Text(
                     text = reading.title,
                     style = MaterialTheme.typography.titleSmall,
@@ -488,7 +488,7 @@ private fun ForYouReadingCard(
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
-                Spacer(modifier = Modifier.height(NovelaSpacing.xxs))
+                Spacer(modifier = Modifier.height(DreamoraSpacing.xxs))
                 Text(
                     text = if (reading.chaptersTotal > 0) {
                         stringResource(
@@ -500,7 +500,7 @@ private fun ForYouReadingCard(
                     } else {
                         stringResource(R.string.for_you_not_started)
                     },
-                    style = NovelaType.bookMeta,
+                    style = DreamoraType.bookMeta,
                     color = palette.onSurfaceVariant,
                 )
             }
@@ -539,20 +539,20 @@ private fun ForYouContinueRow(
     Column(modifier = modifier) {
         Text(
             text = stringResource(R.string.for_you_continue_title),
-            style = NovelaType.sectionTitle,
+            style = DreamoraType.sectionTitle,
             color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.padding(horizontal = NovelaSpacing.screenH, vertical = NovelaSpacing.sm),
+            modifier = Modifier.padding(horizontal = DreamoraSpacing.screenH, vertical = DreamoraSpacing.sm),
         )
         LazyRow(
-            contentPadding = PaddingValues(horizontal = NovelaSpacing.screenH),
-            horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.md),
+            contentPadding = PaddingValues(horizontal = DreamoraSpacing.screenH),
+            horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.md),
         ) {
             items(items = rows, key = { it.bookUrl }) { row ->
                 val cover = rememberResolvedBookImagePath(
                     bookUrl = row.bookUrl,
                     imagePath = row.coverUrl,
                 )
-                NovelaBookCard(
+                DreamoraBookCard(
                     title = row.title,
                     coverModel = cover,
                     subtitle = if (row.chaptersTotal > 0) {
@@ -560,7 +560,7 @@ private fun ForYouContinueRow(
                     } else {
                         null
                     },
-                    modifier = Modifier.width(NovelaSize.railCardWidth),
+                    modifier = Modifier.width(DreamoraSize.railCardWidth),
                     onClick = {
                         onOpenBook(
                             BookMetadata(
@@ -589,7 +589,7 @@ private fun ForYouBookCell(
         imagePath = book.metadata.coverImageUrl,
     )
     Column(modifier = Modifier.fillMaxWidth()) {
-        NovelaBookCard(
+        DreamoraBookCard(
             title = book.metadata.title,
             coverModel = cover,
             subtitle = buildString {
@@ -607,10 +607,10 @@ private fun ForYouBookCell(
             onLongClick = onLongPress,
         )
         book.matchedHistoryTitle?.let { from ->
-            Spacer(modifier = Modifier.height(NovelaSpacing.xxs))
+            Spacer(modifier = Modifier.height(DreamoraSpacing.xxs))
             Text(
                 text = stringResource(R.string.for_you_because_you_read_short, from),
-                style = NovelaType.bookMeta,
+                style = DreamoraType.bookMeta,
                 color = palette.primary,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -642,11 +642,11 @@ private fun ForYouRailCell(
     } else {
         book.sourceName
     }
-    NovelaBookCard(
+    DreamoraBookCard(
         title = book.metadata.title,
         coverModel = cover,
         subtitle = subtitle,
-        modifier = Modifier.width(NovelaSize.railCardWidth),
+        modifier = Modifier.width(DreamoraSize.railCardWidth),
         onClick = { onOpenBook(book.metadata) },
         onLongClick = onLongPress,
     )
@@ -666,17 +666,17 @@ private fun ForYouListRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(NovelaRadius.md))
+            .clip(RoundedCornerShape(DreamoraRadius.md))
             .clickable { onOpenBook(book.metadata) }
-            .padding(vertical = NovelaSpacing.xs, horizontal = NovelaSpacing.xs),
+            .padding(vertical = DreamoraSpacing.xs, horizontal = DreamoraSpacing.xs),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.md),
+        horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.md),
     ) {
         Box(
             modifier = Modifier
                 .width(46.dp)
-                .aspectRatio(NovelaSize.COVER_ASPECT)
-                .clip(RoundedCornerShape(NovelaRadius.cover)),
+                .aspectRatio(DreamoraSize.COVER_ASPECT)
+                .clip(RoundedCornerShape(DreamoraRadius.cover)),
         ) {
             ImageView(
                 imageModel = cover,
@@ -697,7 +697,7 @@ private fun ForYouListRow(
                     if (rating.isNotBlank()) append("★ ").append(rating).append(" · ")
                     append(if (book.inLibrary) stringResource(R.string.for_you_in_library) else book.sourceName)
                 },
-                style = NovelaType.bookMeta,
+                style = DreamoraType.bookMeta,
                 color = palette.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -714,12 +714,12 @@ private fun ForYouPlaceholders() {
             .fillMaxWidth()
             .height(480.dp),
         contentPadding = PaddingValues(
-            start = NovelaSpacing.screenH,
-            end = NovelaSpacing.screenH,
-            top = NovelaSpacing.sm,
+            start = DreamoraSpacing.screenH,
+            end = DreamoraSpacing.screenH,
+            top = DreamoraSpacing.sm,
         ),
-        horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.md),
-        verticalArrangement = Arrangement.spacedBy(NovelaSpacing.lg),
+        horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.md),
+        verticalArrangement = Arrangement.spacedBy(DreamoraSpacing.lg),
         userScrollEnabled = false,
     ) {
         items(count = 6) { index ->
@@ -727,18 +727,18 @@ private fun ForYouPlaceholders() {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .aspectRatio(NovelaSize.COVER_ASPECT)
-                        .clip(RoundedCornerShape(NovelaRadius.cover))
+                        .aspectRatio(DreamoraSize.COVER_ASPECT)
+                        .clip(RoundedCornerShape(DreamoraRadius.cover))
                         .background(
                             MaterialTheme.colorScheme.surfaceVariant.copy(alpha = shimmerAlpha(index))
                         )
                 )
-                Spacer(modifier = Modifier.height(NovelaSpacing.sm))
+                Spacer(modifier = Modifier.height(DreamoraSpacing.sm))
                 Box(
                     modifier = Modifier
                         .fillMaxWidth(0.8f)
                         .height(11.dp)
-                        .clip(RoundedCornerShape(NovelaRadius.xs))
+                        .clip(RoundedCornerShape(DreamoraRadius.xs))
                         .background(
                             MaterialTheme.colorScheme.surfaceVariant.copy(alpha = shimmerAlpha(index))
                         )
@@ -787,15 +787,15 @@ private fun ForYouPool(
         columns = forYouColumns(state),
         modifier = modifier,
         contentPadding = PaddingValues(
-            start = NovelaSpacing.screenH,
-            end = NovelaSpacing.screenH,
-            top = NovelaSpacing.sm,
+            start = DreamoraSpacing.screenH,
+            end = DreamoraSpacing.screenH,
+            top = DreamoraSpacing.sm,
             // The navigation pill floats over this tab, so the last row needs room of its own
             // or the bottom of the grid is permanently unreadable.
-            bottom = NovelaSpacing.navBarClearance + NovelaSpacing.lg,
+            bottom = DreamoraSpacing.navBarClearance + DreamoraSpacing.lg,
         ),
-        horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.md),
-        verticalArrangement = Arrangement.spacedBy(NovelaSpacing.lg),
+        horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.md),
+        verticalArrangement = Arrangement.spacedBy(DreamoraSpacing.lg),
     ) {
         items(
             items = views,
@@ -811,7 +811,7 @@ private fun ForYouPool(
                 // The grid's own row gap is 14 dp; a section needs room under its covers too,
                 // or two rails read as one long shelf. The reference leaves about 28 dp between
                 // sections, which is what the extra lg here and the arrangement add up to.
-                modifier = Modifier.padding(bottom = NovelaSpacing.lg),
+                modifier = Modifier.padding(bottom = DreamoraSpacing.lg),
             )
         }
 
@@ -820,15 +820,15 @@ private fun ForYouPool(
                 Column {
                     Text(
                         text = stringResource(R.string.for_you_pool_title),
-                        style = NovelaType.sectionTitle,
+                        style = DreamoraType.sectionTitle,
                         color = palette.onBackground,
                     )
                     Text(
                         text = stringResource(R.string.for_you_pool_note, state.books.size),
-                        style = NovelaType.bookMeta,
+                        style = DreamoraType.bookMeta,
                         color = palette.onSurfaceVariant,
                         maxLines = 2,
-                        modifier = Modifier.padding(top = NovelaSpacing.xxs),
+                        modifier = Modifier.padding(top = DreamoraSpacing.xxs),
                     )
                 }
             }
@@ -859,7 +859,7 @@ private fun ForYouPool(
                     Button(
                         onClick = onLoadMore,
                         enabled = !state.loadingMore,
-                        modifier = Modifier.padding(bottom = NovelaSpacing.md),
+                        modifier = Modifier.padding(bottom = DreamoraSpacing.md),
                     ) {
                         Text(
                             text = stringResource(
@@ -911,40 +911,40 @@ private fun ForYouRailBlock(
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.sm),
+            horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.sm),
         ) {
             // A tinted chip rather than an icon per genre: there are no forty genre glyphs in
             // this app, and a wrong icon reads as broken faster than a neutral one.
             Box(
                 modifier = Modifier
                     .size(28.dp)
-                    .clip(RoundedCornerShape(NovelaRadius.sm))
+                    .clip(RoundedCornerShape(DreamoraRadius.sm))
                     .background(accent.copy(alpha = 0.16f)),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
                     text = title.take(1).ifEmpty { "★" },
-                    style = NovelaType.badge,
+                    style = DreamoraType.badge,
                     color = accent,
                 )
             }
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title,
-                    style = NovelaType.sectionTitle,
+                    style = DreamoraType.sectionTitle,
                     color = palette.onBackground,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
                     text = note,
-                    style = NovelaType.bookMeta,
+                    style = DreamoraType.bookMeta,
                     color = palette.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            NovelaTileIconButton(
+            DreamoraTileIconButton(
                 contentDescription = stringResource(R.string.for_you_rail_expand, title),
                 onClick = onExpand,
                 accent = palette.surfaceVariant,
@@ -956,8 +956,8 @@ private fun ForYouRailBlock(
         LazyRow(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = NovelaSpacing.sm),
-            horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.md),
+                .padding(top = DreamoraSpacing.sm),
+            horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.md),
         ) {
             items(items = rail.books, key = { "rail_cell_" + it.key }) { book ->
                 Box(modifier = Modifier.animateItem()) {
@@ -1005,13 +1005,13 @@ private fun ForYouExpandedRail(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(
-                            start = NovelaSpacing.screenH,
-                            end = NovelaSpacing.xs,
-                            top = NovelaSpacing.md,
-                            bottom = NovelaSpacing.sm,
+                            start = DreamoraSpacing.screenH,
+                            end = DreamoraSpacing.xs,
+                            top = DreamoraSpacing.md,
+                            bottom = DreamoraSpacing.sm,
                         ),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.sm),
+                    horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.sm),
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
@@ -1023,7 +1023,7 @@ private fun ForYouExpandedRail(
                         )
                         Text(
                             text = stringResource(R.string.for_you_rail_items, rail.books.size),
-                            style = NovelaType.bookMeta,
+                            style = DreamoraType.bookMeta,
                             color = palette.onSurfaceVariant,
                         )
                     }
@@ -1040,13 +1040,13 @@ private fun ForYouExpandedRail(
                         .fillMaxWidth()
                         .weight(1f),
                     contentPadding = PaddingValues(
-                        start = NovelaSpacing.screenH,
-                        end = NovelaSpacing.screenH,
-                        top = NovelaSpacing.xs,
-                        bottom = NovelaSpacing.lg,
+                        start = DreamoraSpacing.screenH,
+                        end = DreamoraSpacing.screenH,
+                        top = DreamoraSpacing.xs,
+                        bottom = DreamoraSpacing.lg,
                     ),
-                    horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.md),
-                    verticalArrangement = Arrangement.spacedBy(NovelaSpacing.lg),
+                    horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.md),
+                    verticalArrangement = Arrangement.spacedBy(DreamoraSpacing.lg),
                 ) {
                     items(items = rail.books, key = { "expanded_" + it.key }) { book ->
                         Column(
@@ -1079,7 +1079,7 @@ private val RAIL_ACCENTS = listOf(
 )
 
 @Composable
-private fun railAccent(genre: NovelaGenre?): Color =
+private fun railAccent(genre: DreamoraGenre?): Color =
     if (genre == null) MaterialTheme.colorScheme.primary
     else RAIL_ACCENTS[genre.ordinal % RAIL_ACCENTS.size]
 
@@ -1107,7 +1107,7 @@ private fun ForYouSourcePickerDialog(
                     style = MaterialTheme.typography.bodySmall,
                     color = palette.onSurfaceVariant,
                 )
-                Spacer(modifier = Modifier.height(NovelaSpacing.md))
+                Spacer(modifier = Modifier.height(DreamoraSpacing.md))
                 ForYouPickerRow(
                     label = stringResource(R.string.for_you_bound_auto),
                     selected = state.boundSourceName == null,
@@ -1140,11 +1140,11 @@ private fun ForYouPickerRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(NovelaRadius.sm))
+            .clip(RoundedCornerShape(DreamoraRadius.sm))
             .clickable(onClick = onClick)
-            .padding(vertical = NovelaSpacing.sm, horizontal = NovelaSpacing.xs),
+            .padding(vertical = DreamoraSpacing.sm, horizontal = DreamoraSpacing.xs),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.sm),
+        horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.sm),
     ) {
         Box(
             modifier = Modifier
@@ -1179,17 +1179,17 @@ private fun ForYouGenresDialog(
                 modifier = Modifier
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(NovelaSpacing.sm),
+                verticalArrangement = Arrangement.spacedBy(DreamoraSpacing.sm),
             ) {
                 Text(
                     text = stringResource(R.string.for_you_genres_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                NovelaGenre.entries.chunked(2).forEach { row ->
-                    Row(horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.sm)) {
+                DreamoraGenre.entries.chunked(2).forEach { row ->
+                    Row(horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.sm)) {
                         row.forEach { genre ->
-                            NovelaFilterChip(
+                            DreamoraFilterChip(
                                 label = stringResource(genre.labelRes),
                                 selected = genre.slug in selected,
                                 onClick = {

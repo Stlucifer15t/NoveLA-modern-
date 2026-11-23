@@ -1,12 +1,12 @@
 name: 🐛 App Bug / Ошибка в приложении
-description: Report a bug in the NoveLA Android app (UI, Reader, TTS, Downloads, etc.)
+description: Report a bug in the Dreamora Android app (UI, Reader, TTS, Downloads, etc.)
 title: "[BUG]: "
 labels: ["bug"]
 body:
   - type: markdown
     attributes:
       value: |
-        ⭐️ **If NoveLA helps you, please consider starring the repository!**
+        ⭐️ **If Dreamora helps you, please consider starring the repository!**
         Ваша звезда — лучшая мотивация чинить баги и развивать проект.
 
   - type: textarea

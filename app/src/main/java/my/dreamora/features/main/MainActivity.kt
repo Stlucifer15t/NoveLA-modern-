@@ -66,12 +66,12 @@ import androidx.lifecycle.LifecycleEventObserver
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import my.dreamora.core.appPreferences.AppPreferences
-import my.dreamora.settings.NovelaOnboardingActivity
+import my.dreamora.settings.DreamoraOnboardingActivity
 import my.dreamora.features.foryou.ForYouViewModel
-import my.dreamora.features.foryou.NovelaForYouScreen
+import my.dreamora.features.foryou.DreamoraForYouScreen
 import my.dreamora.features.feeds.FeedsState
 import my.dreamora.features.feeds.FeedsViewModel
-import my.dreamora.features.feeds.NovelaFeedsScreen
+import my.dreamora.features.feeds.DreamoraFeedsScreen
 import my.dreamora.coreui.BaseActivity
 import my.dreamora.tooling.application_workers.setup.PeriodicWorkersInitializer
 import my.dreamora.coreui.theme.Theme
@@ -85,9 +85,9 @@ import my.dreamora.historyexplorer.HistoryScreen
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.zIndex
-import my.dreamora.coreui.theme.NovelaMotion
-import my.dreamora.coreui.theme.NovelaRadius
-import my.dreamora.coreui.theme.NovelaSize
+import my.dreamora.coreui.theme.DreamoraMotion
+import my.dreamora.coreui.theme.DreamoraRadius
+import my.dreamora.coreui.theme.DreamoraSize
 
 private data class Page(
     @DrawableRes val iconRes: Int,
@@ -157,7 +157,7 @@ open class MainActivity : BaseActivity() {
         // First open asks what the reader actually likes. The sheet writes the flag that
         // guards this line, so answering — including "Skip" — means it never runs again.
         if (!appPreferences.FOR_YOU_GENRES_PICKED.value) {
-            startActivity(NovelaOnboardingActivity.createIntent(this))
+            startActivity(DreamoraOnboardingActivity.createIntent(this))
         }
 
         setContent {
@@ -239,7 +239,7 @@ open class MainActivity : BaseActivity() {
                                     } else Modifier
                                 )
                         ) {
-                            NovelaForYouScreen(
+                            DreamoraForYouScreen(
                                 state = forYouViewModel.state,
                                 appPreferences = appPreferences,
                                 onOpenBook = { meta ->
@@ -278,7 +278,7 @@ open class MainActivity : BaseActivity() {
                                     } else Modifier
                                 )
                         ) {
-                            NovelaFeedsScreen(
+                            DreamoraFeedsScreen(
                                 state = feedsState,
                                 onOpenBook = { meta ->
                                     feedsViewModel.markSeen(meta.url)
@@ -354,8 +354,8 @@ open class MainActivity : BaseActivity() {
                                 horizontal = if (pages.size > 5) 20.dp else 40.dp,
                                 vertical = 16.dp,
                             )
-                            .height(NovelaSize.navBarHeight),
-                        shape = RoundedCornerShape(NovelaRadius.pill),
+                            .height(DreamoraSize.navBarHeight),
+                        shape = RoundedCornerShape(DreamoraRadius.pill),
                         color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.96f),
                         shadowElevation = 12.dp,
                         tonalElevation = 0.dp,
@@ -382,8 +382,8 @@ open class MainActivity : BaseActivity() {
                         if (pages.size > 5) 38.dp else 44.dp
                     },
                                     animationSpec = tween(
-                                        durationMillis = NovelaMotion.STANDARD,
-                                        easing = NovelaMotion.StandardEasing,
+                                        durationMillis = DreamoraMotion.STANDARD,
+                                        easing = DreamoraMotion.StandardEasing,
                                     ),
                                     label = "navCapsuleW$pageIndex",
                                 )
@@ -394,14 +394,14 @@ open class MainActivity : BaseActivity() {
                                         Color.Transparent
                                     },
                                     animationSpec = tween(
-                                        durationMillis = NovelaMotion.STANDARD,
-                                        easing = NovelaMotion.StandardEasing,
+                                        durationMillis = DreamoraMotion.STANDARD,
+                                        easing = DreamoraMotion.StandardEasing,
                                     ),
                                     label = "navCapsuleC$pageIndex",
                                 )
                                 val iconScale by animateFloatAsState(
                                     targetValue = if (isSelected) 1f else 0.92f,
-                                    animationSpec = tween(NovelaMotion.STANDARD),
+                                    animationSpec = tween(DreamoraMotion.STANDARD),
                                     label = "navIconScale$pageIndex",
                                 )
 
@@ -422,7 +422,7 @@ open class MainActivity : BaseActivity() {
                                         modifier = Modifier
                                             .height(40.dp)
                                             .width(capsuleWidth)
-                                            .clip(RoundedCornerShape(NovelaRadius.pill))
+                                            .clip(RoundedCornerShape(DreamoraRadius.pill))
                                             .background(capsuleColor),
                                         contentAlignment = Alignment.Center,
                                     ) {

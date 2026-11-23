@@ -1,31 +1,31 @@
 package my.dreamora.extensions
 
-import my.dreamora.coreui.components.NovelaStatCard
-import my.dreamora.coreui.components.NovelaCardGroupDivider
-import my.dreamora.coreui.components.NovelaCardGroup
-import my.dreamora.coreui.components.NovelaCircleIcon
+import my.dreamora.coreui.components.DreamoraStatCard
+import my.dreamora.coreui.components.DreamoraCardGroupDivider
+import my.dreamora.coreui.components.DreamoraCardGroup
+import my.dreamora.coreui.components.DreamoraCircleIcon
 import androidx.compose.foundation.shape.CircleShape
-import my.dreamora.coreui.components.NovelaTileActionButton
-import my.dreamora.coreui.components.NovelaTileIconButton
+import my.dreamora.coreui.components.DreamoraTileActionButton
+import my.dreamora.coreui.components.DreamoraTileIconButton
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.outlined.Extension
-import my.dreamora.coreui.components.NovelaHeroHeader
-import my.dreamora.coreui.components.NovelaHeroPill
+import my.dreamora.coreui.components.DreamoraHeroHeader
+import my.dreamora.coreui.components.DreamoraHeroPill
 import androidx.compose.material3.HorizontalDivider
-import my.dreamora.coreui.components.NovelaIconChip
-import my.dreamora.coreui.components.NovelaTileBadge
-import my.dreamora.coreui.components.NovelaTileCard
+import my.dreamora.coreui.components.DreamoraIconChip
+import my.dreamora.coreui.components.DreamoraTileBadge
+import my.dreamora.coreui.components.DreamoraTileCard
 import my.dreamora.coreui.components.novelaTileAccent
-import my.dreamora.coreui.theme.NovelaSpacing
-import my.dreamora.coreui.theme.NovelaTheme
-import my.dreamora.coreui.theme.NovelaType
-import my.dreamora.coreui.components.NovelaFilterChip
-import my.dreamora.coreui.components.NovelaSectionHeader
-import my.dreamora.coreui.components.NovelaTopProgress
-import my.dreamora.coreui.theme.NovelaRadius
+import my.dreamora.coreui.theme.DreamoraSpacing
+import my.dreamora.coreui.theme.DreamoraTheme
+import my.dreamora.coreui.theme.DreamoraType
+import my.dreamora.coreui.components.DreamoraFilterChip
+import my.dreamora.coreui.components.DreamoraSectionHeader
+import my.dreamora.coreui.components.DreamoraTopProgress
+import my.dreamora.coreui.theme.DreamoraRadius
 import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -299,7 +299,7 @@ private fun UnifiedExtensionsScreen(
                             }
                         },
                         singleLine = true,
-                        shape = RoundedCornerShape(NovelaRadius.lg),
+                        shape = RoundedCornerShape(DreamoraRadius.lg),
                     )
 
                     // Content type filter chips
@@ -316,7 +316,7 @@ private fun UnifiedExtensionsScreen(
                             "video" to stringResource(StringsR.string.content_type_video),
                         )
                         contentTypeOptions.forEach { (value, label) ->
-                            NovelaFilterChip(
+                            DreamoraFilterChip(
                                 label = label,
                                 selected = state.selectedContentType == value,
                                 onClick = {
@@ -360,7 +360,7 @@ private fun UnifiedExtensionsScreen(
                     LazyColumn(
                         modifier = Modifier.fillMaxWidth(),
                         contentPadding = PaddingValues(
-                            top = NovelaSpacing.xs,
+                            top = DreamoraSpacing.xs,
                             bottom = 240.dp,
                         ),
                     ) {
@@ -370,7 +370,7 @@ private fun UnifiedExtensionsScreen(
                         // lists the groups render, so they cannot disagree with what is shown.
                         item(contentType = "hero") {
                             val accent = MaterialTheme.colorScheme.primary
-                            NovelaHeroHeader(
+                            DreamoraHeroHeader(
                                 title = stringResource(my.dreamora.strings.R.string.title_extensions),
                                 subtitle = stringResource(StringsR.string.extensions_hero_subtitle),
                                 accent = accent,
@@ -390,22 +390,22 @@ private fun UnifiedExtensionsScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = NovelaSpacing.screenH),
-                                horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.sm),
+                                    .padding(horizontal = DreamoraSpacing.screenH),
+                                horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.sm),
                             ) {
-                                NovelaStatCard(
+                                DreamoraStatCard(
                                     value = searchInstalledExtensions.size.toString(),
                                     label = stringResource(my.dreamora.strings.R.string.installed),
                                     accent = scheme.primary,
                                     modifier = Modifier.weight(1f),
                                 )
-                                NovelaStatCard(
+                                DreamoraStatCard(
                                     value = searchAvailableExtensions.size.toString(),
                                     label = stringResource(my.dreamora.strings.R.string.available),
                                     accent = scheme.tertiary,
                                     modifier = Modifier.weight(1f),
                                 )
-                                NovelaStatCard(
+                                DreamoraStatCard(
                                     value = searchInstalledExtensions.count { it.isUpdateAvailable }.toString(),
                                     label = stringResource(my.dreamora.strings.R.string.update),
                                     accent = scheme.secondary,
@@ -416,7 +416,7 @@ private fun UnifiedExtensionsScreen(
 
                         if (searchInstalledExtensions.isNotEmpty()) {
                             item(contentType = "header") {
-                                NovelaSectionHeader(
+                                DreamoraSectionHeader(
                                     title = stringResource(my.dreamora.strings.R.string.installed),
                                     actionLabel = stringResource(StringsR.string.update_all)
                                         .takeIf { searchInstalledExtensions.any { it.isUpdateAvailable } },
@@ -426,10 +426,10 @@ private fun UnifiedExtensionsScreen(
                                 )
                             }
                             item(contentType = "group_installed") {
-                                NovelaCardGroup {
+                                DreamoraCardGroup {
                                     searchInstalledExtensions.forEachIndexed { index, extension ->
                                         if (index > 0) {
-                                            NovelaCardGroupDivider()
+                                            DreamoraCardGroupDivider()
                                         }
                                         ExtensionRow(
                                             extension = extension,
@@ -442,15 +442,15 @@ private fun UnifiedExtensionsScreen(
 
                         if (searchAvailableExtensions.isNotEmpty()) {
                             item(contentType = "header") {
-                                NovelaSectionHeader(
+                                DreamoraSectionHeader(
                                     title = stringResource(my.dreamora.strings.R.string.available),
                                 )
                             }
                             item(contentType = "group_available") {
-                                NovelaCardGroup {
+                                DreamoraCardGroup {
                                     searchAvailableExtensions.forEachIndexed { index, extension ->
                                         if (index > 0) {
-                                            NovelaCardGroupDivider()
+                                            DreamoraCardGroupDivider()
                                         }
                                         ExtensionRow(
                                             extension = extension,
@@ -584,11 +584,11 @@ private fun ExtensionRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = NovelaSpacing.md, vertical = NovelaSpacing.sm),
+            .padding(horizontal = DreamoraSpacing.md, vertical = DreamoraSpacing.sm),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.md),
+        horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.md),
     ) {
-        NovelaCircleIcon(accent = accent) {
+        DreamoraCircleIcon(accent = accent) {
             ImageView(
                 imageModel = extension.iconUrl,
                 modifier = Modifier
@@ -607,22 +607,22 @@ private fun ExtensionRow(
             Spacer(Modifier.height(2.dp))
             Text(
                 text = extension.description.ifBlank { extension.author },
-                style = NovelaType.bookMeta,
-                color = NovelaTheme.colors.textMuted,
+                style = DreamoraType.bookMeta,
+                color = DreamoraTheme.colors.textMuted,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            Spacer(Modifier.height(NovelaSpacing.xxs))
-            Row(horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.xs)) {
-                NovelaTileBadge(text = extension.language.uppercase(), accent = accent)
+            Spacer(Modifier.height(DreamoraSpacing.xxs))
+            Row(horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.xs)) {
+                DreamoraTileBadge(text = extension.language.uppercase(), accent = accent)
                 if (extension.isLocal) {
-                    NovelaTileBadge(
+                    DreamoraTileBadge(
                         text = stringResource(my.dreamora.strings.R.string.local),
                         accent = accent,
                     )
                 }
                 if (updateAvailable) {
-                    NovelaTileBadge(
+                    DreamoraTileBadge(
                         text = stringResource(my.dreamora.strings.R.string.update),
                         accent = MaterialTheme.colorScheme.tertiary,
                     )
@@ -632,7 +632,7 @@ private fun ExtensionRow(
         // The state machine the old row used, unchanged: installing / update / installed /
         // available. Only its shape moved from a trailing column to the row's end.
         when {
-            extension.isInstalling -> NovelaTileActionButton(
+            extension.isInstalling -> DreamoraTileActionButton(
                 label = stringResource(my.dreamora.strings.R.string.installing),
                 icon = { CircularProgressIndicator(modifier = Modifier.size(12.dp), strokeWidth = 2.dp) },
                 accent = accent,
@@ -640,34 +640,34 @@ private fun ExtensionRow(
                 onClick = {},
             )
 
-            updateAvailable -> NovelaTileActionButton(
+            updateAvailable -> DreamoraTileActionButton(
                 label = stringResource(my.dreamora.strings.R.string.update),
                 icon = { Icon(Icons.Filled.Refresh, null, modifier = Modifier.size(14.dp)) },
                 accent = MaterialTheme.colorScheme.tertiary,
                 onClick = { viewModel.onEvent(ExtensionsScreenEvent.OnExtensionInstall(extension.id)) },
             )
 
-            extension.isInstalled -> Row(horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.xs)) {
-                NovelaTileIconButton(
+            extension.isInstalled -> Row(horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.xs)) {
+                DreamoraTileIconButton(
                     accent = accent,
                     contentDescription = stringResource(my.dreamora.strings.R.string.edit_lua),
                     onClick = { viewModel.onEvent(ExtensionsScreenEvent.OnEditLuaClick(extension.id)) },
                 ) { Icon(Icons.Filled.Edit, null, modifier = Modifier.size(16.dp)) }
                 if (!extension.isLocal) {
-                    NovelaTileIconButton(
+                    DreamoraTileIconButton(
                         accent = accent,
                         contentDescription = stringResource(my.dreamora.strings.R.string.reset),
                         onClick = { viewModel.onEvent(ExtensionsScreenEvent.OnResetLuaClick(extension.id)) },
                     ) { Icon(Icons.Filled.Refresh, null, modifier = Modifier.size(16.dp)) }
                 }
-                NovelaTileIconButton(
+                DreamoraTileIconButton(
                     accent = MaterialTheme.colorScheme.error,
                     contentDescription = stringResource(my.dreamora.strings.R.string.uninstall),
                     onClick = { viewModel.onEvent(ExtensionsScreenEvent.OnExtensionUninstallById(extension.id)) },
                 ) { Icon(Icons.Filled.Delete, null, modifier = Modifier.size(16.dp)) }
             }
 
-            else -> NovelaTileActionButton(
+            else -> DreamoraTileActionButton(
                 label = stringResource(my.dreamora.strings.R.string.install),
                 icon = { Icon(Icons.Filled.Add, null, modifier = Modifier.size(14.dp)) },
                 accent = accent,

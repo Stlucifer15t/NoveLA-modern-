@@ -8,7 +8,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /**
- * NoveLA design tokens.
+ * Dreamora design tokens.
  *
  * Single source of truth for spacing, corner radii, sizing and motion.
  * These are additive: nothing here replaces existing theme values, so screens
@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.dp
  */
 
 /** Vertical + horizontal rhythm. Use these instead of magic dp literals. */
-object NovelaSpacing {
+object DreamoraSpacing {
     /** 2dp — hairline tweaks. */
     val xxs: Dp = 2.dp
 
@@ -55,7 +55,7 @@ object NovelaSpacing {
 }
 
 /** Corner radii. Larger + softer than stock M3 for the reading-first look. */
-object NovelaRadius {
+object DreamoraRadius {
     val xs: Dp = 4.dp
     val sm: Dp = 6.dp
     val md: Dp = 10.dp
@@ -78,7 +78,7 @@ object NovelaRadius {
 }
 
 /** Fixed dimensions shared by book presentation. */
-object NovelaSize {
+object DreamoraSize {
     /** Width / height ratio of a book cover. Tall enough to read a title thumbnail. */
     const val COVER_ASPECT: Float = 1f / 1.45f
 
@@ -110,7 +110,7 @@ object NovelaSize {
  * Every animation in the redesign should reference one of these so the whole
  * app moves with a single personality: quick, decelerating, never bouncy.
  */
-object NovelaMotion {
+object DreamoraMotion {
     /** Micro feedback: ripples, icon toggles. */
     const val INSTANT = 120
 

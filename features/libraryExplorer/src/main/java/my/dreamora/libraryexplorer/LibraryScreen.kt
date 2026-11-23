@@ -39,7 +39,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.filled.MoreVert
 import my.dreamora.coreui.components.AnimatedTransition
-import my.dreamora.coreui.components.NovelaScreenHeader
+import my.dreamora.coreui.components.DreamoraScreenHeader
 import my.dreamora.coreui.components.ToolbarMode
 import my.dreamora.coreui.components.TopAppBarSearch
 import my.dreamora.navigation.NavigationRouteViewModel
@@ -178,8 +178,8 @@ fun LibraryScreen(
                     AnimatedTransition(targetState = uiState.toolbarMode) { target ->
                         when (target) {
                             ToolbarMode.MAIN -> Column {
-                                NovelaScreenHeader(
-                                    title = "NoveLA",
+                                DreamoraScreenHeader(
+                                    title = "Dreamora",
                                     subtitle = stringResource(R.string.reading),
                                     actions = {
                                         if (pageViewModel.isUpdating) {

@@ -43,14 +43,14 @@ import androidx.compose.ui.unit.dp
 import my.dreamora.R
 import my.dreamora.core.rememberResolvedBookImagePath
 import my.dreamora.coreui.components.ImageView
-import my.dreamora.coreui.components.NovelaEmptyState
-import my.dreamora.coreui.components.NovelaFilterChip
-import my.dreamora.coreui.components.NovelaTileIconButton
-import my.dreamora.coreui.theme.NovelaMotion
-import my.dreamora.coreui.theme.NovelaRadius
-import my.dreamora.coreui.theme.NovelaSize
-import my.dreamora.coreui.theme.NovelaSpacing
-import my.dreamora.coreui.theme.NovelaType
+import my.dreamora.coreui.components.DreamoraEmptyState
+import my.dreamora.coreui.components.DreamoraFilterChip
+import my.dreamora.coreui.components.DreamoraTileIconButton
+import my.dreamora.coreui.theme.DreamoraMotion
+import my.dreamora.coreui.theme.DreamoraRadius
+import my.dreamora.coreui.theme.DreamoraSize
+import my.dreamora.coreui.theme.DreamoraSpacing
+import my.dreamora.coreui.theme.DreamoraType
 import my.dreamora.feature.local_database.BookMetadata
 
 /**
@@ -62,7 +62,7 @@ import my.dreamora.feature.local_database.BookMetadata
  * that actually asks the sources.
  */
 @Composable
-fun NovelaFeedsScreen(
+fun DreamoraFeedsScreen(
     state: FeedsState,
     onOpenBook: (BookMetadata) -> Unit,
     onCheckForUpdates: () -> Unit,
@@ -78,15 +78,15 @@ fun NovelaFeedsScreen(
         modifier = modifier
             .fillMaxSize()
             .statusBarsPadding()
-            .padding(bottom = NovelaSpacing.navBarClearance),
+            .padding(bottom = DreamoraSpacing.navBarClearance),
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = NovelaSpacing.screenH)
-                .padding(top = NovelaSpacing.md, bottom = NovelaSpacing.sm),
+                .padding(horizontal = DreamoraSpacing.screenH)
+                .padding(top = DreamoraSpacing.md, bottom = DreamoraSpacing.sm),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.md),
+            horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.md),
         ) {
             Box(
                 modifier = Modifier
@@ -110,13 +110,13 @@ fun NovelaFeedsScreen(
                 )
                 Text(
                     text = stringResource(R.string.feeds_subtitle),
-                    style = NovelaType.bookMeta,
+                    style = DreamoraType.bookMeta,
                     color = palette.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            NovelaTileIconButton(
+            DreamoraTileIconButton(
                 contentDescription = stringResource(R.string.feeds_check),
                 onClick = if (state.checking) onCancelUpdate else onCheckForUpdates,
                 accent = if (state.checking) palette.primary else palette.surfaceVariant,
@@ -128,12 +128,12 @@ fun NovelaFeedsScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = NovelaSpacing.screenH)
-                .padding(bottom = NovelaSpacing.sm),
-            horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.sm),
+                .padding(horizontal = DreamoraSpacing.screenH)
+                .padding(bottom = DreamoraSpacing.sm),
+            horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.sm),
         ) {
             FeedFilter.entries.forEach { filter ->
-                NovelaFilterChip(
+                DreamoraFilterChip(
                     label = stringResource(
                         when (filter) {
                             FeedFilter.All -> R.string.feeds_filter_all
@@ -152,15 +152,15 @@ fun NovelaFeedsScreen(
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = NovelaSpacing.screenH),
-                shape = NovelaRadius.cardShape,
+                    .padding(horizontal = DreamoraSpacing.screenH),
+                shape = DreamoraRadius.cardShape,
                 color = palette.primary.copy(alpha = 0.10f),
             ) {
                 Text(
                     text = stringResource(R.string.feeds_checking_now),
-                    style = NovelaType.bookMeta,
+                    style = DreamoraType.bookMeta,
                     color = palette.primary,
-                    modifier = Modifier.padding(horizontal = NovelaSpacing.md, vertical = NovelaSpacing.xs),
+                    modifier = Modifier.padding(horizontal = DreamoraSpacing.md, vertical = DreamoraSpacing.xs),
                 )
             }
         }
@@ -170,7 +170,7 @@ fun NovelaFeedsScreen(
             // shelf can be filled), and releases that exist but not of the kind the segment asks
             // for. Only the first one has somewhere useful to send the reader.
             val nothingAtAll = state.rows.isEmpty()
-            NovelaEmptyState(
+            DreamoraEmptyState(
                 icon = Icons.Outlined.LibraryBooks,
                 title = stringResource(
                     if (nothingAtAll) R.string.feeds_empty_title else R.string.feeds_empty_filter_title
@@ -178,7 +178,7 @@ fun NovelaFeedsScreen(
                 message = stringResource(R.string.feeds_empty_message),
                 actionLabel = if (state.shelfCount == 0) stringResource(R.string.feeds_open_library) else null,
                 onAction = if (state.shelfCount == 0) onOpenLibrary else null,
-                modifier = Modifier.padding(horizontal = NovelaSpacing.screenH),
+                modifier = Modifier.padding(horizontal = DreamoraSpacing.screenH),
             )
             return@Column
         }
@@ -189,12 +189,12 @@ fun NovelaFeedsScreen(
                 .weight(1f),
             state = rememberLazyListState(),
             contentPadding = PaddingValues(
-                start = NovelaSpacing.screenH,
-                end = NovelaSpacing.screenH,
-                top = NovelaSpacing.xs,
-                bottom = NovelaSpacing.lg,
+                start = DreamoraSpacing.screenH,
+                end = DreamoraSpacing.screenH,
+                top = DreamoraSpacing.xs,
+                bottom = DreamoraSpacing.lg,
             ),
-            verticalArrangement = Arrangement.spacedBy(NovelaSpacing.xs),
+            verticalArrangement = Arrangement.spacedBy(DreamoraSpacing.xs),
         ) {
             items(items = rows, key = { it.bookUrl }) { row ->
                 FeedsRow(
@@ -213,11 +213,11 @@ fun NovelaFeedsScreen(
             item(key = "feeds_note") {
                 Text(
                     text = stringResource(R.string.feeds_note),
-                    style = NovelaType.bookMeta,
+                    style = DreamoraType.bookMeta,
                     color = palette.onSurfaceVariant,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = NovelaSpacing.md),
+                        .padding(top = DreamoraSpacing.md),
                 )
             }
         }
@@ -245,17 +245,17 @@ private fun FeedsRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(NovelaRadius.md))
+            .clip(RoundedCornerShape(DreamoraRadius.md))
             .clickable(onClick = onClick)
-            .padding(vertical = NovelaSpacing.xs, horizontal = NovelaSpacing.xs),
+            .padding(vertical = DreamoraSpacing.xs, horizontal = DreamoraSpacing.xs),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(NovelaSpacing.md),
+        horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.md),
     ) {
         Box(
             modifier = Modifier
                 .width(44.dp)
-                .aspectRatio(NovelaSize.COVER_ASPECT)
-                .clip(RoundedCornerShape(NovelaRadius.cover)),
+                .aspectRatio(DreamoraSize.COVER_ASPECT)
+                .clip(RoundedCornerShape(DreamoraRadius.cover)),
         ) {
             ImageView(
                 imageModel = cover,
@@ -281,7 +281,7 @@ private fun FeedsRow(
                         row.unread,
                     )
                 },
-                style = NovelaType.bookMeta,
+                style = DreamoraType.bookMeta,
                 color = palette.primary,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -289,7 +289,7 @@ private fun FeedsRow(
             latest?.chapterTitle?.takeIf { it.isNotBlank() }?.let { title ->
                 Text(
                     text = title,
-                    style = NovelaType.bookMeta,
+                    style = DreamoraType.bookMeta,
                     color = palette.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -298,7 +298,7 @@ private fun FeedsRow(
             foundAgo?.let {
                 Text(
                     text = it,
-                    style = NovelaType.badge,
+                    style = DreamoraType.badge,
                     color = palette.onSurfaceVariant.copy(alpha = 0.8f),
                     maxLines = 1,
                 )

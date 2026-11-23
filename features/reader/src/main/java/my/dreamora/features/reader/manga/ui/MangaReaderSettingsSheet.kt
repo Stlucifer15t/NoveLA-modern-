@@ -67,7 +67,7 @@ private val colorFilterModes = listOf(
  * HorizontalPager со свайпом между ними.
  *
  * Вкладки зеркалят SY ReadingModePage / GeneralSettingsPage / ColorFilterPage.
- * Фона читалки нет (тема NoveLA); авто-скролл вынесен на страницу читалки
+ * Фона читалки нет (тема Dreamora); авто-скролл вынесен на страницу читалки
  * (панель снизу, только лента), в настройках его больше нет.
  */
 @OptIn(ExperimentalMaterial3Api::class)

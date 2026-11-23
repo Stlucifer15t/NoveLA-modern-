@@ -16,7 +16,7 @@ import timber.log.Timber
  * Мост JS→Kotlin→JS для перевода страницы WebView.
  *
  * JS-обвязка страницы вызывает [translateAsync] через интерфейс
- * «NovelaTranslate», регистрируемый `addJavascriptInterface` в WebViewActivity:
+ * «DreamoraTranslate», регистрируемый `addJavascriptInterface` в WebViewActivity:
  * тексты батча приходят сериализованным JSON-массивом, перевод
  * выполняется существующим [TranslationManager.translateBatch] активным
  * провайдером из TRANSLATION_PROVIDER (источник «auto» резолвится внутри
@@ -38,7 +38,7 @@ import timber.log.Timber
  *
  * @param onError колбэк уведомления пользователя об ошибке перевода батча (например, toast).
  */
-class NovelaTranslateBridge(
+class DreamoraTranslateBridge(
     private val webView: WebView,
     private val translationManager: TranslationManager,
     private val lifecycleScope: CoroutineScope,

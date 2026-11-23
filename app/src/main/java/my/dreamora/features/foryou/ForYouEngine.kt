@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import my.dreamora.R
 import my.dreamora.core.PagedList
-import my.dreamora.core.foryou.NovelaGenre
+import my.dreamora.core.foryou.DreamoraGenre
 import my.dreamora.core.Response
 import my.dreamora.core.getOrNull
 import my.dreamora.data.ScraperRepository
@@ -63,7 +63,7 @@ data class ForYouBook(
      */
     val matchedHistoryTitle: String?,
     /** The picked genre whose query returned this book; null = the source's front page. */
-    val genre: NovelaGenre? = null,
+    val genre: DreamoraGenre? = null,
 ) {
     val key: String get() = metadata.url
 
@@ -80,7 +80,7 @@ data class ForYouLane(
         /** The pass that asks for nothing — the source's own front page. */
         val Catalog = ForYouLane(slug = "", terms = emptyList())
 
-        fun forGenres(genres: List<NovelaGenre>): List<ForYouLane> =
+        fun forGenres(genres: List<DreamoraGenre>): List<ForYouLane> =
             genres.map { ForYouLane(it.slug, it.terms) }
     }
 }
@@ -97,7 +97,7 @@ data class ForYouHit(
  * which is why the label is resolved by the caller rather than stored here.
  */
 data class ForYouRail(
-    val genre: NovelaGenre?,
+    val genre: DreamoraGenre?,
     val books: List<ForYouBook>,
 )
 
@@ -278,7 +278,7 @@ class ForYouEngine @Inject constructor(
                     sharedTitleWord(it, meta.title) != null
                 },
                 genre = hit.lane.slug.takeIf { it.isNotEmpty() }?.let { slug ->
-                    NovelaGenre.fromSlugs(listOf(slug)).firstOrNull()
+                    DreamoraGenre.fromSlugs(listOf(slug)).firstOrNull()
                 },
             )
         }
@@ -343,7 +343,7 @@ internal fun List<ForYouBook>.highestRated(limit: Int = 10): List<ForYouBook> =
  * "Isekai" with nothing in it is worse than no "Isekai" at all.
  */
 internal fun List<ForYouBook>.railsFor(
-    genres: List<NovelaGenre>,
+    genres: List<DreamoraGenre>,
     minItems: Int = 3,
 ): List<ForYouRail> =
     genres.mapNotNull { genre ->
