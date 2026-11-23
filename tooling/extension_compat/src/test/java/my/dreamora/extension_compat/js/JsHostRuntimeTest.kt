@@ -1,6 +1,8 @@
 package my.dreamora.extension_compat.js
 
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
 import my.dreamora.core.Response
 import my.dreamora.extension_compat.lnreader.LnReaderSourceAdapter
 import my.dreamora.extension_compat.mangayomi.MangayomiSourceAdapter
@@ -107,13 +109,15 @@ class JsHostRuntimeTest {
             val meta = runtime.evaluate("__lnLoad(${jsString(lnPlugin)})", "plugin.js")
             assertNotNull(meta)
             assertTrue(meta!!.contains("\"hasSearch\":true"))
+            // The loader hands the plugin's own filter definitions to the adapter.
+            val pluginFilters = Json.parseToJsonElement(meta!!).jsonObject["filters"]?.jsonObject
 
             val adapter = LnReaderSourceAdapter(
                 id = "lnreader:sample",
                 name = "Sample Site",
                 baseUrl = "https://sample.test",
                 runtime = runtime,
-                filters = null,
+                filters = pluginFilters,
                 hasSearch = true,
                 hasPages = false,
             )
@@ -128,7 +132,7 @@ class JsHostRuntimeTest {
 
             val filters = adapter.getFilterList()
             assertTrue(filters is Response.Success)
-            assertTrue((filters as Response.Success).data.isEmpty())
+            assertEquals(listOf("genre"), (filters as Response.Success).data.map { it.key })
 
             adapter.getCatalogFiltered(0, ActiveFilters(selectValues = mapOf("genre" to "fantasy")))
             assertTrue("filter was not sent: ${http.urls}", http.urls.last().contains("g=fantasy"))
