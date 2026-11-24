@@ -61,7 +61,8 @@ import my.dreamora.network.getRequest
 @Singleton
 class LuaEngine @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val networkClient: NetworkClient
+    private val networkClient: NetworkClient,
+    private val appPreferences: AppPreferences? = null
 ) {
     private val gson = Gson()
     private val luaPrefs by lazy { context.getSharedPreferences("lua_preferences", Context.MODE_PRIVATE) }
@@ -332,7 +333,7 @@ class LuaEngine @Inject constructor(
     }
 
     private val libDir: File
-        get() = File(luaDir, "lib").also { it.mkdirs() }
+        get() = File(File(context.filesDir, "lua_extensions"), "lib").also { it.mkdirs() }
 
     private fun libFile(id: String) = File(libDir, "$id.lua")
 
@@ -416,8 +417,10 @@ class LuaEngine @Inject constructor(
 
     private fun libraryCatalog(): Map<String, LibraryEntry> {
         libraryCatalog?.let { return it }
-        val url = appPreferences.EXTENSIONS_REPOSITORY_URL.value
-        if (url.isBlank()) return emptyMap()
+        val url = appPreferences?.EXTENSIONS_REPOSITORY_URL?.value.orEmpty()
+        if (url.isBlank()) {
+            throw LuaError("require_lib: extension repository is not configured")
+        }
         val raw = try {
             val response = runBlocking { networkClient.get(url) }
             if (!response.isSuccessful) {
@@ -1372,6 +1375,9 @@ class LuaEngine @Inject constructor(
         // Тег версии LuaJ в имени .lbc-файла: апгрейд движка меняет формат байткода,
         // поэтому все закэшированные файлы инвалидируются автоматически.
         private const val LUAC_TAG = "3.0.1"
+
+        /** Library ids are file names: lowercase letters, digits, underscores only. */
+        private val LIB_ID_PATTERN = Regex("[a-z0-9_]+")
     }
 }
 
@@ -1434,8 +1440,7 @@ class LuaSourceLoader @Inject constructor(
     @ApplicationContext private val context: Context,
     private val networkClient: NetworkClient,
     private val luaEngine: LuaEngine,
-    private val extensionRepository: ExtensionManager,
-    private val appPreferences: AppPreferences
+    private val extensionRepository: ExtensionManager
 ) {
     // ponytail: LRU cache with fixed max size. Evicts least recently used VMs to keep native heap bounded.
     // Cost: ~100ms reload from disk .lua file on cache miss.
@@ -1624,9 +1629,6 @@ class LuaSourceLoader @Inject constructor(
         // Increased from 15 to 30 to avoid thrashing and unnecessary re-compilation
         // when more than 15 extensions are active.
         private const val MAX_CACHED_SOURCES = AppCacheConfig.LUA_MAX_CACHED_SOURCES
-
-        /** Library ids are file names: lowercase letters, digits, underscores only. */
-        private val LIB_ID_PATTERN = Regex("[a-z0-9_]+")
     }
 }
 

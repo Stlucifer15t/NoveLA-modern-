@@ -104,9 +104,8 @@ class RequireLibTest {
         return LuaSourceLoader(
             context = context,
             networkClient = networkClient,
-            luaEngine = LuaEngine(context, networkClient),
+            luaEngine = LuaEngine(context, networkClient, appPreferences),
             extensionRepository = mock<ExtensionManager>(),
-            appPreferences = appPreferences,
         ) to networkClient
     }
 
