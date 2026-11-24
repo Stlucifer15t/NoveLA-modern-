@@ -8,6 +8,7 @@ import my.dreamora.settings.sections.SettingsStats
 import my.dreamora.settings.ui.SettingsMenuCard
 import my.dreamora.settings.ui.SettingsMenuDivider
 import my.dreamora.settings.ui.SettingsMenuRow
+import my.dreamora.settings.ui.accent
 import my.dreamora.settings.ui.hint
 import my.dreamora.settings.ui.label
 import androidx.compose.material.icons.outlined.FavoriteBorder
