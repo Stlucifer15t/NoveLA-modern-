@@ -1,21 +1,13 @@
 package my.dreamora.settings
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Button
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.icons.outlined.MenuBook
-import my.dreamora.coreui.components.DreamoraGreetingHeader
-import my.dreamora.coreui.components.DreamoraMenuCard
-import my.dreamora.coreui.components.DreamoraMenuSectionLabel
-import my.dreamora.coreui.components.DreamoraStatCard
-import my.dreamora.coreui.components.DreamoraStreakPill
-import my.dreamora.coreui.components.DreamoraTileIconButton
-import my.dreamora.coreui.components.novelaGreeting
 import my.dreamora.settings.sections.SettingsLayout
 import my.dreamora.settings.sections.SettingsReading
 import my.dreamora.settings.sections.SettingsStats
+import my.dreamora.settings.ui.SettingsMenuCard
+import my.dreamora.settings.ui.SettingsMenuDivider
+import my.dreamora.settings.ui.SettingsMenuRow
 import my.dreamora.settings.ui.hint
 import my.dreamora.settings.ui.label
 import androidx.compose.material.icons.outlined.FavoriteBorder
@@ -41,16 +33,13 @@ import my.dreamora.settings.ui.SettingsSearchField
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Icon
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -66,13 +55,10 @@ import androidx.compose.runtime.remember
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.material.icons.Icons
@@ -169,7 +155,6 @@ internal fun SettingsScreenBody(
     val showNovelPromptsDialog = remember { mutableStateOf(false) }
     val searchQuery = rememberSaveable { mutableStateOf("") }
 
-    val palette = MaterialTheme.colorScheme
     val currentLanguageObj = remember(state.currentLanguage.value) {
         AppLanguageProvider.fromCode(state.currentLanguage.value)
             ?: AppLanguageProvider.supportedLanguages.first()
@@ -449,113 +434,57 @@ internal fun SettingsScreenBody(
         return
     }
 
-    // The hub. A greeting instead of a title bar, three counters, then the groups as menu
-    // cards and "About" alone at the bottom — the structure of the reference screen, with
-    // the one rule that a number is only printed if the database can answer for it.
-    var searchOpen by rememberSaveable { mutableStateOf(false) }
+    // The hub, in the Android 16 / Pixel Settings shape: a large plain title, one search
+    // pill under it, then the groups as rows of a single flat card — "About" alone in a
+    // second card at the bottom, the way Pixel parks "About phone". No greeting, no
+    // counters, no badges: the screen is navigation, and navigation stays quiet.
     Column(
         modifier = modifier
             .fillMaxWidth()
             .statusBarsPadding()
             .verticalScroll(rememberScrollState()),
     ) {
-        val stats = state.stats.value
-        DreamoraGreetingHeader(
-            greeting = novelaGreeting(),
-            // The version lives in About, not under the greeting.
-            subtitle = null,
-            accent = palette.primary,
-            trailing = {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.sm),
-                ) {
-                    if (stats.streakDays > 0) {
-                        DreamoraStreakPill(days = stats.streakDays, accent = palette.tertiary)
-                    }
-                    DreamoraTileIconButton(
-                        accent = if (searchOpen) palette.primary else palette.surfaceVariant,
-                        contentDescription = stringResource(
-                            my.dreamora.strings.R.string.action_search_settings
-                        ),
-                        onClick = {
-                            searchOpen = !searchOpen
-                            if (!searchOpen) searchQuery.value = ""
-                        },
-                    ) {
-                        Icon(Icons.Outlined.Search, null, modifier = Modifier.size(18.dp))
-                    }
-                }
-            },
+        Text(
+            text = stringResource(id = R.string.title_settings),
+            style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold),
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier
+                .padding(horizontal = DreamoraSpacing.screenH)
+                .padding(top = DreamoraSpacing.sm, bottom = DreamoraSpacing.xs),
         )
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = DreamoraSpacing.screenH),
-            horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.sm),
-        ) {
-            DreamoraStatCard(
-                value = stats.libraryBooks.displayCount(),
-                label = stringResource(my.dreamora.strings.R.string.stats_library),
-                accent = palette.primary,
-                modifier = Modifier.weight(1f),
-            )
-            DreamoraStatCard(
-                value = stats.chaptersRead.displayCount(),
-                label = stringResource(my.dreamora.strings.R.string.stats_chapters_read),
-                accent = palette.tertiary,
-                modifier = Modifier.weight(1f),
-            )
-            // The cache line arrives as "12 MB" from the size scan the screen already runs.
-            DreamoraStatCard(
-                value = state.novelCacheSize.value.ifBlank { "…" },
-                label = stringResource(my.dreamora.strings.R.string.stats_cache),
-                accent = palette.secondary,
-                modifier = Modifier.weight(1f),
-            )
-        }
-
-        if (searchOpen) {
-            SettingsSearchField(
-                query = searchQuery.value,
-                onQueryChange = { searchQuery.value = it },
-                onClear = { searchQuery.value = "" },
-                suggestions = listOf(
-                    SettingsGroup.Appearance.label(),
-                    SettingsGroup.Reading.label(),
-                    SettingsGroup.Translation.label(),
-                    SettingsGroup.Backup.label(),
-                ),
-                modifier = Modifier.padding(
-                    start = DreamoraSpacing.screenH,
-                    end = DreamoraSpacing.screenH,
-                    top = DreamoraSpacing.sm,
-                ),
-            )
-        }
+        SettingsSearchField(
+            query = searchQuery.value,
+            onQueryChange = { searchQuery.value = it },
+            onClear = { searchQuery.value = "" },
+        )
 
         val menuSpecs = visibleSpecs.filter { it.group != SettingsGroup.Support }
         val aboutSpec = visibleSpecs.firstOrNull { it.group == SettingsGroup.Support }
         if (menuSpecs.isNotEmpty()) {
-            DreamoraMenuSectionLabel(stringResource(my.dreamora.strings.R.string.menu_section_menu))
-            menuSpecs.forEach { spec ->
-                DreamoraMenuCard(
-                    icon = spec.icon,
-                    title = spec.title,
-                    subtitle = spec.summary,
-                    onClick = { onOpenGroup(spec.group) },
-                )
+            SettingsMenuCard {
+                menuSpecs.forEachIndexed { index, spec ->
+                    if (index > 0) SettingsMenuDivider()
+                    SettingsMenuRow(
+                        icon = spec.icon,
+                        title = spec.title,
+                        summary = spec.summary,
+                        accent = spec.group.accent(),
+                        onClick = { onOpenGroup(spec.group) },
+                    )
+                }
             }
         }
         if (aboutSpec != null) {
-            DreamoraMenuSectionLabel(stringResource(my.dreamora.strings.R.string.menu_section_about))
-            DreamoraMenuCard(
-                icon = aboutSpec.icon,
-                title = aboutSpec.title,
-                subtitle = aboutSpec.summary,
-                onClick = { onOpenGroup(aboutSpec.group) },
-            )
+            SettingsMenuCard {
+                SettingsMenuRow(
+                    icon = aboutSpec.icon,
+                    title = aboutSpec.title,
+                    summary = aboutSpec.summary,
+                    accent = aboutSpec.group.accent(),
+                    onClick = { onOpenGroup(aboutSpec.group) },
+                )
+            }
         }
         if (visibleSpecs.isEmpty()) {
             DreamoraEmptyState(

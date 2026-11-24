@@ -8,7 +8,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,11 +23,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -40,27 +39,26 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import my.dreamora.coreui.theme.DreamoraMotion
-import my.dreamora.coreui.components.DreamoraIconTile
 import my.dreamora.coreui.theme.DreamoraRadius
 import my.dreamora.coreui.theme.DreamoraSpacing
 import my.dreamora.coreui.theme.DreamoraTheme
 import my.dreamora.coreui.theme.DreamoraType
-import my.dreamora.settings.ui.ExpressiveSwitch
 
 /**
- * The Settings "kit": the vocabulary the settings rebrand is built from.
+ * The Settings "kit": the vocabulary the settings screens are built from.
  *
- * Layout language (Material 3 Expressive / Android 16 settings): every group of
- * related options is its own card, each card is labelled by a tinted icon chip and a
- * title, and a single search field narrows the page down to the groups that match —
- * with 20+ switches on one screen, "find it" beats "scroll to it".
+ * The look follows Android 16 / Pixel Settings: a large plain title instead of a
+ * greeting, one search pill under it, and every group of options as a single flat,
+ * generously rounded card — no borders, no gradients, no badges. Colour appears
+ * exactly once per row, in the circle behind the icon; everything else is surface
+ * and ink.
  *
  * Nothing here re-implements behaviour: the section composables keep their own state
  * and view-model wiring, they are just placed inside a card and filtered as a group.
@@ -69,11 +67,9 @@ import my.dreamora.settings.ui.ExpressiveSwitch
 /**
  * A settings group.
  *
- * [expandSections] is what makes the two-level navigation possible without duplicating
- * the section list: the Settings screen renders every spec as a *header-only* card
- * (tap → open), a group screen renders the same specs *expanded*, with their sections
- * inside. A spec that is not expanded draws no divider and no body, so it is exactly the
- * tappable "box" the design asks for.
+ * The Settings screen renders every spec as a *row* in one menu card (tap → open),
+ * a group screen renders the same spec *expanded*, with its sections inside — so a
+ * setting cannot exist on one level and be missing on the other.
  */
 enum class SettingsGroup {
     Appearance,
@@ -105,15 +101,37 @@ data class SettingsGroupSpec(
     val content: @Composable () -> Unit,
 )
 
+/** The corner every settings card shares: Pixel's large, soft radius. */
+private val SettingsCardShape = RoundedCornerShape(DreamoraRadius.xxl)
+
+/**
+ * The row's single note of colour, for the circle behind its icon. Derived from the
+ * group's own name, so a group keeps its hue across lists and rebuilds, and the
+ * active theme decides which four hues are in rotation.
+ */
+@Composable
+fun SettingsGroup.accent(): Color {
+    val scheme = MaterialTheme.colorScheme
+    val palette = listOf(scheme.primary, scheme.tertiary, scheme.secondary, scheme.error)
+    val index = (name.hashCode() and Int.MAX_VALUE) % palette.size
+    return palette[index]
+}
+
+/**
+ * One group of options as a single flat card. A group screen shows exactly one of
+ * these, expanded, with its sections inside; [showHeader] drops the title row when
+ * the screen's hero already says the name.
+ */
 @Composable
 fun SettingsGroupCard(
     title: String,
     icon: ImageVector,
+    accent: Color = MaterialTheme.colorScheme.primary,
     modifier: Modifier = Modifier,
     summary: String? = null,
     visible: Boolean = true,
     expanded: Boolean = true,
-    /** A group screen already shows its title in the app bar: the card then drops its own. */
+    /** A group screen already shows its title in the hero: the card then drops its own. */
     showHeader: Boolean = true,
     onClick: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
@@ -140,7 +158,7 @@ fun SettingsGroupCard(
                     // the whole box is the tap target once it opens a screen of its own
                     if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier,
                 ),
-            shape = RoundedCornerShape(16.dp),
+            shape = SettingsCardShape,
             color = MaterialTheme.colorScheme.surfaceContainer,
             tonalElevation = 0.dp,
         ) {
@@ -149,29 +167,19 @@ fun SettingsGroupCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(
-                            start = DreamoraSpacing.md,
+                            start = DreamoraSpacing.lg,
                             end = DreamoraSpacing.lg,
                             top = DreamoraSpacing.md,
-                            bottom = DreamoraSpacing.xs,
+                            bottom = DreamoraSpacing.sm,
                         ),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    DreamoraIconTile(icon = icon)
+                    GroupIcon(icon = icon, accent = accent)
                     Spacer(Modifier.width(DreamoraSpacing.md))
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .then(
-                                if (onClick != null) {
-                                    Modifier
-                                        .clip(DreamoraRadius.cardShape)
-                                        .clickable(onClick = onClick)
-                                } else Modifier,
-                            ),
-                    ) {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = title,
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                            style = MaterialTheme.typography.titleMedium,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
@@ -192,12 +200,12 @@ fun SettingsGroupCard(
                 if (expanded) {
                     if (showHeader) Box(
                         Modifier
-                            .padding(horizontal = DreamoraSpacing.md)
+                            .padding(horizontal = DreamoraSpacing.lg)
                             .fillMaxWidth()
                             .height(1.dp)
-                            .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
+                            .background(DreamoraTheme.colors.hairline),
                     )
-                    if (!showHeader) Spacer(Modifier.height(DreamoraSpacing.xs))
+                    if (!showHeader) Spacer(Modifier.height(DreamoraSpacing.sm))
                     content()
                     Spacer(Modifier.height(DreamoraSpacing.sm))
                 }
@@ -207,8 +215,9 @@ fun SettingsGroupCard(
 }
 
 /**
- * The top of a settings group screen: the group's icon on a primary tile, its name and what is
- * inside. The app bar above it carries only the back arrow, so the name is said once.
+ * The top of a settings group screen: the group's name, large and plain, with one
+ * line under it saying what is inside. The app bar above carries only the back
+ * arrow, so the name is said once — no wash, no icon tile, no decoration.
  */
 @Composable
 fun SettingsGroupHero(
@@ -217,40 +226,54 @@ fun SettingsGroupHero(
     summary: String?,
     modifier: Modifier = Modifier,
 ) {
-    Row(
+    Column(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = DreamoraSpacing.screenH)
-            .padding(top = DreamoraSpacing.xs, bottom = DreamoraSpacing.md),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.md),
+            .padding(top = DreamoraSpacing.sm, bottom = DreamoraSpacing.md),
     ) {
-        DreamoraIconTile(icon = icon, size = 52.dp)
-        Column(modifier = Modifier.weight(1f)) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+            color = MaterialTheme.colorScheme.onBackground,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
+        if (!summary.isNullOrBlank()) {
+            Spacer(Modifier.height(DreamoraSpacing.xxs))
             Text(
-                text = title,
-                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.SemiBold),
-                color = MaterialTheme.colorScheme.onBackground,
+                text = summary,
+                style = DreamoraType.bookMeta,
+                color = DreamoraTheme.colors.textMuted,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
-            if (!summary.isNullOrBlank()) {
-                Spacer(Modifier.height(DreamoraSpacing.xxs))
-                Text(
-                    text = summary,
-                    style = DreamoraType.bookMeta,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
         }
     }
 }
 
+/** The tinted circle behind a group icon — the row's single note of colour. */
+@Composable
+private fun GroupIcon(icon: ImageVector, accent: Color) {
+    Box(
+        modifier = Modifier
+            .size(38.dp)
+            .clip(CircleShape)
+            .background(accent.copy(alpha = if (DreamoraTheme.colors.isLight) 0.14f else 0.22f)),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = accent,
+            modifier = Modifier.size(20.dp),
+        )
+    }
+}
+
 /**
- * Search field for the settings page. Suggestions are shown before the first
- * keystroke (recent/helpful queries) so the field is also a table of contents.
+ * Search field for the settings page: a quiet pill under the title, always visible,
+ * like the one Pixel Settings opens with.
  */
 @Composable
 fun SettingsSearchField(
@@ -259,97 +282,136 @@ fun SettingsSearchField(
     onClear: () -> Unit,
     modifier: Modifier = Modifier,
     placeholder: String? = null,
-    suggestions: List<String> = emptyList(),
 ) {
     Surface(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = DreamoraSpacing.screenH, vertical = DreamoraSpacing.xs),
         shape = RoundedCornerShape(DreamoraRadius.pill),
-        color = DreamoraTheme.colors.elevatedSurface,
-        border = androidx.compose.foundation.BorderStroke(
-            1.dp,
-            if (query.isEmpty()) DreamoraTheme.colors.hairline else MaterialTheme.colorScheme.primary,
-        ),
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
     ) {
-        Column {
-            Row(
-                modifier = Modifier.padding(start = DreamoraSpacing.md, end = DreamoraSpacing.xs),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(
-                    imageVector = if (query.isEmpty()) Icons.Outlined.Search else Icons.Filled.Search,
-                    contentDescription = null,
-                    tint = DreamoraTheme.colors.textMuted,
-                    modifier = Modifier.size(18.dp),
-                )
-                androidx.compose.foundation.text.BasicTextField(
-                    value = query,
-                    onValueChange = onQueryChange,
-                    singleLine = true,
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(horizontal = DreamoraSpacing.sm, vertical = 12.dp),
-                    textStyle = MaterialTheme.typography.bodyMedium.copy(
-                        color = MaterialTheme.colorScheme.onSurface,
-                    ),
-                    decorationBox = { inner ->
-                        Box(contentAlignment = Alignment.CenterStart) {
-                            if (query.isEmpty()) {
-                                Text(
-                                    text = placeholder ?: stringResource(my.dreamora.strings.R.string.action_search_settings),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = DreamoraTheme.colors.textMuted,
-                                )
-                            }
-                            inner()
+        Row(
+            modifier = Modifier.padding(start = DreamoraSpacing.lg, end = DreamoraSpacing.xs),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Search,
+                contentDescription = null,
+                tint = DreamoraTheme.colors.textMuted,
+                modifier = Modifier.size(20.dp),
+            )
+            BasicTextField(
+                value = query,
+                onValueChange = onQueryChange,
+                singleLine = true,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = DreamoraSpacing.sm, vertical = 14.dp),
+                textStyle = MaterialTheme.typography.bodyMedium.copy(
+                    color = MaterialTheme.colorScheme.onSurface,
+                ),
+                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                decorationBox = { inner ->
+                    Box(contentAlignment = Alignment.CenterStart) {
+                        if (query.isEmpty()) {
+                            Text(
+                                text = placeholder ?: stringResource(my.dreamora.strings.R.string.action_search_settings),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = DreamoraTheme.colors.textMuted,
+                            )
                         }
-                    },
-                )
-                if (query.isNotEmpty()) {
-                    IconButton(onClick = onClear, modifier = Modifier.size(32.dp)) {
-                        Icon(
-                            imageVector = Icons.Filled.Close,
-                            contentDescription = stringResource(my.dreamora.strings.R.string.clear),
-                            modifier = Modifier.size(16.dp),
-                            tint = DreamoraTheme.colors.textMuted,
-                        )
+                        inner()
                     }
-                }
-            }
-            AnimatedVisibility(
-                visible = query.isEmpty() && suggestions.isNotEmpty(),
-                enter = fadeIn(tween(DreamoraMotion.STANDARD)) + expandVertically(tween(DreamoraMotion.STANDARD)),
-                exit = fadeOut(tween(DreamoraMotion.INSTANT)) + shrinkVertically(tween(DreamoraMotion.STANDARD)),
-            ) {
-                Row(
-                    modifier = Modifier.padding(
-                        start = DreamoraSpacing.md,
-                        end = DreamoraSpacing.md,
-                        bottom = DreamoraSpacing.sm,
-                    ),
-                    horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.xs),
-                ) {
-                    suggestions.take(4).forEach { label ->
-                        SuggestionPill(label) { onQueryChange(label) }
-                    }
+                },
+            )
+            if (query.isNotEmpty()) {
+                IconButton(onClick = onClear, modifier = Modifier.size(32.dp)) {
+                    Icon(
+                        imageVector = Icons.Filled.Close,
+                        contentDescription = stringResource(my.dreamora.strings.R.string.clear),
+                        modifier = Modifier.size(16.dp),
+                        tint = DreamoraTheme.colors.textMuted,
+                    )
                 }
             }
         }
     }
 }
 
+/**
+ * The hub's menu: one flat card whose rows are the settings groups, separated by
+ * hairlines that stop at the icon — the way Pixel Settings groups its entries.
+ */
 @Composable
-private fun SuggestionPill(label: String, onClick: () -> Unit) {
-    Text(
-        text = label,
-        style = DreamoraType.badge,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier
-            .clip(RoundedCornerShape(DreamoraRadius.pill))
-            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.10f))
+fun SettingsMenuCard(
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = DreamoraSpacing.screenH, vertical = DreamoraSpacing.xs),
+        shape = SettingsCardShape,
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        tonalElevation = 0.dp,
+    ) {
+        Column(content = content)
+    }
+}
+
+/** One entry of the hub's menu: tinted circle icon, title, one-line summary, caret. */
+@Composable
+fun SettingsMenuRow(
+    icon: ImageVector,
+    title: String,
+    summary: String,
+    accent: Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(SettingsCardShape)
             .clickable(onClick = onClick)
-            .padding(horizontal = DreamoraSpacing.sm, vertical = 5.dp),
+            .padding(
+                horizontal = DreamoraSpacing.lg,
+                vertical = DreamoraSpacing.md,
+            ),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.md),
+    ) {
+        GroupIcon(icon = icon, accent = accent)
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Spacer(Modifier.height(1.dp))
+            Text(
+                text = summary,
+                style = MaterialTheme.typography.bodySmall,
+                color = DreamoraTheme.colors.textMuted,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        SettingsCaret()
+    }
+}
+
+/** The hairline between two rows of a [SettingsMenuCard], inset past the icon. */
+@Composable
+fun SettingsMenuDivider(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .padding(start = DreamoraSpacing.lg + 38.dp + DreamoraSpacing.md)
+            .fillMaxWidth()
+            .height(1.dp)
+            .background(DreamoraTheme.colors.hairline),
     )
 }
 
@@ -360,7 +422,7 @@ fun SettingsCaret(modifier: Modifier = Modifier) {
         imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
         contentDescription = null,
         tint = DreamoraTheme.colors.textMuted,
-        modifier = modifier.size(18.dp),
+        modifier = modifier.size(20.dp),
     )
 }
 
