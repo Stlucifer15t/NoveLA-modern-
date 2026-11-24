@@ -15,6 +15,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import my.dreamora.core.AppCacheConfig
 import my.dreamora.core.ExtensionManager
+import my.dreamora.core.appPreferences.AppPreferences
 import my.dreamora.network.NetworkClient
 import my.dreamora.network.postRequest
 import my.dreamora.scraper.configs.SourceMetadata
@@ -298,6 +299,8 @@ class LuaEngine @Inject constructor(
         g.set("log_error",              LogErrorFunction()             as LuaValue)
         g.set("base64_encode",          Base64EncodeFunction()         as LuaValue)
         g.set("os_time",                OsTimeFunction()               as LuaValue)
+        // Shared libraries (libs/ of the extension repo, synced on demand)
+        g.set("require_lib",            RequireLibFunction(g)          as LuaValue)
         // Plugin error signaling
         g.set("show_error", object : ThreeArgFunction() {
             override fun call(titleArg: LuaValue, messageArg: LuaValue, authArg: LuaValue): LuaValue {
@@ -311,6 +314,145 @@ class LuaEngine @Inject constructor(
         })
     }
 
+
+    // ── Shared libraries (require_lib) ────────────────────────────────────────
+
+    /**
+     * `require_lib(id)` — loads a shared library from the extension repo's `libs/`
+     * into the calling plugin's globals and returns its table.
+     *
+     * The library file lives at `lua_extensions/lib/<id>.lua`; a missing file is
+     * downloaded from the repo index (`libraries:` section, sha256-verified) on
+     * first use. Libraries run with the same sandbox globals as the plugin, so
+     * they can use the engine API and `require_lib` each other; cycles are
+     * rejected. Loaded tables are cached and invalidated by file mtime+size.
+     */
+    private inner class RequireLibFunction(private val globals: Globals) : OneArgFunction() {
+        override fun call(arg: LuaValue): LuaValue = requireLib(arg.checkjstring(), globals)
+    }
+
+    private val libDir: File
+        get() = File(luaDir, "lib").also { it.mkdirs() }
+
+    private fun libFile(id: String) = File(libDir, "$id.lua")
+
+    private data class LibKey(val mtime: Long, val size: Long)
+
+    private data class LibraryEntry(val url: String, val sha256: String)
+
+    private val libCache = ConcurrentHashMap<String, Pair<LibKey, LuaValue>>()
+
+    /** One lock for first-loads: two plugins needing the same lib load it once. */
+    private val libLoadLock = Any()
+
+    /** require_lib calls active on this thread — recursion inside one load chain. */
+    private val loadingLibs = object : ThreadLocal<MutableSet<String>>() {
+        override fun initialValue() = mutableSetOf<String>()
+    }
+
+    /** The repo's library catalog, fetched once per session. */
+    @Volatile
+    private var libraryCatalog: Map<String, LibraryEntry>? = null
+
+    private fun requireLib(id: String, globals: Globals): LuaValue {
+        if (!LIB_ID_PATTERN.matches(id)) {
+            throw LuaError("require_lib: invalid library id '$id'")
+        }
+        val chain = loadingLibs.get()
+        if (!chain.add(id)) throw LuaError("require_lib: circular library dependency '$id'")
+        try {
+            synchronized(libLoadLock) {
+                val file = libFile(id)
+                if (!file.exists()) downloadLibrary(id)
+                val key = LibKey(file.lastModified(), file.length())
+                libCache[id]?.let { (cachedKey, value) -> if (cachedKey == key) return value }
+                val result = try {
+                    globals.load(file.readText(Charsets.UTF_8), "lib/$id.lua").call()
+                } catch (e: LuaError) {
+                    throw LuaError("require_lib: library '$id' failed: ${e.message}")
+                } catch (e: Exception) {
+                    throw LuaError("require_lib: failed to load library '$id': ${e.message}")
+                }
+                if (!result.istable()) {
+                    throw LuaError("require_lib: library '$id' did not return a table")
+                }
+                libCache[id] = key to result
+                return result
+            }
+        } finally {
+            chain.remove(id)
+        }
+    }
+
+    private fun downloadLibrary(id: String) {
+        val entry = libraryCatalog()[id]
+            ?: throw LuaError("require_lib: library '$id' is not in the repository index")
+        val code = try {
+            val response = runBlocking { networkClient.get(entry.url) }
+            if (!response.isSuccessful) {
+                throw LuaError("require_lib: HTTP ${response.code} for library '$id'")
+            }
+            response.body.string()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: LuaError) {
+            throw e
+        } catch (e: Exception) {
+            throw LuaError("require_lib: failed to download library '$id': ${e.message}")
+        }
+        if (entry.sha256.isNotBlank()) {
+            val actual = sha256Hex(code.toByteArray(Charsets.UTF_8))
+            if (!actual.equals(entry.sha256, ignoreCase = true)) {
+                throw LuaError("require_lib: checksum mismatch for library '$id'")
+            }
+        }
+        try {
+            atomicWrite(libFile(id), code.toByteArray(Charsets.UTF_8))
+        } catch (e: Exception) {
+            throw LuaError("require_lib: failed to save library '$id': ${e.message}")
+        }
+        Timber.d("Downloaded shared library: $id")
+    }
+
+    private fun libraryCatalog(): Map<String, LibraryEntry> {
+        libraryCatalog?.let { return it }
+        val url = appPreferences.EXTENSIONS_REPOSITORY_URL.value
+        if (url.isBlank()) return emptyMap()
+        val raw = try {
+            val response = runBlocking { networkClient.get(url) }
+            if (!response.isSuccessful) {
+                throw LuaError("require_lib: HTTP ${response.code} for the repository index")
+            }
+            response.body.string()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: LuaError) {
+            throw e
+        } catch (e: Exception) {
+            throw LuaError("require_lib: failed to load the repository index: ${e.message}")
+        }
+        @Suppress("UNCHECKED_CAST")
+        val index = try {
+            Yaml().loadAs(raw, Map::class.java) as? Map<String, Any>
+        } catch (e: Exception) {
+            throw LuaError("require_lib: bad repository index: ${e.message}")
+        }
+        @Suppress("UNCHECKED_CAST")
+        val catalog = (index?.get("libraries") as? List<Map<String, Any>>)
+            ?.mapNotNull { entry ->
+                val libId = entry["id"] as? String ?: return@mapNotNull null
+                val libUrl = entry["url"] as? String ?: return@mapNotNull null
+                libId to LibraryEntry(libUrl, entry["sha256"] as? String ?: "")
+            }
+            ?.toMap()
+            ?: emptyMap()
+        libraryCatalog = catalog
+        return catalog
+    }
+
+    private fun sha256Hex(bytes: ByteArray): String =
+        MessageDigest.getInstance("SHA-256").digest(bytes)
+            .joinToString("") { "%02x".format(it) }
 
     // ── HTTP ──────────────────────────────────────────────────────────────────
 
@@ -1292,7 +1434,8 @@ class LuaSourceLoader @Inject constructor(
     @ApplicationContext private val context: Context,
     private val networkClient: NetworkClient,
     private val luaEngine: LuaEngine,
-    private val extensionRepository: ExtensionManager
+    private val extensionRepository: ExtensionManager,
+    private val appPreferences: AppPreferences
 ) {
     // ponytail: LRU cache with fixed max size. Evicts least recently used VMs to keep native heap bounded.
     // Cost: ~100ms reload from disk .lua file on cache miss.
@@ -1481,6 +1624,9 @@ class LuaSourceLoader @Inject constructor(
         // Increased from 15 to 30 to avoid thrashing and unnecessary re-compilation
         // when more than 15 extensions are active.
         private const val MAX_CACHED_SOURCES = AppCacheConfig.LUA_MAX_CACHED_SOURCES
+
+        /** Library ids are file names: lowercase letters, digits, underscores only. */
+        private val LIB_ID_PATTERN = Regex("[a-z0-9_]+")
     }
 }
 
