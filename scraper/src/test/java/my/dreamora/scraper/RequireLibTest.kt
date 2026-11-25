@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.res.Configuration
 import android.content.res.Resources
 import kotlinx.coroutines.runBlocking
-import my.dreamora.core.ExtensionManager
 import my.dreamora.core.appPreferences.AppPreferences
 import my.dreamora.network.NetworkClient
 import okhttp3.MediaType.Companion.toMediaType
@@ -17,10 +16,7 @@ import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.luaj.vm2.LuaError
-import org.luaj.vm2.LuaValue
-import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
-import org.mockito.kotlin.never
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
@@ -71,10 +67,10 @@ class RequireLibTest {
         "languages: {}\nlibraries: []\n"
     }
 
-    private fun createLoader(libBody: String, index: String): LuaSourceLoader =
-        createLoaderWithClient(libBody, index).first
-
-    private fun createLoaderWithClient(libBody: String, index: String): Pair<LuaSourceLoader, NetworkClient> {
+    private fun createEngine(
+        libBody: String,
+        index: String,
+    ): Pair<LuaEngine, NetworkClient> {
         val networkClient = mock<NetworkClient>()
         runBlocking {
             whenever(networkClient.get(repoUrl)).thenAnswer {
@@ -101,12 +97,7 @@ class RequireLibTest {
         }
         whenever(appPreferences.EXTENSIONS_REPOSITORY_URL).thenReturn(repoPref)
 
-        return LuaSourceLoader(
-            context = context,
-            networkClient = networkClient,
-            luaEngine = LuaEngine(context, networkClient, appPreferences),
-            extensionRepository = mock<ExtensionManager>(),
-        ) to networkClient
+        return LuaEngine(context, networkClient, appPreferences) to networkClient
     }
 
     private fun pluginUsingLib(): String = """
@@ -116,9 +107,9 @@ class RequireLibTest {
 
     @Test
     fun `require_lib downloads, verifies and loads a library into the plugin`() {
-        val loader = createLoader(libCode, indexYaml(sha256Of(libCode)))
+        val (engine, _) = createEngine(libCode, indexYaml(sha256Of(libCode)))
 
-        val result = runBlocking { loader.loadScript(pluginUsingLib()) }
+        val result = runBlocking { engine.loadScript(pluginUsingLib()) }
 
         assertEquals("world", result.get("greeting").tojstring())
         assertTrue(File(tempDir, "lua_extensions/lib/urls.lua").exists())
@@ -126,38 +117,38 @@ class RequireLibTest {
 
     @Test
     fun `require_lib caches the library file across plugin loads`() {
-        val (loader, networkClient) = createLoaderWithClient(libCode, indexYaml(sha256Of(libCode)))
+        val (engine, networkClient) = createEngine(libCode, indexYaml(sha256Of(libCode)))
 
-        runBlocking { loader.loadScript(pluginUsingLib()) }
-        runBlocking { loader.loadScript(pluginUsingLib()) }
+        runBlocking { engine.loadScript(pluginUsingLib()) }
+        runBlocking { engine.loadScript(pluginUsingLib()) }
 
         runBlocking { verify(networkClient, times(1)).get(libUrl) }
     }
 
     @Test
     fun `checksum mismatch fails with LuaError`() {
-        val loader = createLoader(libCode, indexYaml("deadbeef"))
+        val (engine, _) = createEngine(libCode, indexYaml("deadbeef"))
 
         assertThrows(LuaError::class.java) {
-            runBlocking { loader.loadScript(pluginUsingLib()) }
+            runBlocking { engine.loadScript(pluginUsingLib()) }
         }
     }
 
     @Test
     fun `library missing from the index fails with LuaError`() {
-        val loader = createLoader(libCode, indexYaml(sha256Of(libCode), withLib = false))
+        val (engine, _) = createEngine(libCode, indexYaml(sha256Of(libCode), withLib = false))
 
         assertThrows(LuaError::class.java) {
-            runBlocking { loader.loadScript(pluginUsingLib()) }
+            runBlocking { engine.loadScript(pluginUsingLib()) }
         }
     }
 
     @Test
     fun `invalid library id fails with LuaError`() {
-        val loader = createLoader(libCode, indexYaml(sha256Of(libCode)))
+        val (engine, _) = createEngine(libCode, indexYaml(sha256Of(libCode)))
 
         assertThrows(LuaError::class.java) {
-            runBlocking { loader.loadScript("""return require_lib("../escape")""") }
+            runBlocking { engine.loadScript("""return require_lib("../escape")""") }
         }
     }
 }
