@@ -9,7 +9,7 @@
 			android:name="my.dreamora.settings.SettingsGroupActivity"
 			android:exported="false" />
 		<activity
-			android:name="my.dreamora.settings.NovelaOnboardingActivity"
+			android:name="my.dreamora.settings.DreamoraOnboardingActivity"
 			android:exported="false" />
 	</application>
 
