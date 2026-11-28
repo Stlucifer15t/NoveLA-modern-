@@ -541,6 +541,22 @@ fun PremiumSwitch(
     )
 }
 
+/** Backwards-compatible alias for [PremiumSwitch]. */
+@Composable
+fun ExpressiveSwitch(
+    checked: Boolean,
+    onCheckedChange: ((Boolean) -> Unit)?,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+) {
+    PremiumSwitch(
+        checked = checked,
+        onCheckedChange = onCheckedChange,
+        modifier = modifier,
+        enabled = enabled,
+    )
+}
+
 /** Premium outlined chip: border + fill on select. */
 @Composable
 fun PremiumChip(
