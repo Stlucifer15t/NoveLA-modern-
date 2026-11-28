@@ -67,7 +67,7 @@ internal fun SettingsLayout(layout: LayoutPreferences) {
                         ListLayoutMode.entries.forEach { mode ->
                             PremiumChip(
                                 selected = mode == layout.forYouLayoutMode.value,
-                                onClick = { layout.forYouLayoutMode.value = it },
+                                onClick = { layout.forYouLayoutMode.value = mode },
                                 label = {
                                     Text(
                                         text = if (mode == ListLayoutMode.VerticalGrid) {
@@ -101,7 +101,7 @@ internal fun SettingsLayout(layout: LayoutPreferences) {
                         ListLayoutMode.entries.forEach { mode ->
                             PremiumChip(
                                 selected = mode == layout.booksLayoutMode.value,
-                                onClick = { layout.booksLayoutMode.value = it },
+                                onClick = { layout.booksLayoutMode.value = mode },
                                 label = {
                                     Text(
                                         text = if (mode == ListLayoutMode.VerticalGrid) {
