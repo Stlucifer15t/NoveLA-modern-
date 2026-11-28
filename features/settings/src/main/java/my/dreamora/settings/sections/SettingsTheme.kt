@@ -181,7 +181,7 @@ private fun PremiumThemeChip(
     }
 
     val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.isPressed.collectAsStateWithLifecycle()
+    val isPressed = interactionSource.isPressed.value
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,

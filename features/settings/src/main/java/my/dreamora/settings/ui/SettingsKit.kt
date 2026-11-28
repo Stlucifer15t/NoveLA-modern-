@@ -173,7 +173,7 @@ fun PremiumSettingsCard(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.isPressed.collectAsStateWithLifecycle()
+    val isPressed = interactionSource.isPressed.value
 
     AnimatedVisibility(
         visible = visible,
@@ -431,7 +431,7 @@ fun PremiumSettingsRow(
     accent: Color = MaterialTheme.colorScheme.primary,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.isPressed.collectAsStateWithLifecycle()
+    val isPressed = interactionSource.isPressed.value
 
     Row(
         modifier = modifier
@@ -508,7 +508,7 @@ fun PremiumSwitch(
     enabled: Boolean = true,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.isPressed.collectAsStateWithLifecycle()
+    val isPressed = interactionSource.isPressed.value
 
     Switch(
         checked = checked,
@@ -572,7 +572,7 @@ fun PremiumChip(
     modifier: Modifier = Modifier,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.isPressed.collectAsStateWithLifecycle()
+    val isPressed = interactionSource.isPressed.value
 
     Box(
         modifier = modifier
