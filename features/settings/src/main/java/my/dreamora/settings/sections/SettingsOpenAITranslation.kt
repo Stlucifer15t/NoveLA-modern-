@@ -37,6 +37,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import my.dreamora.settings.ui.SettingsRow
 import my.dreamora.coreui.theme.DreamoraSpacing
+import my.dreamora.coreui.theme.textPadding
 import my.dreamora.settings.R
 import my.dreamora.settings.ui.PremiumChip
 import my.dreamora.settings.ui.PremiumSettingsRow
