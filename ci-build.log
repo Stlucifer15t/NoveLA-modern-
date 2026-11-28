@@ -1,0 +1,465 @@
+# CI build log
+run: https://github.com/Stlucifer15t/NoveLA-modern-/actions/runs/46140997714
+commit: 6372dff13c34be5d238a38beae4936bd4a5878da
+
+(no test-results xml found)
+
+## key build lines
+> Task :features:settings:compileDebugKotlin FAILED
+e: file:///home/runner/work/NoveLA-modern-/NoveLA-modern-/features/settings/src/main/java/my/dreamora/settings/sections/SettingsGeminiTranslation.kt:535:76 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/NoveLA-modern-/NoveLA-modern-/features/settings/src/main/java/my/dreamora/settings/sections/SettingsGeminiTranslation.kt:566:25 'val' cannot be reassigned.
+e: file:///home/runner/work/NoveLA-modern-/NoveLA-modern-/features/settings/src/main/java/my/dreamora/settings/sections/SettingsNetwork.kt:14:43 Cannot access 'val RowColumnParentData?.weight: Float': it is internal in file.
+e: file:///home/runner/work/NoveLA-modern-/NoveLA-modern-/features/settings/src/main/java/my/dreamora/settings/sections/SettingsReading.kt:10:43 Cannot access 'val RowColumnParentData?.weight: Float': it is internal in file.
+e: file:///home/runner/work/NoveLA-modern-/NoveLA-modern-/features/settings/src/main/java/my/dreamora/settings/sections/SettingsReading.kt:36:38 Conflicting import: imported name 'FontWeight' is ambiguous.
+e: file:///home/runner/work/NoveLA-modern-/NoveLA-modern-/features/settings/src/main/java/my/dreamora/settings/sections/SettingsReading.kt:47:38 Conflicting import: imported name 'FontWeight' is ambiguous.
+e: file:///home/runner/work/NoveLA-modern-/NoveLA-modern-/features/settings/src/main/java/my/dreamora/settings/sections/SettingsStats.kt:137:14 Functions which invoke @Composable functions must be marked with the @Composable annotation
+e: file:///home/runner/work/NoveLA-modern-/NoveLA-modern-/features/settings/src/main/java/my/dreamora/settings/sections/SettingsStats.kt:139:22 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/NoveLA-modern-/NoveLA-modern-/features/settings/src/main/java/my/dreamora/settings/sections/SettingsStats.kt:140:13 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/NoveLA-modern-/NoveLA-modern-/features/settings/src/main/java/my/dreamora/settings/sections/SettingsTheme.kt:44:38 Conflicting import: imported name 'FontWeight' is ambiguous.
+e: file:///home/runner/work/NoveLA-modern-/NoveLA-modern-/features/settings/src/main/java/my/dreamora/settings/sections/SettingsTheme.kt:58:38 Conflicting import: imported name 'FontWeight' is ambiguous.
+e: file:///home/runner/work/NoveLA-modern-/NoveLA-modern-/features/settings/src/main/java/my/dreamora/settings/sections/SettingsTheme.kt:184:39 Unresolved reference 'isPressed' on receiver of type 'MutableInteractionSource'.
+e: file:///home/runner/work/NoveLA-modern-/NoveLA-modern-/features/settings/src/main/java/my/dreamora/settings/ui/SettingsKit.kt:108:62 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/NoveLA-modern-/NoveLA-modern-/features/settings/src/main/java/my/dreamora/settings/ui/SettingsKit.kt:176:39 Unresolved reference 'isPressed' on receiver of type 'MutableInteractionSource'.
+e: file:///home/runner/work/NoveLA-modern-/NoveLA-modern-/features/settings/src/main/java/my/dreamora/settings/ui/SettingsKit.kt:434:39 Unresolved reference 'isPressed' on receiver of type 'MutableInteractionSource'.
+e: file:///home/runner/work/NoveLA-modern-/NoveLA-modern-/features/settings/src/main/java/my/dreamora/settings/ui/SettingsKit.kt:511:39 Unresolved reference 'isPressed' on receiver of type 'MutableInteractionSource'.
+e: file:///home/runner/work/NoveLA-modern-/NoveLA-modern-/features/settings/src/main/java/my/dreamora/settings/ui/SettingsKit.kt:518:41 None of the following candidates is applicable:
+e: file:///home/runner/work/NoveLA-modern-/NoveLA-modern-/features/settings/src/main/java/my/dreamora/settings/ui/SettingsKit.kt:518:41 No value passed for parameter 'onClick'.
+e: file:///home/runner/work/NoveLA-modern-/NoveLA-modern-/features/settings/src/main/java/my/dreamora/settings/ui/SettingsKit.kt:524:22 None of the following candidates is applicable:
+e: file:///home/runner/work/NoveLA-modern-/NoveLA-modern-/features/settings/src/main/java/my/dreamora/settings/ui/SettingsKit.kt:575:39 Unresolved reference 'isPressed' on receiver of type 'MutableInteractionSource'.
+* What went wrong:
+Caused by: org.gradle.workers.internal.DefaultWorkerExecutor$WorkExecutionException: A failure occurred while executing org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork
+Caused by: org.jetbrains.kotlin.gradle.tasks.CompilationErrorException: @Composable invocations can only happen from the context of a @Composable function
+
+## diagnostics
+=== extension_compat: generated Hilt/Dagger sources ===
+tooling/extension_compat/build/generated/ksp/debug/java/my/dreamora/extension_compat/di/CompatProviderModule_ProvideLoadersFactory.java
+tooling/extension_compat/build/generated/ksp/debug/java/my/dreamora/extension_compat/di/CompatProviderModule_ProvideCompatStorageFactory.java
+tooling/extension_compat/build/generated/ksp/debug/java/my/dreamora/extension_compat/legado/LegadoExtensionLoader_Factory.java
+tooling/extension_compat/build/generated/ksp/debug/java/my/dreamora/extension_compat/mangayomi/MangayomiExtensionLoader_Factory.java
+tooling/extension_compat/build/generated/ksp/debug/java/my/dreamora/extension_compat/lnreader/LnReaderExtensionLoader_Factory.java
+tooling/extension_compat/build/generated/ksp/debug/java/my/dreamora/extension_compat/tachiyomi/TachiyomiExtensionLoader_Factory.java
+tooling/extension_compat/build/generated/ksp/debug/java/my/dreamora/extension_compat/core/CompatSourceProviderImpl_Factory.java
+tooling/extension_compat/build/generated/ksp/debug/java/my/dreamora/extension_compat/core/CompatRepositoryManager_Factory.java
+tooling/extension_compat/build/generated/ksp/debug/java/my/dreamora/extension_compat/core/CompatDiagnostics_Factory.java
+tooling/extension_compat/build/generated/ksp/debug/java/hilt_aggregated_deps/_my_dreamora_extension_compat_di_CompatModule.java
+tooling/extension_compat/build/generated/ksp/debug/java/hilt_aggregated_deps/_my_dreamora_extension_compat_di_CompatProviderModule.java
+tooling/extension_compat/build/generated/source/buildConfig/debug/my/dreamora/extension_compat/BuildConfig.java
+=== CompatModule* generated? ===
+./tooling/extension_compat/build/generated/ksp/debug/java/hilt_aggregated_deps/_my_dreamora_extension_compat_di_CompatModule.java
+=== Hilt modules and providers generated in tooling/extension_compat ===
+tooling/extension_compat/build/generated/ksp/debug/java/my/dreamora/extension_compat/legado/LegadoExtensionLoader_Factory.java
+tooling/extension_compat/build/generated/ksp/debug/java/my/dreamora/extension_compat/mangayomi/MangayomiExtensionLoader_Factory.java
+tooling/extension_compat/build/generated/ksp/debug/java/my/dreamora/extension_compat/lnreader/LnReaderExtensionLoader_Factory.java
+tooling/extension_compat/build/generated/ksp/debug/java/my/dreamora/extension_compat/tachiyomi/TachiyomiExtensionLoader_Factory.java
+tooling/extension_compat/build/generated/ksp/debug/java/my/dreamora/extension_compat/core/CompatSourceProviderImpl_Factory.java
+tooling/extension_compat/build/generated/ksp/debug/java/my/dreamora/extension_compat/core/CompatRepositoryManager_Factory.java
+tooling/extension_compat/build/generated/ksp/debug/java/my/dreamora/extension_compat/core/CompatDiagnostics_Factory.java
+tooling/extension_compat/build/generated/ksp/debug/java/hilt_aggregated_deps
+tooling/extension_compat/build/generated/ksp/debug/java/hilt_aggregated_deps/_my_dreamora_extension_compat_di_CompatModule.java
+tooling/extension_compat/build/generated/ksp/debug/java/hilt_aggregated_deps/_my_dreamora_extension_compat_di_CompatProviderModule.java
+=== which module was changed recently, for context ===
+6372dff Fix isPressed State read - use .value instead of collectAsStateWithLifecycle
+
+## last 400 lines
+```
+> Task :tooling:text_to_speech:kspDebugKotlin FROM-CACHE
+> Task :tooling:epub_importer:javaPreCompileDebug FROM-CACHE
+> Task :app:generateDebugRFile FROM-CACHE
+> Task :features:libraryExplorer:javaPreCompileDebug FROM-CACHE
+> Task :features:sourceExplorer:generateDebugBuildConfig FROM-CACHE
+> Task :features:sourceExplorer:javaPreCompileDebug FROM-CACHE
+> Task :features:webview:generateDebugBuildConfig FROM-CACHE
+> Task :tooling:text_to_speech:compileDebugKotlin FROM-CACHE
+> Task :features:webview:javaPreCompileDebug FROM-CACHE
+> Task :tooling:local_source:generateDebugBuildConfig FROM-CACHE
+> Task :tooling:local_source:javaPreCompileDebug FROM-CACHE
+> Task :core:bundleLibRuntimeToJarDebug
+> Task :core:bundleLibCompileToJarDebug
+> Task :tooling:text_to_speech:compileDebugJavaWithJavac FROM-CACHE
+> Task :tooling:text_to_speech:transformDebugClassesWithAsm FROM-CACHE
+> Task :tooling:text_to_speech:bundleLibCompileToJarDebug
+> Task :tooling:text_to_speech:bundleLibRuntimeToJarDebug
+> Task :tooling:epub_parser:compileDebugKotlin FROM-CACHE
+> Task :networking:kspDebugKotlin FROM-CACHE
+> Task :tooling:local_database:kspDebugKotlin FROM-CACHE
+> Task :networking:compileDebugKotlin FROM-CACHE
+> Task :tooling:epub_parser:compileDebugJavaWithJavac FROM-CACHE
+> Task :tooling:epub_parser:bundleLibRuntimeToJarDebug
+> Task :tooling:epub_parser:bundleLibCompileToJarDebug
+> Task :tooling:local_database:compileDebugKotlin FROM-CACHE
+> Task :networking:compileDebugJavaWithJavac FROM-CACHE
+> Task :networking:transformDebugClassesWithAsm FROM-CACHE
+> Task :tooling:local_database:compileDebugJavaWithJavac FROM-CACHE
+> Task :networking:bundleLibRuntimeToJarDebug
+> Task :networking:bundleLibCompileToJarDebug
+> Task :tooling:text_translator:translator_nop:kspDebugKotlin FROM-CACHE
+> Task :tooling:local_database:transformDebugClassesWithAsm FROM-CACHE
+> Task :tooling:local_database:bundleLibCompileToJarDebug
+> Task :tooling:local_database:bundleLibRuntimeToJarDebug
+> Task :tooling:text_translator:translator_nop:compileDebugKotlin FROM-CACHE
+> Task :navigation:kspDebugKotlin FROM-CACHE
+> Task :tooling:text_translator:translator_nop:compileDebugJavaWithJavac FROM-CACHE
+> Task :navigation:compileDebugKotlin FROM-CACHE
+> Task :coreui:kspDebugKotlin FROM-CACHE
+> Task :tooling:text_translator:translator_nop:transformDebugClassesWithAsm FROM-CACHE
+> Task :tooling:text_translator:translator_nop:bundleLibCompileToJarDebug
+> Task :tooling:text_translator:translator_nop:bundleLibRuntimeToJarDebug
+> Task :navigation:compileDebugJavaWithJavac FROM-CACHE
+> Task :navigation:transformDebugClassesWithAsm FROM-CACHE
+> Task :navigation:bundleLibRuntimeToJarDebug
+> Task :navigation:bundleLibCompileToJarDebug
+> Task :coreui:compileDebugKotlin FROM-CACHE
+> Task :coreui:compileDebugJavaWithJavac FROM-CACHE
+> Task :coreui:transformDebugClassesWithAsm FROM-CACHE
+> Task :coreui:bundleLibCompileToJarDebug
+> Task :coreui:bundleLibRuntimeToJarDebug
+> Task :features:webview:kspDebugKotlin FROM-CACHE
+> Task :scraper:kspDebugKotlin FROM-CACHE
+> Task :features:webview:compileDebugKotlin FROM-CACHE
+> Task :scraper:compileDebugKotlin FROM-CACHE
+> Task :features:webview:compileDebugJavaWithJavac FROM-CACHE
+> Task :features:webview:transformDebugClassesWithAsm FROM-CACHE
+> Task :features:webview:bundleLibCompileToJarDebug
+> Task :scraper:compileDebugJavaWithJavac FROM-CACHE
+> Task :scraper:transformDebugClassesWithAsm FROM-CACHE
+> Task :scraper:bundleLibCompileToJarDebug
+> Task :scraper:bundleLibRuntimeToJarDebug
+> Task :data:kspDebugKotlin FROM-CACHE
+> Task :tooling:extension_compat:kspDebugKotlin FROM-CACHE
+> Task :data:compileDebugKotlin FROM-CACHE
+> Task :tooling:extension_compat:compileDebugKotlin FROM-CACHE
+> Task :tooling:extension_compat:compileDebugJavaWithJavac FROM-CACHE
+> Task :data:compileDebugJavaWithJavac FROM-CACHE
+> Task :tooling:extension_compat:transformDebugClassesWithAsm FROM-CACHE
+> Task :tooling:extension_compat:bundleLibCompileToJarDebug
+> Task :data:transformDebugClassesWithAsm FROM-CACHE
+> Task :tooling:extension_compat:bundleLibRuntimeToJarDebug
+> Task :data:bundleLibRuntimeToJarDebug
+> Task :data:bundleLibCompileToJarDebug
+> Task :tooling:backup_restore:kspDebugKotlin FROM-CACHE
+> Task :features:globalSourceSearch:kspDebugKotlin FROM-CACHE
+> Task :tooling:backup_create:kspDebugKotlin FROM-CACHE
+> Task :features:extensions:kspDebugKotlin FROM-CACHE
+> Task :tooling:backup_restore:compileDebugKotlin FROM-CACHE
+> Task :tooling:backup_create:compileDebugKotlin FROM-CACHE
+> Task :features:globalSourceSearch:compileDebugKotlin FROM-CACHE
+> Task :features:extensions:compileDebugKotlin FROM-CACHE
+> Task :tooling:backup_restore:compileDebugJavaWithJavac FROM-CACHE
+> Task :tooling:backup_create:compileDebugJavaWithJavac FROM-CACHE
+> Task :features:globalSourceSearch:compileDebugJavaWithJavac FROM-CACHE
+> Task :tooling:backup_create:transformDebugClassesWithAsm FROM-CACHE
+> Task :features:globalSourceSearch:transformDebugClassesWithAsm FROM-CACHE
+> Task :tooling:backup_create:bundleLibCompileToJarDebug
+> Task :tooling:backup_restore:transformDebugClassesWithAsm FROM-CACHE
+> Task :features:globalSourceSearch:bundleLibCompileToJarDebug
+> Task :features:globalSourceSearch:bundleLibRuntimeToJarDebug
+> Task :tooling:backup_create:bundleLibRuntimeToJarDebug
+> Task :tooling:backup_restore:bundleLibCompileToJarDebug
+> Task :tooling:backup_restore:bundleLibRuntimeToJarDebug
+> Task :tooling:novel_migration:kspDebugKotlin FROM-CACHE
+> Task :tooling:application_workers:kspDebugKotlin FROM-CACHE
+> Task :features:databaseExplorer:kspDebugKotlin FROM-CACHE
+> Task :features:extensions:compileDebugJavaWithJavac FROM-CACHE
+> Task :features:databaseExplorer:compileDebugKotlin FROM-CACHE
+> Task :tooling:application_workers:compileDebugKotlin FROM-CACHE
+> Task :tooling:novel_migration:compileDebugKotlin FROM-CACHE
+> Task :features:extensions:transformDebugClassesWithAsm FROM-CACHE
+> Task :features:extensions:bundleLibCompileToJarDebug
+> Task :features:databaseExplorer:compileDebugJavaWithJavac FROM-CACHE
+> Task :tooling:application_workers:compileDebugJavaWithJavac FROM-CACHE
+> Task :features:extensions:bundleLibRuntimeToJarDebug
+> Task :tooling:application_workers:transformDebugClassesWithAsm FROM-CACHE
+> Task :features:historyExplorer:kspDebugKotlin FROM-CACHE
+> Task :features:databaseExplorer:transformDebugClassesWithAsm FROM-CACHE
+> Task :tooling:novel_migration:compileDebugJavaWithJavac FROM-CACHE
+> Task :tooling:application_workers:bundleLibRuntimeToJarDebug
+> Task :features:databaseExplorer:bundleLibCompileToJarDebug
+> Task :tooling:application_workers:bundleLibCompileToJarDebug
+> Task :tooling:epub_importer:kspDebugKotlin FROM-CACHE
+> Task :tooling:novel_migration:transformDebugClassesWithAsm FROM-CACHE
+> Task :tooling:novel_migration:bundleLibCompileToJarDebug
+> Task :features:historyExplorer:compileDebugKotlin FROM-CACHE
+> Task :tooling:epub_importer:compileDebugKotlin FROM-CACHE
+> Task :tooling:novel_migration:bundleLibRuntimeToJarDebug
+> Task :features:catalogExplorer:kspDebugKotlin FROM-CACHE
+> Task :tooling:epub_importer:compileDebugJavaWithJavac FROM-CACHE
+> Task :features:historyExplorer:compileDebugJavaWithJavac FROM-CACHE
+> Task :features:catalogExplorer:compileDebugKotlin FROM-CACHE
+> Task :tooling:epub_importer:transformDebugClassesWithAsm FROM-CACHE
+> Task :features:historyExplorer:transformDebugClassesWithAsm FROM-CACHE
+> Task :tooling:epub_importer:bundleLibCompileToJarDebug
+> Task :features:historyExplorer:bundleLibCompileToJarDebug
+> Task :tooling:epub_importer:bundleLibRuntimeToJarDebug
+> Task :features:catalogExplorer:compileDebugJavaWithJavac FROM-CACHE
+> Task :features:sourceExplorer:kspDebugKotlin FROM-CACHE
+> Task :features:libraryExplorer:kspDebugKotlin FROM-CACHE
+> Task :features:catalogExplorer:transformDebugClassesWithAsm FROM-CACHE
+> Task :features:catalogExplorer:bundleLibCompileToJarDebug
+> Task :features:sourceExplorer:compileDebugKotlin FROM-CACHE
+> Task :tooling:local_source:kspDebugKotlin FROM-CACHE
+> Task :features:libraryExplorer:compileDebugKotlin FROM-CACHE
+> Task :features:sourceExplorer:compileDebugJavaWithJavac FROM-CACHE
+> Task :tooling:local_source:compileDebugKotlin FROM-CACHE
+> Task :features:sourceExplorer:transformDebugClassesWithAsm FROM-CACHE
+> Task :features:sourceExplorer:bundleLibCompileToJarDebug
+> Task :tooling:local_source:compileDebugJavaWithJavac FROM-CACHE
+> Task :features:libraryExplorer:compileDebugJavaWithJavac FROM-CACHE
+> Task :tooling:local_source:transformDebugClassesWithAsm FROM-CACHE
+> Task :tooling:local_source:bundleLibCompileToJarDebug
+> Task :features:libraryExplorer:transformDebugClassesWithAsm FROM-CACHE
+> Task :features:libraryExplorer:bundleLibCompileToJarDebug
+> Task :features:settings:kspDebugKotlin
+
+> Task :features:settings:compileDebugKotlin FAILED
+w: The argument '-Xjvm-default' is deprecated since Kotlin 2.2.0. It will be removed in one of the future releases. Use `-jvm-default` instead.
+e: file:///home/runner/work/NoveLA-modern-/NoveLA-modern-/features/settings/src/main/java/my/dreamora/settings/sections/SettingsGeminiTranslation.kt:535:76 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/NoveLA-modern-/NoveLA-modern-/features/settings/src/main/java/my/dreamora/settings/sections/SettingsGeminiTranslation.kt:566:25 'val' cannot be reassigned.
+e: file:///home/runner/work/NoveLA-modern-/NoveLA-modern-/features/settings/src/main/java/my/dreamora/settings/sections/SettingsNetwork.kt:14:43 Cannot access 'val RowColumnParentData?.weight: Float': it is internal in file.
+e: file:///home/runner/work/NoveLA-modern-/NoveLA-modern-/features/settings/src/main/java/my/dreamora/settings/sections/SettingsReading.kt:10:43 Cannot access 'val RowColumnParentData?.weight: Float': it is internal in file.
+e: file:///home/runner/work/NoveLA-modern-/NoveLA-modern-/features/settings/src/main/java/my/dreamora/settings/sections/SettingsReading.kt:36:38 Conflicting import: imported name 'FontWeight' is ambiguous.
+e: file:///home/runner/work/NoveLA-modern-/NoveLA-modern-/features/settings/src/main/java/my/dreamora/settings/sections/SettingsReading.kt:47:38 Conflicting import: imported name 'FontWeight' is ambiguous.
+e: file:///home/runner/work/NoveLA-modern-/NoveLA-modern-/features/settings/src/main/java/my/dreamora/settings/sections/SettingsStats.kt:137:14 Functions which invoke @Composable functions must be marked with the @Composable annotation
+e: file:///home/runner/work/NoveLA-modern-/NoveLA-modern-/features/settings/src/main/java/my/dreamora/settings/sections/SettingsStats.kt:139:22 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/NoveLA-modern-/NoveLA-modern-/features/settings/src/main/java/my/dreamora/settings/sections/SettingsStats.kt:140:13 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/NoveLA-modern-/NoveLA-modern-/features/settings/src/main/java/my/dreamora/settings/sections/SettingsTheme.kt:44:38 Conflicting import: imported name 'FontWeight' is ambiguous.
+e: file:///home/runner/work/NoveLA-modern-/NoveLA-modern-/features/settings/src/main/java/my/dreamora/settings/sections/SettingsTheme.kt:58:38 Conflicting import: imported name 'FontWeight' is ambiguous.
+e: file:///home/runner/work/NoveLA-modern-/NoveLA-modern-/features/settings/src/main/java/my/dreamora/settings/sections/SettingsTheme.kt:184:39 Unresolved reference 'isPressed' on receiver of type 'MutableInteractionSource'.
+e: file:///home/runner/work/NoveLA-modern-/NoveLA-modern-/features/settings/src/main/java/my/dreamora/settings/ui/SettingsKit.kt:108:62 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/NoveLA-modern-/NoveLA-modern-/features/settings/src/main/java/my/dreamora/settings/ui/SettingsKit.kt:176:39 Unresolved reference 'isPressed' on receiver of type 'MutableInteractionSource'.
+e: file:///home/runner/work/NoveLA-modern-/NoveLA-modern-/features/settings/src/main/java/my/dreamora/settings/ui/SettingsKit.kt:434:39 Unresolved reference 'isPressed' on receiver of type 'MutableInteractionSource'.
+e: file:///home/runner/work/NoveLA-modern-/NoveLA-modern-/features/settings/src/main/java/my/dreamora/settings/ui/SettingsKit.kt:511:39 Unresolved reference 'isPressed' on receiver of type 'MutableInteractionSource'.
+e: file:///home/runner/work/NoveLA-modern-/NoveLA-modern-/features/settings/src/main/java/my/dreamora/settings/ui/SettingsKit.kt:518:41 None of the following candidates is applicable:
+
+fun Modifier.clickable(enabled: Boolean = ..., onClickLabel: String? = ..., role: Role? = ..., interactionSource: MutableInteractionSource? = ..., onClick: () -> Unit): Modifier:
+  No parameter with name 'indication' found.
+
+fun Modifier.clickable(interactionSource: MutableInteractionSource?, indication: Indication?, enabled: Boolean = ..., onClickLabel: String? = ..., role: Role? = ..., onClick: () -> Unit): Modifier
+e: file:///home/runner/work/NoveLA-modern-/NoveLA-modern-/features/settings/src/main/java/my/dreamora/settings/ui/SettingsKit.kt:518:41 No value passed for parameter 'onClick'.
+e: file:///home/runner/work/NoveLA-modern-/NoveLA-modern-/features/settings/src/main/java/my/dreamora/settings/ui/SettingsKit.kt:524:22 None of the following candidates is applicable:
+
+fun Modifier.background(color: Color, shape: Shape = ...): Modifier:
+  Argument type mismatch: actual type is 'Any', but 'Color' was expected.
+
+fun Modifier.background(brush: Brush, shape: Shape = ..., alpha: Float = ...): Modifier:
+  Argument type mismatch: actual type is 'Any', but 'Brush' was expected.
+e: file:///home/runner/work/NoveLA-modern-/NoveLA-modern-/features/settings/src/main/java/my/dreamora/settings/ui/SettingsKit.kt:575:39 Unresolved reference 'isPressed' on receiver of type 'MutableInteractionSource'.
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run_3-1795866059574.json
+
+[Incubating] Problems report is available at: file:///home/runner/work/NoveLA-modern-/NoveLA-modern-/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':features:settings:compileDebugKotlin' (registered by plugin 'com.android.internal.library').
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork
+   > Kotlin compiler: COMPOSABLE_INVOCATION
+       Kotlin compiler error
+         @Composable invocations can only happen from the context of a @Composable function
+         Location: /home/runner/work/NoveLA-modern-/NoveLA-modern-/features/settings/src/main/java/my/dreamora/settings/sections/SettingsGeminiTranslation.kt line 535
+
+* Try:
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+* Exception is:
+org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':features:settings:compileDebugKotlin' (registered by plugin 'com.android.internal.library').
+	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.lambda$executeIfValid$1(ExecuteActionsTaskExecuter.java:135)
+	at org.gradle.internal.Try$Failure.ifSuccessfulOrElse(Try.java:288)
+	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:133)
+	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.execute(ExecuteActionsTaskExecuter.java:121)
+	at org.gradle.api.internal.tasks.execution.ProblemsTaskPathTrackingTaskExecuter.execute(ProblemsTaskPathTrackingTaskExecuter.java:41)
+	at org.gradle.api.internal.tasks.execution.ResolveTaskExecutionModeExecuter.execute(ResolveTaskExecutionModeExecuter.java:51)
+	at org.gradle.api.internal.tasks.execution.FinalizePropertiesTaskExecuter.execute(FinalizePropertiesTaskExecuter.java:46)
+	at org.gradle.api.internal.tasks.execution.SkipTaskWithNoActionsExecuter.execute(SkipTaskWithNoActionsExecuter.java:57)
+	at org.gradle.api.internal.tasks.execution.SkipOnlyIfTaskExecuter.execute(SkipOnlyIfTaskExecuter.java:74)
+	at org.gradle.api.internal.tasks.execution.CatchExceptionTaskExecuter.execute(CatchExceptionTaskExecuter.java:36)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.executeTask(EventFiringTaskExecuter.java:77)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:55)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:52)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:210)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:205)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:54)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter.execute(EventFiringTaskExecuter.java:52)
+	at org.gradle.execution.plan.DefaultNodeExecutor.executeLocalTaskNode(DefaultNodeExecutor.java:55)
+	at org.gradle.execution.plan.DefaultNodeExecutor.execute(DefaultNodeExecutor.java:34)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:355)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:343)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.lambda$execute$0(DefaultTaskExecutionGraph.java:339)
+	at org.gradle.internal.operations.CurrentBuildOperationRef.with(CurrentBuildOperationRef.java:84)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:339)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:328)
+	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.execute(DefaultPlanExecutor.java:459)
+	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.run(DefaultPlanExecutor.java:376)
+	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
+	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:47)
+Caused by: org.gradle.workers.internal.DefaultWorkerExecutor$WorkExecutionException: A failure occurred while executing org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork
+	at org.gradle.workers.internal.DefaultWorkerExecutor$WorkItemExecution.waitForCompletion(DefaultWorkerExecutor.java:278)
+	at org.gradle.internal.work.DefaultAsyncWorkTracker.lambda$waitForItemsAndGatherFailures$2(DefaultAsyncWorkTracker.java:132)
+	at org.gradle.internal.Factories$1.create(Factories.java:30)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.lambda$withoutLocksBlocking$3(DefaultWorkerLeaseService.java:410)
+	at org.gradle.internal.work.ResourceLockStatistics$1.measure(ResourceLockStatistics.java:43)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.withoutLocksBlocking(DefaultWorkerLeaseService.java:405)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.blocking(DefaultWorkerLeaseService.java:255)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.blocking(DefaultWorkerLeaseService.java:237)
+	at org.gradle.internal.work.DefaultAsyncWorkTracker.lambda$waitForItemsAndGatherFailures$3(DefaultAsyncWorkTracker.java:128)
+	at org.gradle.internal.Factories$1.create(Factories.java:30)
+	at org.gradle.internal.resources.AbstractResourceLockRegistry.whileDisallowingLockChanges(AbstractResourceLockRegistry.java:50)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.whileDisallowingProjectLockChanges(DefaultWorkerLeaseService.java:260)
+	at org.gradle.internal.work.DefaultAsyncWorkTracker.waitForItemsAndGatherFailures(DefaultAsyncWorkTracker.java:127)
+	at org.gradle.internal.work.DefaultAsyncWorkTracker.waitForItemsAndGatherFailures(DefaultAsyncWorkTracker.java:93)
+	at org.gradle.internal.work.DefaultAsyncWorkTracker.waitForAll(DefaultAsyncWorkTracker.java:79)
+	at org.gradle.internal.work.DefaultAsyncWorkTracker.waitForCompletion(DefaultAsyncWorkTracker.java:67)
+	at org.gradle.api.internal.tasks.execution.TaskExecution$3.run(TaskExecution.java:267)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:30)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:27)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.run(DefaultBuildOperationRunner.java:48)
+	at org.gradle.api.internal.tasks.execution.TaskExecution.executeAction(TaskExecution.java:244)
+	at org.gradle.api.internal.tasks.execution.TaskExecution.executeActions(TaskExecution.java:227)
+	at org.gradle.api.internal.tasks.execution.TaskExecution.executeWithPreviousOutputFiles(TaskExecution.java:210)
+	at org.gradle.api.internal.tasks.execution.TaskExecution.execute(TaskExecution.java:176)
+	at org.gradle.internal.execution.steps.ExecuteStep.executeInternal(ExecuteStep.java:167)
+	at org.gradle.internal.execution.steps.ExecuteStep.access$000(ExecuteStep.java:47)
+	at org.gradle.internal.execution.steps.ExecuteStep$1.call(ExecuteStep.java:137)
+	at org.gradle.internal.execution.steps.ExecuteStep$1.call(ExecuteStep.java:134)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:210)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:205)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:54)
+	at org.gradle.internal.execution.steps.ExecuteStep.execute(ExecuteStep.java:134)
+	at org.gradle.internal.execution.steps.ExecuteStep$Mutable.execute(ExecuteStep.java:80)
+	at org.gradle.internal.execution.steps.CancelExecutionStep.execute(CancelExecutionStep.java:42)
+	at org.gradle.internal.execution.steps.TimeoutStep.executeWithoutTimeout(TimeoutStep.java:75)
+	at org.gradle.internal.execution.steps.TimeoutStep.execute(TimeoutStep.java:55)
+	at org.gradle.internal.execution.steps.PreCreateOutputParentsStep.execute(PreCreateOutputParentsStep.java:51)
+	at org.gradle.internal.execution.steps.PreCreateOutputParentsStep.execute(PreCreateOutputParentsStep.java:29)
+	at org.gradle.internal.execution.steps.RemovePreviousOutputsStep.executeMutable(RemovePreviousOutputsStep.java:67)
+	at org.gradle.internal.execution.steps.RemovePreviousOutputsStep.executeMutable(RemovePreviousOutputsStep.java:39)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.BroadcastChangingOutputsStep.execute(BroadcastChangingOutputsStep.java:42)
+	at org.gradle.internal.execution.steps.BroadcastChangingOutputsStep.execute(BroadcastChangingOutputsStep.java:24)
+	at org.gradle.internal.execution.steps.CaptureOutputsAfterExecutionStep.execute(CaptureOutputsAfterExecutionStep.java:69)
+	at org.gradle.internal.execution.steps.CaptureOutputsAfterExecutionStep.execute(CaptureOutputsAfterExecutionStep.java:46)
+	at org.gradle.internal.execution.steps.ResolveInputChangesStep.executeMutable(ResolveInputChangesStep.java:39)
+	at org.gradle.internal.execution.steps.ResolveInputChangesStep.executeMutable(ResolveInputChangesStep.java:28)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.BuildCacheStep.executeWithoutCache(BuildCacheStep.java:189)
+	at org.gradle.internal.execution.steps.BuildCacheStep.executeAndStoreInCache(BuildCacheStep.java:145)
+	at org.gradle.internal.execution.steps.BuildCacheStep.lambda$executeWithCache$4(BuildCacheStep.java:104)
+	at org.gradle.internal.execution.steps.BuildCacheStep.lambda$executeWithCache$5(BuildCacheStep.java:104)
+	at org.gradle.internal.Try$Success.map(Try.java:170)
+	at org.gradle.internal.execution.steps.BuildCacheStep.executeWithCache(BuildCacheStep.java:88)
+	at org.gradle.internal.execution.steps.BuildCacheStep.lambda$execute$0(BuildCacheStep.java:75)
+	at org.gradle.internal.Either$Left.fold(Either.java:116)
+	at org.gradle.internal.execution.caching.CachingState.fold(CachingState.java:62)
+	at org.gradle.internal.execution.steps.BuildCacheStep.execute(BuildCacheStep.java:74)
+	at org.gradle.internal.execution.steps.BuildCacheStep.execute(BuildCacheStep.java:49)
+	at org.gradle.internal.execution.steps.StoreExecutionStateStep.executeMutable(StoreExecutionStateStep.java:46)
+	at org.gradle.internal.execution.steps.StoreExecutionStateStep.executeMutable(StoreExecutionStateStep.java:35)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.SkipUpToDateStep.executeBecause(SkipUpToDateStep.java:75)
+	at org.gradle.internal.execution.steps.SkipUpToDateStep.lambda$execute$2(SkipUpToDateStep.java:53)
+	at org.gradle.internal.execution.steps.SkipUpToDateStep.execute(SkipUpToDateStep.java:53)
+	at org.gradle.internal.execution.steps.SkipUpToDateStep.execute(SkipUpToDateStep.java:35)
+	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsFinishedStep.execute(MarkSnapshottingInputsFinishedStep.java:37)
+	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsFinishedStep.execute(MarkSnapshottingInputsFinishedStep.java:27)
+	at org.gradle.internal.execution.steps.ResolveMutableCachingStateStep.executeDelegate(ResolveMutableCachingStateStep.java:70)
+	at org.gradle.internal.execution.steps.ResolveMutableCachingStateStep.executeDelegate(ResolveMutableCachingStateStep.java:32)
+	at org.gradle.internal.execution.steps.AbstractResolveCachingStateStep.execute(AbstractResolveCachingStateStep.java:69)
+	at org.gradle.internal.execution.steps.AbstractResolveCachingStateStep.execute(AbstractResolveCachingStateStep.java:37)
+	at org.gradle.internal.execution.steps.ResolveChangesStep.executeMutable(ResolveChangesStep.java:63)
+	at org.gradle.internal.execution.steps.ResolveChangesStep.executeMutable(ResolveChangesStep.java:34)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.ValidateStep$Mutable.executeDelegate(ValidateStep.java:79)
+	at org.gradle.internal.execution.steps.ValidateStep$Mutable.executeDelegate(ValidateStep.java:65)
+	at org.gradle.internal.execution.steps.ValidateStep.execute(ValidateStep.java:105)
+	at org.gradle.internal.execution.steps.ValidateStep$Mutable.execute(ValidateStep.java:65)
+	at org.gradle.internal.execution.steps.CaptureMutableStateBeforeExecutionStep.executeMutable(CaptureMutableStateBeforeExecutionStep.java:86)
+	at org.gradle.internal.execution.steps.CaptureMutableStateBeforeExecutionStep.execute(CaptureMutableStateBeforeExecutionStep.java:65)
+	at org.gradle.internal.execution.steps.CaptureMutableStateBeforeExecutionStep.execute(CaptureMutableStateBeforeExecutionStep.java:45)
+	at org.gradle.internal.execution.steps.SkipEmptyMutableWorkStep.executeWithNonEmptySources(SkipEmptyMutableWorkStep.java:210)
+	at org.gradle.internal.execution.steps.SkipEmptyMutableWorkStep.executeMutable(SkipEmptyMutableWorkStep.java:90)
+	at org.gradle.internal.execution.steps.SkipEmptyMutableWorkStep.executeMutable(SkipEmptyMutableWorkStep.java:53)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsStartedStep.execute(MarkSnapshottingInputsStartedStep.java:38)
+	at org.gradle.internal.execution.steps.LoadPreviousExecutionStateStep.executeMutable(LoadPreviousExecutionStateStep.java:36)
+	at org.gradle.internal.execution.steps.LoadPreviousExecutionStateStep.executeMutable(LoadPreviousExecutionStateStep.java:23)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.HandleStaleOutputsStep.executeMutable(HandleStaleOutputsStep.java:77)
+	at org.gradle.internal.execution.steps.HandleStaleOutputsStep.executeMutable(HandleStaleOutputsStep.java:43)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.lambda$executeMutable$0(AssignMutableWorkspaceStep.java:34)
+	at org.gradle.api.internal.tasks.execution.TaskExecution$4.withWorkspace(TaskExecution.java:305)
+	at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.executeMutable(AssignMutableWorkspaceStep.java:30)
+	at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.executeMutable(AssignMutableWorkspaceStep.java:21)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.ChoosePipelineStep.execute(ChoosePipelineStep.java:40)
+	at org.gradle.internal.execution.steps.ChoosePipelineStep.execute(ChoosePipelineStep.java:23)
+	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.lambda$execute$2(ExecuteWorkBuildOperationFiringStep.java:67)
+	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.execute(ExecuteWorkBuildOperationFiringStep.java:67)
+	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.execute(ExecuteWorkBuildOperationFiringStep.java:39)
+	at org.gradle.internal.execution.steps.IdentityCacheStep.execute(IdentityCacheStep.java:46)
+	at org.gradle.internal.execution.steps.IdentityCacheStep.execute(IdentityCacheStep.java:34)
+	at org.gradle.internal.execution.steps.IdentifyStep.execute(IdentifyStep.java:56)
+	at org.gradle.internal.execution.steps.IdentifyStep.execute(IdentifyStep.java:38)
+	at org.gradle.internal.execution.impl.DefaultExecutionEngine$1.execute(DefaultExecutionEngine.java:68)
+	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:132)
+	... 30 more
+Caused by: org.jetbrains.kotlin.gradle.tasks.CompilationErrorException: @Composable invocations can only happen from the context of a @Composable function
+	at org.jetbrains.kotlin.gradle.plugin.diagnostics.DefaultCompilerDiagnosticsProblemsReporter.reportCompilerMessage(CompilerDiagnosticsProblemsReporter.kt:63)
+	at org.jetbrains.kotlin.compilerRunner.btapi.ProblemsApiCompilerMessageRenderer.replayTo(ProblemsApiCompilerMessageRenderer.kt:88)
+	at org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork.execute(BuildToolsApiCompilationWork.kt:251)
+	at org.gradle.workers.internal.DefaultWorkerServer.execute(DefaultWorkerServer.java:68)
+	at org.gradle.workers.internal.NoIsolationWorkerFactory$1$1.create(NoIsolationWorkerFactory.java:64)
+	at org.gradle.workers.internal.NoIsolationWorkerFactory$1$1.create(NoIsolationWorkerFactory.java:61)
+	at org.gradle.internal.classloader.ClassLoaderUtils.executeInClassloader(ClassLoaderUtils.java:102)
+	at org.gradle.workers.internal.NoIsolationWorkerFactory$1.lambda$execute$0(NoIsolationWorkerFactory.java:61)
+	at org.gradle.workers.internal.AbstractWorker$1.call(AbstractWorker.java:44)
+	at org.gradle.workers.internal.AbstractWorker$1.call(AbstractWorker.java:41)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:210)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:205)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:54)
+	at org.gradle.workers.internal.AbstractWorker.executeWrappedInBuildOperation(AbstractWorker.java:41)
+	at org.gradle.workers.internal.NoIsolationWorkerFactory$1.execute(NoIsolationWorkerFactory.java:58)
+	at org.gradle.workers.internal.DefaultWorkerExecutor.lambda$submitWork$0(DefaultWorkerExecutor.java:174)
+	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.runExecution(DefaultConditionalExecutionQueue.java:191)
+	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.access$500(DefaultConditionalExecutionQueue.java:112)
+	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner$1.run(DefaultConditionalExecutionQueue.java:168)
+	at org.gradle.internal.Factories$1.create(Factories.java:30)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.lambda$runAndReleaseLocks$0(DefaultWorkerLeaseService.java:300)
+	at org.gradle.internal.work.ResourceLockStatistics$1.measure(ResourceLockStatistics.java:43)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.runAndReleaseLocks(DefaultWorkerLeaseService.java:298)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.withLocksAcquired(DefaultWorkerLeaseService.java:294)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.withLocks(DefaultWorkerLeaseService.java:286)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.runAsWorkerThread(DefaultWorkerLeaseService.java:130)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.runAsWorkerThread(DefaultWorkerLeaseService.java:135)
+	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.runBatch(DefaultConditionalExecutionQueue.java:163)
+	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.run(DefaultConditionalExecutionQueue.java:125)
+	... 2 more
+
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.6.0/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD FAILED in 56s
+377 actionable tasks: 55 executed, 322 from cache
+Configuration cache entry stored.
+```
