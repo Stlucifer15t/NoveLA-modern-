@@ -33,6 +33,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -40,6 +41,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -410,7 +412,7 @@ private fun ApiKeyRow(
     tip: String,
     minLines: Int,
     maxLines: Int,
-    textFieldColors: OutlinedTextFieldDefaults.Colors,
+    textFieldColors: TextFieldColors,
 ) {
     var localValue by rememberSaveable { mutableStateOf(value) }
     SettingsRow(
@@ -546,8 +548,8 @@ private fun NumericFieldRow(
     label: String,
     presets: List<String>,
     onPresetClick: (String) -> Unit,
-    textFieldColors: OutlinedTextFieldDefaults.Colors,
-    focusManager: androidx.compose.ui.platform.LocalFocusManager,
+    textFieldColors: TextFieldColors,
+    focusManager: FocusManager,
 ) {
     SettingsRow(
         modifier = Modifier.textPadding(),

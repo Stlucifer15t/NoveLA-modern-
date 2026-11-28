@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Insights
 import androidx.compose.material.icons.outlined.MenuBook
 import androidx.compose.material.icons.outlined.PlayCircle
 import androidx.compose.material3.FilterChip
@@ -37,6 +38,7 @@ import my.dreamora.settings.ReadingStats
 import my.dreamora.settings.R
 import my.dreamora.settings.displayCount
 import my.dreamora.settings.watchMinutes
+import my.dreamora.settings.ui.PremiumChip
 import my.dreamora.settings.ui.PremiumSectionHeader
 import my.dreamora.settings.ui.PremiumSectionTitle
 import my.dreamora.settings.ui.PremiumSettingsRow

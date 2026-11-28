@@ -23,6 +23,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,6 +32,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -153,7 +155,7 @@ private fun TextFieldRow(
     maxLines: Int = 1,
     keyboardOptions: KeyboardOptions = KeyboardOptions(),
     keyboardActions: KeyboardActions = KeyboardActions(),
-    textFieldColors: OutlinedTextFieldDefaults.Colors,
+    textFieldColors: TextFieldColors,
 ) {
     SettingsRow(
         modifier = Modifier.textPadding(),
@@ -214,8 +216,8 @@ private fun ModelRow(
     tip: String,
     presets: List<String>,
     onPresetClick: (String) -> Unit,
-    textFieldColors: OutlinedTextFieldDefaults.Colors,
-    focusManager: androidx.compose.ui.platform.LocalFocusManager,
+    textFieldColors: TextFieldColors,
+    focusManager: FocusManager,
 ) {
     SettingsRow(
         modifier = Modifier.textPadding(),

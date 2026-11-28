@@ -1237,6 +1237,7 @@
 
     <!-- Premium settings section summaries -->
     <string name="theme_summary">Dark mode, colour schemes and icon accents</string>
+    <string name="dark_mode">Dark mode</string>
     <string name="dark_mode_summary">Choose how the app adapts to light and dark</string>
     <string name="translation_services_summary">Gemini, OpenAI-compatible and Google PA translation</string>
     <string name="network_summary">User agent, Cloudflare bypass and download delays</string>
@@ -1249,4 +1250,8 @@
     <string name="regex_cleanup_summary">Clean chapter text with regex patterns</string>
     <string name="library_update_interval">Update interval</string>
     <string name="translation_provider">Translation provider</string>
+    <string name="reading_text_options">Text options</string>
+    <string name="reading_behaviour">Screen &amp; interaction</string>
+    <string name="reading_preload">Preload</string>
+    <string name="llm_presets">Presets</string>
 </resources>
