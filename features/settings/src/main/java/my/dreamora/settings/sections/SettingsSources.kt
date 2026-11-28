@@ -15,37 +15,45 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import my.dreamora.coreui.theme.DreamoraTheme
 import my.dreamora.coreui.theme.DreamoraType
+import my.dreamora.coreui.theme.DreamoraSpacing
 import my.dreamora.settings.ui.ExpressiveSwitch
-import my.dreamora.settings.ui.SettingsRowPadding
+import my.dreamora.settings.ui.PremiumSectionHeader
+import my.dreamora.settings.R
 
-/**
- * Extension sources marked 18+ by their repository. Hidden from the extension catalog and the
- * installed list until the reader turns this on. The same switch is in the repository manager.
- */
 @Composable
 fun SettingsSources(showAdult: MutableState<Boolean>) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(SettingsRowPadding),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = stringResource(my.dreamora.strings.R.string.settings_sources_adult_title),
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            Text(
-                text = stringResource(my.dreamora.strings.R.string.settings_sources_adult_hint),
-                style = DreamoraType.bookMeta,
-                color = DreamoraTheme.colors.textMuted,
+    Column {
+        PremiumSectionHeader(
+            icon = androidx.compose.material.icons.Icons.Outlined.Extension,
+            title = stringResource(my.dreamora.strings.R.string.settings_sources_adult_title),
+            summary = stringResource(my.dreamora.strings.R.string.settings_sources_adult_hint),
+            accent = MaterialTheme.colorScheme.error,
+        )
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(DreamoraSpacing.screenH)
+                .padding(bottom = DreamoraSpacing.sm),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.md),
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(my.dreamora.strings.R.string.settings_sources_adult_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Text(
+                    text = stringResource(my.dreamora.strings.R.string.settings_sources_adult_hint),
+                    style = DreamoraType.bookMeta,
+                    color = DreamoraTheme.colors.textMuted,
+                )
+            }
+            ExpressiveSwitch(
+                checked = showAdult.value,
+                onCheckedChange = { showAdult.value = it },
             )
         }
-        ExpressiveSwitch(
-            checked = showAdult.value,
-            onCheckedChange = { showAdult.value = it },
-        )
     }
 }

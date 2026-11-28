@@ -37,16 +37,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import my.dreamora.settings.ui.SettingsRow
+import my.dreamora.coreui.theme.DreamoraSpacing
 import my.dreamora.coreui.theme.colorAccent
 import my.dreamora.coreui.theme.textPadding
 import my.dreamora.settings.R
-import my.dreamora.text_translator.BUILT_IN_PROMPTS
 import my.dreamora.settings.ui.ExpressiveSwitch
+import my.dreamora.settings.ui.PremiumSectionTitle
+import my.dreamora.settings.ui.PremiumChip
+import my.dreamora.settings.ui.PremiumSettingsRow
+import androidx.compose.ui.text.font.FontWeight
 
-/**
- * One prompt manager shared by the LLM providers (Gemini and OpenAI-compatible).
- * Rendered inside the provider's settings block when Gemini or OpenAI is selected.
- */
 @Composable
 internal fun SettingsPromptManager(
     activeSystemPrompt: String,
@@ -59,7 +59,7 @@ internal fun SettingsPromptManager(
 ) {
     val textFieldColors = OutlinedTextFieldDefaults.colors(
         focusedBorderColor   = MaterialTheme.colorScheme.onSurface,
-        unfocusedBorderColor = MaterialTheme.colorScheme.onSurface,
+        unfocusedBorderColor = MaterialTheme.colorScheme.onSurfaceVariant,
         cursorColor          = MaterialTheme.colorScheme.onSurface,
         focusedLabelColor    = MaterialTheme.colorScheme.onSurface,
         unfocusedLabelColor  = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -69,22 +69,15 @@ internal fun SettingsPromptManager(
     var showSavePresetDialog by rememberSaveable { mutableStateOf(false) }
     var presetNameInput by rememberSaveable { mutableStateOf("") }
 
-    // Section header, in the same style as the other settings sections
-    Text(
-        text     = stringResource(R.string.llm_prompt_section_title),
-        style    = MaterialTheme.typography.titleMedium,
-        modifier = Modifier.textPadding(),
-        color    = colorAccent(),
-    )
+    PremiumSectionTitle(text = stringResource(R.string.llm_prompt_section_title))
 
-    // ── System Prompt field ───────────────────────────────────────────────────
     SettingsRow(
+        modifier = Modifier.textPadding().padding(top = DreamoraSpacing.xs),
         headlineContent = {
-            // Top padding so the OutlinedTextField label is not clipped by the animation
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 8.dp)
+                    .padding(top = DreamoraSpacing.xs)
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -98,10 +91,10 @@ internal fun SettingsPromptManager(
                     Spacer(Modifier.width(8.dp))
                     Text(
                         text  = stringResource(R.string.llm_prompt_label),
-                        style = MaterialTheme.typography.titleSmall,
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
                     )
                 }
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(DreamoraSpacing.xs))
                 OutlinedTextField(
                     value         = promptText,
                     onValueChange = { promptText = it; onActiveSystemPromptChange(it) },
@@ -110,52 +103,48 @@ internal fun SettingsPromptManager(
                     maxLines      = 12,
                     colors        = textFieldColors,
                 )
-                Spacer(Modifier.height(4.dp))
+                Spacer(Modifier.height(DreamoraSpacing.xs))
                 Text(
                     text  = stringResource(R.string.llm_prompt_placeholders_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
 
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(DreamoraSpacing.md))
 
-                // ── Preset chips ──────────────────────────────────────────────
-                val allPresets: List<Pair<String, String>> = buildList {
-                    addAll(BUILT_IN_PROMPTS)
-                    addAll(promptPresets)
-                }
-                val builtInNames = BUILT_IN_PROMPTS.map { it.first }.toSet()
+                PremiumSectionTitle(text = stringResource(R.string.llm_presets))
 
                 Row(
                     modifier              = Modifier.horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.sm),
                 ) {
+                    val allPresets: List<Pair<String, String>> = buildList {
+                        addAll(my.dreamora.text_translator.BUILT_IN_PROMPTS)
+                        addAll(promptPresets)
+                    }
+                    val builtInNames = my.dreamora.text_translator.BUILT_IN_PROMPTS.map { it.first }.toSet()
+
                     allPresets.forEach { (presetName, presetPrompt) ->
                         val isBuiltIn  = presetName in builtInNames
                         val isSelected = promptText == presetPrompt
 
-                        // For user presets: tapping the selected chip
-                        // opens a DropdownMenu with Apply / Delete
                         var showChipMenu by remember { mutableStateOf(false) }
 
                         if (isBuiltIn) {
-                            // Built-in preset — a plain click, no menu
-                            FilterChip(
+                            PremiumChip(
                                 selected = isSelected,
                                 onClick  = {
                                     promptText = presetPrompt
                                     onActiveSystemPromptChange(presetPrompt)
                                 },
-                                label    = { Text(presetName) },
+                                label    = { Text(presetName, style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium)) },
                             )
                         } else {
-                            // User preset — the click opens the menu
-                            // (both apply and delete, without a touch conflict)
                             Column {
-                                FilterChip(
+                                PremiumChip(
                                     selected = isSelected,
                                     onClick  = { showChipMenu = true },
-                                    label    = { Text(presetName) },
+                                    label    = { Text(presetName, style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium)) },
                                 )
                                 DropdownMenu(
                                     expanded        = showChipMenu,
@@ -187,9 +176,8 @@ internal fun SettingsPromptManager(
                     }
                 }
 
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(DreamoraSpacing.md))
 
-                // ── Save preset button ────────────────────────────────────────
                 OutlinedButton(
                     onClick  = {
                         presetNameInput = ""
@@ -209,7 +197,7 @@ internal fun SettingsPromptManager(
                         contentDescription = null,
                         tint               = MaterialTheme.colorScheme.onSurface,
                     )
-                    Spacer(Modifier.width(8.dp))
+                    Spacer(Modifier.width(DreamoraSpacing.xs))
                     Text(
                         text  = stringResource(R.string.llm_save_preset),
                         color = MaterialTheme.colorScheme.onSurface,
@@ -219,102 +207,117 @@ internal fun SettingsPromptManager(
         }
     )
 
-    // ── English locale toggle ─────────────────────────────────────────────────
     SettingsRow(
+        modifier = Modifier.textPadding(),
         headlineContent = {
-            Column(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                verticalAlignment     = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier              = Modifier.fillMaxWidth(),
+            ) {
                 Row(
-                    verticalAlignment     = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier              = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier          = Modifier.weight(1f),
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier          = Modifier.weight(1f),
-                    ) {
-                        Icon(
-                            Icons.Outlined.Translate,
-                            contentDescription = null,
-                            tint               = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Column {
-                            Text(
-                                text  = stringResource(R.string.llm_prompt_use_english_locale),
-                                style = MaterialTheme.typography.titleSmall,
-                            )
-                            Text(
-                                text  = stringResource(R.string.llm_prompt_use_english_locale_tip),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    }
-                    Spacer(Modifier.width(12.dp))
-                    ExpressiveSwitch(
-                        checked         = promptUseEnglishLocale,
-                        onCheckedChange = onPromptUseEnglishLocaleChange,
+                    Icon(
+                        Icons.Outlined.Translate,
+                        contentDescription = null,
+                        tint               = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                    Spacer(Modifier.width(DreamoraSpacing.sm))
+                    Column {
+                        Text(
+                            text  = stringResource(R.string.llm_prompt_use_english_locale),
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                        )
+                        Text(
+                            text  = stringResource(R.string.llm_prompt_use_english_locale_tip),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
+                Spacer(Modifier.width(DreamoraSpacing.md))
+                ExpressiveSwitch(
+                    checked         = promptUseEnglishLocale,
+                    onCheckedChange = onPromptUseEnglishLocaleChange,
+                )
             }
         }
     )
 
-    // ── Save preset dialog ────────────────────────────────────────────────────
     if (showSavePresetDialog) {
-        AlertDialog(
+        PremiumSavePresetDialog(
             onDismissRequest = { showSavePresetDialog = false },
-            title            = {
-                Text(
-                    text  = stringResource(R.string.llm_save_preset),
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
+            presetNameInput = presetNameInput,
+            onPresetNameChange = { presetNameInput = it },
+            onSave = {
+                val name = presetNameInput.trim()
+                if (name.isNotEmpty()) {
+                    onSavePreset(name, promptText)
+                    showSavePresetDialog = false
+                }
             },
-            text             = {
-                OutlinedTextField(
-                    value         = presetNameInput,
-                    onValueChange = { presetNameInput = it },
-                    label         = {
-                        Text(
-                            text  = stringResource(R.string.llm_preset_name),
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
-                    },
-                    singleLine = true,
-                    modifier   = Modifier.fillMaxWidth(),
-                    colors     = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor   = MaterialTheme.colorScheme.onSurface,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                        cursorColor          = MaterialTheme.colorScheme.onSurface,
-                        focusedLabelColor    = MaterialTheme.colorScheme.onSurface,
-                        unfocusedLabelColor  = MaterialTheme.colorScheme.onSurfaceVariant,
-                    ),
-                )
-            },
-            confirmButton    = {
-                TextButton(
-                    onClick  = {
-                        val name = presetNameInput.trim()
-                        if (name.isNotEmpty()) {
-                            onSavePreset(name, promptText)
-                            showSavePresetDialog = false
-                        }
-                    },
-                    enabled  = presetNameInput.trim().isNotEmpty(),
-                    colors   = ButtonDefaults.textButtonColors(
-                        contentColor         = MaterialTheme.colorScheme.onSurface,
-                        disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
-                    ),
-                ) { Text(stringResource(R.string.save)) }
-            },
-            dismissButton    = {
-                TextButton(
-                    onClick = { showSavePresetDialog = false },
-                    colors  = ButtonDefaults.textButtonColors(
-                        contentColor = MaterialTheme.colorScheme.onSurface,
-                    ),
-                ) { Text(stringResource(R.string.cancel)) }
-            },
+            onCancel = { showSavePresetDialog = false },
         )
     }
+}
+
+@Composable
+private fun PremiumSavePresetDialog(
+    onDismissRequest: () -> Unit,
+    presetNameInput: String,
+    onPresetNameChange: (String) -> Unit,
+    onSave: () -> Unit,
+    onCancel: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismissRequest,
+        title = {
+            Text(
+                text  = stringResource(R.string.llm_save_preset),
+                color = MaterialTheme.colorScheme.onSurface,
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+            )
+        },
+        text = {
+            OutlinedTextField(
+                value         = presetNameInput,
+                onValueChange = onPresetNameChange,
+                label         = {
+                    Text(
+                        text  = stringResource(R.string.llm_preset_name),
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                },
+                singleLine = true,
+                modifier   = Modifier.fillMaxWidth(),
+                colors     = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor   = MaterialTheme.colorScheme.onSurface,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    cursorColor          = MaterialTheme.colorScheme.onSurface,
+                    focusedLabelColor    = MaterialTheme.colorScheme.onSurface,
+                    unfocusedLabelColor  = MaterialTheme.colorScheme.onSurfaceVariant,
+                ),
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick  = onSave,
+                enabled  = presetNameInput.trim().isNotEmpty(),
+                colors   = ButtonDefaults.textButtonColors(
+                    contentColor         = MaterialTheme.colorScheme.onSurface,
+                    disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+                ),
+            ) { Text(stringResource(R.string.save)) }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onCancel,
+                colors  = ButtonDefaults.textButtonColors(
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                ),
+            ) { Text(stringResource(R.string.cancel)) }
+        },
+    )
 }

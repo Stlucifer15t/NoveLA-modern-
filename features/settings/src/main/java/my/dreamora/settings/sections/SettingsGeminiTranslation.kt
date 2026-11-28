@@ -46,10 +46,16 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import my.dreamora.settings.ui.SettingsRow
+import my.dreamora.coreui.theme.DreamoraSpacing
 import my.dreamora.coreui.theme.colorAccent
 import my.dreamora.coreui.theme.textPadding
 import my.dreamora.settings.R
 import my.dreamora.settings.ui.ExpressiveSwitch
+import my.dreamora.settings.ui.PremiumSectionHeader
+import my.dreamora.settings.ui.PremiumSectionTitle
+import my.dreamora.settings.ui.PremiumChip
+import my.dreamora.settings.ui.PremiumSettingsRow
+import androidx.compose.ui.text.font.FontWeight
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -78,12 +84,10 @@ internal fun SettingsGeminiTranslation(
     onPromptUseEnglishLocaleChange: (Boolean) -> Unit,
     onSavePreset: (name: String, prompt: String) -> Unit,
     onDeletePreset: (name: String) -> Unit,
-    // LLM batch / token settings (shown only for Gemini and OpenAI)
     llmBatchSize: Int,
     llmMaxOutputTokens: Int,
     onLlmBatchSizeChange: (Int) -> Unit,
     onLlmMaxOutputTokensChange: (Int) -> Unit,
-    // Novel-specific prompts
     novelPromptCount: Int,
     onNovelPromptsClick: () -> Unit,
 ) {
@@ -102,7 +106,6 @@ internal fun SettingsGeminiTranslation(
         cursorColor          = MaterialTheme.colorScheme.onSurface
     )
 
-    // rememberSaveable — survives rotation; no LaunchedEffect reset so typing isn't interrupted
     var apiKeyText by rememberSaveable { mutableStateOf(geminiApiKey) }
     var modelText  by rememberSaveable { mutableStateOf(geminiModel) }
     var paKeysText by rememberSaveable { mutableStateOf(googlePaApiKeys) }
@@ -110,51 +113,52 @@ internal fun SettingsGeminiTranslation(
     val focusManager = LocalFocusManager.current
 
     Column {
-        Text(
-            text     = stringResource(R.string.translation_services),
-            style    = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.textPadding(),
-        color    = colorAccent()
+        PremiumSectionHeader(
+            icon = Icons.Outlined.Translate,
+            title = stringResource(R.string.translation_services),
+            summary = stringResource(R.string.translation_services_summary),
+            accent = colorAccent(),
         )
 
         // ── Translation mode: per-novel / global ──────────────────────────
-        SettingsRow(
+        PremiumSettingsRow(
+            modifier = Modifier.textPadding().padding(top = DreamoraSpacing.sm),
             headlineContent = {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier          = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text  = stringResource(R.string.translation_mode_title),
-                            style = MaterialTheme.typography.titleSmall
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
                         )
                         Spacer(Modifier.height(4.dp))
                         Text(
                             text  = stringResource(R.string.translation_mode_settings_description),
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                     Spacer(Modifier.width(12.dp))
                     ExpressiveSwitch(
                         checked = translationGlobalMode,
                         onCheckedChange = onTranslationGlobalModeChange,
-                        // FIX-C: the switch is unavailable until the global language
-                        // pair is set — visual hint plus a barrier in the view model
                         enabled = hasGlobalPair,
                     )
                 }
             }
         )
-        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
+        HorizontalDivider(modifier = Modifier.padding(horizontal = DreamoraSpacing.screenH, vertical = 4.dp))
 
         // ── Provider picker ───────────────────────────────────────────────────
+        PremiumSectionTitle(text = stringResource(R.string.translation_provider))
+
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .selectableGroup()
-                .padding(horizontal = 16.dp, vertical = 4.dp)
+                .padding(horizontal = DreamoraSpacing.screenH, vertical = 4.dp)
         ) {
             ProviderRadioOption(
                 label       = stringResource(R.string.provider_google_pa),
@@ -192,40 +196,18 @@ internal fun SettingsGeminiTranslation(
             exit    = shrinkVertically()
         ) {
             Column {
-                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
-                SettingsRow(
-                    headlineContent = {
-                        Column(modifier = Modifier.fillMaxWidth()) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier          = Modifier.fillMaxWidth()
-                            ) {
-                                Icon(Icons.Outlined.Key, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                                Spacer(Modifier.width(8.dp))
-                                Text(
-                                    text  = stringResource(R.string.google_pa_api_keys),
-                                    style = MaterialTheme.typography.titleSmall
-                                )
-                            }
-                            Spacer(Modifier.height(8.dp))
-                            OutlinedTextField(
-                                value         = paKeysText,
-                                onValueChange = { paKeysText = it; onGooglePaApiKeysChange(it) },
-                                label         = { Text(stringResource(R.string.enter_google_pa_api_keys), color = MaterialTheme.colorScheme.onSurface) },
-                                placeholder   = { Text(stringResource(R.string.google_pa_api_keys_placeholder)) },
-                                modifier      = Modifier.fillMaxWidth(),
-                                minLines      = 2,
-                                maxLines      = 5,
-                                colors        = textFieldColors
-                            )
-                            Spacer(Modifier.height(4.dp))
-                            Text(
-                                text  = stringResource(R.string.google_pa_api_keys_tip),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
+                HorizontalDivider(modifier = Modifier.padding(horizontal = DreamoraSpacing.screenH, vertical = 4.dp))
+                ApiKeyRow(
+                    title = stringResource(R.string.google_pa_api_keys),
+                    icon = Icons.Outlined.Key,
+                    value = paKeysText,
+                    onValueChange = { paKeysText = it; onGooglePaApiKeysChange(it) },
+                    label = stringResource(R.string.enter_google_pa_api_keys),
+                    placeholder = stringResource(R.string.google_pa_api_keys_placeholder),
+                    tip = stringResource(R.string.google_pa_api_keys_tip),
+                    minLines = 2,
+                    maxLines = 5,
+                    textFieldColors = textFieldColors,
                 )
             }
         }
@@ -237,57 +219,34 @@ internal fun SettingsGeminiTranslation(
             exit    = shrinkVertically()
         ) {
             Column {
-                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
+                HorizontalDivider(modifier = Modifier.padding(horizontal = DreamoraSpacing.screenH, vertical = 4.dp))
 
-                // API Key
-                SettingsRow(
-                    headlineContent = {
-                        Column(modifier = Modifier.fillMaxWidth()) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier          = Modifier.fillMaxWidth()
-                            ) {
-                                Icon(Icons.Outlined.Key, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                                Spacer(Modifier.width(8.dp))
-                                Text(
-                                    text  = stringResource(R.string.gemini_api_key),
-                                    style = MaterialTheme.typography.titleSmall
-                                )
-                            }
-                            Spacer(Modifier.height(8.dp))
-                            OutlinedTextField(
-                                value         = apiKeyText,
-                                onValueChange = { apiKeyText = it; onGeminiApiKeyChange(it) },
-                                label         = { Text(stringResource(R.string.enter_gemini_api_keys), color = MaterialTheme.colorScheme.onSurface) },
-                                placeholder   = { Text(stringResource(R.string.gemini_api_keys_placeholder)) },
-                                modifier      = Modifier.fillMaxWidth(),
-                                minLines      = 2,
-                                maxLines      = 5,
-                                colors        = textFieldColors
-                            )
-                            Spacer(Modifier.height(4.dp))
-                            Text(
-                                text  = stringResource(R.string.get_free_api_key) + "\n" +
-                                        stringResource(R.string.api_key_tip) + "\n\n" +
-                                        stringResource(R.string.no_api_key_note),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
+                ApiKeyRow(
+                    title = stringResource(R.string.gemini_api_key),
+                    icon = Icons.Outlined.Key,
+                    value = apiKeyText,
+                    onValueChange = { apiKeyText = it; onGeminiApiKeyChange(it) },
+                    label = stringResource(R.string.enter_gemini_api_keys),
+                    placeholder = stringResource(R.string.gemini_api_keys_placeholder),
+                    tip = stringResource(R.string.get_free_api_key) + "\n" +
+                            stringResource(R.string.api_key_tip) + "\n\n" +
+                            stringResource(R.string.no_api_key_note),
+                    minLines = 2,
+                    maxLines = 5,
+                    textFieldColors = textFieldColors,
                 )
 
                 // Model
                 SettingsRow(
+                    modifier = Modifier.textPadding(),
                     headlineContent = {
                         Column(modifier = Modifier.fillMaxWidth()) {
                             Text(
                                 text  = stringResource(R.string.gemini_model),
-                                style = MaterialTheme.typography.titleSmall,
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
                             )
-                            Spacer(Modifier.height(8.dp))
+                            Spacer(Modifier.height(DreamoraSpacing.xs))
 
-                            // Plain TextField — no ExposedDropdownMenuBox stealing events
                             OutlinedTextField(
                                 value         = modelText,
                                 onValueChange = {
@@ -303,16 +262,15 @@ internal fun SettingsGeminiTranslation(
                                 colors        = textFieldColors
                             )
 
-                            Spacer(Modifier.height(8.dp))
+                            Spacer(Modifier.height(DreamoraSpacing.xs))
 
-                            // Preset chips
                             FlowRow(
                                 modifier             = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                                 verticalArrangement  = Arrangement.spacedBy(4.dp)
                             ) {
                                 predefinedGeminiModels.forEach { preset ->
-                                    FilterChip(
+                                    PremiumChip(
                                         selected = modelText == preset,
                                         onClick  = {
                                             modelText = preset
@@ -322,14 +280,14 @@ internal fun SettingsGeminiTranslation(
                                         label    = {
                                             Text(
                                                 text  = preset,
-                                                style = MaterialTheme.typography.labelSmall
+                                                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium)
                                             )
-                                        }
+                                        },
                                     )
                                 }
                             }
 
-                            Spacer(Modifier.height(4.dp))
+                            Spacer(Modifier.height(DreamoraSpacing.xs))
                             Text(
                                 text  = stringResource(R.string.default_gemini_model) + "\n" +
                                         stringResource(R.string.model_examples),
@@ -340,7 +298,6 @@ internal fun SettingsGeminiTranslation(
                     }
                 )
 
-                // Prompt manager for Gemini
                 SettingsPromptManager(
                     activeSystemPrompt             = activeSystemPrompt,
                     promptPresets                  = promptPresets,
@@ -380,20 +337,20 @@ internal fun SettingsGeminiTranslation(
             }
         }
 
-        // ── Novel-specific prompts — Gemini and OpenAI only ──────────────────
+        // ── Novel-specific prompts ────────────────────────────────────────────
         AnimatedVisibility(
             visible = translationProvider == "GEMINI" || translationProvider == "OPENAI",
             enter   = expandVertically(),
             exit    = shrinkVertically()
         ) {
             Column {
-                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
+                HorizontalDivider(modifier = Modifier.padding(horizontal = DreamoraSpacing.screenH, vertical = 4.dp))
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { onNovelPromptsClick() }
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                        .padding(horizontal = DreamoraSpacing.screenH, vertical = DreamoraSpacing.md),
                 ) {
                     Icon(
                         Icons.Outlined.Psychology,
@@ -401,7 +358,7 @@ internal fun SettingsGeminiTranslation(
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(24.dp),
                     )
-                    Spacer(Modifier.width(16.dp))
+                    Spacer(Modifier.width(DreamoraSpacing.md))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = stringResource(R.string.novel_prompts_title),
@@ -425,7 +382,7 @@ internal fun SettingsGeminiTranslation(
             }
         }
 
-        // ── LLM batch / token settings — Gemini and OpenAI only ──────────────
+        // ── LLM batch / token settings ────────────────────────────────────────
         AnimatedVisibility(
             visible = translationProvider == "GEMINI" || translationProvider == "OPENAI",
             enter   = expandVertically(),
@@ -439,6 +396,57 @@ internal fun SettingsGeminiTranslation(
             )
         }
     }
+}
+
+@Composable
+private fun ApiKeyRow(
+    title: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    placeholder: String,
+    tip: String,
+    minLines: Int,
+    maxLines: Int,
+    textFieldColors: OutlinedTextFieldDefaults.Colors,
+) {
+    var localValue by rememberSaveable { mutableStateOf(value) }
+    SettingsRow(
+        modifier = Modifier.textPadding(),
+        headlineContent = {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text  = title,
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                    )
+                }
+                Spacer(Modifier.height(DreamoraSpacing.xs))
+                OutlinedTextField(
+                    value         = localValue,
+                    onValueChange = { localValue = it; onValueChange(it) },
+                    label         = { Text(label, color = MaterialTheme.colorScheme.onSurface) },
+                    placeholder   = { Text(placeholder) },
+                    modifier      = Modifier.fillMaxWidth(),
+                    minLines      = minLines,
+                    maxLines      = maxLines,
+                    colors        = textFieldColors
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text  = tip,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        },
+    )
 }
 
 @Composable
@@ -472,10 +480,6 @@ private fun ProviderRadioOption(
     }
 }
 
-/**
- * Batch size and max output tokens — shown only for Gemini and OpenAI providers.
- * Google PA and Free use character-based chunking and ignore these settings.
- */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun SettingsLlmBatchOptions(
@@ -498,99 +502,95 @@ internal fun SettingsLlmBatchOptions(
     val tokensPresets = listOf(0, 1024, 2048, 4096, 8192, 16384, 32768)
 
     Column {
-        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
+        HorizontalDivider(modifier = Modifier.padding(horizontal = DreamoraSpacing.screenH, vertical = 4.dp))
 
-        // ── Batch size ────────────────────────────────────────────────────────
-        SettingsRow(
-            headlineContent = {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        text  = stringResource(R.string.llm_batch_size),
-                        style = MaterialTheme.typography.titleSmall
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value         = batchText,
-                        onValueChange = { raw ->
-                            batchText = raw
-                            raw.toIntOrNull()?.coerceAtLeast(1)?.let(onBatchSizeChange)
-                        },
-                        label           = { Text(stringResource(R.string.llm_batch_size_label), color = MaterialTheme.colorScheme.onSurface) },
-                        modifier        = Modifier.fillMaxWidth(),
-                        singleLine      = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
-                        keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-                        colors          = textFieldColors
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    FlowRow(
-                        modifier              = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalArrangement   = Arrangement.spacedBy(4.dp)
-                    ) {
-                        batchPresets.forEach { preset ->
-                            FilterChip(
-                                selected = batchText == preset.toString(),
-                                onClick  = { batchText = preset.toString(); onBatchSizeChange(preset); focusManager.clearFocus() },
-                                label    = { Text(preset.toString(), style = MaterialTheme.typography.labelSmall) }
-                            )
-                        }
-                    }
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        text  = stringResource(R.string.llm_batch_size_tip),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
+        NumericFieldRow(
+            title = stringResource(R.string.llm_batch_size),
+            tip = stringResource(R.string.llm_batch_size_tip),
+            value = batchText,
+            onValueChange = { raw ->
+                batchText = raw
+                raw.toIntOrNull()?.coerceAtLeast(1)?.let(onBatchSizeChange)
+            },
+            label = stringResource(R.string.llm_batch_size_label),
+            presets = batchPresets.map { it.toString() },
+            onPresetClick = { batchText = it; onBatchSizeChange(it.toInt()); focusManager.clearFocus() },
+            textFieldColors = textFieldColors,
+            focusManager = focusManager,
         )
 
-        // ── Max output tokens ─────────────────────────────────────────────────
-        SettingsRow(
-            headlineContent = {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        text  = stringResource(R.string.llm_max_output_tokens),
-                        style = MaterialTheme.typography.titleSmall
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value         = tokensText,
-                        onValueChange = { raw ->
-                            tokensText = raw
-                            raw.toIntOrNull()?.coerceAtLeast(0)?.let(onMaxTokensChange)
-                        },
-                        label           = { Text(stringResource(R.string.llm_max_output_tokens_label), color = MaterialTheme.colorScheme.onSurface) },
-                        modifier        = Modifier.fillMaxWidth(),
-                        singleLine      = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
-                        keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-                        colors          = textFieldColors
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    FlowRow(
-                        modifier              = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalArrangement   = Arrangement.spacedBy(4.dp)
-                    ) {
-                        tokensPresets.forEach { preset ->
-                            val label = if (preset == 0) stringResource(R.string.llm_tokens_auto) else preset.toString()
-                            FilterChip(
-                                selected = tokensText == preset.toString(),
-                                onClick  = { tokensText = preset.toString(); onMaxTokensChange(preset); focusManager.clearFocus() },
-                                label    = { Text(label, style = MaterialTheme.typography.labelSmall) }
-                            )
-                        }
-                    }
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        text  = stringResource(R.string.llm_max_output_tokens_tip),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
+        NumericFieldRow(
+            title = stringResource(R.string.llm_max_output_tokens),
+            tip = stringResource(R.string.llm_max_output_tokens_tip),
+            value = tokensText,
+            onValueChange = { raw ->
+                tokensText = raw
+                raw.toIntOrNull()?.coerceAtLeast(0)?.let(onMaxTokensChange)
+            },
+            label = stringResource(R.string.llm_max_output_tokens_label),
+            presets = tokensPresets.map { if (it == 0) stringResource(R.string.llm_tokens_auto) else it.toString() },
+            onPresetClick = { tokensText = it; onMaxTokensChange(if (it == stringResource(R.string.llm_tokens_auto)) 0 else it.toInt()); focusManager.clearFocus() },
+            textFieldColors = textFieldColors,
+            focusManager = focusManager,
         )
     }
+}
+
+@Composable
+private fun NumericFieldRow(
+    title: String,
+    tip: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    presets: List<String>,
+    onPresetClick: (String) -> Unit,
+    textFieldColors: OutlinedTextFieldDefaults.Colors,
+    focusManager: androidx.compose.ui.platform.LocalFocusManager,
+) {
+    SettingsRow(
+        modifier = Modifier.textPadding(),
+        headlineContent = {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text  = title,
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                )
+                Spacer(Modifier.height(DreamoraSpacing.xs))
+                OutlinedTextField(
+                    value         = value,
+                    onValueChange = { raw ->
+                        value = raw
+                        onValueChange(raw)
+                    },
+                    label           = { Text(label, color = MaterialTheme.colorScheme.onSurface) },
+                    modifier        = Modifier.fillMaxWidth(),
+                    singleLine      = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+                    colors          = textFieldColors
+                )
+                Spacer(Modifier.height(DreamoraSpacing.xs))
+                FlowRow(
+                    modifier              = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement   = Arrangement.spacedBy(4.dp)
+                ) {
+                    presets.forEach { preset ->
+                        PremiumChip(
+                            selected = value == preset,
+                            onClick  = { onPresetClick(preset) },
+                            label    = { Text(preset, style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium)) }
+                        )
+                    }
+                }
+                Spacer(Modifier.height(DreamoraSpacing.xs))
+                Text(
+                    text  = tip,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        },
+    )
 }

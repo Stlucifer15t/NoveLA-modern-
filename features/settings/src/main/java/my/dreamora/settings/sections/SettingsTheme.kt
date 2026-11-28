@@ -5,7 +5,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -39,11 +38,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import my.dreamora.coreui.theme.AppTheme
+import my.dreamora.coreui.theme.DreamoraSpacing
 import my.dreamora.coreui.theme.colorAccent
 import my.dreamora.coreui.theme.DarkMode
 import my.dreamora.coreui.theme.HighlightDark
 import my.dreamora.coreui.theme.textPadding
+import my.dreamora.settings.ui.PremiumSectionHeader
+import my.dreamora.settings.ui.PremiumSectionTitle
+import my.dreamora.settings.ui.PremiumSettingsRow
+import my.dreamora.settings.ui.PremiumChip
 import my.dreamora.settings.R
+import androidx.compose.ui.text.font.FontWeight
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -54,71 +59,93 @@ internal fun SettingsTheme(
     onDarkModeChange: (DarkMode) -> Unit,
 ) {
     Column {
-        Text(
-            text = stringResource(id = R.string.theme),
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.textPadding(),
-            color = colorAccent()
+        PremiumSectionHeader(
+            icon = Icons.Outlined.Palette,
+            title = stringResource(id = R.string.theme),
+            summary = stringResource(id = R.string.theme_summary),
+            accent = colorAccent(),
         )
 
-        // Mode chips (System/Light/Dark/Black)
-        FlowRow(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            DarkMode.entries.forEach { mode ->
-                FilterChip(
-                    selected = mode == currentDarkMode,
-                    onClick = { onDarkModeChange(mode) },
-                    label = { Text(text = stringResource(id = mode.titleRes)) },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = when (mode) {
-                                DarkMode.SYSTEM -> Icons.Outlined.BrightnessMedium
-                                DarkMode.LIGHT -> Icons.Outlined.LightMode
-                                DarkMode.DARK -> Icons.Outlined.DarkMode
-                                DarkMode.BLACK -> Icons.Outlined.Nightlight
+        // ── Dark mode chips (System/Light/Dark/Black) ─────────────────────────
+        PremiumSettingsRow(
+            modifier = Modifier.textPadding().padding(top = DreamoraSpacing.sm),
+            headlineContent = {
+                Column {
+                    Text(
+                        text = stringResource(id = R.string.dark_mode),
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                    )
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        text = stringResource(id = R.string.dark_mode_summary),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            },
+            trailingContent = {
+                // Use a compact FlowRow of toggle chips instead of a switch
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    DarkMode.entries.forEach { mode ->
+                        val isSelected = mode == currentDarkMode
+                        PremiumChip(
+                            selected = isSelected,
+                            onClick = { onDarkModeChange(mode) },
+                            label = {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                ) {
+                                    Icon(
+                                        imageVector = when (mode) {
+                                            DarkMode.SYSTEM -> Icons.Outlined.BrightnessMedium
+                                            DarkMode.LIGHT -> Icons.Outlined.LightMode
+                                            DarkMode.DARK -> Icons.Outlined.DarkMode
+                                            DarkMode.BLACK -> Icons.Outlined.Nightlight
+                                        },
+                                        contentDescription = null,
+                                        modifier = Modifier.size(14.dp),
+                                        tint = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                    Text(
+                                        text = stringResource(id = mode.titleRes),
+                                        style = MaterialTheme.typography.labelSmall.copy(
+                                            fontWeight = if (isSelected) FontWeight.Medium else FontWeight.Normal,
+                                        ),
+                                        color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface,
+                                    )
+                                }
                             },
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp)
                         )
                     }
-                )
-            }
-        }
-
-        Spacer(Modifier.height(8.dp))
-
-        // Color schemes section
-        Text(
-            text = stringResource(id = R.string.color_scheme),
-            style = MaterialTheme.typography.titleSmall,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+                }
+            },
         )
 
-        // Compact horizontal scrollable theme picker
+        Spacer(Modifier.height(DreamoraSpacing.md))
+
+        // ── Color schemes section ─────────────────────────────────────────────
+        PremiumSectionTitle(text = stringResource(id = R.string.color_scheme))
+
         LazyRow(
             modifier = Modifier.fillMaxWidth(),
-            contentPadding = PaddingValues(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(horizontal = DreamoraSpacing.screenH),
+            horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.sm),
         ) {
             items(AppTheme.entries) { theme ->
-                ThemePreviewChip(
+                PremiumThemeChip(
                     theme = theme,
                     isSelected = theme == currentAppTheme,
                     onClick = { onAppThemeChange(theme) },
                 )
             }
         }
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(DreamoraSpacing.md))
     }
 }
 
 @Composable
-private fun ThemePreviewChip(
+private fun PremiumThemeChip(
     theme: AppTheme,
     isSelected: Boolean,
     onClick: () -> Unit,
@@ -146,34 +173,48 @@ private fun ThemePreviewChip(
         AppTheme.SAPPHIRE -> Color(0xFF1E88E5)
     }
 
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.isPressed.collectAsStateWithLifecycle()
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
-            .clip(RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(DreamoraRadius.lg))
             .clickable(
-                interactionSource = remember { MutableInteractionSource() },
+                interactionSource = interactionSource,
                 indication = ripple(bounded = true),
-                onClick = onClick
+                onClick = onClick,
             )
-            .width(52.dp)
+            .width(64.dp)
+            .padding(vertical = DreamoraSpacing.xs),
     ) {
         Box(
             modifier = Modifier
-                .size(36.dp)
+                .size(40.dp)
                 .clip(CircleShape)
                 .background(accentColor)
-                    .border(
-                    width = if (isSelected) 2.dp else 0.dp,
+                .border(
+                    width = if (isSelected || isPressed) 2.dp else 0.dp,
                     color = if (isSelected) MaterialTheme.colorScheme.onSurface else Color.Transparent,
-                    shape = CircleShape
+                    shape = CircleShape,
+                ),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (isSelected) {
+                Icon(
+                    imageVector = Icons.Default.Check,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                    tint = MaterialTheme.colorScheme.onSurface,
                 )
-        )
+            }
+        }
 
-        Spacer(Modifier.height(4.dp))
+        Spacer(Modifier.height(DreamoraSpacing.xs))
 
         Text(
             text = stringResource(id = theme.titleRes),
-            style = MaterialTheme.typography.labelSmall,
+            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
             color = if (isSelected) MaterialTheme.colorScheme.primary
                     else MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,

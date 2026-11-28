@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.ViewModule
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -22,78 +21,201 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import my.dreamora.core.appPreferences.ListLayoutMode
-import my.dreamora.settings.ui.SettingsRow
-import my.dreamora.coreui.theme.colorAccent
-import my.dreamora.coreui.theme.textPadding
 import my.dreamora.settings.LayoutPreferences
 import my.dreamora.settings.R
 import my.dreamora.settings.ui.ExpressiveSwitch
+import my.dreamora.settings.ui.PremiumChip
+import my.dreamora.settings.ui.PremiumSectionHeader
+import my.dreamora.settings.ui.PremiumSectionTitle
+import my.dreamora.settings.ui.PremiumSettingsRow
+import my.dreamora.coreui.theme.DreamoraSpacing
+import my.dreamora.coreui.theme.textPadding
+import androidx.compose.ui.text.font.FontWeight
 
 /**
  * How the shelves are laid out.
  *
  * This screen writes the same preferences the tabs read: `FOR_YOU_*` for the For You tab and
- * `BOOKS_*` for the library, the plugin catalog and the source search (those three have always
- * shared one column count, and they still do — what was missing was a door to it that was not
- * buried in the library's own sort sheet). Nothing here is a preview of a setting: the row shows
- * the stored value, and the tab changes while you look at it.
+ * `BOOKS_*` for the library, the plugin catalog and the source search.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun SettingsLayout(layout: LayoutPreferences) {
     Column {
-        Text(
-            text = stringResource(R.string.settings_group_layout),
-            style = MaterialTheme.typography.titleMedium,
+        PremiumSectionHeader(
+            icon = Icons.Outlined.ViewModule,
+            title = stringResource(R.string.settings_group_layout),
+            summary = stringResource(R.string.settings_group_layout_hint),
+            accent = MaterialTheme.colorScheme.primary,
+        )
+
+        PremiumSectionTitle(text = stringResource(R.string.layout_display_mode))
+
+        PremiumSettingsRow(
+            modifier = Modifier.textPadding().padding(top = DreamoraSpacing.sm),
+            headlineContent = {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(R.string.layout_for_you),
+                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                        modifier = Modifier.weight(1f),
+                    )
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        ListLayoutMode.entries.forEach { mode ->
+                            PremiumChip(
+                                selected = mode == layout.forYouLayoutMode.value,
+                                onClick = { layout.forYouLayoutMode.value = it },
+                                label = {
+                                    Text(
+                                        text = if (mode == ListLayoutMode.VerticalGrid) {
+                                            stringResource(R.string.layout_display_mode_grid)
+                                        } else {
+                                            stringResource(R.string.layout_display_mode_list)
+                                        },
+                                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
+                                    )
+                                },
+                            )
+                        }
+                    }
+                }
+            },
+        )
+
+        PremiumSettingsRow(
             modifier = Modifier.textPadding(),
-            color = colorAccent(),
+            headlineContent = {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(R.string.layout_browse_search),
+                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                        modifier = Modifier.weight(1f),
+                    )
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        ListLayoutMode.entries.forEach { mode ->
+                            PremiumChip(
+                                selected = mode == layout.booksLayoutMode.value,
+                                onClick = { layout.booksLayoutMode.value = it },
+                                label = {
+                                    Text(
+                                        text = if (mode == ListLayoutMode.VerticalGrid) {
+                                            stringResource(R.string.layout_display_mode_grid)
+                                        } else {
+                                            stringResource(R.string.layout_display_mode_list)
+                                        },
+                                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
+                                    )
+                                },
+                            )
+                        }
+                    }
+                }
+            },
         )
 
-        LayoutLabel(Icons.Outlined.ViewModule, R.string.layout_display_mode)
-        ModeRow(
-            title = stringResource(R.string.layout_for_you),
-            selected = layout.forYouLayoutMode.value,
-            onSelect = { layout.forYouLayoutMode.value = it },
-        )
-        // The library is a grid by design (its own sort sheet has no list mode), so this row
-        // names the two screens the preference actually drives.
-        ModeRow(
-            title = stringResource(R.string.layout_browse_search),
-            selected = layout.booksLayoutMode.value,
-            onSelect = { layout.booksLayoutMode.value = it },
-        )
+        Spacer(Modifier.height(DreamoraSpacing.md))
 
-        LayoutLabel(Icons.Outlined.GridView, R.string.layout_grid_columns)
-        ColumnsRow(
-            title = stringResource(R.string.layout_for_you),
-            selected = layout.forYouGridColumns.value,
-            choices = LayoutPreferences.GRID_COLUMN_CHOICES,
-            onSelect = layout::setForYouGridColumns,
-        )
-        Text(
-            text = stringResource(R.string.layout_for_you_columns_summary),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier
-                .textPadding()
-                .padding(bottom = 4.dp),
-        )
-        ColumnsRow(
-            title = stringResource(R.string.layout_library_shared),
-            selected = layout.booksGridColumns.value,
-            choices = (LayoutPreferences.MIN_GRID_COLUMNS..LayoutPreferences.MAX_GRID_COLUMNS).toList(),
-            onSelect = layout::setBooksGridColumns,
-        )
+        PremiumSectionTitle(text = stringResource(R.string.layout_grid_columns))
 
-        SettingsRow(
-            modifier = Modifier.textPadding(),
-            headlineContent = { Text(stringResource(R.string.layout_grey_read)) },
+        PremiumSettingsRow(
+            modifier = Modifier.textPadding().padding(top = DreamoraSpacing.sm),
+            headlineContent = {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(R.string.layout_for_you),
+                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                        modifier = Modifier.weight(1f),
+                    )
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        choicesForYou.forEach { columns ->
+                            PremiumChip(
+                                selected = columns == layout.forYouGridColumns.value,
+                                onClick = { layout.setForYouGridColumns(columns) },
+                                label = {
+                                    Text(
+                                        text = if (columns == LayoutPreferences.AUTO_COLUMNS) {
+                                            stringResource(R.string.layout_columns_auto)
+                                        } else {
+                                            columns.toString()
+                                        },
+                                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
+                                    )
+                                },
+                            )
+                        }
+                    }
+                }
+            },
             supportingContent = {
                 Text(
-                    text = stringResource(R.string.layout_grey_read_summary),
+                    text = stringResource(R.string.layout_for_you_columns_summary),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+            },
+        )
+
+        PremiumSettingsRow(
+            modifier = Modifier.textPadding(),
+            headlineContent = {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(R.string.layout_library_shared),
+                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                        modifier = Modifier.weight(1f),
+                    )
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        (LayoutPreferences.MIN_GRID_COLUMNS..LayoutPreferences.MAX_GRID_COLUMNS).toList().forEach { columns ->
+                            PremiumChip(
+                                selected = columns == layout.booksGridColumns.value,
+                                onClick = { layout.setBooksGridColumns(columns) },
+                                label = {
+                                    Text(
+                                        text = columns.toString(),
+                                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
+                                    )
+                                },
+                            )
+                        }
+                    }
+                }
+            },
+        )
+
+        Spacer(Modifier.height(DreamoraSpacing.md))
+
+        PremiumSettingsRow(
+            modifier = Modifier.textPadding(),
+            headlineContent = {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(R.string.layout_grey_read),
+                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                        )
+                        Spacer(Modifier.height(2.dp))
+                        Text(
+                            text = stringResource(R.string.layout_grey_read_summary),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
             },
             trailingContent = {
                 ExpressiveSwitch(
@@ -101,108 +223,9 @@ internal fun SettingsLayout(layout: LayoutPreferences) {
                     onCheckedChange = { layout.greyOutReadChapters.value = it },
                 )
             },
+            onClick = { layout.greyOutReadChapters.value = !layout.greyOutReadChapters.value },
         )
     }
 }
 
-@Composable
-private fun LayoutLabel(icon: androidx.compose.ui.graphics.vector.ImageVector, @StringRes text: Int) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .textPadding()
-            .padding(top = 10.dp, bottom = 2.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Icon(
-            icon,
-            null,
-            modifier = Modifier.size(18.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Text(
-            text = stringResource(text),
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun ModeRow(
-    title: String,
-    selected: ListLayoutMode,
-    onSelect: (ListLayoutMode) -> Unit,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .textPadding(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.weight(1f),
-        )
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            ListLayoutMode.entries.forEach { mode ->
-                FilterChip(
-                    selected = mode == selected,
-                    onClick = { onSelect(mode) },
-                    label = {
-                        Text(
-                            stringResource(
-                                if (mode == ListLayoutMode.VerticalGrid) R.string.layout_display_mode_grid
-                                else R.string.layout_display_mode_list
-                            )
-                        )
-                    }
-                )
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun ColumnsRow(
-    title: String,
-    selected: Int,
-    choices: List<Int>,
-    onSelect: (Int) -> Unit,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .textPadding(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.weight(1f),
-        )
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            choices.forEach { columns ->
-                FilterChip(
-                    selected = columns == selected,
-                    onClick = { onSelect(columns) },
-                    label = {
-                        Text(
-                            if (columns == LayoutPreferences.AUTO_COLUMNS) {
-                                stringResource(R.string.layout_columns_auto)
-                            } else {
-                                columns.toString()
-                            }
-                        )
-                    }
-                )
-            }
-        }
-    }
-}
+private val choicesForYou = listOf(LayoutPreferences.Companion.AUTO_COLUMNS, 2, 3, 4, 5, 6)

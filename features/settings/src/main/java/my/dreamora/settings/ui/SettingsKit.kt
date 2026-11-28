@@ -1,6 +1,5 @@
 package my.dreamora.settings.ui
 
-import androidx.compose.ui.res.stringResource
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
@@ -8,7 +7,9 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -39,6 +40,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -52,25 +54,18 @@ import my.dreamora.coreui.theme.DreamoraTheme
 import my.dreamora.coreui.theme.DreamoraType
 
 /**
- * The Settings "kit": the vocabulary the settings screens are built from.
+ * Premium Settings design vocabulary.
  *
- * The look follows Android 16 / Pixel Settings: a large plain title instead of a
- * greeting, one search pill under it, and every group of options as a single flat,
- * generously rounded card — no borders, no gradients, no badges. Colour appears
- * exactly once per row, in the circle behind the icon; everything else is surface
- * and ink.
- *
- * Nothing here re-implements behaviour: the section composables keep their own state
- * and view-model wiring, they are just placed inside a card and filtered as a group.
+ * Design principles:
+ *   • Every card carries a 1dp hairline border + subtle tonal elevation — never flat.
+ *   • Section headers carry a colored left accent (the group's hue) + an underline.
+ *   • Icons live in tinted surfaces; color appears exactly once per row.
+ *   • Switches use gradient thumbs so state is readable without track color.
+ *   • Chips carry borders; selected chips fill with accent + white text.
+ *   • Typography uses the editorial scale: section titles are semibold, body is medium.
+ *   • Whitespace is generous: sections breathe, rows have vertical rhythm.
  */
 
-/**
- * A settings group.
- *
- * The Settings screen renders every spec as a *row* in one menu card (tap → open),
- * a group screen renders the same spec *expanded*, with its sections inside — so a
- * setting cannot exist on one level and be missing on the other.
- */
 enum class SettingsGroup {
     Appearance,
     Reading,
@@ -101,14 +96,13 @@ data class SettingsGroupSpec(
     val content: @Composable () -> Unit,
 )
 
-/** The corner every settings card shares: Pixel's large, soft radius. */
-private val SettingsCardShape = RoundedCornerShape(DreamoraRadius.xxl)
+/** Premium card shape: softer than stock M3. */
+private val PremiumCardShape = RoundedCornerShape(DreamoraRadius.xxl)
 
-/**
- * The row's single note of colour, for the circle behind its icon. Derived from the
- * group's own name, so a group keeps its hue across lists and rebuilds, and the
- * active theme decides which four hues are in rotation.
- */
+/** Hairline used for card borders and row separators. */
+private val PremiumBorder = BorderStroke(1.dp, DreamoraTheme.colors.hairline)
+
+/** The row's single note of colour — derived from the group name, rotated through the scheme. */
 @Composable
 fun SettingsGroup.accent(): Color {
     val scheme = MaterialTheme.colorScheme
@@ -117,13 +111,51 @@ fun SettingsGroup.accent(): Color {
     return palette[index]
 }
 
+/** Gradient accent used behind hero titles and active chips. */
+@Composable
+private fun SettingsGroup.accentGradient(): Brush {
+    val scheme = MaterialTheme.colorScheme
+    val c = accent()
+    return Brush.linearGradient(
+        colors = listOf(
+            c.copy(alpha = if (DreamoraTheme.colors.isLight) 0.12f else 0.20f),
+            Color.Transparent,
+        ),
+    )
+}
+
+/** The tinted circle behind a group icon — premium version with subtle border. */
+@Composable
+private fun PremiumGroupIcon(icon: ImageVector, accent: Color) {
+    Box(
+        modifier = Modifier
+            .size(42.dp)
+            .clip(CircleShape)
+            .background(
+                accent.copy(alpha = if (DreamoraTheme.colors.isLight) 0.10f else 0.16f),
+            )
+            .border(
+                width = 1.dp,
+                color = accent.copy(alpha = if (DreamoraTheme.colors.isLight) 0.25f else 0.35f),
+                shape = CircleShape,
+            ),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = accent,
+            modifier = Modifier.size(22.dp),
+        )
+    }
+}
+
 /**
- * One group of options as a single flat card. A group screen shows exactly one of
- * these, expanded, with its sections inside; [showHeader] drops the title row when
- * the screen's hero already says the name.
+ * Premium group card for the hub (tappable row) and expanded group screens.
+ * Carries a hairline border + tonal elevation. The icon circle has a subtle border.
  */
 @Composable
-fun SettingsGroupCard(
+fun PremiumSettingsCard(
     title: String,
     icon: ImageVector,
     accent: Color = MaterialTheme.colorScheme.primary,
@@ -131,11 +163,13 @@ fun SettingsGroupCard(
     summary: String? = null,
     visible: Boolean = true,
     expanded: Boolean = true,
-    /** A group screen already shows its title in the hero: the card then drops its own. */
     showHeader: Boolean = true,
     onClick: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.isPressed.collectAsStateWithLifecycle()
+
     AnimatedVisibility(
         visible = visible,
         enter = fadeIn(tween(DreamoraMotion.STANDARD)) + expandVertically(
@@ -155,12 +189,24 @@ fun SettingsGroupCard(
                     vertical = DreamoraSpacing.xs,
                 )
                 .then(
-                    // the whole box is the tap target once it opens a screen of its own
-                    if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier,
+                    if (onClick != null)
+                        Modifier.clickable(
+                            interactionSource = interactionSource,
+                            indication = null,
+                            onClick = onClick,
+                        )
+                    else Modifier,
+                )
+                .then(
+                    Modifier
+                        .background(
+                            color = MaterialTheme.colorScheme.surfaceContainer,
+                            shape = PremiumCardShape,
+                        )
+                        .border(PremiumBorder, PremiumCardShape)
                 ),
-            shape = SettingsCardShape,
             color = MaterialTheme.colorScheme.surfaceContainer,
-            tonalElevation = 0.dp,
+            tonalElevation = if (isPressed) 0.dp else 1.dp,
         ) {
             Column {
                 if (showHeader) Row(
@@ -174,12 +220,14 @@ fun SettingsGroupCard(
                         ),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    GroupIcon(icon = icon, accent = accent)
+                    PremiumGroupIcon(icon = icon, accent = accent)
                     Spacer(Modifier.width(DreamoraSpacing.md))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = title,
-                            style = MaterialTheme.typography.titleMedium,
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                fontWeight = FontWeight.SemiBold,
+                            ),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
@@ -194,7 +242,7 @@ fun SettingsGroupCard(
                         }
                     }
                     if (onClick != null) {
-                        SettingsCaret()
+                        PremiumCaret(isPressed = isPressed)
                     }
                 }
                 if (expanded) {
@@ -214,16 +262,27 @@ fun SettingsGroupCard(
     }
 }
 
+/** Trailing chevron with pressed-state tint. */
+@Composable
+private fun PremiumCaret(isPressed: Boolean = false) {
+    Icon(
+        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+        contentDescription = null,
+        tint = if (isPressed) MaterialTheme.colorScheme.primary else DreamoraTheme.colors.textMuted,
+        modifier = Modifier.size(22.dp),
+    )
+}
+
 /**
- * The top of a settings group screen: the group's name, large and plain, with one
- * line under it saying what is inside. The app bar above carries only the back
- * arrow, so the name is said once — no wash, no icon tile, no decoration.
+ * Premium section header: a colored left accent bar + title + optional summary.
+ * Used at the top of every settings group screen and inside group cards.
  */
 @Composable
-fun SettingsGroupHero(
+fun PremiumSectionHeader(
     icon: ImageVector,
     title: String,
     summary: String?,
+    accent: Color = MaterialTheme.colorScheme.primary,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -232,51 +291,59 @@ fun SettingsGroupHero(
             .padding(horizontal = DreamoraSpacing.screenH)
             .padding(top = DreamoraSpacing.sm, bottom = DreamoraSpacing.md),
     ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
-            color = MaterialTheme.colorScheme.onBackground,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-        )
-        if (!summary.isNullOrBlank()) {
-            Spacer(Modifier.height(DreamoraSpacing.xxs))
-            Text(
-                text = summary,
-                style = DreamoraType.bookMeta,
-                color = DreamoraTheme.colors.textMuted,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(4.dp)
+                    .background(
+                        Brush.horizontalGradient(
+                            colors = listOf(accent, accent.copy(alpha = 0f)),
+                        ),
+                    ),
             )
+            Spacer(Modifier.width(DreamoraSpacing.sm))
+            PremiumGroupIcon(icon = icon, accent = accent)
+            Spacer(Modifier.width(DreamoraSpacing.md))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.headlineMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                    ),
+                    color = MaterialTheme.colorScheme.onBackground,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                if (!summary.isNullOrBlank()) {
+                    Spacer(Modifier.height(DreamoraSpacing.xxs))
+                    Text(
+                        text = summary,
+                        style = DreamoraType.bookMeta,
+                        color = DreamoraTheme.colors.textMuted,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
         }
-    }
-}
-
-/** The tinted circle behind a group icon — the row's single note of colour. */
-@Composable
-private fun GroupIcon(icon: ImageVector, accent: Color) {
-    Box(
-        modifier = Modifier
-            .size(38.dp)
-            .clip(CircleShape)
-            .background(accent.copy(alpha = if (DreamoraTheme.colors.isLight) 0.14f else 0.22f)),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = accent,
-            modifier = Modifier.size(20.dp),
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(DreamoraTheme.colors.hairline)
+                .padding(top = DreamoraSpacing.md),
         )
     }
 }
 
 /**
- * Search field for the settings page: a quiet pill under the title, always visible,
- * like the one Pixel Settings opens with.
+ * Premium search field: an outlined pill with a subtle border, always visible.
  */
 @Composable
-fun SettingsSearchField(
+fun PremiumSearchField(
     query: String,
     onQueryChange: (String) -> Unit,
     onClear: () -> Unit,
@@ -288,10 +355,16 @@ fun SettingsSearchField(
             .fillMaxWidth()
             .padding(horizontal = DreamoraSpacing.screenH, vertical = DreamoraSpacing.xs),
         shape = RoundedCornerShape(DreamoraRadius.pill),
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        color = MaterialTheme.colorScheme.surfaceContainerHighest,
+        tonalElevation = 0.dp,
     ) {
         Row(
-            modifier = Modifier.padding(start = DreamoraSpacing.lg, end = DreamoraSpacing.xs),
+            modifier = Modifier
+                .padding(start = DreamoraSpacing.md, end = DreamoraSpacing.xs)
+                .border(
+                    BorderStroke(1.dp, DreamoraTheme.colors.hairline),
+                    RoundedCornerShape(DreamoraRadius.pill),
+                ),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
@@ -306,7 +379,7 @@ fun SettingsSearchField(
                 singleLine = true,
                 modifier = Modifier
                     .weight(1f)
-                    .padding(horizontal = DreamoraSpacing.sm, vertical = 14.dp),
+                    .padding(horizontal = DreamoraSpacing.sm, vertical = 15.dp),
                 textStyle = MaterialTheme.typography.bodyMedium.copy(
                     color = MaterialTheme.colorScheme.onSurface,
                 ),
@@ -315,7 +388,7 @@ fun SettingsSearchField(
                     Box(contentAlignment = Alignment.CenterStart) {
                         if (query.isEmpty()) {
                             Text(
-                                text = placeholder ?: stringResource(my.dreamora.strings.R.string.action_search_settings),
+                                text = placeholder ?: "Search settings",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = DreamoraTheme.colors.textMuted,
                             )
@@ -325,11 +398,11 @@ fun SettingsSearchField(
                 },
             )
             if (query.isNotEmpty()) {
-                IconButton(onClick = onClear, modifier = Modifier.size(32.dp)) {
+                IconButton(onClick = onClear, modifier = Modifier.size(36.dp)) {
                     Icon(
                         imageVector = Icons.Filled.Close,
-                        contentDescription = stringResource(my.dreamora.strings.R.string.clear),
-                        modifier = Modifier.size(16.dp),
+                        contentDescription = "Clear",
+                        modifier = Modifier.size(18.dp),
                         tint = DreamoraTheme.colors.textMuted,
                     )
                 }
@@ -339,135 +412,76 @@ fun SettingsSearchField(
 }
 
 /**
- * The hub's menu: one flat card whose rows are the settings groups, separated by
- * hairlines that stop at the icon — the way Pixel Settings groups its entries.
+ * Premium settings row inside a group card: tinted icon surface, headline, supporting line,
+ * optional trailing content. Every section uses this for consistent rhythm.
  */
 @Composable
-fun SettingsMenuCard(
+fun PremiumSettingsRow(
     modifier: Modifier = Modifier,
-    content: @Composable ColumnScope.() -> Unit,
+    headlineContent: @Composable () -> Unit,
+    supportingContent: (@Composable () -> Unit)? = null,
+    leadingContent: (@Composable () -> Unit)? = null,
+    trailingContent: (@Composable () -> Unit)? = null,
+    onClick: (() -> Unit)? = null,
+    accent: Color = MaterialTheme.colorScheme.primary,
 ) {
-    Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = DreamoraSpacing.screenH, vertical = DreamoraSpacing.xs),
-        shape = SettingsCardShape,
-        color = MaterialTheme.colorScheme.surfaceContainer,
-        tonalElevation = 0.dp,
-    ) {
-        Column(content = content)
-    }
-}
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.isPressed.collectAsStateWithLifecycle()
 
-/** One entry of the hub's menu: tinted circle icon, title, one-line summary, caret. */
-@Composable
-fun SettingsMenuRow(
-    icon: ImageVector,
-    title: String,
-    summary: String,
-    accent: Color,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clip(SettingsCardShape)
-            .clickable(onClick = onClick)
-            .padding(
-                horizontal = DreamoraSpacing.lg,
-                vertical = DreamoraSpacing.md,
-            ),
+            .defaultMinSize(minHeight = 64.dp)
+            .then(
+                if (onClick != null)
+                    Modifier.clickable(
+                        interactionSource = interactionSource,
+                        indication = null,
+                        onClick = onClick,
+                    )
+                else Modifier,
+            )
+            .padding(horizontal = DreamoraSpacing.md, vertical = DreamoraSpacing.xs),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.md),
     ) {
-        GroupIcon(icon = icon, accent = accent)
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Spacer(Modifier.height(1.dp))
-            Text(
-                text = summary,
-                style = MaterialTheme.typography.bodySmall,
-                color = DreamoraTheme.colors.textMuted,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+        if (leadingContent != null) {
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(RoundedCornerShape(DreamoraRadius.xl))
+                    .background(
+                        accent.copy(alpha = if (DreamoraTheme.colors.isLight) 0.08f else 0.14f),
+                    )
+                    .border(
+                        BorderStroke(1.dp, accent.copy(alpha = if (DreamoraTheme.colors.isLight) 0.20f else 0.28f)),
+                        RoundedCornerShape(DreamoraRadius.xl),
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                leadingContent()
+            }
+            Spacer(Modifier.width(DreamoraSpacing.sm))
         }
-        SettingsCaret()
+
+        Column(Modifier.weight(1f)) {
+            headlineContent()
+            if (supportingContent != null) {
+                Spacer(Modifier.height(2.dp))
+                supportingContent()
+            }
+        }
+
+        if (trailingContent != null) {
+            Box(Modifier.padding(start = 12.dp)) {
+                trailingContent()
+            }
+        }
     }
 }
 
-/** The hairline between two rows of a [SettingsMenuCard], inset past the icon. */
+/** Premium section title inside a card — uppercase, tracked, muted. */
 @Composable
-fun SettingsMenuDivider(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .padding(start = DreamoraSpacing.lg + 38.dp + DreamoraSpacing.md)
-            .fillMaxWidth()
-            .height(1.dp)
-            .background(DreamoraTheme.colors.hairline),
-    )
-}
-
-/** Trailing chevron that marks a row as "opens another screen". */
-@Composable
-fun SettingsCaret(modifier: Modifier = Modifier) {
-    Icon(
-        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-        contentDescription = null,
-        tint = DreamoraTheme.colors.textMuted,
-        modifier = modifier.size(20.dp),
-    )
-}
-
-/**
- * Expressive switch: the thumb carries a check or a cross, so state is readable
- * without looking at the track color (and color-blind safe).
- */
-@Composable
-fun ExpressiveSwitch(
-    checked: Boolean,
-    onCheckedChange: ((Boolean) -> Unit)?,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-) {
-    Switch(
-        checked = checked,
-        onCheckedChange = onCheckedChange,
-        enabled = enabled,
-        modifier = modifier,
-        thumbContent = {
-            Icon(
-                imageVector = if (checked) Icons.Filled.Check else Icons.Filled.Close,
-                contentDescription = null,
-                modifier = Modifier.size(16.dp),
-                tint = if (checked) {
-                    MaterialTheme.colorScheme.onPrimaryContainer
-                } else {
-                    MaterialTheme.colorScheme.outline
-                },
-            )
-        },
-    )
-}
-
-/** Padding used by every section composable that draws its own rows inside a card. */
-val SettingsRowPadding = PaddingValues(
-    start = DreamoraSpacing.md,
-    end = DreamoraSpacing.lg,
-    top = DreamoraSpacing.xs,
-    bottom = DreamoraSpacing.xs,
-)
-
-/** A section title inside a card — used where a group has two blocks of rows. */
-@Composable
-fun SettingsInnerLabel(text: String, modifier: Modifier = Modifier) {
+fun PremiumSectionTitle(text: String, modifier: Modifier = Modifier) {
     Text(
         text = text.uppercase(),
         style = DreamoraType.badge,
@@ -480,7 +494,136 @@ fun SettingsInnerLabel(text: String, modifier: Modifier = Modifier) {
     )
 }
 
-/** The group's own title, for its screen header — the pre-existing group labels. */
+/** Premium switch: custom gradient thumb, check/cross for color-blind safety. */
+@Composable
+fun PremiumSwitch(
+    checked: Boolean,
+    onCheckedChange: ((Boolean) -> Unit)?,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.isPressed.collectAsStateWithLifecycle()
+
+    Switch(
+        checked = checked,
+        onCheckedChange = onCheckedChange,
+        enabled = enabled,
+        modifier = modifier
+            .then(if (enabled) Modifier.clickable(interactionSource = interactionSource, indication = null) else Modifier),
+        thumbContent = {
+            Box(
+                modifier = Modifier
+                    .size(20.dp)
+                    .clip(CircleShape)
+                    .background(
+                        if (checked) {
+                            Brush.linearGradient(
+                                colors = listOf(
+                                    MaterialTheme.colorScheme.primary,
+                                    MaterialTheme.colorScheme.secondary,
+                                ),
+                            )
+                        } else {
+                            MaterialTheme.colorScheme.outline
+                        },
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = if (checked) Icons.Filled.Check else Icons.Filled.Close,
+                    contentDescription = null,
+                    modifier = Modifier.size(12.dp),
+                    tint = Color.White,
+                )
+            }
+        },
+    )
+}
+
+/** Premium outlined chip: border + fill on select. */
+@Composable
+fun PremiumChip(
+    selected: Boolean,
+    onClick: () -> Unit,
+    label: @Composable () -> Unit,
+    accent: Color = MaterialTheme.colorScheme.primary,
+    modifier: Modifier = Modifier,
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.isPressed.collectAsStateWithLifecycle()
+
+    Box(
+        modifier = modifier
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick,
+            )
+            .clip(RoundedCornerShape(DreamoraRadius.pill))
+            .background(
+                if (selected) accent else MaterialTheme.colorScheme.surfaceContainerHighest,
+            )
+            .border(
+                if (selected) BorderStroke(1.dp, accent) else PremiumBorder,
+                RoundedCornerShape(DreamoraRadius.pill),
+            ),
+        contentAlignment = Alignment.Center,
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            label()
+        }
+    }
+}
+
+/** Premium filter chip row: label + chips arranged horizontally. */
+@Composable
+fun PremiumFilterRow(
+    title: String,
+    selected: Any,
+    choices: List<Pair<String, Any>>,
+    onSelect: (Any) -> Unit,
+    accent: Color = MaterialTheme.colorScheme.primary,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.md),
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+            modifier = Modifier.weight(1f),
+        )
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            choices.forEach { (label, value) ->
+                PremiumChip(
+                    selected = value == selected,
+                    onClick = { onSelect(value) },
+                    accent = accent,
+                    label = { Text(text = label, style = MaterialTheme.typography.labelSmall) },
+                )
+            }
+        }
+    }
+}
+
+/** Padding used by every section composable that draws its own rows inside a card. */
+val PremiumRowPadding = PaddingValues(
+    start = DreamoraSpacing.md,
+    end = DreamoraSpacing.lg,
+    top = DreamoraSpacing.xs,
+    bottom = DreamoraSpacing.xs,
+)
+
+/** The group's own title, for its screen header. */
 @Composable
 fun SettingsGroup.label(): String = stringResource(
     when (this) {

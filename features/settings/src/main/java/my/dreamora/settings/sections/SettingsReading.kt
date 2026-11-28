@@ -16,34 +16,37 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import my.dreamora.coreui.components.PillSlider
-import my.dreamora.settings.ui.SettingsRow
-import my.dreamora.coreui.theme.colorAccent
-import my.dreamora.coreui.theme.textPadding
-import my.dreamora.settings.R
+import my.dreamora.coreui.theme.DreamoraSpacing
 import my.dreamora.settings.ReadingPreferences
+import androidx.compose.ui.text.font.FontWeight
 import my.dreamora.settings.ReadingPreferences.Companion.MAX_FONT_SIZE
 import my.dreamora.settings.ReadingPreferences.Companion.MAX_LINE_HEIGHT
 import my.dreamora.settings.ReadingPreferences.Companion.MIN_FONT_SIZE
 import my.dreamora.settings.ReadingPreferences.Companion.MIN_LINE_HEIGHT
+import my.dreamora.settings.R
 import my.dreamora.settings.ui.ExpressiveSwitch
+import my.dreamora.settings.ui.PremiumSectionHeader
+import my.dreamora.settings.ui.PremiumSectionTitle
+import my.dreamora.settings.ui.PremiumSettingsRow
+import my.dreamora.coreui.theme.textPadding
+import androidx.compose.ui.text.font.FontWeight
 
 /**
- * The reader's settings, reachable without opening a book. The labels are the reader panel's
- * own strings and the ranges are its own, so the two screens are two doors into one set of
- * values rather than two dialects of the same idea.
+ * The reader's settings, reachable without opening a book.
  */
 @Composable
 internal fun SettingsReading(reading: ReadingPreferences) {
     Column {
-        Text(
-            text = stringResource(R.string.settings_group_reading),
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.textPadding(),
-            color = colorAccent(),
+        PremiumSectionHeader(
+            icon = Icons.Outlined.MenuBook,
+            title = stringResource(R.string.settings_group_reading),
+            summary = stringResource(R.string.settings_group_reading_hint),
+            accent = MaterialTheme.colorScheme.primary,
         )
 
         PillSlider(
@@ -52,7 +55,7 @@ internal fun SettingsReading(reading: ReadingPreferences) {
             valueRange = MIN_FONT_SIZE..MAX_FONT_SIZE,
             onValueChange = { reading.setFontSize(it) },
             valueText = "%.2f".format(reading.fontSize.value),
-            modifier = Modifier.textPadding(),
+            modifier = Modifier.textPadding().padding(top = DreamoraSpacing.sm),
         )
 
         PillSlider(
@@ -81,6 +84,10 @@ internal fun SettingsReading(reading: ReadingPreferences) {
             valueText = "%.0f dp".format(reading.sideMargins),
             modifier = Modifier.textPadding(),
         )
+
+        Spacer(Modifier.height(DreamoraSpacing.md))
+
+        PremiumSectionTitle(text = stringResource(R.string.reading_text_options))
 
         ToggleRow(
             icon = Icons.Outlined.FormatAlignJustify,
@@ -117,6 +124,11 @@ internal fun SettingsReading(reading: ReadingPreferences) {
             checked = reading.textSmooth.value,
             onCheckedChange = { reading.textSmooth.value = it },
         )
+
+        Spacer(Modifier.height(DreamoraSpacing.md))
+
+        PremiumSectionTitle(text = stringResource(R.string.reading_behaviour))
+
         ToggleRow(
             icon = Icons.Outlined.BrightnessHigh,
             title = stringResource(R.string.reading_keep_screen_on),
@@ -146,18 +158,36 @@ internal fun SettingsReading(reading: ReadingPreferences) {
             onCheckedChange = { reading.selectableText.value = it },
         )
 
-        // Prefetch is a step, not a slider: the useful range is a handful of integers, and a
-        // continuous control invites a number that only spends mobile data.
+        Spacer(Modifier.height(DreamoraSpacing.md))
+
+        PremiumSectionTitle(text = stringResource(R.string.reading_preload))
+
         SettingsRow(
-            headlineContent = { Text(stringResource(R.string.reading_preload_pages)) },
-            supportingContent = {
-                Column {
-                    Text(stringResource(R.string.reading_preload_pages_description))
-                    Text(
-                        text = reading.prefetchChapters.value.toString(),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = colorAccent(),
-                    )
+            headlineContent = {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(R.string.reading_preload_pages),
+                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                        )
+                        Spacer(Modifier.height(2.dp))
+                        Text(
+                            text = stringResource(R.string.reading_preload_pages_description),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Spacer(Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = reading.prefetchChapters.value.toString(),
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    }
                 }
             },
             leadingContent = {
@@ -188,8 +218,28 @@ private fun ToggleRow(
     onCheckedChange: (Boolean) -> Unit,
 ) {
     SettingsRow(
-        headlineContent = { Text(title) },
-        supportingContent = summary?.let { { Text(it) } },
+        modifier = Modifier.textPadding(),
+        headlineContent = {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                    )
+                    if (summary != null) {
+                        Spacer(Modifier.height(2.dp))
+                        Text(
+                            text = summary,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+        },
         leadingContent = {
             Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         },

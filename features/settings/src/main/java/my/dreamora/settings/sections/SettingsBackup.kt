@@ -30,18 +30,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import my.dreamora.settings.ui.SettingsRow
-import my.dreamora.coreui.theme.colorAccent
+import my.dreamora.coreui.theme.DreamoraSpacing
 import my.dreamora.coreui.theme.textPadding
 import my.dreamora.settings.R
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import androidx.compose.ui.text.font.FontWeight
 
 @Composable
 internal fun SettingsBackup(
     onBackupData: () -> Unit = {},
     onRestoreData: () -> Unit = {},
-    // Auto backup
     autoBackupEnabled: Boolean = false,
     onAutoBackupEnabledChange: (Boolean) -> Unit = {},
     autoBackupDirectoryUri: String = "",
@@ -60,12 +60,11 @@ internal fun SettingsBackup(
     autoBackupLastTimestamp: Long = 0L,
 ) {
     Column {
-        // ── Manual Backup Section ──
         Text(
             text = stringResource(id = R.string.backup),
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.textPadding(),
-            color = colorAccent()
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+            modifier = Modifier.textPadding().padding(bottom = DreamoraSpacing.sm),
+            color = MaterialTheme.colorScheme.onSurface,
         )
         SettingsRow(
             headlineContent = {
@@ -77,7 +76,7 @@ internal fun SettingsBackup(
             leadingContent = {
                 Icon(Icons.Outlined.Save, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
             },
-            modifier = Modifier.clickable { onBackupData() }
+            modifier = Modifier.textPadding().clickable { onBackupData() }
         )
         SettingsRow(
             headlineContent = {
@@ -93,175 +92,223 @@ internal fun SettingsBackup(
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             },
-            modifier = Modifier.clickable { onRestoreData() }
+            modifier = Modifier.textPadding().clickable { onRestoreData() }
         )
 
-        // ── Auto Backup Section ──
+        Spacer(Modifier.height(DreamoraSpacing.md))
+
         Text(
             text = stringResource(id = R.string.auto_backup),
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.textPadding().padding(top = 16.dp),
-            color = colorAccent()
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+            modifier = Modifier.textPadding().padding(bottom = DreamoraSpacing.sm),
+            color = MaterialTheme.colorScheme.onSurface,
         )
 
-        // Enable/Disable
         SettingsRow(
             headlineContent = {
-                Text(text = stringResource(R.string.auto_backup_switch))
-            },
-            supportingContent = {
-                Text(text = stringResource(id = R.string.auto_backup_description))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(R.string.auto_backup_switch),
+                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                        )
+                        Spacer(Modifier.height(2.dp))
+                        Text(
+                            text = stringResource(id = R.string.auto_backup_description),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Spacer(Modifier.width(12.dp))
+                    Switch(
+                        checked = autoBackupEnabled,
+                        onCheckedChange = onAutoBackupEnabledChange
+                    )
+                }
             },
             leadingContent = {
                 Icon(Icons.Outlined.Backup, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
             },
-            trailingContent = {
-                Switch(
-                    checked = autoBackupEnabled,
-                    onCheckedChange = onAutoBackupEnabledChange
-                )
-            }
+            modifier = Modifier.textPadding(),
         )
 
-        // Directory selection
-        SettingsRow(
-            headlineContent = {
-                Text(text = stringResource(R.string.auto_backup_directory))
-            },
-            supportingContent = {
-                Text(
-                    text = if (autoBackupDirectoryUri.isNotEmpty() && autoBackupDirectoryDisplayName.isNotEmpty())
-                        autoBackupDirectoryDisplayName
-                    else if (autoBackupDirectoryUri.isNotEmpty())
-                        stringResource(R.string.auto_backup_directory_selected)
-                    else
-                        stringResource(R.string.auto_backup_select_directory)
-                )
-            },
-            leadingContent = {
-                Icon(Icons.Outlined.Storage, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-            },
-            modifier = Modifier.clickable(enabled = true) { onAutoBackupSelectDirectory() }
+        BackupRow(
+            title = stringResource(R.string.auto_backup_directory),
+            value = if (autoBackupDirectoryUri.isNotEmpty() && autoBackupDirectoryDisplayName.isNotEmpty())
+                autoBackupDirectoryDisplayName
+            else if (autoBackupDirectoryUri.isNotEmpty())
+                stringResource(R.string.auto_backup_directory_selected)
+            else
+                stringResource(R.string.auto_backup_select_directory),
+            icon = Icons.Outlined.Storage,
+            onClick = onAutoBackupSelectDirectory,
         )
 
-        // Max count
-        SettingsRow(
-            headlineContent = {
-                Text(text = stringResource(R.string.auto_backup_max_count))
-            },
-            supportingContent = {
-                Text(text = stringResource(R.string.auto_backup_max_count_value, autoBackupMaxCount))
-            },
-            leadingContent = {
-                Icon(Icons.Outlined.Schedule, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-            },
-            modifier = Modifier.clickable {
+        BackupRow(
+            title = stringResource(R.string.auto_backup_max_count),
+            value = stringResource(R.string.auto_backup_max_count_value, autoBackupMaxCount),
+            icon = Icons.Outlined.Schedule,
+            onClick = {
                 val options = listOf(1, 3, 5, 10, 20, 50)
                 val nextIndex = (options.indexOf(autoBackupMaxCount) + 1) % options.size
                 onAutoBackupMaxCountChange(options[nextIndex])
-            }
+            },
         )
 
-        // Interval
-        SettingsRow(
-            headlineContent = {
-                Text(text = stringResource(R.string.auto_backup_interval))
-            },
-            supportingContent = {
-                Text(text = formatIntervalMinutes(autoBackupIntervalMinutes))
-            },
-            leadingContent = {
-                Icon(Icons.Outlined.Schedule, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-            },
-            modifier = Modifier.clickable {
+        BackupRow(
+            title = stringResource(R.string.auto_backup_interval),
+            value = formatIntervalMinutes(autoBackupIntervalMinutes),
+            icon = Icons.Outlined.Schedule,
+            onClick = {
                 val options = listOf(60L, 120L, 360L, 720L, 1440L, 4320L, 10080L)
                 val nextIndex = (options.indexOf(autoBackupIntervalMinutes) + 1) % options.size
                 onAutoBackupIntervalMinutesChange(options[nextIndex])
-            }
+            },
         )
 
-        // Last backup time
+        BackupRow(
+            title = stringResource(R.string.auto_backup_last_time),
+            value = if (autoBackupLastTimestamp > 0) {
+                val sdf = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault())
+                sdf.format(Date(autoBackupLastTimestamp))
+            } else {
+                stringResource(R.string.auto_backup_never)
+            },
+            icon = Icons.Outlined.Schedule,
+        )
+
         SettingsRow(
             headlineContent = {
-                Text(text = stringResource(R.string.auto_backup_last_time))
-            },
-            supportingContent = {
-                Text(
-                    text = if (autoBackupLastTimestamp > 0) {
-                        val sdf = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault())
-                        sdf.format(Date(autoBackupLastTimestamp))
-                    } else {
-                        stringResource(R.string.auto_backup_never)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(R.string.auto_backup_include_images),
+                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                        )
+                        Spacer(Modifier.height(2.dp))
+                        Text(
+                            text = stringResource(id = R.string.auto_backup_include_images_description),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                     }
-                )
-            },
-            leadingContent = {
-                Icon(Icons.Outlined.Schedule, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-        )
-
-        // Include images
-        SettingsRow(
-            headlineContent = {
-                Text(text = stringResource(R.string.auto_backup_include_images))
-            },
-            supportingContent = {
-                Text(text = stringResource(id = R.string.auto_backup_include_images_description))
+                    Spacer(Modifier.width(12.dp))
+                    Switch(
+                        checked = autoBackupIncludeImages,
+                        onCheckedChange = onAutoBackupIncludeImagesChange
+                    )
+                }
             },
             leadingContent = {
                 Icon(Icons.Outlined.Image, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
             },
-            trailingContent = {
-                Switch(
-                    checked = autoBackupIncludeImages,
-                    onCheckedChange = onAutoBackupIncludeImagesChange
-                )
-            }
+            modifier = Modifier.textPadding(),
         )
 
-        // Include settings
         SettingsRow(
             headlineContent = {
-                Text(text = stringResource(R.string.auto_backup_include_settings))
-            },
-            supportingContent = {
-                Text(text = stringResource(id = R.string.auto_backup_include_settings_description))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(R.string.auto_backup_include_settings),
+                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                        )
+                        Spacer(Modifier.height(2.dp))
+                        Text(
+                            text = stringResource(id = R.string.auto_backup_include_settings_description),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Spacer(Modifier.width(12.dp))
+                    Switch(
+                        checked = autoBackupIncludeSettings,
+                        onCheckedChange = onAutoBackupIncludeSettingsChange
+                    )
+                }
             },
             leadingContent = {
                 Icon(Icons.Outlined.Settings, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
             },
-            trailingContent = {
-                Switch(
-                    checked = autoBackupIncludeSettings,
-                    onCheckedChange = onAutoBackupIncludeSettingsChange
-                )
-            }
+            modifier = Modifier.textPadding(),
         )
 
-        // Include plugins
         SettingsRow(
             headlineContent = {
-                Text(text = stringResource(R.string.auto_backup_include_plugins))
-            },
-            supportingContent = {
-                Text(text = stringResource(id = R.string.auto_backup_include_plugins_description))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(R.string.auto_backup_include_plugins),
+                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                        )
+                        Spacer(Modifier.height(2.dp))
+                        Text(
+                            text = stringResource(id = R.string.auto_backup_include_plugins_description),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Spacer(Modifier.width(12.dp))
+                    Switch(
+                        checked = autoBackupIncludePlugins,
+                        onCheckedChange = onAutoBackupIncludePluginsChange
+                    )
+                }
             },
             leadingContent = {
                 Icon(Icons.Outlined.Extension, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
             },
-            trailingContent = {
-                Switch(
-                    checked = autoBackupIncludePlugins,
-                    onCheckedChange = onAutoBackupIncludePluginsChange
-                )
-            }
+            modifier = Modifier.textPadding(),
         )
     }
 }
 
-/**
- * Format interval in minutes to human-readable string.
- */
+@Composable
+private fun BackupRow(
+    title: String,
+    value: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    onClick: (() -> Unit)? = null,
+) {
+    SettingsRow(
+        modifier = Modifier.textPadding()
+            .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier),
+        headlineContent = {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    text = value,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        },
+        leadingContent = {
+            Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        },
+    )
+}
+
+/** Format interval in minutes to human-readable string. */
 private fun formatIntervalMinutes(minutes: Long): String {
     return when {
         minutes < 60 -> "${minutes} min"

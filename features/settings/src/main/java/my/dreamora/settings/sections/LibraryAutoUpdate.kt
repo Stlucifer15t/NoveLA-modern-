@@ -4,6 +4,7 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.material.icons.Icons
@@ -16,11 +17,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import my.dreamora.settings.ui.SettingsRow
+import my.dreamora.coreui.theme.DreamoraSpacing
 import my.dreamora.coreui.theme.colorAccent
 import my.dreamora.coreui.theme.InternalTheme
 import my.dreamora.coreui.theme.textPadding
@@ -32,6 +34,9 @@ import androidx.compose.material.icons.outlined.NotificationsActive
 import my.dreamora.settings.SettingsScreenState
 import my.dreamora.settings.views.NewAppUpdateDialog
 import my.dreamora.settings.ui.ExpressiveSwitch
+import my.dreamora.settings.ui.PremiumSectionHeader
+import my.dreamora.settings.ui.PremiumChip
+import androidx.compose.ui.text.font.FontWeight
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -39,18 +44,41 @@ fun LibraryAutoUpdate(
     state: SettingsScreenState.LibraryAutoUpdate,
 ) {
     Column {
-        Text(
-            text = stringResource(StringsR.string.settings_library_updates),
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.textPadding(),
-            color = colorAccent()
+        PremiumSectionHeader(
+            icon = Icons.Outlined.AutoMode,
+            title = stringResource(StringsR.string.settings_library_updates),
+            summary = stringResource(StringsR.string.settings_library_updates_summary),
+            accent = colorAccent(),
         )
         SettingsRow(
-            modifier = Modifier.clickable {
+            modifier = Modifier.textPadding().clickable {
                 state.autoUpdateEnabled.value = !state.autoUpdateEnabled.value
             },
             headlineContent = {
-                Text(text = stringResource(R.string.automatically_check_for_library_updates))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(R.string.automatically_check_for_library_updates),
+                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                        )
+                        Spacer(Modifier.height(2.dp))
+                        Text(
+                            text = stringResource(R.string.automatically_check_for_library_updates_summary),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Spacer(Modifier.width(DreamoraSpacing.md))
+                    ExpressiveSwitch(
+                        checked = state.autoUpdateEnabled.value,
+                        onCheckedChange = {
+                            state.autoUpdateEnabled.value = !state.autoUpdateEnabled.value
+                        }
+                    )
+                }
             },
             leadingContent = {
                 Icon(
@@ -58,26 +86,29 @@ fun LibraryAutoUpdate(
                     null,
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-            },
-            trailingContent = {
-                ExpressiveSwitch(
-                    checked = state.autoUpdateEnabled.value,
-                    onCheckedChange = {
-                        state.autoUpdateEnabled.value = !state.autoUpdateEnabled.value
-                    }
-                )
             }
         )
-        // Library update interval options
+
         SettingsRow(
+            modifier = Modifier.textPadding(),
             headlineContent = {
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    libraryUpdateTimes.forEach {
-                        FilterChip(
-                            selected = it.intervalHours == state.autoUpdateIntervalHours.value,
-                            onClick = { state.autoUpdateIntervalHours.value = it.intervalHours },
-                            label = { Text(text = stringResource(id = it.nameRes)) }
-                        )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(R.string.library_update_interval),
+                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                        modifier = Modifier.weight(1f),
+                    )
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.sm)) {
+                        libraryUpdateTimes.forEach {
+                            PremiumChip(
+                                selected = it.intervalHours == state.autoUpdateIntervalHours.value,
+                                onClick = { state.autoUpdateIntervalHours.value = it.intervalHours },
+                                label = { Text(text = stringResource(id = it.nameRes), style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium)) },
+                            )
+                        }
                     }
                 }
             },
@@ -85,11 +116,14 @@ fun LibraryAutoUpdate(
                 Icon(Icons.Outlined.Timer, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         )
-        // Проверка канала: тот же канал, что у настоящих уведомлений о главах.
+
         SettingsRow(
-            modifier = Modifier.clickable { state.onSendTestNotification() },
+            modifier = Modifier.textPadding().clickable { state.onSendTestNotification() },
             headlineContent = {
-                Text(text = stringResource(StringsR.string.library_test_notification))
+                Text(
+                    text = stringResource(StringsR.string.library_test_notification),
+                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                )
             },
             leadingContent = {
                 Icon(

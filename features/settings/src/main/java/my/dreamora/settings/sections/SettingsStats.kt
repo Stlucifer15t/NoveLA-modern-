@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import my.dreamora.coreui.theme.DreamoraSpacing
 import my.dreamora.coreui.theme.DreamoraType
 import my.dreamora.coreui.theme.colorAccent
 import my.dreamora.coreui.theme.textPadding
@@ -36,76 +37,72 @@ import my.dreamora.settings.ReadingStats
 import my.dreamora.settings.R
 import my.dreamora.settings.displayCount
 import my.dreamora.settings.watchMinutes
+import my.dreamora.settings.ui.PremiumSectionHeader
+import my.dreamora.settings.ui.PremiumSectionTitle
+import my.dreamora.settings.ui.PremiumSettingsRow
+import androidx.compose.ui.text.font.FontWeight
 
-/**
- * What this device has read and watched, separated by kind.
- *
- * Two lists, not one: a chapter and an episode are different units, and mixing them into a
- * single "chapters" number is how reading stats start lying. The values are counts over the
- * library, history and chapter tables — the app keeps no reading timer and no attention model,
- * so there is no "minutes read" here, and the watch time it does show is the player's own
- * position per episode rather than an estimate.
- */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun SettingsStats(stats: ReadingStats) {
     var showMovies by rememberSaveable { mutableStateOf(false) }
 
     Column {
-        Text(
-            text = stringResource(R.string.settings_group_stats),
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.textPadding(),
-            color = colorAccent(),
+        PremiumSectionHeader(
+            icon = Icons.Outlined.Insights,
+            title = stringResource(R.string.settings_group_stats),
+            summary = stringResource(R.string.settings_group_stats_hint),
+            accent = MaterialTheme.colorScheme.primary,
         )
+
         FlowRow(
             modifier = Modifier
                 .fillMaxWidth()
                 .textPadding(),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.sm),
         ) {
-            FilterChip(
+            PremiumChip(
                 selected = !showMovies,
                 onClick = { showMovies = false },
-                label = { Text(stringResource(R.string.stats_books)) },
+                label = { Text(stringResource(R.string.stats_books), style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium)) },
             )
-            FilterChip(
+            PremiumChip(
                 selected = showMovies,
                 onClick = { showMovies = true },
-                label = { Text(stringResource(R.string.stats_movies)) },
+                label = { Text(stringResource(R.string.stats_movies), style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium)) },
             )
         }
 
         if (!showMovies) {
             ReadingStatsPanel(stats = stats)
-            Spacer(Modifier.height(12.dp))
-            StatRow(
+            Spacer(Modifier.height(DreamoraSpacing.md))
+            PremiumStatRow(
                 icon = Icons.Outlined.MenuBook,
                 title = stringResource(R.string.stats_library_books),
                 value = stats.libraryBooks.displayCount(),
             )
-            StatRow(
+            PremiumStatRow(
                 icon = Icons.Outlined.MenuBook,
                 title = stringResource(R.string.stats_books_finished),
                 value = stats.booksFinished.displayCount(),
             )
-            StatRow(
+            PremiumStatRow(
                 icon = Icons.Outlined.MenuBook,
                 title = stringResource(R.string.stats_streak),
                 value = stats.streakDays.displayCount(),
             )
         } else {
-            StatRow(
+            PremiumStatRow(
                 icon = Icons.Outlined.PlayCircle,
                 title = stringResource(R.string.stats_movies_in_library),
                 value = stats.moviesInLibrary.displayCount(),
             )
-            StatRow(
+            PremiumStatRow(
                 icon = Icons.Outlined.PlayCircle,
                 title = stringResource(R.string.stats_episodes_watched),
                 value = stats.episodesWatched.displayCount(),
             )
-            StatRow(
+            PremiumStatRow(
                 icon = Icons.Outlined.PlayCircle,
                 title = stringResource(R.string.stats_watch_time),
                 value = watchTimeLabel(stats.watchMinutes()),
@@ -117,7 +114,7 @@ internal fun SettingsStats(stats: ReadingStats) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier
                         .textPadding()
-                        .padding(top = 4.dp),
+                        .padding(top = DreamoraSpacing.xs),
                 )
             }
         }
@@ -130,13 +127,11 @@ internal fun SettingsStats(stats: ReadingStats) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier
                 .textPadding()
-                .padding(top = 6.dp),
+                .padding(top = DreamoraSpacing.xs),
         )
     }
 }
 
-/** "1 h 12 min" above an hour, "47 min" below it — and a dash while the count is not in yet. */
-@Composable
 internal fun watchTimeLabel(minutes: Long): String = when {
     minutes < 0L -> "…"
     minutes < 60L -> stringResource(R.string.stats_minute, minutes.toInt())
@@ -144,44 +139,48 @@ internal fun watchTimeLabel(minutes: Long): String = when {
 }
 
 @Composable
-private fun StatRow(
+private fun PremiumStatRow(
     icon: ImageVector,
     title: String,
     value: String,
 ) {
     val palette = MaterialTheme.colorScheme
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .textPadding()
-            .padding(vertical = 3.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        Surface(
-            modifier = Modifier.size(30.dp),
-            shape = RoundedCornerShape(9.dp),
-            color = palette.primary.copy(alpha = 0.12f),
-        ) {
-            Icon(
-                icon,
-                null,
+    PremiumSettingsRow(
+        modifier = Modifier.textPadding().padding(vertical = DreamoraSpacing.xs),
+        headlineContent = {
+            Row(
                 modifier = Modifier
-                    .padding(6.dp)
-                    .size(18.dp),
-                tint = palette.primary,
-            )
-        }
-        Text(
-            text = title,
-            style = MaterialTheme.typography.bodyLarge,
-            color = palette.onSurface,
-            modifier = Modifier.weight(1f),
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.titleMedium,
-            color = colorAccent(),
-        )
-    }
+                    .fillMaxWidth()
+                    .padding(vertical = 3.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.md),
+            ) {
+                Surface(
+                    modifier = Modifier.size(36.dp),
+                    shape = RoundedCornerShape(DreamoraSpacing.xl),
+                    color = palette.primary.copy(alpha = 0.12f),
+                ) {
+                    Icon(
+                        icon,
+                        null,
+                        modifier = Modifier
+                            .padding(8.dp)
+                            .size(20.dp),
+                        tint = palette.primary,
+                    )
+                }
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                    color = palette.onSurface,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    text = value,
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                    color = colorAccent(),
+                )
+            }
+        },
+    )
 }

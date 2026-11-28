@@ -1,6 +1,7 @@
 package my.dreamora.settings.sections
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -27,9 +28,11 @@ import androidx.compose.ui.unit.dp
 import my.dreamora.core.appPreferences.AppLanguage
 import my.dreamora.core.appPreferences.AppLanguageProvider
 import my.dreamora.settings.ui.SettingsRow
-import my.dreamora.coreui.theme.colorAccent
+import my.dreamora.coreui.theme.DreamoraSpacing
 import my.dreamora.coreui.theme.textPadding
 import my.dreamora.settings.R
+import my.dreamora.settings.ui.PremiumSectionHeader
+import androidx.compose.ui.text.font.FontWeight
 
 @Composable
 internal fun SettingsLanguage(
@@ -39,66 +42,98 @@ internal fun SettingsLanguage(
     var showDialog by remember { mutableStateOf(false) }
 
     Column {
-        Text(
-            text = stringResource(id = R.string.language),
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.textPadding(),
-            color = colorAccent()
+        PremiumSectionHeader(
+            icon = Icons.Outlined.Language,
+            title = stringResource(id = R.string.language),
+            summary = stringResource(id = R.string.language_summary),
+            accent = MaterialTheme.colorScheme.primary,
         )
         SettingsRow(
             onClick = { showDialog = true },
             headlineContent = {
-                Text(currentLanguage.getDisplayName())
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = currentLanguage.getDisplayName(),
+                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                    )
+                    Spacer(Modifier.width(DreamoraSpacing.sm))
+                    Text(
+                        text = stringResource(R.string.language_tap_to_change),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             },
             leadingContent = {
                 Icon(Icons.Outlined.Language, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
             },
+            modifier = Modifier.textPadding(),
         )
     }
 
     if (showDialog) {
-        AlertDialog(
+        PremiumLanguageDialog(
             onDismissRequest = { showDialog = false },
-            title = {
-                Text(stringResource(R.string.language))
-            },
-            text = {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(max = 400.dp)
-                        .verticalScroll(rememberScrollState()),
-                ) {
-                    AppLanguageProvider.supportedLanguages.forEach { language ->
-                        val isSelected = language == currentLanguage
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    onLanguageChange(language)
-                                    showDialog = false
-                                }
-                                .padding(vertical = 12.dp, horizontal = 16.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(
-                                language.getDisplayName(),
-                                modifier = Modifier.weight(1f),
-                                color = if (isSelected) MaterialTheme.colorScheme.primary
-                                    else MaterialTheme.colorScheme.onSurface,
-                            )
-                            if (isSelected) {
-                                Icon(
-                                    Icons.Default.Check,
-                                    null,
-                                    tint = MaterialTheme.colorScheme.primary,
-                                )
+            currentLanguage = currentLanguage,
+            onLanguageChange = { onLanguageChange(it); showDialog = false },
+        )
+    }
+}
+
+@Composable
+private fun PremiumLanguageDialog(
+    onDismissRequest: () -> Unit,
+    currentLanguage: AppLanguage,
+    onLanguageChange: (AppLanguage) -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismissRequest,
+        title = {
+            Text(
+                text  = stringResource(R.string.language),
+                color = MaterialTheme.colorScheme.onSurface,
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 400.dp)
+                    .verticalScroll(rememberScrollState()),
+            ) {
+                AppLanguageProvider.supportedLanguages.forEach { language ->
+                    val isSelected = language == currentLanguage
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                onLanguageChange(language)
                             }
+                            .padding(vertical = DreamoraSpacing.sm, horizontal = DreamoraSpacing.md),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            language.getDisplayName(),
+                            modifier = Modifier.weight(1f),
+                            color = if (isSelected) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.onSurface,
+                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                        )
+                        if (isSelected) {
+                            Icon(
+                                Icons.Default.Check,
+                                null,
+                                tint = MaterialTheme.colorScheme.primary,
+                            )
                         }
                     }
                 }
-            },
-            confirmButton = {},
-        )
-    }
+            }
+        },
+        confirmButton = {},
+    )
 }

@@ -3,6 +3,7 @@ package my.dreamora.settings.sections
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -34,11 +35,15 @@ import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
 import my.dreamora.settings.ui.SettingsRow
+import my.dreamora.coreui.theme.DreamoraSpacing
 import my.dreamora.coreui.theme.colorAccent
 import my.dreamora.coreui.theme.textPadding
 import my.dreamora.network.interceptors.UAPresets
 import my.dreamora.settings.R
 import my.dreamora.settings.ui.ExpressiveSwitch
+import my.dreamora.settings.ui.PremiumSectionHeader
+import my.dreamora.settings.ui.PremiumSettingsRow
+import androidx.compose.ui.text.font.FontWeight
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -54,24 +59,35 @@ internal fun SettingsNetwork(
     @Suppress("UNUSED_PARAMETER") onCloudflareBypassChanged: (() -> Unit)? = null
 ) {
     Column {
-        Text(
-            text = stringResource(id = R.string.network),
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.textPadding(),
-            color = colorAccent()
+        PremiumSectionHeader(
+            icon = Icons.Outlined.Public,
+            title = stringResource(id = R.string.network),
+            summary = stringResource(id = R.string.network_summary),
+            accent = MaterialTheme.colorScheme.primary,
         )
 
-        // User-Agent setting
         var showUserAgentDialog by remember { mutableStateOf(false) }
-        SettingsRow(
+        PremiumSettingsRow(
+            modifier = Modifier.textPadding().padding(top = DreamoraSpacing.sm),
             headlineContent = {
-                Text(text = stringResource(R.string.scraper_user_agent))
-            },
-            supportingContent = {
-                Text(text = if (scraperUserAgent.value.isBlank())
-                    stringResource(R.string.default_user_agent)
-                else
-                    scraperUserAgent.value.take(50) + if (scraperUserAgent.value.length > 50) "..." else "")
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(R.string.scraper_user_agent),
+                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = if (scraperUserAgent.value.isBlank())
+                            stringResource(R.string.default_user_agent)
+                        else
+                            scraperUserAgent.value.take(50) + if (scraperUserAgent.value.length > 50) "..." else "",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             },
             leadingContent = {
                 Icon(Icons.Outlined.Http, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -80,134 +96,53 @@ internal fun SettingsNetwork(
         )
 
         if (showUserAgentDialog) {
-            var tempUserAgent by remember { mutableStateOf(scraperUserAgent.value) }
-            val hasInvalidChars = tempUserAgent.isNotBlank() && tempUserAgent.any { it.code > 127 }
-            Dialog(onDismissRequest = { showUserAgentDialog = false }) {
-                androidx.compose.material3.Card {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = stringResource(R.string.scraper_user_agent),
-                            style = MaterialTheme.typography.headlineSmall,
-                            modifier = Modifier.padding(bottom = 16.dp),
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-
-                        // UA Preset chips
-                        val presetEntries = remember { UAPresets.allPresets().entries.toList() }
-                        FlowRow(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            FilterChip(
-                                selected = tempUserAgent.isBlank(),
-                                onClick = { tempUserAgent = "" },
-                                label = { Text(text = stringResource(R.string.default_user_agent)) }
-                            )
-                            presetEntries.forEach { (name, ua) ->
-                                FilterChip(
-                                    selected = tempUserAgent == ua,
-                                    onClick = { tempUserAgent = ua },
-                                    label = { Text(text = name) }
-                                )
-                            }
-                        }
-
-                        OutlinedTextField(
-                            value = tempUserAgent,
-                            onValueChange = { tempUserAgent = it },
-                            label = { Text(stringResource(R.string.user_agent), color = MaterialTheme.colorScheme.onSurface) },
-                            modifier = Modifier.fillMaxWidth(),
-                            isError = hasInvalidChars,
-                            supportingText = {
-                                if (hasInvalidChars) {
-                                    Text(
-                                        text = stringResource(R.string.user_agent_invalid_chars),
-                                        color = MaterialTheme.colorScheme.error
-                                    )
-                                } else {
-                                    Text(stringResource(R.string.leave_empty_for_default))
-                                }
-                            },
-                            colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = if (hasInvalidChars) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
-                                unfocusedBorderColor = if (hasInvalidChars) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
-                                cursorColor = MaterialTheme.colorScheme.onSurface
-                            )
-                        )
-
-                        androidx.compose.foundation.layout.Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 16.dp),
-                            horizontalArrangement = androidx.compose.foundation.layout.Arrangement.End
-                        ) {
-                            TextButton(
-                                onClick = { showUserAgentDialog = false },
-                                colors = androidx.compose.material3.ButtonDefaults.textButtonColors(
-                                    contentColor = MaterialTheme.colorScheme.onSurface
-                                )
-                            ) {
-                                Text(stringResource(android.R.string.cancel))
-                            }
-                            TextButton(
-                                onClick = {
-                                    scraperUserAgent.value = tempUserAgent.trim()
-                                    showUserAgentDialog = false
-                                },
-                                enabled = !hasInvalidChars,
-                                colors = androidx.compose.material3.ButtonDefaults.textButtonColors(
-                                    contentColor = MaterialTheme.colorScheme.onSurface
-                                )
-                            ) {
-                                Text(stringResource(android.R.string.ok))
-                            }
-                        }
-                    }
-                }
-            }
+            PremiumUserAgentDialog(
+                onDismissRequest = { showUserAgentDialog = false },
+                currentUserAgent = scraperUserAgent.value,
+                onUserAgentChange = { scraperUserAgent.value = it.trim(); showUserAgentDialog = false },
+                onCancel = { showUserAgentDialog = false },
+            )
         }
 
-        // Cloudflare bypass toggle
-        SettingsRow(
+        PremiumSettingsRow(
+            modifier = Modifier.textPadding(),
             headlineContent = {
-                Text(text = stringResource(R.string.cloudflare_bypass))
-            },
-            supportingContent = {
-                Text(text = stringResource(R.string.cloudflare_bypass_description))
-            },
-            leadingContent = {
-                Icon(Icons.Outlined.Security, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-            },
-            trailingContent = {
-                ExpressiveSwitch(
-                    checked = cloudflareBypassEnabled.value,
-                    onCheckedChange = {
-                        cloudflareBypassEnabled.value = it
-                        // Note: Requires app restart to take effect
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(R.string.cloudflare_bypass),
+                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                        )
+                        Spacer(Modifier.height(2.dp))
+                        Text(
+                            text = stringResource(R.string.cloudflare_bypass_description),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                     }
-                )
-            }
-        )
-
-        // Download delay setting
-        SettingsRow(
-            headlineContent = {
-                Text(text = stringResource(R.string.download_delay))
-            },
-            supportingContent = {
-                Column {
-                    Text(text = stringResource(R.string.download_delay_description))
-                    Text(
-                        text = "${downloadDelayMs.value / 1000}.${(downloadDelayMs.value % 1000) / 100} s",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    Spacer(Modifier.width(12.dp))
+                    ExpressiveSwitch(
+                        checked = cloudflareBypassEnabled.value,
+                        onCheckedChange = {
+                            cloudflareBypassEnabled.value = it
+                        }
                     )
                 }
             },
             leadingContent = {
-                Icon(Icons.Outlined.Http, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-            },
-            modifier = Modifier.clickable {
+                Icon(Icons.Outlined.Security, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        )
+
+        DelayRow(
+            title = stringResource(R.string.download_delay),
+            description = stringResource(R.string.download_delay_description),
+            value = "${downloadDelayMs.value / 1000}.${(downloadDelayMs.value % 1000) / 100} s",
+            icon = Icons.Outlined.Http,
+            onClick = {
                 val currentDelay = downloadDelayMs.value
                 val newDelay = when (currentDelay) {
                     500L -> 1000L
@@ -221,59 +156,112 @@ internal fun SettingsNetwork(
             }
         )
 
-        // Add delay setting
-        SettingsRow(
-            headlineContent = {
-                Text(text = stringResource(R.string.add_delay))
-            },
-            supportingContent = {
-                Column {
-                    Text(text = stringResource(R.string.add_delay_description, massAddDelayMs.value / 1000))
-                }
-            },
-            leadingContent = {
-                Icon(Icons.Outlined.Http, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-            },
-            modifier = Modifier.clickable {
-                // Cycle through common delay values: 0.5s, 1s, 2s, 3s, 5s
+        DelayRow(
+            title = stringResource(R.string.add_delay),
+            description = stringResource(R.string.add_delay_description, massAddDelayMs.value / 1000),
+            value = "",
+            icon = Icons.Outlined.Http,
+            onClick = {
                 val currentDelay = massAddDelayMs.value
                 val newDelay = when (currentDelay) {
                     500L -> 1000L
                     1000L -> 2000L
                     2000L -> 3000L
                     3000L -> 5000L
-                    else -> 500L // Default to 0.5s if unknown value
+                    else -> 500L
                 }
                 onMassAddDelayChange(newDelay)
             }
         )
 
-        // Battery optimization setting
-        val powerManager = remember { context.getSystemService(Context.POWER_SERVICE) as? PowerManager }
-        val isIgnoringBatteryOptimizations = remember { mutableStateOf(false) }
-        val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
-        androidx.compose.runtime.DisposableEffect(lifecycleOwner) {
-            val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
-                if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
-                    isIgnoringBatteryOptimizations.value =
-                        powerManager?.isIgnoringBatteryOptimizations(context.packageName) ?: false
+        BatteryOptimizationRow(
+            context = context,
+            icon = Icons.Outlined.Security,
+        )
+    }
+}
+
+@Composable
+private fun DelayRow(
+    title: String,
+    description: String,
+    value: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    onClick: () -> Unit,
+) {
+    PremiumSettingsRow(
+        modifier = Modifier.textPadding().clickable { onClick() },
+        headlineContent = {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                    )
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        text = description,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    if (value.isNotBlank()) {
+                        Text(
+                            text = value,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    }
                 }
             }
-            lifecycleOwner.lifecycle.addObserver(observer)
-            onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+        },
+        leadingContent = {
+            Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        },
+    )
+}
+
+@Composable
+private fun BatteryOptimizationRow(
+    context: Context,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+) {
+    val powerManager = remember { context.getSystemService(Context.POWER_SERVICE) as? PowerManager }
+    val isIgnoringBatteryOptimizations = remember { mutableStateOf(false) }
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    androidx.compose.runtime.DisposableEffect(lifecycleOwner) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                isIgnoringBatteryOptimizations.value =
+                    powerManager?.isIgnoringBatteryOptimizations(context.packageName) ?: false
+            }
         }
-        
-        SettingsRow(
-            headlineContent = {
-                Text(text = stringResource(R.string.battery_optimization))
-            },
-            supportingContent = {
-                Column {
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    PremiumSettingsRow(
+        modifier = Modifier.textPadding(),
+        headlineContent = {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.battery_optimization),
+                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                    )
+                    Spacer(Modifier.height(2.dp))
                     Text(
                         text = stringResource(
                             if (isIgnoringBatteryOptimizations.value) R.string.battery_optimization_disabled
                             else R.string.battery_optimization_enabled
-                        )
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Text(
                         text = stringResource(R.string.battery_optimization_description),
@@ -281,26 +269,117 @@ internal fun SettingsNetwork(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-            },
-            leadingContent = {
-                Icon(Icons.Outlined.Security, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-            },
-            onClick = {
-                if (isIgnoringBatteryOptimizations.value) {
-                    // Battery optimisation is already off — open the app settings screen
-                    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                        data = Uri.parse("package:${context.packageName}")
+            }
+        },
+        leadingContent = {
+            Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        },
+        onClick = {
+            if (isIgnoringBatteryOptimizations.value) {
+                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                    data = Uri.parse("package:${context.packageName}")
+                }
+                context.startActivity(intent)
+            } else {
+                val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                    data = Uri.parse("package:${context.packageName}")
+                }
+                context.startActivity(intent)
+            }
+        }
+    )
+}
+
+@Composable
+private fun PremiumUserAgentDialog(
+    onDismissRequest: () -> Unit,
+    currentUserAgent: String,
+    onUserAgentChange: (String) -> Unit,
+    onCancel: () -> Unit,
+) {
+    var tempUserAgent by remember { mutableStateOf(currentUserAgent) }
+    val hasInvalidChars = tempUserAgent.isNotBlank() && tempUserAgent.any { it.code > 127 }
+    Dialog(onDismissRequest = onDismissRequest) {
+        androidx.compose.material3.Card {
+            Column(modifier = Modifier.padding(24.dp)) {
+                Text(
+                    text = stringResource(R.string.scraper_user_agent),
+                    style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                    modifier = Modifier.padding(bottom = DreamoraSpacing.md),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                val presetEntries = remember { UAPresets.allPresets().entries.toList() }
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.sm),
+                ) {
+                    FilterChip(
+                        selected = tempUserAgent.isBlank(),
+                        onClick = { tempUserAgent = "" },
+                        label = { Text(text = stringResource(R.string.default_user_agent)) }
+                    )
+                    presetEntries.forEach { (name, ua) ->
+                        FilterChip(
+                            selected = tempUserAgent == ua,
+                            onClick = { tempUserAgent = ua },
+                            label = { Text(text = name) }
+                        )
                     }
-                    context.startActivity(intent)
-                } else {
-                    // Battery optimisation is on — ask the system to disable it
-                    val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-                        data = Uri.parse("package:${context.packageName}")
+                }
+
+                Spacer(Modifier.height(DreamoraSpacing.md))
+
+                OutlinedTextField(
+                    value = tempUserAgent,
+                    onValueChange = { tempUserAgent = it },
+                    label = { Text(stringResource(R.string.user_agent), color = MaterialTheme.colorScheme.onSurface) },
+                    modifier = Modifier.fillMaxWidth(),
+                    isError = hasInvalidChars,
+                    supportingText = {
+                        if (hasInvalidChars) {
+                            Text(
+                                text = stringResource(R.string.user_agent_invalid_chars),
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        } else {
+                            Text(stringResource(R.string.leave_empty_for_default))
+                        }
+                    },
+                    colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = if (hasInvalidChars) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
+                        unfocusedBorderColor = if (hasInvalidChars) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
+                        cursorColor = MaterialTheme.colorScheme.onSurface
+                    )
+                )
+
+                androidx.compose.foundation.layout.Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = DreamoraSpacing.md),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(
+                        onClick = onCancel,
+                        colors = androidx.compose.material3.ButtonDefaults.textButtonColors(
+                            contentColor = MaterialTheme.colorScheme.onSurface
+                        )
+                    ) {
+                        Text(stringResource(android.R.string.cancel))
                     }
-                    context.startActivity(intent)
+                    TextButton(
+                        onClick = {
+                            onUserAgentChange(tempUserAgent)
+                        },
+                        enabled = !hasInvalidChars,
+                        colors = androidx.compose.material3.ButtonDefaults.textButtonColors(
+                            contentColor = MaterialTheme.colorScheme.onSurface
+                        )
+                    ) {
+                        Text(stringResource(android.R.string.ok))
+                    }
                 }
             }
-        )
-
+        }
     }
 }

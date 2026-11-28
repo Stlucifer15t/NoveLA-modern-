@@ -5,9 +5,9 @@ import androidx.compose.material.icons.outlined.MenuBook
 import my.dreamora.settings.sections.SettingsLayout
 import my.dreamora.settings.sections.SettingsReading
 import my.dreamora.settings.sections.SettingsStats
-import my.dreamora.settings.ui.SettingsMenuCard
-import my.dreamora.settings.ui.SettingsMenuDivider
-import my.dreamora.settings.ui.SettingsMenuRow
+import my.dreamora.settings.ui.PremiumSearchField
+import my.dreamora.settings.ui.PremiumSectionHeader
+import my.dreamora.settings.ui.PremiumSettingsCard
 import my.dreamora.settings.ui.accent
 import my.dreamora.settings.ui.hint
 import my.dreamora.settings.ui.label
@@ -27,17 +27,14 @@ import my.dreamora.coreui.components.DreamoraEmptyState
 import my.dreamora.coreui.theme.DreamoraSpacing
 import my.dreamora.coreui.theme.DreamoraTheme
 import my.dreamora.settings.ui.SettingsGroup
-import my.dreamora.settings.ui.SettingsGroupCard
-import my.dreamora.settings.ui.SettingsGroupHero
 import my.dreamora.settings.ui.SettingsGroupSpec
-import my.dreamora.settings.ui.SettingsSearchField
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -135,11 +132,8 @@ internal fun SettingsScreenBody(
     groups: Set<SettingsGroup>? = null,
     onOpenGroup: (SettingsGroup) -> Unit = {},
 ) {
-    // null [groups] = the Settings screen itself, which lists every group as a
-    // tappable box; a non-null set = one group screen, which expands that group only.
     val expanded = groups != null
 
-    // Refresh size displays every time the user navigates to this screen
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -161,17 +155,11 @@ internal fun SettingsScreenBody(
             ?: AppLanguageProvider.supportedLanguages.first()
     }
 
-    // One list, two renderings: the Settings screen shows these as boxes (expanded =
-    // false, tap opens a group), a group screen shows the one requested entry with its
-    // sections inside. Keeping the sections in this file means the two levels can never
-    // drift apart. Keywords are written once, so the search filter and the empty state
-    // cannot disagree — filtering happens per box, never inside a section.
     fun matches(spec: SettingsGroupSpec): Boolean {
         val q = searchQuery.value.trim().lowercase()
         if (expanded || q.isEmpty()) return true
         return spec.title.lowercase().contains(q) ||
             spec.summary.lowercase().contains(q) ||
-            // a blank keyword would match every query (q.contains("") is always true)
             spec.keywords.any { it.isNotBlank() && (it.contains(q) || q.contains(it)) }
     }
 
@@ -206,8 +194,6 @@ internal fun SettingsScreenBody(
                 "hyphen", "screen on", "full screen", "tap", "select", "preload", "prefetch",
             ),
             content = {
-                // Same preference states the reader panel writes — this screen is another
-                // door into them, not a second copy.
                 reading?.let { SettingsReading(it) }
             },
         ),
@@ -221,8 +207,6 @@ internal fun SettingsScreenBody(
                 "read chapters", "grey",
             ),
             content = {
-                // The tabs read these while the screen is open, so tapping "3" has already
-                // changed the tab — there is nothing left to apply.
                 layout?.let { SettingsLayout(it) }
             },
         ),
@@ -406,7 +390,6 @@ internal fun SettingsScreenBody(
     }
 
     if (expanded) {
-        // A group screen: the one spec, open, with its sections inside.
         Column(
             modifier = modifier
                 .fillMaxWidth()
@@ -415,14 +398,16 @@ internal fun SettingsScreenBody(
             verticalArrangement = Arrangement.spacedBy(DreamoraSpacing.xs),
         ) {
             visibleSpecs.forEach { spec ->
-                SettingsGroupHero(
+                PremiumSectionHeader(
                     icon = spec.icon,
                     title = spec.title,
                     summary = spec.summary,
+                    accent = spec.group.accent(),
                 )
-                SettingsGroupCard(
+                PremiumSettingsCard(
                     title = spec.title,
                     icon = spec.icon,
+                    accent = spec.group.accent(),
                     summary = null,
                     expanded = true,
                     showHeader = false,
@@ -435,10 +420,7 @@ internal fun SettingsScreenBody(
         return
     }
 
-    // The hub, in the Android 16 / Pixel Settings shape: a large plain title, one search
-    // pill under it, then the groups as rows of a single flat card — "About" alone in a
-    // second card at the bottom, the way Pixel parks "About phone". No greeting, no
-    // counters, no badges: the screen is navigation, and navigation stays quiet.
+    // Premium hub: large plain title, search pill, then groups as a grid of cards.
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -454,7 +436,7 @@ internal fun SettingsScreenBody(
                 .padding(top = DreamoraSpacing.sm, bottom = DreamoraSpacing.xs),
         )
 
-        SettingsSearchField(
+        PremiumSearchField(
             query = searchQuery.value,
             onQueryChange = { searchQuery.value = it },
             onClear = { searchQuery.value = "" },
@@ -462,31 +444,53 @@ internal fun SettingsScreenBody(
 
         val menuSpecs = visibleSpecs.filter { it.group != SettingsGroup.Support }
         val aboutSpec = visibleSpecs.firstOrNull { it.group == SettingsGroup.Support }
+
         if (menuSpecs.isNotEmpty()) {
-            SettingsMenuCard {
-                menuSpecs.forEachIndexed { index, spec ->
-                    if (index > 0) SettingsMenuDivider()
-                    SettingsMenuRow(
-                        icon = spec.icon,
-                        title = spec.title,
-                        summary = spec.summary,
-                        accent = spec.group.accent(),
-                        onClick = { onOpenGroup(spec.group) },
-                    )
+            // Grid of group cards: 2 columns when there's enough width, 1 otherwise.
+            val columns = if (menuSpecs.size > 3) 2 else 1
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = DreamoraSpacing.screenH, vertical = DreamoraSpacing.xs),
+            ) {
+                menuSpecs.chunked(columns).forEach { row ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(DreamoraSpacing.md),
+                    ) {
+                        row.forEach { spec ->
+                            PremiumSettingsCard(
+                                title = spec.title,
+                                icon = spec.icon,
+                                accent = spec.group.accent(),
+                                summary = spec.summary,
+                                onClick = { onOpenGroup(spec.group) },
+                                modifier = Modifier.weight(1f),
+                            ) {
+                                // Expanded content not shown in hub grid; tapping opens group screen.
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(DreamoraSpacing.xs))
                 }
             }
         }
+
         if (aboutSpec != null) {
-            SettingsMenuCard {
-                SettingsMenuRow(
-                    icon = aboutSpec.icon,
-                    title = aboutSpec.title,
-                    summary = aboutSpec.summary,
-                    accent = aboutSpec.group.accent(),
-                    onClick = { onOpenGroup(aboutSpec.group) },
-                )
+            PremiumSettingsCard(
+                title = aboutSpec.title,
+                icon = aboutSpec.icon,
+                accent = aboutSpec.group.accent(),
+                summary = aboutSpec.summary,
+                onClick = { onOpenGroup(aboutSpec.group) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = DreamoraSpacing.screenH, vertical = DreamoraSpacing.xs),
+            ) {
+                // About content shown in its own screen.
             }
         }
+
         if (visibleSpecs.isEmpty()) {
             DreamoraEmptyState(
                 icon = Icons.Outlined.Search,

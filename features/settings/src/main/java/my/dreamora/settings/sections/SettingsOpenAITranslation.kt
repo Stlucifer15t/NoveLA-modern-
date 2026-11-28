@@ -36,7 +36,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import my.dreamora.settings.ui.SettingsRow
+import my.dreamora.coreui.theme.DreamoraSpacing
 import my.dreamora.settings.R
+import my.dreamora.settings.ui.PremiumChip
+import my.dreamora.settings.ui.PremiumSettingsRow
+import androidx.compose.ui.text.font.FontWeight
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -67,181 +71,206 @@ internal fun SettingsOpenAITranslation(
         cursorColor = MaterialTheme.colorScheme.onSurface
     )
 
-    // Local state for text fields — NOT synced back from props to avoid
-    // resetting the cursor while the user is typing.
     var baseUrlText by rememberSaveable { mutableStateOf(baseUrl) }
     var apiKeysText by rememberSaveable { mutableStateOf(apiKeys) }
-
-    // Model field: plain independent state, no LaunchedEffect reset.
     var modelText by rememberSaveable { mutableStateOf(model) }
 
     val focusManager = LocalFocusManager.current
 
     Column {
-        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
+        HorizontalDivider(modifier = Modifier.padding(horizontal = DreamoraSpacing.screenH, vertical = 4.dp))
 
-        // ── Base URL ──────────────────────────────────────────────────────────
-        SettingsRow(
-            headlineContent = {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Icon(
-                            Icons.Outlined.Link,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            text = stringResource(R.string.openai_base_url),
-                            style = MaterialTheme.typography.titleSmall
-                        )
-                    }
-                    Spacer(Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = baseUrlText,
-                        onValueChange = {
-                            baseUrlText = it
-                            onBaseUrlChange(it)
-                        },
-                        label = {
-                            Text(
-                                stringResource(R.string.openai_base_url_label),
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                        },
-                        placeholder = { Text("https://api.openai.com") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                        keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-                        colors = textFieldColors
-                    )
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        text = stringResource(R.string.openai_base_url_tip),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
+        TextFieldRow(
+            title = stringResource(R.string.openai_base_url),
+            icon = Icons.Outlined.Link,
+            value = baseUrlText,
+            onValueChange = {
+                baseUrlText = it
+                onBaseUrlChange(it)
+            },
+            label = stringResource(R.string.openai_base_url_label),
+            placeholder = "https://api.openai.com",
+            tip = stringResource(R.string.openai_base_url_tip),
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+            textFieldColors = textFieldColors,
         )
 
-        // ── API Keys ──────────────────────────────────────────────────────────
-        SettingsRow(
-            headlineContent = {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Icon(
-                            Icons.Outlined.Key,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            text = stringResource(R.string.openai_api_keys),
-                            style = MaterialTheme.typography.titleSmall
-                        )
-                    }
-                    Spacer(Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = apiKeysText,
-                        onValueChange = {
-                            apiKeysText = it
-                            onApiKeysChange(it)
-                        },
-                        label = {
-                            Text(
-                                stringResource(R.string.openai_api_keys_label),
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                        },
-                        placeholder = { Text(stringResource(R.string.openai_api_keys_placeholder)) },
-                        modifier = Modifier.fillMaxWidth(),
-                        minLines = 2,
-                        maxLines = 5,
-                        colors = textFieldColors
-                    )
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        text = stringResource(R.string.openai_api_keys_tip),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
+        TextFieldRow(
+            title = stringResource(R.string.openai_api_keys),
+            icon = Icons.Outlined.Key,
+            value = apiKeysText,
+            onValueChange = {
+                apiKeysText = it
+                onApiKeysChange(it)
+            },
+            label = stringResource(R.string.openai_api_keys_label),
+            placeholder = stringResource(R.string.openai_api_keys_placeholder),
+            tip = stringResource(R.string.openai_api_keys_tip),
+            singleLine = false,
+            minLines = 2,
+            maxLines = 5,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+            textFieldColors = textFieldColors,
         )
 
-        // ── Model ─────────────────────────────────────────────────────────────
-        SettingsRow(
-            headlineContent = {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        text = stringResource(R.string.openai_model),
-                        style = MaterialTheme.typography.titleSmall
-                    )
-                    Spacer(Modifier.height(8.dp))
-
-                    // Plain text field — no dropdown wrapper stealing events
-                    OutlinedTextField(
-                        value = modelText,
-                        onValueChange = {
-                            modelText = it
-                            onModelChange(it)
-                        },
-                        label = {
-                            Text(
-                                stringResource(R.string.openai_model_label),
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                        },
-                        placeholder = { Text(predefinedModels.first()) },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                        keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-                        colors = textFieldColors
-                    )
-
-                    Spacer(Modifier.height(8.dp))
-
-                    // Preset chips — tap to fill the field instantly
-                    FlowRow(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        predefinedModels.forEach { preset ->
-                            FilterChip(
-                                selected = modelText == preset,
-                                onClick = {
-                                    modelText = preset
-                                    onModelChange(preset)
-                                    focusManager.clearFocus()
-                                },
-                                label = {
-                                    Text(
-                                        text = preset,
-                                        style = MaterialTheme.typography.labelSmall
-                                    )
-                                }
-                            )
-                        }
-                    }
-
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        text = stringResource(R.string.openai_model_tip),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
+        ModelRow(
+            title = stringResource(R.string.openai_model),
+            value = modelText,
+            onValueChange = {
+                modelText = it
+                onModelChange(it)
+            },
+            label = stringResource(R.string.openai_model_label),
+            placeholder = predefinedModels.first(),
+            tip = stringResource(R.string.openai_model_tip),
+            presets = predefinedModels,
+            onPresetClick = {
+                modelText = it
+                onModelChange(it)
+                focusManager.clearFocus()
+            },
+            textFieldColors = textFieldColors,
+            focusManager = focusManager,
         )
     }
+}
+
+@Composable
+private fun TextFieldRow(
+    title: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    placeholder: String,
+    tip: String,
+    singleLine: Boolean = true,
+    minLines: Int = 1,
+    maxLines: Int = 1,
+    keyboardOptions: KeyboardOptions = KeyboardOptions(),
+    keyboardActions: KeyboardActions = KeyboardActions(),
+    textFieldColors: OutlinedTextFieldDefaults.Colors,
+) {
+    SettingsRow(
+        modifier = Modifier.textPadding(),
+        headlineContent = {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        icon,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(Modifier.width(DreamoraSpacing.sm))
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                    )
+                }
+                Spacer(Modifier.height(DreamoraSpacing.xs))
+                OutlinedTextField(
+                    value = value,
+                    onValueChange = onValueChange,
+                    label = {
+                        Text(
+                            label,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    },
+                    placeholder = { Text(placeholder) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = singleLine,
+                    minLines = minLines,
+                    maxLines = maxLines,
+                    keyboardOptions = keyboardOptions,
+                    keyboardActions = keyboardActions,
+                    colors = textFieldColors
+                )
+                Spacer(Modifier.height(DreamoraSpacing.xs))
+                Text(
+                    text = tip,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        },
+    )
+}
+
+@Composable
+private fun ModelRow(
+    title: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    placeholder: String,
+    tip: String,
+    presets: List<String>,
+    onPresetClick: (String) -> Unit,
+    textFieldColors: OutlinedTextFieldDefaults.Colors,
+    focusManager: androidx.compose.ui.platform.LocalFocusManager,
+) {
+    SettingsRow(
+        modifier = Modifier.textPadding(),
+        headlineContent = {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                )
+                Spacer(Modifier.height(DreamoraSpacing.xs))
+
+                OutlinedTextField(
+                    value = value,
+                    onValueChange = onValueChange,
+                    label = {
+                        Text(
+                            label,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    },
+                    placeholder = { Text(placeholder) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+                    colors = textFieldColors
+                )
+
+                Spacer(Modifier.height(DreamoraSpacing.xs))
+
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    presets.forEach { preset ->
+                        PremiumChip(
+                            selected = value == preset,
+                            onClick = { onPresetClick(preset) },
+                            label = {
+                                Text(
+                                    text = preset,
+                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium)
+                                )
+                            }
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(DreamoraSpacing.xs))
+                Text(
+                    text = tip,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        },
+    )
 }

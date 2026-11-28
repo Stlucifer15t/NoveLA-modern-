@@ -1234,4 +1234,23 @@
     <string name="compat_stored_not_runnable">Saved. This build cannot run %1$s sources yet.</string>
     <string name="settings_sources_adult_title">Show 18+ sources</string>
     <string name="settings_sources_adult_hint">Sources marked 18+ stay out of browsing (catalog, search and For You) until this is on. Ones you installed stay in the installed list, marked 18+.</string>
+
+    <!-- Premium settings section summaries -->
+    <string name="theme_summary">Dark mode, colour schemes and icon accents</string>
+    <string name="dark_mode_system">System</string>
+    <string name="dark_mode_light">Light</string>
+    <string name="dark_mode_dark">Dark</string>
+    <string name="dark_mode_black">Black</string>
+    <string name="dark_mode_summary">Choose how the app adapts to light and dark</string>
+    <string name="translation_services_summary">Gemini, OpenAI-compatible and Google PA translation</string>
+    <string name="network_summary">User agent, Cloudflare bypass and download delays</string>
+    <string name="settings_library_updates_summary">Keep your library in sync with sources</string>
+    <string name="app_updates_summary">Stay up to date with the latest releases</string>
+    <string name="automatically_check_for_app_updates_summary">Check GitHub for new versions automatically</string>
+    <string name="automatically_check_for_library_updates_summary">Refresh library metadata on a schedule</string>
+    <string name="language_summary">Change the app interface language</string>
+    <string name="language_tap_to_change">Tap to pick a language</string>
+    <string name="regex_cleanup_summary">Clean chapter text with regex patterns</string>
+    <string name="library_update_interval">Update interval</string>
+    <string name="translation_provider">Translation provider</string>
 </resources>

@@ -1,6 +1,5 @@
 package my.dreamora.settings.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,10 +23,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 /**
- * One row inside a settings group card. Every settings section uses this instead of the
- * app-wide SlimListItem, so the settings rows share one rhythm: a 40dp tinted icon tile,
- * a medium-weight headline and a muted supporting line. Same parameters as SlimListItem,
- * so call sites only change their name.
+ * One row inside a settings group card. Delegates to [PremiumSettingsRow] for the
+ * premium look: tinted icon surface, medium-weight headline, muted supporting line.
  */
 @Composable
 fun SettingsRow(
@@ -38,53 +35,17 @@ fun SettingsRow(
     trailingContent: (@Composable () -> Unit)? = null,
     onClick: (() -> Unit)? = null,
 ) {
-    val rowShape = RoundedCornerShape(14.dp)
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .defaultMinSize(minHeight = 60.dp)
-            .then(
-                if (onClick != null) Modifier.clip(rowShape).clickable(onClick = onClick) else Modifier,
-            )
-            .padding(horizontal = 12.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        if (leadingContent != null) {
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.surfaceContainerHighest),
-                contentAlignment = Alignment.Center,
-            ) {
-                leadingContent()
-            }
-            Spacer(Modifier.width(14.dp))
-        }
-
-        Column(Modifier.weight(1f)) {
-            CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
-                headlineContent()
-            }
-            if (supportingContent != null) {
-                Spacer(Modifier.size(2.dp))
-                CompositionLocalProvider(
-                    LocalContentColor provides MaterialTheme.colorScheme.onSurfaceVariant,
-                ) {
-                    supportingContent()
-                }
-            }
-        }
-
-        if (trailingContent != null) {
-            Box(Modifier.padding(start = 12.dp)) {
-                trailingContent()
-            }
-        }
-    }
+    PremiumSettingsRow(
+        modifier = modifier,
+        headlineContent = headlineContent,
+        supportingContent = supportingContent,
+        leadingContent = leadingContent,
+        trailingContent = trailingContent,
+        onClick = onClick,
+    )
 }
 
-/** Title/subtitle form of [SettingsRow], matching the SlimListItem overload used by settings. */
+/** Title/subtitle form of [SettingsRow]. */
 @Composable
 fun SettingsRow(
     title: String,
@@ -94,7 +55,7 @@ fun SettingsRow(
     trailingContent: (@Composable () -> Unit)? = null,
     onClick: (() -> Unit)? = null,
 ) {
-    SettingsRow(
+    PremiumSettingsRow(
         modifier = modifier,
         headlineContent = {
             Text(
